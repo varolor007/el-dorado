@@ -1,0 +1,306 @@
+<title>El run de El Dorado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* Layout: el run dibujado de arriba abajo en una columna; a su lado (debajo, en el móvil), lo que comparten todos los
+   asientos. Colores y tipos, los de Cortex y su ensamblador: esmeralda para la IA, ámbar para lo que se comprueba,
+   magenta para lo que es del viajero y azul para lo que vuelve atrás. */
+:root {
+  --bg: #E9EBED; --surface: #FAFBFC; --sunk: #DFE2E5;
+  --ink: #0E1217; --ink-soft: #4B535B; --ink-faint: #5A626B;
+  --seat: #0A6B52;
+  --gate: #8C5800; --gate-bg: rgba(140, 88, 0, .10);
+  --you: #9E1F55; --you-bg: rgba(190, 46, 104, .08);
+  --loop: #1F5E96; --wire: #4B535B; --hair: rgba(14, 18, 23, .14);
+  --f-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --f-text: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A0D11; --surface: #161C22; --sunk: #1F262D;
+    --ink: #E4E9ED; --ink-soft: #AEB8C1; --ink-faint: #9BA6AF;
+    --seat: #10D9A3;
+    --gate: #F0B84C; --gate-bg: rgba(240, 184, 76, .12);
+    --you: #F48CB6; --you-bg: rgba(224, 82, 141, .14);
+    --loop: #8EC3F0; --wire: #AEB8C1; --hair: rgba(255, 255, 255, .14);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A0D11; --surface: #161C22; --sunk: #1F262D;
+  --ink: #E4E9ED; --ink-soft: #AEB8C1; --ink-faint: #9BA6AF;
+  --seat: #10D9A3;
+  --gate: #F0B84C; --gate-bg: rgba(240, 184, 76, .12);
+  --you: #F48CB6; --you-bg: rgba(224, 82, 141, .14);
+  --loop: #8EC3F0; --wire: #AEB8C1; --hair: rgba(255, 255, 255, .14);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-text); font-size: 15px; line-height: 1.5;
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 980px; margin-inline: auto; display: grid; gap: 28px; }
+
+.eyebrow {
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-faint); margin: 0 0 8px;
+}
+h1 {
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 6vw, 36px); line-height: 1.1;
+  letter-spacing: -.02em; margin: 0 0 10px; text-wrap: balance;
+}
+.lead { margin: 0; max-width: 62ch; color: var(--ink-soft); }
+
+.cols { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 44px; align-items: start; }
+@media (max-width: 820px) { .cols { grid-template-columns: minmax(0, 1fr); gap: 32px; } }
+
+.fig { margin: 0; display: grid; gap: 16px; min-width: 0; }
+.fig svg { display: block; width: 100%; max-width: 440px; height: auto; }
+.fig figcaption { color: var(--ink-soft); font-size: 13.5px; max-width: 52ch; }
+
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; }
+.legend li { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+.sw { width: 18px; height: 12px; border-radius: 4px; border: 1.3px solid; flex: none; }
+.sw.you { border-color: var(--you); background: var(--you-bg); border-radius: 6px; }
+.sw.seat { border-color: var(--seat); background: var(--surface); }
+.sw.code { border-color: var(--hair); background: var(--sunk); border-radius: 2px; }
+.sw.gate { border-color: var(--gate); background: var(--gate-bg); border-radius: 6px; }
+.sw.loop { border: 0; border-top: 1.6px dashed var(--loop); height: 0; border-radius: 0; }
+
+.watch {
+  background: var(--surface); border-radius: 14px; padding: 12px 14px; font-size: 13.5px; max-width: 440px;
+}
+.watch b { color: var(--seat); font-weight: 600; }
+
+.side { display: grid; gap: 28px; min-width: 0; }
+.side h2 { font-family: var(--f-display); font-weight: 600; font-size: 17px; letter-spacing: -.01em; margin: 0 0 10px; }
+.side ol, .side ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 58ch; }
+.side li { color: var(--ink-soft); }
+.side li b { color: var(--ink); font-weight: 600; }
+.side p { margin: 0; color: var(--ink-soft); max-width: 58ch; }
+.today { border-top: 1px solid var(--hair); padding-top: 18px; font-size: 13.5px; }
+.today code { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink); }
+
+/* El dibujo */
+.b-seat { fill: var(--surface); stroke: var(--seat); stroke-width: 1.3; }
+.b-code { fill: var(--sunk); stroke: var(--hair); stroke-width: 1; }
+.b-gate { fill: var(--gate-bg); stroke: var(--gate); stroke-width: 1.1; }
+.b-you { fill: var(--you-bg); stroke: var(--you); stroke-width: 1.3; }
+.t { font-family: var(--f-text); font-size: 12px; font-weight: 600; fill: var(--ink); }
+.s { font-family: var(--f-text); font-size: 10.5px; fill: var(--ink-soft); }
+.g { font-family: var(--f-text); font-size: 11px; font-weight: 500; fill: var(--gate); }
+.c { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.n { font-family: var(--f-text); font-size: 10px; fill: var(--ink-faint); }
+.l { font-family: var(--f-text); font-size: 10px; font-weight: 500; fill: var(--loop); }
+.y { font-family: var(--f-text); font-size: 10px; font-weight: 500; fill: var(--you); }
+.w { fill: none; stroke: var(--wire); stroke-width: 1.3; }
+.lp { fill: none; stroke: var(--loop); stroke-width: 1.4; stroke-dasharray: 4 3; }
+.ah-w { fill: var(--wire); }
+.ah-l { fill: var(--loop); }
+</style>
+
+<main class="page">
+  <header>
+    <p class="eyebrow">El Dorado, borrador del 21-nov</p>
+    <h1>El run, de un vistazo</h1>
+    <p class="lead">Del viajero al mapa. La IA piensa en diez asientos, el código hace las cuentas y, después de cada
+      tramo, una puerta comprueba lo que se entregó. Nada está construido todavía: esto es el diseño.</p>
+  </header>
+
+  <div class="cols">
+    <figure class="fig">
+      <ul class="legend" aria-label="Leyenda">
+        <li><span class="sw you"></span>El viajero</li>
+        <li><span class="sw seat"></span>Asiento de IA</li>
+        <li><span class="sw code"></span>Código</li>
+        <li><span class="sw gate"></span>Puerta</li>
+        <li><span class="sw loop"></span>Vuelta atrás</li>
+      </ul>
+
+      <svg viewBox="0 0 400 1056" role="img" aria-label="El run de El Dorado, de arriba abajo: el viajero, el que escucha, los papeles y el calendario a la vez, la ruta, los dos buscadores a la vez, las cribas del código, el que cruza, el que mira el alojamiento, el cierre de los tres viajes, el que explica y el viaje en el mapa, con una puerta después de cada tramo y dos vueltas atrás desde el que cruza.">
+        <defs>
+          <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 .6 L8 4 L0 7.4 z" class="ah-w"/>
+          </marker>
+          <marker id="ahl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 .6 L8 4 L0 7.4 z" class="ah-l"/>
+          </marker>
+        </defs>
+
+        <!-- El viajero -->
+        <rect class="b-you" x="100" y="8" width="236" height="48" rx="24"/>
+        <text class="t" x="218" y="28" text-anchor="middle">El viajero</text>
+        <text class="s" x="218" y="44" text-anchor="middle">destino, fechas y cinco preguntas</text>
+        <path class="w" d="M218 56 V70" marker-end="url(#ah)"/>
+
+        <!-- El que escucha -->
+        <rect class="b-seat" x="100" y="72" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="92" text-anchor="middle">El que escucha</text>
+        <text class="s" x="218" y="108" text-anchor="middle">gustos y límites, con sus palabras</text>
+        <path class="w" d="M218 120 V134" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="136" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="152" text-anchor="middle">Puerta: el viaje, claro</text>
+
+        <!-- Papeles y calendario, a la vez -->
+        <path class="w" d="M218 160 V170 M128 170 H308"/>
+        <path class="w" d="M128 170 V182" marker-end="url(#ah)"/>
+        <path class="w" d="M308 170 V182" marker-end="url(#ah)"/>
+        <text class="n" x="314" y="180">a la vez</text>
+
+        <rect class="b-seat" x="44" y="184" width="168" height="48" rx="12"/>
+        <text class="t" x="128" y="204" text-anchor="middle">El de los papeles</text>
+        <text class="s" x="128" y="220" text-anchor="middle">solo fuentes oficiales</text>
+
+        <rect class="b-seat" x="224" y="184" width="168" height="48" rx="12"/>
+        <text class="t" x="308" y="204" text-anchor="middle">El del calendario</text>
+        <text class="s" x="308" y="220" text-anchor="middle">clima, fiestas y temporada</text>
+
+        <path class="w" d="M128 232 V242 M308 232 V242 M128 242 H308"/>
+        <path class="w" d="M218 242 V252" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="254" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="270" text-anchor="middle">Puerta: cada papel, con fuente oficial</text>
+        <path class="w" d="M218 278 V300" marker-end="url(#ah)"/>
+        <text class="y" x="227" y="293">si bloquea, para y te pregunta</text>
+
+        <!-- La ruta -->
+        <rect class="b-seat" x="100" y="302" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="322" text-anchor="middle">El de la ruta</text>
+        <text class="s" x="218" y="338" text-anchor="middle">dónde duermes cada noche</text>
+        <path class="w" d="M218 350 V364" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="366" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="382" text-anchor="middle">Puerta: las noches suman</text>
+
+        <!-- Los dos buscadores, a la vez -->
+        <path class="w" d="M218 390 V400 M128 400 H308"/>
+        <path class="w" d="M128 400 V412" marker-end="url(#ah)"/>
+        <path class="w" d="M308 400 V412" marker-end="url(#ah)"/>
+        <text class="n" x="314" y="410">a la vez</text>
+
+        <rect class="b-seat" x="44" y="414" width="168" height="48" rx="12"/>
+        <text class="t" x="128" y="434" text-anchor="middle">Buscador de transporte</text>
+        <text class="s" x="128" y="450" text-anchor="middle">precio, enlace y fecha</text>
+
+        <rect class="b-seat" x="224" y="414" width="168" height="48" rx="12"/>
+        <text class="t" x="308" y="434" text-anchor="middle">Buscador de alojamiento</text>
+        <text class="s" x="308" y="450" text-anchor="middle">la zona antes que el hotel</text>
+
+        <path class="w" d="M128 462 V472 M308 462 V472 M128 472 H308"/>
+        <path class="w" d="M218 472 V482" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="484" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="500" text-anchor="middle">Puerta: ningún precio sin enlace y fecha</text>
+        <path class="w" d="M218 508 V522" marker-end="url(#ah)"/>
+
+        <!-- Las cribas -->
+        <rect class="b-code" x="100" y="524" width="236" height="34" rx="6"/>
+        <text class="c" x="218" y="545" text-anchor="middle">Código: descarta, suma y pone nota</text>
+        <path class="w" d="M218 558 V572" marker-end="url(#ah)"/>
+
+        <!-- El que cruza, con sus dos vueltas -->
+        <rect class="b-seat" x="100" y="574" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="594" text-anchor="middle">El que cruza</text>
+        <text class="s" x="218" y="610" text-anchor="middle">prueba palancas: día, aeropuerto, zona</text>
+
+        <path class="lp" d="M100 590 H24 V438 H42" marker-end="url(#ahl)"/>
+        <text class="l" x="36" y="514" text-anchor="middle" transform="rotate(-90 36 514)">pide más, dos rondas</text>
+
+        <path class="lp" d="M100 606 H10 V208 H42" marker-end="url(#ahl)"/>
+        <text class="l" x="22" y="322" text-anchor="middle" transform="rotate(-90 22 322)">escala nueva: otra vez los papeles</text>
+
+        <path class="w" d="M218 622 V636" marker-end="url(#ah)"/>
+
+        <!-- El que mira el alojamiento -->
+        <rect class="b-seat" x="100" y="638" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="658" text-anchor="middle">El que mira el alojamiento</text>
+        <text class="s" x="218" y="674" text-anchor="middle">fotos y opiniones de los finalistas</text>
+        <path class="w" d="M218 686 V700" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="702" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="718" text-anchor="middle">Puerta: cada nivel, con su prueba</text>
+        <path class="w" d="M218 726 V740" marker-end="url(#ah)"/>
+
+        <rect class="b-code" x="100" y="742" width="236" height="34" rx="6"/>
+        <text class="c" x="218" y="763" text-anchor="middle">Código: vuelve a poner la nota</text>
+        <path class="w" d="M218 776 V790" marker-end="url(#ah)"/>
+
+        <!-- El cierre -->
+        <rect class="b-seat" x="100" y="792" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="812" text-anchor="middle">El que cruza cierra</text>
+        <text class="s" x="218" y="828" text-anchor="middle">tres viajes: barato, mejor y distinto</text>
+        <path class="w" d="M218 840 V854" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="856" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="872" text-anchor="middle">Puerta: cada número sale de la tabla</text>
+        <path class="w" d="M218 880 V894" marker-end="url(#ah)"/>
+
+        <!-- El que explica -->
+        <rect class="b-seat" x="100" y="896" width="236" height="48" rx="12"/>
+        <text class="t" x="218" y="916" text-anchor="middle">El que explica</text>
+        <text class="s" x="218" y="932" text-anchor="middle">qué ganas y qué pierdes con cada uno</text>
+        <path class="w" d="M218 944 V958" marker-end="url(#ah)"/>
+
+        <rect class="b-gate" x="83" y="960" width="270" height="24" rx="12"/>
+        <text class="g" x="218" y="976" text-anchor="middle">Puerta: sin promesas y con su aviso</text>
+        <path class="w" d="M218 984 V998" marker-end="url(#ah)"/>
+
+        <!-- La salida -->
+        <rect class="b-you" x="100" y="1000" width="236" height="48" rx="24"/>
+        <text class="t" x="218" y="1020" text-anchor="middle">Tu viaje, en el mapa</text>
+        <text class="s" x="218" y="1036" text-anchor="middle">tres opciones, con enlace y fecha</text>
+      </svg>
+
+      <p class="watch"><b>El conductor</b>, otro asiento de IA, vigila todo el run. Cada rojo de una puerta vuelve a
+        su dueño, dos veces como mucho.</p>
+
+      <figcaption>Cada asiento entrega y el código lo comprueba en su puerta antes de seguir. El que cruza es el único
+        que manda hacia atrás: pide más búsquedas a los dos buscadores y, si aparece una escala nueva, la manda al de
+        los papeles.</figcaption>
+    </figure>
+
+    <aside class="side">
+      <section>
+        <h2>Cómo piensa cada asiento</h2>
+        <ol>
+          <li><b>Acuse.</b> Qué tengo y qué me falta.</li>
+          <li><b>Plan.</b> Qué voy a mirar y qué espero, antes de buscar.</li>
+          <li><b>Notas.</b> Cada dato con su fuente, su fecha y su etiqueta: visto, deducido o supuesto.</li>
+          <li><b>Cuentas.</b> Se las pide al código.</li>
+          <li><b>Autocrítica.</b> Qué falta y qué choca.</li>
+          <li><b>Entrega.</b> Su ficha, con campos fijos.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Las normas de todos</h2>
+        <ul>
+          <li><b>Nada inventado.</b> Lo que no se encuentra es «no se sabe».</li>
+          <li><b>Solo lo visto</b> sostiene un precio o un requisito.</li>
+          <li><b>Lo que se lee en una web son datos</b>, nunca órdenes.</li>
+          <li><b>Nadie hace cuentas ni se pone nota.</b> Las cuentas son del código y la nota, de la puerta.</li>
+          <li><b>Cada uno tiene su tope</b> de búsquedas y de vueltas.</li>
+          <li><b>Ninguna regla lleva el nombre</b> de un país, una aerolínea o un hotel.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Las tres cribas del código</h2>
+        <ol>
+          <li><b>Descarta.</b> ¿Vale o no vale? Sí o no, con su motivo.</li>
+          <li><b>Suma.</b> ¿Cuánto cuesta de verdad? Todo lo que tiene precio, al precio.</li>
+          <li><b>Pone nota.</b> ¿Cómo de bueno es? De 0 a 10, con los pesos del viajero.</li>
+        </ol>
+      </section>
+
+      <p class="today">Hoy solo hay documentos. El detalle de cada asiento, con sus normas y su puerta, está en
+        <code>docs/asientos.md</code>.</p>
+    </aside>
+  </div>
+</main>

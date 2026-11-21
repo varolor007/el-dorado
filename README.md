@@ -14,4 +14,5 @@ Está en diseño. Por dónde vamos, en [docs/memoria.md](docs/memoria.md); el en
 | [docs/encargo.md](docs/encargo.md) | Etapa 1: la ficha del encargo y tu proceso, en cajas |
 | [docs/oficio.md](docs/oficio.md) | Etapa 2, en borrador: cómo se valora un vuelo y un alojamiento |
 | [docs/asientos.md](docs/asientos.md) | Borrador: cómo piensa cada asiento, sus normas y su puerta |
+| [docs/paginas/run.html](docs/paginas/run.html) | El run en un dibujo, publicado en https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw |
 | [docs/piezas.md](docs/piezas.md) | Borrador: los asientos, el código, las puertas y los datos que salen de lo hablado |

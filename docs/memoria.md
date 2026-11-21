@@ -7,7 +7,8 @@ Al día el 21-nov-2026. Lo que hace falta para seguir sin la conversación de an
 viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en
 conversación, y antes de seguir con el resto del viaje pidió la base: cómo piensa cada asiento, sus normas y sus
 puertas. Está en borrador, a su revisión, en [asientos.md](asientos.md) (diez asientos, con el que cruza, que pidió
-él); cómo se valora, en [oficio.md](oficio.md), y el inventario de piezas, en [piezas.md](piezas.md). Lo siguiente:
+él), con su dibujo, el run de un vistazo, en `paginas/run.html`, publicado en
+https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw; cómo se valora, en [oficio.md](oficio.md), y el inventario de piezas, en [piezas.md](piezas.md). Lo siguiente:
 sus cambios a los asientos; después, lo que falta por hablar (al final de piezas.md) y la etapa 2, contrastar el
 borrador con el oficio y sus fuentes.
 
@@ -44,6 +45,8 @@ crea. Lo que deja cada una aquí:
   (`docs/ensamblador/hoja.md`) dice las etapas, las filas, los dos tipos de agente, sus partes como un programa y cómo
   sale el plan de obra; la carpeta que entrega, en `docs/ensamblador/planos/carpeta.md`. Cortex, en
   `cognitive/src/app/cortex/`.
+- **Las páginas publicadas**: su fuente, en `docs/paginas/`. Se cambian ahí y se publican en su misma dirección. Son
+  fragmentos sin `<!doctype>`: el publicador les pone el esqueleto. Sus colores y sus tipos, los de Cortex.
 - **Los datos de los viajeros**: nunca en el repositorio.
 
 ## 4. Cómo se retoma
