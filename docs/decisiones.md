@@ -19,7 +19,14 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   inglés; lo que ve el cliente en la web, en inglés; lo demás, en español.
 - **Las preguntas al viajero.** Con el destino y las fechas, cinco preguntas con toques (de dónde sale, quiénes van,
   si las fechas son fijas, cuánto quiere gastar y qué busca) y una casilla, «Ya tengo algo reservado». Lo demás se
-  supone, se dice y se cambia en su vertical (el PM: «me parece bien»). En el encargo.
+  supone, se dice y se cambia en su vertical (el PM: «me parece bien»). En el encargo. Son una base, no una lista
+  cerrada: «puede haber más» (el PM); el agente pregunta más solo si la respuesta cambia el viaje, y hay una caja libre.
+- **Cómo se valora, en tres cribas** (la sesión; el PM: «not bad, vamos mejorando»): qué se descarta, qué se suma al
+  precio y qué se puntúa, con pesos de partida que se ajustan en el ensayo. Los requisitos de entrada no se guardan
+  por país: se guarda la lista de preguntas y cada respuesta se busca en su fuente oficial. En `oficio.md`, borrador.
+- **Un alojamiento no es su nota** (el PM): «aparte de por la puntuación de Booking o las estrellas, nos fijamos por la
+  vista, cómo de aesthetic es la habitación, cómo de moderno; tiene gimnasio y piscina, ok, pero ¿es grande, tiene
+  vistas, máquinas modernas? Eso hay que saber sacarlo también». Cómo se saca, en `oficio.md`.
 - **El proceso se rehace paso a paso con el PM**: «hay mucho más de lo que me has propuesto». Las siete cajas de la
   versión 1 quedan en revisión.
 
@@ -30,5 +37,7 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Los momentos**: qué verticales exactamente, qué se guarda de un viaje y quién trabaja en cada una. Al diseñar el
   tipo por momentos, tras la primera versión.
 - **La API de precios**: cuál, y si es de pago. Después de la primera versión.
+- **Las fotos de los alojamientos**: de dónde se leen en la primera versión (las de viajeros piden casi siempre una
+  API) y con qué derechos se enseñan en una web que se vende. Antes de construir la salida.
 - **Dónde corre el agente y quién paga su IA**: en el servidor del motor de Cortex o aparte, y si la paga el cliente
   con su cuenta, como al crear un agente. Antes del ensayo.

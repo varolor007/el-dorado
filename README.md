@@ -12,3 +12,4 @@ Está en diseño. Por dónde vamos, en [docs/memoria.md](docs/memoria.md); el en
 | [docs/memoria.md](docs/memoria.md) | Qué es, dónde vive cada cosa, por dónde vamos y cómo se retoma |
 | [docs/decisiones.md](docs/decisiones.md) | Cada decisión, con su fecha; lo pendiente, aparte |
 | [docs/encargo.md](docs/encargo.md) | Etapa 1: la ficha del encargo y tu proceso, en cajas |
+| [docs/oficio.md](docs/oficio.md) | Etapa 2, en borrador: cómo se valora un vuelo y un alojamiento |

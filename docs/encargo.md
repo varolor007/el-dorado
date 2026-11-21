@@ -1,6 +1,6 @@
 # El encargo (etapa 1)
 
-La ficha sale de las respuestas del PM del 21-nov. Las preguntas al viajero, aprobadas ese día. Su proceso, en cajas,
+La ficha sale de las respuestas del PM del 21-nov. Las preguntas al viajero, una base, aprobada ese día. Su proceso, en cajas,
 se rehace con él paso a paso (su «hay mucho más de lo que me has propuesto», del 21-nov): aún sin firma.
 
 ## La ficha
@@ -28,7 +28,7 @@ se rehace con él paso a paso (su «hay mucho más de lo que me has propuesto»,
 - **Un precio sin su enlace y su fecha no sale**, y lo que no encuentra, lo dice: nunca rellena con un precio
   inventado.
 
-## Las preguntas al viajero (aprobadas por el PM, 21-nov)
+## Las preguntas al viajero: la base (aprobada por el PM, 21-nov)
 
 El viajero elige el destino, en el mapa o escrito, y da sus fechas. Para arrancar faltan cinco cosas, todas con toques
 y sin escribir. Solo se pregunta lo que nada más sabe él; lo demás lo mira el agente y avisa.
@@ -43,6 +43,12 @@ y sin escribir. Solo se pregunta lo que nada más sabe él; lo demás lo mira el
    Puede marcar varias.
 
 Y una casilla opcional, «Ya tengo algo reservado»: los vuelos, el alojamiento o un día fijo, como una boda.
+
+**No es una lista cerrada** (el PM, 21-nov: «son una base, pero puede haber más»). El agente pregunta más cuando el
+viaje o una respuesta lo abren, y solo si la respuesta cambia el viaje; si no, supone y lo dice. Por ejemplo: con un
+país y no una ciudad, si quiere una base o ir moviéndose; al llegar al alojamiento, qué le importa de él (las vistas, el
+diseño, el gimnasio, la piscina, el tamaño, la tranquilidad), cada cosa como imprescindible, me gusta o me da igual. Y
+siempre, una caja libre, «¿Algo más que deba saber?», de la que el agente saca gustos y límites.
 
 **Lo que no se pregunta**: se supone, se dice y se cambia después en su vertical. Vuelos directos o con escala y la
 maleta; el tipo de alojamiento y la zona; si alquila coche; y la ruta, si eligió un país y no una ciudad.

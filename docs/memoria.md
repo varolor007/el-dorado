@@ -4,9 +4,10 @@ Al día el 21-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y las preguntas al
-viajero, aprobadas ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en conversación: va por
-lo que se considera al buscar y comparar (qué descarta, qué se suma al precio y cómo se pondera un vuelo y un
-alojamiento). Lo siguiente, con su firma del proceso: la etapa 2, investigar el oficio.
+viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en
+conversación: va por cómo se valora (las tres cribas y cómo es de verdad un alojamiento), que queda en borrador en
+[oficio.md](oficio.md). Lo siguiente, con su firma del proceso: la etapa 2, contrastar ese borrador con el oficio y sus
+fuentes.
 
 ## 1. Qué es
 
@@ -26,7 +27,7 @@ crea. Lo que deja cada una aquí:
 | Etapa | Qué deja | Dónde |
 |---|---|---|
 | 1 Encargo | La ficha del encargo y el proceso del PM, en cajas, firmado | [encargo.md](encargo.md) |
-| 2 Investigar el oficio | Cómo lo hace un profesional con oficio: dónde busca, qué compara y qué trucos ahorran, cada cosa con su fuente | `docs/oficio.md` |
+| 2 Investigar el oficio | Cómo lo hace un profesional con oficio: dónde busca, qué compara y qué trucos ahorran, cada cosa con su fuente | [oficio.md](oficio.md), en borrador |
 | 3 Proponer la hoja | La hoja de El Dorado, el one-pager: sus etapas en columnas, su flujo (asientos, scripts y puertas) y sus filas | `docs/paginas/hoja.html`, publicada |
 | 4 Cerrar la hoja | La firma del PM | en el registro |
 | 5 Planificar la obra | El plan por bloques: lo común por capas y cada etapa, entera | `docs/plan.md` |
