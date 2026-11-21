@@ -8,9 +8,9 @@ viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se re
 conversación, y antes de seguir con el resto del viaje pidió la base: cómo piensa cada asiento, sus normas y sus
 puertas. Está en borrador, a su revisión, en [asientos.md](asientos.md) (diez asientos, con el que cruza, que pidió
 él), con su dibujo, el run de un vistazo, en `paginas/run.html`, publicado en
-https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw; cómo se valora, en [oficio.md](oficio.md), y el inventario de piezas, en [piezas.md](piezas.md). Lo siguiente:
-sus cambios a los asientos; después, lo que falta por hablar (al final de piezas.md) y la etapa 2, contrastar el
-borrador con el oficio y sus fuentes.
+https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw; cómo se valora, en [oficio.md](oficio.md), y el inventario de
+piezas, en [piezas.md](piezas.md). Lo siguiente: sus cambios a los asientos; después, lo que falta por hablar (al
+final de piezas.md) y la etapa 2, contrastar el borrador con el oficio y sus fuentes.
 
 ## 1. Qué es
 
