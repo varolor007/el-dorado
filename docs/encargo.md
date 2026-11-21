@@ -1,7 +1,8 @@
 # El encargo (etapa 1)
 
-La ficha sale de las respuestas del PM del 21-nov. Las preguntas al viajero, una base, aprobada ese día. Su proceso, en cajas,
-se rehace con él paso a paso (su «hay mucho más de lo que me has propuesto», del 21-nov): aún sin firma.
+La ficha sale de las respuestas del PM del 21-nov. Las preguntas al viajero, una base, aprobada ese día. Su
+proceso, en cajas, se rehace con él paso a paso (su «hay mucho más de lo que me has propuesto», del 21-nov): aún
+sin firma.
 
 ## La ficha
 

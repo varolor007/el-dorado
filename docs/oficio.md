@@ -112,6 +112,44 @@ moderna que es la habitación y, del gimnasio y la piscina, no si los hay sino c
 
 Por resolver, en el registro: de dónde se leen las fotos en la primera versión y con qué derechos se enseñan.
 
+## Cómo razona el asiento que mira un alojamiento
+
+Lo que preocupa al PM (21-nov) no es enseñar las fotos, sino que el asiento las vea y cribe bien: con qué modelo
+razona si una habitación gusta o si un gimnasio está bien. El modelo ve fotos y las describe bien. Falla en cuatro
+cosas, y el método va contra ellas: lo bien fotografiado le parece bueno; el gran angular le engaña con el tamaño;
+puede decir que ve lo que no está, y no sabe de cuándo es la foto ni de qué habitación.
+
+1. **Primero mira y después juzga.** De cada foto apunta qué es (la habitación, el baño, el gimnasio, la piscina, la
+   vista), de quién (oficial o de un viajero) y lo que se ve, cosa a cosa y sin opinar. El juicio sale de esas notas,
+   nunca de la impresión.
+2. **Lo que se ve, por lista.**
+   - La habitación: el suelo y las paredes, los muebles y sus cantos, la ropa de cama, la tele, el aire, los enchufes
+     junto a la cama; el baño (ducha de obra con mampara o bañera con cortina, la grifería, las juntas); la ventana y
+     lo que se ve por ella; el sitio que queda alrededor de la cama.
+   - El gimnasio: cuántas máquinas se cuentan y de qué tipo (cintas, bicis, elípticas); si hay pesas libres, banco,
+     jaula o poleas; la generación de las máquinas (pantallas, desgaste); si tiene luz o es un sótano.
+   - La piscina: el tamaño, con las personas y las tumbonas como medida; interior o exterior; el estado del vaso y de
+     lo que la rodea.
+3. **Niveles con su descripción, no adjetivos.** Cada campo tiene tres o cuatro niveles escritos, para que dos
+   pasadas den lo mismo:
+   - El estado: nuevo o recién reformado; cuidado; anticuado; descuidado.
+   - El gimnasio: para entrenar de verdad (cardio, pesas libres y jaula o poleas); para mantenerse (algo de cardio y
+     mancuernas); de compromiso (dos o tres máquinas en un cuarto).
+   - La piscina: para nadar; para bañarse; para remojarse.
+   - La vista de esa habitación: abierta (el mar, la ciudad, la montaña); a la calle; a un patio o a un muro.
+   Cada nivel lleva la foto o la opinión que lo prueba. Sin prueba, «no se sabe»: nunca un nivel por defecto.
+4. **El estado no es el estilo.** El estado se juzga, con sus niveles. El estilo solo se nombra, con palabras fijas
+   (moderno y sobrio, clásico, con carácter, de cadena, rústico), y no es mejor ni peor: lo decide el gusto del
+   viajero, que lo elige tocando fotos de ejemplo, no con palabras.
+5. **El asiento describe; no decide si gusta.** El código cruza sus niveles con lo que marcó el viajero: lo
+   imprescindible descarta y lo que gusta sube la nota.
+6. **El tamaño, nunca solo a ojo.** Los metros, de la ficha; en la foto se cuenta (máquinas, tumbonas, lo que cabe
+   junto a la cama), no se estima.
+7. **Si las fotos y las opiniones chocan**, mandan las de los viajeros y las recientes, y el choque se marca.
+8. **Nadie se pone nota.** El código comprueba que cada nivel es de su lista, que su prueba existe y que es de la
+   habitación de ese precio. Y antes de fiarnos, un banco: hoteles que juzgamos nosotros a mano, y el asiento tiene que
+   coincidir. Esa prueba gasta: con el visto bueno del PM.
+
 ## Mejor o peor
 
 - **La más barata**: el menor precio total entre las que pasan de una nota mínima.
