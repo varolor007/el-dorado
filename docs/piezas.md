@@ -2,7 +2,8 @@
 
 Borrador del 21-nov, a petición del PM: los asientos, el código, las puertas y los datos que salen de lo hablado hasta
 hoy. Nada está construido ni firmado, y los nombres son provisionales: se fijan en la hoja (etapa 3). Lo que aún no
-se ha hablado no tiene piezas; va al final.
+se ha hablado no tiene piezas; va al final. Cómo piensa cada asiento, sus normas y su puerta, en
+[asientos.md](asientos.md).
 
 ## Lo que hay de verdad
 
@@ -22,6 +23,7 @@ contrastarlo con fuentes, y sus pesos son un punto de partida.
 | El buscador de transporte | Abre el abanico (aeropuertos, días, escalas, tren) y trae cada opción con su precio, su enlace y su fecha | sí |
 | El buscador de alojamiento | Por zona: trae candidatos con el precio total de la estancia y juzga la zona | sí |
 | El que mira el alojamiento | De los finalistas: las fotos, las opiniones por temas y la ficha; deja la ficha de cómo es, con niveles y pruebas | sí |
+| El que cruza | Une a los dos buscadores: lee la tabla del código, prueba palancas (otro día, otro aeropuerto, otra zona), pide más búsquedas y cierra los tres viajes | no |
 | El que explica | Escribe qué se gana y qué se pierde con cada opción; los números se los da el código | no |
 | El conductor | Vigila el run y arregla lo que se para | no |
 
@@ -34,7 +36,7 @@ contrastarlo con fuentes, y sus pesos son un punto de partida.
 | La criba 2 | Suma el precio total de cada vuelo y de cada alojamiento |
 | La criba 3 | Pone la nota, con los pesos del viajero; corrige las opiniones por cuántas son y de cuándo |
 | Los gustos | Cruza los niveles de cada alojamiento con lo que marcó el viajero |
-| El cruce | Monta viajes completos, los suma y elige los tres: el más barato, el mejor por lo que cuesta y el distinto |
+| El cruce | Monta viajes completos y los suma en una tabla, con cuánto varía cada cosa; saca el más barato y el mejor por lo que cuesta. Qué probar lo decide el que cruza |
 | Las fotos | Elige qué fotos ve el asiento, con un tope por alojamiento |
 | La salida | Pinta el viaje en el mapa (por decidir cómo) |
 
@@ -65,6 +67,7 @@ Hoy no existe ninguna base de datos. Lo que haría falta, en tres grupos:
 - Las preguntas base y las que se abren.
 - Las fotos de ejemplo de cada estilo, para que el viajero elija.
 - El banco de hoteles juzgados a mano, para saber si el asiento acierta.
+- Los dominios oficiales por país, las palancas del que cruza, las clases de aviso y las palabras prohibidas.
 
 **Lo de fuera, que se busca cada vez y no se guarda como verdad** (solo una caché, con su fuente y su fecha): los
 requisitos de entrada, las aerolíneas vetadas, los precios, las opiniones, las fotos, el clima y los eventos.

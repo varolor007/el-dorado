@@ -29,6 +29,10 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   vistas, máquinas modernas? Eso hay que saber sacarlo también». Cómo se saca, en `oficio.md`.
 - **El proceso se rehace paso a paso con el PM**: «hay mucho más de lo que me has propuesto». Las siete cajas de la
   versión 1 quedan en revisión.
+- **Un asiento que une a los dos buscadores** (el PM): «tienen que tener uno que los una, que cruce, que optimice, que
+  cambie, que vea variabilidad». Es el que cruza; las cuentas siguen siendo del código.
+- **Antes de seguir con el resto del viaje, la base** (el PM): el proceso de cada asiento, con normas claras y puertas.
+  En `asientos.md`, borrador, a su revisión.
 
 ## Pendientes
 
@@ -37,6 +41,7 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Los momentos**: qué verticales exactamente, qué se guarda de un viaje y quién trabaja en cada una. Al diseñar el
   tipo por momentos, tras la primera versión.
 - **La API de precios**: cuál, y si es de pago. Después de la primera versión.
+- **Un revisor del viaje entero**, que no lo hizo: lo propone la sesión; por hablar.
 - **Las fotos de los alojamientos**: de dónde se leen en la primera versión (las de viajeros piden casi siempre una
   API) y con qué derechos se enseñan en una web que se vende. Antes de construir la salida.
 - **Dónde corre el agente y quién paga su IA**: en el servidor del motor de Cortex o aparte, y si la paga el cliente

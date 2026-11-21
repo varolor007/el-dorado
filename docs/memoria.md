@@ -5,10 +5,11 @@ Al día el 21-nov-2026. Lo que hace falta para seguir sin la conversación de an
 
 **Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y las preguntas al
 viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en
-conversación: va por cómo se valora (las tres cribas y cómo es de verdad un alojamiento), que queda en borrador en
-[oficio.md](oficio.md); y las piezas que salen de lo hablado (asientos, código, puertas y datos), con lo que falta por
-hablar, en [piezas.md](piezas.md). Lo siguiente, con su firma del proceso: la etapa 2, contrastar ese borrador con el oficio y sus
-fuentes.
+conversación, y antes de seguir con el resto del viaje pidió la base: cómo piensa cada asiento, sus normas y sus
+puertas. Está en borrador, a su revisión, en [asientos.md](asientos.md) (diez asientos, con el que cruza, que pidió
+él); cómo se valora, en [oficio.md](oficio.md), y el inventario de piezas, en [piezas.md](piezas.md). Lo siguiente:
+sus cambios a los asientos; después, lo que falta por hablar (al final de piezas.md) y la etapa 2, contrastar el
+borrador con el oficio y sus fuentes.
 
 ## 1. Qué es
 
