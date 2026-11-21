@@ -3,8 +3,10 @@
 Al día el 21-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y su proceso, en siete
-cajas, a su firma ([encargo.md](encargo.md)). Lo siguiente, con su firma: la etapa 2, investigar el oficio.
+**Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y las preguntas al
+viajero, aprobadas ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en conversación: va por
+lo que se considera al buscar y comparar (qué descarta, qué se suma al precio y cómo se pondera un vuelo y un
+alojamiento). Lo siguiente, con su firma del proceso: la etapa 2, investigar el oficio.
 
 ## 1. Qué es
 

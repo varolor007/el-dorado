@@ -1,6 +1,7 @@
 # El encargo (etapa 1)
 
-La ficha sale de las respuestas del PM del 21-nov. A su firma: su proceso, en cajas, que es la versión 1 de su flujo.
+La ficha sale de las respuestas del PM del 21-nov. Las preguntas al viajero, aprobadas ese día. Su proceso, en cajas,
+se rehace con él paso a paso (su «hay mucho más de lo que me has propuesto», del 21-nov): aún sin firma.
 
 ## La ficha
 
@@ -27,7 +28,36 @@ La ficha sale de las respuestas del PM del 21-nov. A su firma: su proceso, en ca
 - **Un precio sin su enlace y su fecha no sale**, y lo que no encuentra, lo dice: nunca rellena con un precio
   inventado.
 
-## Tu proceso, en cajas (versión 1, a tu firma)
+## Las preguntas al viajero (aprobadas por el PM, 21-nov)
+
+El viajero elige el destino, en el mapa o escrito, y da sus fechas. Para arrancar faltan cinco cosas, todas con toques
+y sin escribir. Solo se pregunta lo que nada más sabe él; lo demás lo mira el agente y avisa.
+
+1. **¿De dónde sales?** Su ciudad, propuesta por su ubicación; solo confirma.
+2. **¿Quiénes vais?** Adultos y niños, con la edad de los niños. El pasaporte de cada uno, ya puesto por su país; lo
+   cambia si no es ese.
+3. **¿Tus fechas son fijas?** Fijas, puedo moverlas unos días o me vale cualquier semana del mes.
+4. **¿Cuánto quieres gastar?** Una cifra, o tres niveles: ajustado, medio o cómodo. También vale «no lo sé»: entonces
+   ve el viaje en tres precios.
+5. **¿Qué buscas en este viaje?** Descansar, ver lo imprescindible, naturaleza, comer bien, salir o de todo un poco.
+   Puede marcar varias.
+
+Y una casilla opcional, «Ya tengo algo reservado»: los vuelos, el alojamiento o un día fijo, como una boda.
+
+**Lo que no se pregunta**: se supone, se dice y se cambia después en su vertical. Vuelos directos o con escala y la
+maleta; el tipo de alojamiento y la zona; si alquila coche; y la ruta, si eligió un país y no una ciudad.
+
+**Lo que mira el agente solo con las fechas, y avisa antes de arrancar**: el clima y la temporada, las fiestas y los
+eventos que encarecen o cierran, cuántos días pide el destino, lo que se agota con antelación y los papeles
+(pasaporte, visado, vacunas y avisos). Si las fechas se pueden mover, propone otras mejores.
+
+## Tu proceso, en cajas (versión 1, en revisión con el PM, paso a paso)
+
+Lo hablado el 21-nov, aún sin cerrar: antes de las cajas de abajo van «¿Cuándo y cuántos días?» y «Los papeles», en
+caja propia; y la búsqueda sigue este orden: el esqueleto del viaje, sin precios (dónde se duerme cada noche, por dónde
+se entra y se sale); el transporte largo, primero; el alojamiento, sobre los vuelos que quedan; cruzar, por la suma, que
+hace el código; y las alternativas. Lo que se considera en cada uno (cómo se valora un vuelo y un alojamiento, qué
+descarta y cómo se pondera), en conversación.
 
 Los pasos del trabajo, como los haría un agente de viajes con oficio; nunca las partes de lo que entrega.
 
@@ -53,4 +83,4 @@ por la 6 y la 7.
 | Salida, frecuencia y entrada, definidas | sí; de la salida, cómo se construye, por decidir |
 | La salida, sin conectores en la primera versión | sí: los precios, de la web |
 | El tipo, dicho | sí: de una tirada primero; por momentos, después, con sus momentos por decidir |
-| Tu proceso, de 4 a 8 cajas, en pasos del trabajo y firmado | siete cajas; a tu firma |
+| Tu proceso, de 4 a 8 cajas, en pasos del trabajo y firmado | en revisión con el PM, paso a paso |

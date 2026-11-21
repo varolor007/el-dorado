@@ -17,6 +17,11 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   agente propone y enlaza, no reserva ni paga; ningún precio sin su enlace y su fecha, y nada inventado.
 - **Cómo se escribe** (la sesión, como en el ensamblador): el código, en TypeScript sobre Node 22; los contratos, en
   inglés; lo que ve el cliente en la web, en inglés; lo demás, en español.
+- **Las preguntas al viajero.** Con el destino y las fechas, cinco preguntas con toques (de dónde sale, quiénes van,
+  si las fechas son fijas, cuánto quiere gastar y qué busca) y una casilla, «Ya tengo algo reservado». Lo demás se
+  supone, se dice y se cambia en su vertical (el PM: «me parece bien»). En el encargo.
+- **El proceso se rehace paso a paso con el PM**: «hay mucho más de lo que me has propuesto». Las siete cajas de la
+  versión 1 quedan en revisión.
 
 ## Pendientes
 
