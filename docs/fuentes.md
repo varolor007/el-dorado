@@ -93,7 +93,29 @@ que lo hacen de diferentes maneras; tenemos que encontrar la nuestra». Lo que s
    dejan leer, pero las grandes lo bloquean. Hacerlo escondido (saltarse sus bloqueos, hacerse pasar por una persona)
    es donde está el riesgo legal y lo que más se rompe: la sesión no lo recomienda ni lo construiría así.
 
-## La solución propia: nuestro índice (22-nov)
+## La herramienta de datos, a demanda (22-nov)
+
+El PM descartó el índice propio de abajo: «requiere mantener una base de datos actualizada y no puede ser; yo pienso
+más en una herramienta que nos permita obtener la información cada vez. Al menos de momento, hasta que funcione; luego
+ya discutiré con un abogado una estrategia de acuerdos con las grandes bases de datos».
+
+Lo que propone la sesión, a su decisión:
+
+- **Una herramienta nuestra, sin base que mantener.** Se le pide una zona, unas noches, un grupo y unos mínimos, y
+  devuelve en cada búsqueda la lista en nuestro formato: precio, nota, fotos y opiniones. No guarda nada que haya que
+  tener al día.
+- **Con enchufes.** Por dentro, cada fuente es un enchufe que se cambia sin tocar el resto del agente. Hoy se enchufa
+  lo que hay; cuando haya acuerdos con las grandes, se cambia el enchufe.
+- **Lo que se enchufa hoy, en dos niveles:**
+  - A, limpio: LiteAPI (la lista, el precio, la nota, las fotos oficiales y las opiniones) y la web propia de cada
+    finalista, leída en el momento. Empezar es gratis.
+  - B, más completo y con riesgo: además, un servicio que lee Google Hotels por nosotros (SerpApi o parecido): fotos y
+    opiniones de viajeros y el precio de varias agencias, a unos 25 USD por 1.000 consultas. El riesgo legal y de que
+    se corte es de quien lo usa: lo decide el PM. Al ser un enchufe, se quita sin tocar lo demás.
+- **Fuera**: un lector nuestro que lea las agencias a escondidas, saltándose sus bloqueos.
+- **Los vuelos, igual**: la misma herramienta, con la Data API de Aviasales enchufada.
+
+## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y
 para las fotos. Lo que propone la sesión, a su decisión. Las licencias de las fuentes abiertas van de memoria: se

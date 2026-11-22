@@ -49,17 +49,21 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   opiniones por una IA (Booking.com, solo con su aprobación por escrito), que es lo que hace el asiento que mira el
   alojamiento.
 - **Una solución propia para los datos** (el PM): «tenemos que salir con una solución propietaria en este aspecto»,
-  para la información de los hoteles y para las fotos. La sesión propone un índice nuestro: la ficha de cada
-  alojamiento, hecha una vez y guardada, con fuentes abiertas y la web propia de cada hotel. En `fuentes.md`; a su
-  decisión.
+  para la información de los hoteles y para las fotos. ~~La sesión propone un índice nuestro: la ficha de cada
+  alojamiento, hecha una vez y guardada.~~ Descartado por el PM ese día: «requiere mantener una base de datos
+  actualizada y no puede ser».
+- **Una herramienta que saca la información cada vez** (el PM): sin base que mantener, «al menos de momento, hasta que
+  funcione; luego ya discutiré con un abogado una estrategia de acuerdos con las grandes bases de datos». La sesión
+  propone una herramienta nuestra con enchufes, una fuente por enchufe, que se cambian sin tocar el resto. En
+  `fuentes.md`.
 
 ## Pendientes
 
-- **La fuente de datos de la búsqueda** (22-nov): la sesión recomienda una fuente desde la primera versión: para el
-  alojamiento, LiteAPI, preguntándoles antes por escrito si sus fotos y sus opiniones pueden pasar por una IA, y pedir
-  ya el acceso a Booking.com con ese permiso; para los vuelos, la Data API de Aviasales, con precios guardados y su
-  enlace para confirmarlos; y no usar de base los servicios que sacan datos de Google. Decide el PM; registrarse y
-  aceptar condiciones es suyo. En `fuentes.md`.
+- **Qué se enchufa hoy en la herramienta de datos** (22-nov): el nivel A, limpio (LiteAPI y la web propia de cada
+  finalista), o el A más el B, con un servicio que lee Google Hotels por nosotros, de pago y con riesgo legal y de
+  corte. La sesión recomienda empezar por el A. Decide el PM; registrarse y aceptar condiciones es suyo. Para los
+  vuelos, la Data API de Aviasales. En `fuentes.md`.
+- **Los acuerdos con las grandes** (Booking.com y demás): el PM, con un abogado, cuando el agente funcione.
 - **El transporte, también código**: lo propone la sesión; decide el PM.
 
 - **La salida en la web**: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. En su etapa, antes
