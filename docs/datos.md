@@ -68,9 +68,41 @@ sin comprobar (dicho de memoria). El detalle de cada fuente, en [fuentes.md](fue
 | 24. Qué ver, cuánto pide cada sitio y cuánto se tarda entre ellos | El índice; los mapas abiertos | |
 | 25. Lo que se agota: entradas con cupo y permisos | Las fuentes oficiales; el índice | |
 
+## Las piezas 9 y 13, ampliadas (22-nov)
+
+El PM: «¿cómo solventamos las piezas 9 y 13?», pensando en el programa que saca la información para que después la IA
+valore. Para cada una: dónde vive el dato, por dónde sale y cómo se coge. Que las puertas existen está comprobado por
+la sesión; que den lo que hace falta, por probar.
+
+### La pieza 9: las fotos de viajeros
+
+**Dónde viven**: en Google Maps, en Tripadvisor, en las opiniones de las agencias y, cada vez más, en vídeos de
+viajeros.
+
+| Cómo se coge | Qué es | Cómo está |
+|---|---|---|
+| Un índice de imágenes | Igual que el índice de texto, pero de fotos: se le pregunta «gimnasio del hotel tal» y devuelve la dirección de cada foto y la página de la que sale. El archivo se abre desde el servidor de fotos y lo mira nuestro asiento | Existen y son baratos (uno, a 1 USD por 1.000 consultas de 20 fotos). Por probar: si trae fotos de viajeros o solo oficiales, y sus derechos |
+| Los vídeos de viajeros | Se busca el vídeo del hotel en YouTube, por su puerta oficial, y una IA que sabe ver vídeos lo mira: la habitación, el baño, el gimnasio, tal como los grabó un viajero | La IA de Google admite la dirección de un vídeo público. Por probar: cuántos hoteles tienen vídeo. Ese asiento correría con la IA de Google |
+| Google Maps desde la IA de Google | Su herramienta oficial, con las fotos y las opiniones de sus usuarios | Por comprobar: si vale en Europa y si mira las fotos o solo resume |
+| El lector oficial de una IA | Sobre las páginas de opiniones de las agencias que lo dejan pasar | Por probar; con el visto bueno del PM |
+
+### La pieza 13: los pisos de particulares
+
+**Dónde viven**: muchos pisos no están solo en Airbnb: sus dueños los ponen también en Booking.com, en Vrbo y en otras.
+Lo que es solo de Airbnb no tiene puerta para buscar: sus reglas cierran la búsqueda, las fotos y las opiniones a los
+robots, y solo dejan la página de cada piso.
+
+| Cómo se coge | Qué es | Cómo está |
+|---|---|---|
+| Los pisos que también están en otras agencias | LiteAPI, pidiendo apartamentos en vez de hoteles | Por probar con claves: cuántos pisos trae |
+| Los datos abiertos de Inside Airbnb | Un proyecto que publica gratis, ciudad a ciudad y cada trimestre, los pisos de Airbnb: dónde están, su nota, su precio de lista, sus servicios y su calendario. Se descarga el archivo de la ciudad cuando hace falta; lo mantienen ellos | Sigue publicando (julio de 2026). Solo las ciudades que cubre; tiene hasta tres meses; su licencia, por confirmar; el precio de esas noches se confirma en el enlace |
+| El índice, piso a piso | Con la lista de Inside Airbnb, se pregunta al índice por la página de cada finalista | Por probar |
+| Fuera de la primera versión | Solo hoteles y apartamentos de las otras agencias | Lo decide el PM |
+
 ## Lo que se ve en el mapa
 
-- **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13).
+- **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13). Sus salidas
+  posibles, arriba, por probar.
 - **Lo que depende de una sola fuente**: la lista y el precio en vivo del alojamiento (1 y 2), de LiteAPI.
 - **Lo más flojo de los vuelos**: el precio en vivo y el detalle (15 y 16), que hoy cuelgan de Kiwi, por comprobar.
 - **Lo que ya tiene dos fuentes o más**: la nota, las estrellas, los servicios y los horarios (3, 4, 5 y 12).
