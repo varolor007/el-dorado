@@ -159,6 +159,28 @@ De ahí, tres familias, a su decisión y con lo que falta por comprobar:
    llevan datos ordenados para los buscadores. Se leen sin bloqueo y son de primera mano. Por comprobar: cuántos la
    tienen.
 
+## Lo que manda el PM, y el reparto que sale (22-nov)
+
+El PM: lo del PDF era solo una idea; el problema «sigue siendo extracción de datos cuando se pida, en el momento, y no
+que el usuario nos traiga nada». Con eso, y sin base que mantener ni depender de aprobaciones, quedan fuera «trae tu
+lista» y la extensión.
+
+Leer en el momento, desde nuestros servidores, las páginas de las agencias tiene tres salidas y ninguna más: su permiso
+(los acuerdos de después), que otro entre por nosotros (un lector comprado) o entrar a escondidas (que no se hace). Lo
+inteligente es no leer esas páginas: la misma información está en sitios que la dan en el momento y sin bloqueo.
+
+| Lo que hace falta | De dónde, en el momento | Por comprobar |
+|---|---|---|
+| La lista de un radio, con sus mínimos y su precio | LiteAPI, por código | Sus condiciones sobre IA y el coste del exceso |
+| Lo que dicen los viajeros | El texto de opiniones de LiteAPI; Google Maps, por la herramienta oficial de la IA de Google; y un buscador hecho para IA, que ya tiene la web leída y se consulta por hotel | Google en Europa; qué buscador, sus condiciones y su precio |
+| Las fotos | Las de LiteAPI, por habitación; la web del hotel; las de Google Maps | Si la herramienta de Google deja verlas |
+| Los datos duros | La ficha técnica en PDF y la web del hotel | Cuántos la tienen |
+| Los vuelos | La Data API de Aviasales (guardados) y el servidor para agentes de Kiwi (en vivo) | Las condiciones de uso comercial de Kiwi |
+| Lo que siga faltando | Un lector comprado, como un enchufe más | Lo decide el PM, por su riesgo |
+
+Lo siguiente que propone la sesión: una prueba con hoteles de verdad de una ciudad, fuente a fuente, para ver cuánto de
+la ficha de cómo es se llena con cada una.
+
 ## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y

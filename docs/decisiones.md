@@ -56,6 +56,9 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   funcione; luego ya discutiré con un abogado una estrategia de acuerdos con las grandes bases de datos». La sesión
   propone una herramienta nuestra con enchufes, una fuente por enchufe, que se cambian sin tocar el resto. En
   `fuentes.md`.
+- **Los datos se sacan en el momento y el viajero no trae nada** (el PM): «extracción de datos cuando se pida, en el
+  momento, y no que el usuario nos traiga nada». Quedan fuera «trae tu lista» y la extensión. El reparto que sale, en
+  `fuentes.md`.
 
 ## Pendientes
 
