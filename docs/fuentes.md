@@ -69,6 +69,30 @@ gratis con registro y da precios guardados de 2 a 7 días. Lo demás, de la bús
 
 Registrarse en una fuente y aceptar sus condiciones es del PM. Probar con sus claves no gasta IA.
 
+## Las alternativas, sin depender de aprobaciones (22-nov)
+
+El PM: «no podemos depender puramente de las API», «sin ellas tampoco podemos hacer escrutinio», «hay muchas compañías
+que lo hacen de diferentes maneras; tenemos que encontrar la nuestra». Lo que se le ocurre a la sesión, a su decisión:
+
+1. **Separar la lista del escrutinio.** La lista (todos los de un radio, con sus mínimos y su precio) sí sale hoy de
+   una fuente que se abre con un registro, sin aprobación: LiteAPI, que además se presenta como hecha para agentes de
+   IA y tiene su propio servidor para ellos (visto por la sesión en su web; sus condiciones, sin leer). El problema
+   real es solo el escrutinio.
+2. **El viajero trae su lista.** Pega los enlaces de los alojamientos que está mirando, o sus capturas, y el agente
+   los escudriña y los compara. Sin búsqueda propia: el valor es el criterio.
+3. **El agente mira desde el navegador del viajero.** Una extensión lee las páginas que el viajero abre, con su
+   sesión, y las pasa por el criterio. Así trabajan las extensiones de comparar precios. Cambia la forma del producto.
+4. **La web propia de cada hotel.** El agente lee, como lo haría una persona y uno a uno, la web oficial de cada
+   finalista: sus fotos y sus habitaciones. Sin fotos de viajeros.
+5. **Comprar el escrutinio ya hecho.** Hay quien vende, con licencia, el resumen de las opiniones de muchas webs por
+   temas (TrustYou: una nota y resúmenes por tipo de viajero, de más de 80 fuentes; precio sin publicar) y quien vende
+   fichas y fotos de hoteles con sus derechos.
+6. **Que lo lea otro por nosotros.** Los servicios que sacan datos de Google o de las agencias. Funciona hoy; el
+   riesgo legal y de que se corte es de quien lo usa.
+7. **Un programa nuestro que lea las webs.** Se puede hacer leyendo a cara descubierta, despacio y lo que las webs
+   dejan leer, pero las grandes lo bloquean. Hacerlo escondido (saltarse sus bloqueos, hacerse pasar por una persona)
+   es donde está el riesgo legal y lo que más se rompe: la sesión no lo recomienda ni lo construiría así.
+
 ## Lo que queda por saber
 
 - LiteAPI: sus condiciones sobre IA y caché, lo que cuesta el exceso de búsquedas y cuántas fotos da.
