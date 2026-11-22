@@ -93,6 +93,32 @@ que lo hacen de diferentes maneras; tenemos que encontrar la nuestra». Lo que s
    dejan leer, pero las grandes lo bloquean. Hacerlo escondido (saltarse sus bloqueos, hacerse pasar por una persona)
    es donde está el riesgo legal y lo que más se rompe: la sesión no lo recomienda ni lo construiría así.
 
+## La solución propia: nuestro índice (22-nov)
+
+El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y
+para las fotos. Lo que propone la sesión, a su decisión. Las licencias de las fuentes abiertas van de memoria: se
+comprueban antes de construir.
+
+**La idea**: lo nuestro no es leer las webs de las agencias, sino tener la ficha propia de cada alojamiento. El
+escrutinio se hace una vez por alojamiento, se guarda como dato nuestro (sus niveles, con su prueba y su fecha) y se
+refresca cada cierto tiempo. La búsqueda pasa a ser una consulta de código sobre nuestra base.
+
+| Qué | De dónde, siendo nuestro | Qué da | Su límite |
+|---|---|---|---|
+| Qué alojamientos hay y dónde | Mapas y registros abiertos: OpenStreetMap, Overture Maps, los sitios abiertos de Foursquare y los registros oficiales de turismo | Nombre, tipo, dónde está y su web | Sin nota ni precio; calidad desigual |
+| Cómo es por dentro | La web propia de cada hotel, leída por un lector nuestro con IA, a cara descubierta | Habitaciones con sus metros, fotos oficiales, gimnasio, piscina: la ficha de cómo es | Fotos oficiales; un piso particular no tiene web |
+| Lo que se mide desde fuera | Fotos aéreas abiertas, mapas y fotos de calle abiertas | El tamaño de la piscina, la distancia real a la playa o al metro, cómo es la calle | La cobertura cambia por país |
+| Fotos y opiniones de viajeros | Las de nuestros propios viajeros, que cuentan cómo era; después, la extensión | Lo que no enseña el hotel | Al principio, vacío |
+| El precio y la nota | No pueden ser propios: de una API (LiteAPI) o del enlace | Precio en vivo y nota | Los de esa fuente |
+
+**Lo que no cubre**: la nota de Booking.com, las fotos de viajeros de otras webs y los pisos de Airbnb. Para eso, que
+el viajero traiga su lista o, después, la extensión.
+
+**Lo que no se hace**: leer a escondidas las webs de las agencias, saltándose sus bloqueos.
+
+**Antes de construir**: una prueba pequeña con los hoteles de una ciudad (cuántos tienen web que se deja leer, qué se
+saca y cuánto cuesta por hotel), y que un abogado mire cómo se guardan y se enseñan las fotos.
+
 ## Lo que queda por saber
 
 - LiteAPI: sus condiciones sobre IA y caché, lo que cuesta el exceso de búsquedas y cuántas fotos da.

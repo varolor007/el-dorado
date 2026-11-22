@@ -48,6 +48,10 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   precio, en `fuentes.md`. Lo que más pesa: las fuentes grandes limitan en sus condiciones pasar sus fotos y sus
   opiniones por una IA (Booking.com, solo con su aprobación por escrito), que es lo que hace el asiento que mira el
   alojamiento.
+- **Una solución propia para los datos** (el PM): «tenemos que salir con una solución propietaria en este aspecto»,
+  para la información de los hoteles y para las fotos. La sesión propone un índice nuestro: la ficha de cada
+  alojamiento, hecha una vez y guardada, con fuentes abiertas y la web propia de cada hotel. En `fuentes.md`; a su
+  decisión.
 
 ## Pendientes
 
