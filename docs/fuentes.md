@@ -218,6 +218,39 @@ hotel; no da listas enteras ni deja mirar fotos.
 
 Ninguna de estas da los pisos de Airbnb.
 
+## Cómo funciona la web de una agencia, y por dónde sale su información (22-nov)
+
+El PM quiere repasar la arquitectura paso a paso, para ver en qué punto se puede sacar la información. La vista
+entera, de dentro afuera; el detalle de cada paso, en conversación.
+
+1. **El origen.** El hotel sube sus fotos, sus habitaciones y sus precios, y los viajeros escriben sus opiniones. Todo
+   va a las bases de datos de la agencia. Privado.
+2. **Las llamadas internas.** Los servicios de dentro (precios, contenido, opiniones) contestan a las llamadas de su
+   propia web y de su propia app: «dame los precios de este hotel para estas noches». Es el dato más limpio, pero es
+   su interfaz privada, hecha solo para ellos: quien la usa sin permiso entra a escondidas. Su versión con permiso es
+   la API de socios.
+3. **La página.** Su servidor monta la página con parte de los datos ya dentro: el texto que se ve y un bloque
+   ordenado para los buscadores (el nombre, la dirección, la nota, cuántas opiniones, las direcciones de las fotos). Y
+   publica la lista de todas sus páginas, para que los buscadores las encuentren.
+4. **El portero.** Delante de todo hay una defensa que decide quién pasa: las personas, sí; los robots conocidos (los
+   buscadores y, donde lo publican, los lectores de las IA), comprobando su dirección; un programa desconocido, no. No
+   es un sitio del que sacar nada: es el filtro. La pregunta no es por dónde se entra, sino con el carné de quién.
+5. **El navegador del viajero.** Recibe la página y su código hace más llamadas (los precios de esas noches, más
+   opiniones, la galería) y la pinta.
+6. **Las fotos.** Viven en otro servidor, hecho para repartir archivos deprisa. Quien tiene la dirección de una foto
+   suele poder abrirla.
+
+Por dónde sale la información a propósito:
+
+| Salida | Qué sale | Cómo se llega |
+|---|---|---|
+| A los buscadores | El texto de cada página y su bloque ordenado | Preguntando a un índice (solución parcial, anotada por el PM) |
+| A los lectores de las IA | La página, como a un buscador | Con la herramienta oficial de la IA; por probar |
+| A los socios | Lo mismo que las llamadas internas, con permiso | La API de socios: los acuerdos de después |
+| A los comparadores (Google Hotels, KAYAK, Trivago) | Sus precios, que la agencia les manda | Por las puertas de esos comparadores: KAYAK para afiliados, las herramientas de Google |
+| El servidor de fotos | Los archivos de las fotos | Con la dirección de cada foto, conseguida por una vía permitida; sus derechos, al abogado |
+| La pantalla del viajero | Todo lo que ve | Una extensión: fuera, por decisión del PM |
+
 ## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y

@@ -59,6 +59,11 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Los datos se sacan en el momento y el viajero no trae nada** (el PM): «extracción de datos cuando se pida, en el
   momento, y no que el usuario nos traiga nada». Quedan fuera «trae tu lista» y la extensión. El reparto que sale, en
   `fuentes.md`.
+- **El índice para IA, posible solución parcial** (el PM: «anota esto como potencial solución parcial»): preguntar a
+  un buscador hecho para IA por la nota y lo que se dice de cada finalista. Da texto, hotel a hotel y con días de
+  retraso; no da la lista ni las fotos. En `fuentes.md`.
+- **Se repasa cómo funciona la web de una agencia, paso a paso** (el PM), para ver en qué punto se puede sacar la
+  información. La vista entera, en `fuentes.md`.
 
 ## Pendientes
 
