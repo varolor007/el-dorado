@@ -115,6 +115,29 @@ Lo que propone la sesión, a su decisión:
 - **Fuera**: un lector nuestro que lea las agencias a escondidas, saltándose sus bloqueos.
 - **Los vuelos, igual**: la misma herramienta, con la Data API de Aviasales enchufada.
 
+## Cómo funciona un servicio como SerpApi, y las formas de tener algo así (22-nov)
+
+Explicado al PM, que quiere entenderlo antes de decidir. Un servicio así tiene tres capas:
+
+1. **Entrar**: abre la página que abriría una persona (la de Google Hotels para esa ciudad y esas noches) sin que la
+   web lo corte. Las webs grandes se defienden de los programas, y el negocio de estos servicios es pasar esa defensa:
+   muchas direcciones repartidas, navegadores que parecen de persona y resolver las comprobaciones. Es lo caro y es lo
+   que se discute en los juzgados.
+2. **Leer**: saca de la página los datos (nombres, precios, notas, fotos) y los devuelve ordenados.
+3. **Mantener**: cada vez que la web cambia su página, la lectura se rompe y hay que rehacerla.
+
+Las formas de tenerlo:
+
+| Forma | Quién hace cada capa | Para nosotros |
+|---|---|---|
+| Comprarlo hecho (SerpApi, SearchApi) | Ellos, las tres | Lo más rápido; se paga por consulta; solo las webs que cubren. El riesgo, de quien lo usa |
+| Alquilar la entrada y leer nosotros | Un proveedor entra; nosotros leemos, con código o con una IA | Vale para cualquier web; la responsabilidad pasa a ser más nuestra: antes, el abogado |
+| Montarlo entero | Nosotros, las tres | Es una empresa en sí misma, lo que más se rompe y lo que la sesión no construye |
+| Leer desde el navegador del viajero | Entra el viajero; nosotros solo leemos | Sin esconder nada; pide una extensión |
+
+De partida, la cuenta de comprarlo hecho: una búsqueda con diez finalistas son unas 21 consultas (la lista, y las fotos
+y las opiniones de cada uno); a 25 USD por 1.000, unos 50 céntimos de dólar por búsqueda, y menos en los planes grandes.
+
 ## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y
