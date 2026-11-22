@@ -138,6 +138,27 @@ Las formas de tenerlo:
 De partida, la cuenta de comprarlo hecho: una búsqueda con diez finalistas son unas 21 consultas (la lista, y las fotos
 y las opiniones de cada uno); a 25 USD por 1.000, unos 50 céntimos de dólar por búsqueda, y menos en los planes grandes.
 
+## Darle la vuelta al problema (22-nov)
+
+El PM: «¿no hay otra forma más inteligente? Tipo imprimir páginas en PDF y así no te bloquean». El PDF no evita el
+bloqueo: a un programa lo cortan al abrir la página, antes de poder imprimirla. Lo que cuenta es quién abre la página.
+De ahí, tres familias, a su decisión y con lo que falta por comprobar:
+
+1. **Que la abra quien puede: el viajero.** Él abre la página en su navegador, y nos pasa el enlace, una captura o la
+   página guardada en PDF; o una extensión lo hace por él con un toque. No hay nada que saltarse.
+2. **Las puertas que las grandes están abriendo para agentes de IA.**
+   - La IA de Google tiene una herramienta oficial que consulta Google Maps (sitios, opiniones, fotos, direcciones):
+     5.000 consultas gratis al mes en el nivel de pago y después 14 USD por 1.000. Por comprobar: si vale con
+     facturación en Europa, sus condiciones y si deja ver las fotos o solo un resumen. Ese asiento correría con la IA
+     de Google.
+   - LiteAPI tiene su servidor para agentes, con registro.
+   - Booking.com tiene el suyo, oficial, solo para socios aprobados: es la puerta de los acuerdos de después.
+   - Tripadvisor tiene búsqueda para agentes, solo si el contrato la incluye.
+3. **Donde la información está hecha para repartirse.** Muchos hoteles de cuatro y cinco estrellas publican su ficha
+   técnica en PDF para agencias (los metros de cada habitación, la piscina, el gimnasio, los horarios), y sus webs
+   llevan datos ordenados para los buscadores. Se leen sin bloqueo y son de primera mano. Por comprobar: cuántos la
+   tienen.
+
 ## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y
