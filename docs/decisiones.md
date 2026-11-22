@@ -67,6 +67,12 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **El mapa de los datos** (el PM): «sepárame todas las piezas de información que necesitemos y los puntos de donde
   las podemos conseguir». En `datos.md`: veinticinco piezas y catorce puntos. El cómo de cada pieza se amplía con él,
   una a una.
+- **El gasto de esta cuenta** (el PM): «lo que tire de esta cuenta nos da igual». La sesión lo lee así: lo que gasta
+  la propia sesión, con su IA, su búsqueda y su lector, no espera su visto bueno cada vez. Lo demás sigue como dice la
+  regla 5: una clave nueva, una API de pago o un run del agente, con su visto bueno.
+- **Lo mínimo para empezar, simplificado** (la sesión, a petición del PM): tres registros (LiteAPI, Aviasales y un
+  índice de imágenes) y la IA de esta cuenta. La IA de Google y los vídeos de YouTube quedan como idea, fuera de la
+  primera versión, salvo que el PM diga otra cosa: meten otra IA y otra cuenta.
 
 ## Pendientes
 
