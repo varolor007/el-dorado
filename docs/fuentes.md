@@ -181,6 +181,43 @@ inteligente es no leer esas páginas: la misma información está en sitios que 
 Lo siguiente que propone la sesión: una prueba con hoteles de verdad de una ciudad, fuente a fuente, para ver cuánto de
 la ficha de cómo es se llena con cada una.
 
+## Más formas, y lo que se comprobó (22-nov)
+
+El PM: «eso es lo que se conoce; tiene que haber más maneras». Lo que salió, con lo que la sesión comprobó ese día.
+
+**1. La puerta de los agentes de IA con carné.** Las agencias publican qué robots pueden leer sus páginas, y varias
+dejan pasar por su nombre a los lectores que usan las IA cuando leen para una persona. Leído por la sesión en las
+reglas de cada web (su `robots.txt`):
+
+| Web | Lo que publican para esos lectores |
+|---|---|
+| Expedia y Hotels.com | Un grupo «AI Search» con los lectores de las tres grandes IA: todo permitido, salvo las páginas de cuenta |
+| Tripadvisor | Cierra a los robots que recogen para entrenar; a los lectores de dos de las grandes IA los trata como al resto, con lo general permitido |
+| Booking.com | Sin reglas propias para IA; las páginas de hotel no están cerradas a los robots |
+| Airbnb | Cierra a los robots de entrenar; a los lectores les deja la página del piso, pero no sus fotos, sus opiniones ni la búsqueda |
+
+En la práctica, la prueba de la sesión con un lector corriente, desde aquí, no pasó en ninguna: Expedia cortó por
+exceso de peticiones, Hotels.com dio error y Booking.com devolvió la página vacía. La puerta es para el lector oficial
+de cada IA, desde sus direcciones: falta probarlo con la herramienta oficial, que gasta y lanza el PM. Las reglas
+publicadas no son las condiciones de uso: lo que diga el abogado.
+
+**2. Preguntar a un índice hecho para IA.** Comprobado: una sola consulta por un hotel de Lisboa devolvió su nota en
+Booking.com, sus horarios, sus servicios, lo que dice Expedia (estrellas, azotea, gimnasio, lo que cuesta el
+aparcamiento) y el número de habitaciones según otras dos webs, sin abrir ninguna página suya. Da texto, de hotel en
+hotel; no da listas enteras ni deja mirar fotos.
+
+**3. Otras, sin comprobar** (de memoria; se miran antes de usarlas):
+
+- Mapas con datos de viajeros que no son Google: Foursquare (nota sobre diez, fotos y consejos de usuarios, búsqueda por
+  radio) y HERE.
+- OpenStreetMap, a demanda y gratis, para la lista de un radio, con la web de cada hotel.
+- El precio directo del hotel, leyendo el motor de reservas de su propia web: lo que los comparadores no suelen dar.
+- Imágenes abiertas: fotos aéreas, fotos de calle y fotos con posición de sitios como Flickr.
+- KAYAK para afiliados: una sola solicitud para hoteles y vuelos.
+- Las copias públicas de la web: descartado para Tripadvisor, que cierra a ese robot.
+
+Ninguna de estas da los pisos de Airbnb.
+
 ## La solución propia: nuestro índice (22-nov), descartada por el PM
 
 El PM: «creo que tenemos que salir con una solución propietaria en este aspecto», para la información de los hoteles y
