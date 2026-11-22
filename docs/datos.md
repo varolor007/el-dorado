@@ -99,6 +99,50 @@ robots, y solo dejan la página de cada piso.
 | El índice, piso a piso | Con la lista de Inside Airbnb, se pregunta al índice por la página de cada finalista | Por probar |
 | Fuera de la primera versión | Solo hoteles y apartamentos de las otras agencias | Lo decide el PM |
 
+## Lo que hace falta para montarlo y probarlo (22-nov)
+
+A petición del PM, antes de probar nada: las cuentas, las claves, el gasto y las decisiones. Los precios que van de
+memoria se confirman al registrarse. Las claves no se pegan en el chat: se dan por el formulario seguro de la sesión.
+
+| Qué | Para qué piezas | Qué hace falta | Coste | Quién |
+|---|---|---|---|---|
+| Las webs oficiales, la web y la ficha técnica de cada hotel | 5, 6, 8, 12, 21, 25 | Nada | Nada | La sesión |
+| OpenStreetMap | 1, 10, 11, 20, 24 | Nada | Nada | La sesión |
+| Inside Airbnb | 13 | Descargar el archivo de la ciudad | Nada | La sesión |
+| LiteAPI | 1 a 8, 12, 13 | Una cuenta y su clave | Gratis hasta 5.000 búsquedas por reserva | El PM se registra |
+| Aviasales, en Travelpayouts | 14, 15 | Una cuenta y su clave | Gratis | El PM se registra |
+| YouTube, para buscar los vídeos | 9 | Una cuenta de Google con su clave | Gratis hasta un tope diario (de memoria) | El PM se registra |
+| Un índice de imágenes | 9 | Una cuenta y su clave | Sobre 1 USD por 1.000 consultas | El PM se registra |
+| La IA de los asientos, con su búsqueda y su lector | 3, 4, 5, 7, 10, 12, 17, 18, 22, 23, 24 | Una clave de la IA y un tope de gasto | Por medir: por uso | El PM da la clave y el tope |
+| La IA de Google, para ver vídeos y para Google Maps | 7, 9 | Una cuenta de pago de Google | Por medir; un vídeo gasta bastante. Google Maps: 5.000 consultas gratis al mes y después 14 USD por 1.000 | El PM, si acepta un asiento con otra IA |
+| Kiwi para agentes | 15, 16 | Ninguna cuenta descrita | Sin publicar | La sesión mira antes sus condiciones |
+| KAYAK para afiliados | 2, 15, 16, 17 | Una solicitud | Sin publicar | El PM, después |
+| Booking.com, de socio | 1, 2, 3, 7, 8 | Un acuerdo | Comisión | El PM, con su abogado, después |
+| Un lector comprado | 9, 13 y lo que falte | Una cuenta | Desde 25 USD por 1.000 consultas | Solo si el PM acepta el riesgo |
+
+**Dónde corre**: para probar, en esta sesión, con las claves del PM. Para funcionar, un servidor, como el del motor del
+ensamblador, y un sitio fuera del repositorio para los archivos de cada viaje.
+
+**Lo que decide el PM:**
+
+- La ciudad y las fechas de la prueba.
+- Si Airbnb entra en la primera versión.
+- Si acepta que un asiento corra con la IA de Google.
+- Si se enchufa un lector comprado.
+- Si el transporte pasa también a código.
+- El tope de gasto de las pruebas.
+
+**Lo que tiene que mirar el abogado:**
+
+- Mirar con una IA las fotos y las opiniones de cada fuente, y enseñarlas.
+- Las condiciones de LiteAPI sobre IA y sobre guardar datos.
+- Usar los datos de Inside Airbnb en algo que se vende.
+- Lo que publican las agencias para los lectores de las IA, frente a sus condiciones de uso.
+- Las condiciones de Google en Europa.
+
+**Lo mínimo para empezar a probar**: la clave de LiteAPI, la de Aviasales y una clave de IA con un tope pequeño. Lo
+que no pide nada (las webs de los hoteles, OpenStreetMap e Inside Airbnb) se puede probar ya.
+
 ## Lo que se ve en el mapa
 
 - **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13). Sus salidas
