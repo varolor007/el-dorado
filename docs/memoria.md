@@ -10,14 +10,14 @@ puertas. Está en borrador, a su revisión: los asientos, en [asientos.md](asien
 en [puertas.md](puertas.md); cómo se valora, en [oficio.md](oficio.md), y el inventario, en [piezas.md](piezas.md). El
 22-nov cambió la búsqueda de alojamiento: es código, con los datos de la plataforma y sus mínimos, y el que discierne
 es el que mira el alojamiento. Eso pide una fuente de datos que el código pueda consultar, que choca con «web primero,
-API después». Las fuentes están miradas, en [fuentes.md](fuentes.md). El PM no quiere depender de que una fuente
-grande nos apruebe ni mantener una base de datos propia: quiere una herramienta que saque la información en cada
-búsqueda, y los acuerdos con las grandes, después, con un abogado. La sesión propone esa herramienta con enchufes
-(hoy, LiteAPI y la web propia de cada finalista; para los vuelos, Aviasales), y queda a su decisión si además enchufa
-un servicio de pago que lee Google Hotels, con su riesgo (en «Pendientes» del registro). El dibujo del run
-(`paginas/run.html`, publicado en https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos
-buscadores como asientos: se rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después,
-lo que falta por hablar (al final de piezas.md) y la etapa 2.
+API después». De dónde salen los datos es lo que se trabaja ahora con el PM. Lo que manda: se sacan en el momento, el
+viajero no trae nada, sin base que mantener y sin leer a escondidas; los acuerdos con las grandes, después, con un
+abogado. El mapa, en [datos.md](datos.md): cada pieza de información y de dónde sale, que se amplía con él pieza a
+pieza; lo mirado de cada fuente y lo comprobado, en [fuentes.md](fuentes.md). El índice para IA queda como posible
+solución parcial. El dibujo del run (`paginas/run.html`, publicado en
+https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos buscadores como asientos: se
+rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después, lo que falta por hablar (al
+final de piezas.md) y la etapa 2.
 
 ## 1. Qué es
 

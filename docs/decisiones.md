@@ -64,6 +64,9 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   retraso; no da la lista ni las fotos. En `fuentes.md`.
 - **Se repasa cómo funciona la web de una agencia, paso a paso** (el PM), para ver en qué punto se puede sacar la
   información. La vista entera, en `fuentes.md`.
+- **El mapa de los datos** (el PM): «sepárame todas las piezas de información que necesitemos y los puntos de donde
+  las podemos conseguir». En `datos.md`: veinticinco piezas y catorce puntos. El cómo de cada pieza se amplía con él,
+  una a una.
 
 ## Pendientes
 
