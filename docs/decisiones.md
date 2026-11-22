@@ -44,13 +44,18 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Las puertas, explicadas** (el PM): «me tendrás que decir qué están midiendo esas puertas y por qué lo van a medir
   bien». En `puertas.md`: lo que miden bien (las cuentas y la forma, de dónde sale cada cosa y que las piezas casen), lo
   que no (si un juicio es acertado) y con qué se cubre (el banco, dos fuentes, otra pasada a ciegas y el viajero).
+- **Las fuentes de datos, miradas** (el PM: «sí»): qué hay para alojamiento y para vuelos, con sus condiciones y su
+  precio, en `fuentes.md`. Lo que más pesa: las fuentes grandes limitan en sus condiciones pasar sus fotos y sus
+  opiniones por una IA (Booking.com, solo con su aprobación por escrito), que es lo que hace el asiento que mira el
+  alojamiento.
 
 ## Pendientes
 
-- **La fuente de datos de la búsqueda** (22-nov): traer todos los alojamientos de un radio con sus datos pide una
-  fuente que el código pueda consultar, y buscando en la web a mano no se puede. Choca con «web primero, API después»
-  del 21-nov: la sesión recomienda una fuente de datos desde la primera versión, para el alojamiento y para el
-  transporte. Cuál, sus condiciones y su precio, por mirar; decide el PM, porque puede gastar.
+- **La fuente de datos de la búsqueda** (22-nov): la sesión recomienda una fuente desde la primera versión: para el
+  alojamiento, LiteAPI, preguntándoles antes por escrito si sus fotos y sus opiniones pueden pasar por una IA, y pedir
+  ya el acceso a Booking.com con ese permiso; para los vuelos, la Data API de Aviasales, con precios guardados y su
+  enlace para confirmarlos; y no usar de base los servicios que sacan datos de Google. Decide el PM; registrarse y
+  aceptar condiciones es suyo. En `fuentes.md`.
 - **El transporte, también código**: lo propone la sesión; decide el PM.
 
 - **La salida en la web**: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. En su etapa, antes
