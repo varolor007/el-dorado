@@ -11,17 +11,24 @@ son un punto de partida.
 - **Los papeles, dos veces** (lo propone la sesión): primero, para el destino, antes de buscar nada; después, para las
   escalas de los vuelos que quedan.
 
+- **La búsqueda de alojamiento es código, no un asiento** (el PM, 22-nov): la primera búsqueda trae, con los datos
+  de la plataforma, todos los alojamientos de un radio que cumplen los mínimos (la nota, las estrellas, lo que pidió
+  el viajero); ahí no hay nada que mirar. Donde hace falta discernir entra el que mira el alojamiento. Pide una fuente
+  de datos con la que el código pueda consultar: por decidir, en el registro.
+- **El transporte, igual** (lo propone la sesión, a decisión del PM): su parrilla de aeropuertos y días también es una
+  consulta de código.
+
 ## El orden del run
 
 1. El que escucha.
 2. El del calendario y el de los papeles (el destino), a la vez. Si algo bloquea el viaje, el run para y se lo dice al
    viajero antes de gastar en buscar.
 3. El de la ruta.
-4. El buscador de transporte y el de alojamiento, a la vez.
+4. La búsqueda, en código: el alojamiento de cada zona y, si el PM lo decide, también el transporte.
 5. El código: las cribas 1, 2 y 3.
 6. El que cruza: lee la tabla y pide más búsquedas, dos rondas como mucho. Si aparece una escala nueva, vuelve el de
    los papeles.
-7. El que mira el alojamiento, solo los finalistas; el código vuelve a poner la nota.
+7. El que mira el alojamiento: los que pasaron los mínimos, hasta su tope; el código vuelve a poner la nota.
 8. El que cruza cierra los tres viajes.
 9. El que explica.
 10. Las puertas del final y la salida.
@@ -173,8 +180,10 @@ código. Si algo bloquea, el run para y se lo dice al viajero antes de buscar.
 3. Los encaja en los días que hay, que cuenta el código. Si no caben, quita sitios; no aprieta.
 4. Los ordena para no volver atrás, con el tiempo de cada traslado sacado de una fuente, y propone por dónde entrar y
    por dónde salir.
-5. Deja uno o dos esqueletos, con lo que gana y pierde cada uno.
-6. Se revisa: un día con demasiadas horas de traslado, un hotel distinto cada noche, el día de llegada contado como
+5. Dentro de cada base marca dónde buscar alojamiento: de una a tres zonas, cada una con su centro, su radio y su
+   porqué (a cuántos minutos de lo que va a hacer el viajero, el transporte, la seguridad y el ruido).
+6. Deja uno o dos esqueletos, con lo que gana y pierde cada uno.
+7. Se revisa: un día con demasiadas horas de traslado, un hotel distinto cada noche, el día de llegada contado como
    día entero.
 
 **Sus normas:**
@@ -184,15 +193,18 @@ código. Si algo bloquea, el run para y se lo dice al viajero antes de buscar.
 - **RU3.** El tiempo de cada traslado, de una fuente; si no, supuesto y marcado.
 - **RU4.** El esqueleto no lleva precios ni hoteles: sitios, noches, orden, entrada y salida.
 - **RU5.** Lo imprescindible del viajero está dentro, o dice por qué no.
+- **RU6.** Cada zona se juzga en minutos y con su fuente, no con adjetivos.
 
-**Entrega**: uno o dos esqueletos: las bases, las noches, el orden, los traslados con su tiempo, y la entrada y la
-salida.
+**Entrega**: uno o dos esqueletos: las bases, las noches, el orden, los traslados con su tiempo, la entrada y la
+salida, y las zonas de cada base, con su centro y su radio.
 
 **Su puerta**: las noches suman las del viaje; cada traslado tiene su duración y su fuente; ningún día pasa del tope
 de horas de traslado; cada base cumple el mínimo de noches; la entrada y la salida están dichas; cada imprescindible
 está, o lleva su motivo.
 
 ## 5. El buscador de transporte
+
+Propuesta del 22-nov, a decisión del PM: que pase a ser código, como el alojamiento. Lo de abajo es lo de antes.
 
 **Lee**: de dónde sale el viajero, quiénes van, qué maleta necesitan, sus límites, el esqueleto (la entrada, la
 salida y las fechas) y cuánto se pueden mover.
@@ -225,38 +237,30 @@ salida y las fechas) y cuánto se pueden mover.
 con «no se sabe»; cada precio tiene su enlace y una fecha reciente; las casillas sin mirar están dichas; está la
 variedad mínima.
 
-## 6. El buscador de alojamiento
+## 6. La búsqueda de alojamiento (código, no un asiento)
 
-**Lee**: el esqueleto (las bases y las noches), quiénes van, sus gustos y sus imprescindibles, y el nivel de gasto.
+Cambiado el 22-nov, por el PM. No piensa: consulta, filtra y ordena, y la misma entrada da siempre la misma lista.
 
-**Piensa así:**
+1. **La consulta.** De cada zona que marcó el de la ruta, trae todos los alojamientos de la fuente para esas noches y
+   ese grupo, con lo que da la plataforma: el precio, la nota y cuántas opiniones, las estrellas, el tipo, los
+   servicios, dónde está, la cancelación, sus habitaciones y sus fotos.
+2. **Los mínimos.** Quita lo que no llega: la nota y las opiniones mínimas, las estrellas o el tipo, que quepa el
+   grupo, lo imprescindible del viajero que la plataforma da como dato (piscina, gimnasio, aparcamiento) y su tope de
+   gasto. Los mínimos salen del nivel de gasto y de lo que dijo el viajero.
+3. **El orden.** Pone a cada uno su precio total y su primera nota (la zona, las opiniones corregidas y las
+   condiciones), y pasa los mejores, hasta su tope, al que mira el alojamiento.
 
-1. Primero, las zonas: en cada base, de dos a cuatro zonas para este viajero, cada una con su porqué (a cuántos
-   minutos de lo que va a hacer, el transporte, la seguridad, el ruido) y su fuente.
-2. Escribe su parrilla: zonas por tipo de alojamiento, con su tope.
-3. Busca. De cada candidato apunta: su nombre y su tipo; el precio de esas noches, para ese grupo y en qué habitación;
-   qué incluye; la cancelación; la nota, cuántas opiniones y en qué plataforma; los minutos al transporte; su enlace y
-   la fecha.
-4. Apunta los hechos que piden las cribas: las camas, cuántos caben, la recepción de noche.
-5. Se revisa: una zona sin candidatos, un precio de otras fechas, un precio sin tasas, todos de la misma cadena.
+**Sus pruebas**: todo lo que sale cumple los mínimos; el precio es de esas noches y de ese grupo; la misma consulta da
+lo mismo; y dice de qué fuente sale cada dato.
 
-**Sus normas:**
-
-- **AL1.** La zona, antes que el hotel, y juzgada con su base, en minutos y no en adjetivos.
-- **AL2.** Un precio es de esas noches, para ese grupo y de esa habitación. Si no, no es un precio.
-- **AL3.** No lee las opiniones a fondo ni mira las fotos: eso es del que mira el alojamiento.
-- **AL4.** No elige ni ordena.
-
-**Entrega**: las zonas, con su juicio y su fuente, y los candidatos con sus campos.
-
-**Su puerta**: cada candidato tiene su zona, su habitación, su precio con enlace y fecha para esas noches y ese grupo,
-su nota con cuántas opiniones y de dónde, y la cancelación o «no se sabe»; cada zona tiene su fuente; el número de
-candidatos está entre su mínimo y su máximo.
+**Lo que pide**: una fuente de datos que el código pueda consultar. Buscando en la web a mano no se puede traer
+«todos los de un radio»: por decidir, en el registro.
 
 ## 7. El que mira el alojamiento
 
-**Lee**: de cada finalista, sus fotos (las oficiales y las de viajeros), sus opiniones y su ficha, y qué habitación es
-la del precio. No ve el precio ni la nota, para juzgar sin sesgo.
+**Lee**: de cada alojamiento que pasó los mínimos, hasta su tope, sus fotos (las oficiales y las de viajeros), sus
+opiniones y su ficha, y qué habitación es la del precio. No ve el precio ni la nota, para juzgar sin sesgo. Es donde se
+discierne: lo que los datos de la plataforma no dicen.
 
 **Piensa así:**
 

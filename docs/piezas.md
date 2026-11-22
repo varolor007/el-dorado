@@ -3,7 +3,7 @@
 Borrador del 21-nov, a petición del PM: los asientos, el código, las puertas y los datos que salen de lo hablado hasta
 hoy. Nada está construido ni firmado, y los nombres son provisionales: se fijan en la hoja (etapa 3). Lo que aún no
 se ha hablado no tiene piezas; va al final. Cómo piensa cada asiento, sus normas y su puerta, en
-[asientos.md](asientos.md).
+[asientos.md](asientos.md), y qué mide cada puerta y por qué, en [puertas.md](puertas.md).
 
 ## Lo que hay de verdad
 
@@ -19,9 +19,8 @@ contrastarlo con fuentes, y sus pesos son un punto de partida.
 | El que escucha | Lee la caja libre, saca gustos y límites y decide si hay que preguntar algo más | no |
 | El del calendario | Con las fechas: el clima, la temporada, las fiestas, los días que pide el destino y lo que se agota; avisa y propone fechas mejores | sí |
 | El de los papeles | Contesta la lista fija de requisitos para cada pasaporte, el destino y las escalas, cada respuesta con su fuente oficial | sí |
-| El de la ruta | El esqueleto: dónde se duerme cada noche y por dónde se entra y se sale | sí |
+| El de la ruta | El esqueleto: dónde se duerme cada noche, por dónde se entra y se sale, y en qué zonas buscar alojamiento | sí |
 | El buscador de transporte | Abre el abanico (aeropuertos, días, escalas, tren) y trae cada opción con su precio, su enlace y su fecha | sí |
-| El buscador de alojamiento | Por zona: trae candidatos con el precio total de la estancia y juzga la zona | sí |
 | El que mira el alojamiento | De los finalistas: las fotos, las opiniones por temas y la ficha; deja la ficha de cómo es, con niveles y pruebas | sí |
 | El que cruza | Une a los dos buscadores: lee la tabla del código, prueba palancas (otro día, otro aeropuerto, otra zona), pide más búsquedas y cierra los tres viajes | no |
 | El que explica | Escribe qué se gana y qué se pierde con cada opción; los números se los da el código | no |
@@ -32,6 +31,7 @@ contrastarlo con fuentes, y sus pesos son un punto de partida.
 | Pieza | Qué hace |
 |---|---|
 | Las preguntas | Enseña las preguntas base y las que se abren, y deja la ficha del viaje |
+| La búsqueda de alojamiento | Trae de la fuente todos los alojamientos de cada zona, quita los que no llegan a los mínimos y pasa los mejores al que mira (el PM, 22-nov) |
 | La criba 1 | Descarta lo que no vale, con su motivo |
 | La criba 2 | Suma el precio total de cada vuelo y de cada alojamiento |
 | La criba 3 | Pone la nota, con los pesos del viajero; corrige las opiniones por cuántas son y de cuándo |

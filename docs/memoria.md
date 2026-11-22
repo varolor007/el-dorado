@@ -1,16 +1,19 @@
 # Memoria de El Dorado
 
-Al día el 21-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
+Al día el 22-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y las preguntas al
 viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en
 conversación, y antes de seguir con el resto del viaje pidió la base: cómo piensa cada asiento, sus normas y sus
-puertas. Está en borrador, a su revisión, en [asientos.md](asientos.md) (diez asientos, con el que cruza, que pidió
-él), con su dibujo, el run de un vistazo, en `paginas/run.html`, publicado en
-https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw; cómo se valora, en [oficio.md](oficio.md), y el inventario de
-piezas, en [piezas.md](piezas.md). Lo siguiente: sus cambios a los asientos; después, lo que falta por hablar (al
-final de piezas.md) y la etapa 2, contrastar el borrador con el oficio y sus fuentes.
+puertas. Está en borrador, a su revisión: los asientos, en [asientos.md](asientos.md); qué mide cada puerta y por qué,
+en [puertas.md](puertas.md); cómo se valora, en [oficio.md](oficio.md), y el inventario, en [piezas.md](piezas.md). El
+22-nov cambió la búsqueda de alojamiento: es código, con los datos de la plataforma y sus mínimos, y el que discierne
+es el que mira el alojamiento. Eso pide una fuente de datos que el código pueda consultar, que choca con «web primero,
+API después»: a su decisión, con la del transporte (en «Pendientes» del registro). El dibujo del run
+(`paginas/run.html`, publicado en https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos
+buscadores como asientos: se rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después,
+lo que falta por hablar (al final de piezas.md) y la etapa 2.
 
 ## 1. Qué es
 

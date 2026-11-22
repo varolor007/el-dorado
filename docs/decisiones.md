@@ -34,7 +34,24 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Antes de seguir con el resto del viaje, la base** (el PM): el proceso de cada asiento, con normas claras y puertas.
   En `asientos.md`, borrador, a su revisión.
 
+## 22-nov-2026
+
+- **La primera búsqueda de alojamiento es código** (el PM): «tiene que ser casi determinista, casi un código:
+  descárgame todos los alojamientos en cierto radio, que sean más de 8, de 4 o 5 estrellas, o las otras cosas que le
+  has preguntado. Son las características mínimas. Eso no necesitas mirar nada: son los datos puros que te trae la
+  plataforma. Ahí lo que tiene que entrar es el que mire los alojamientos, para saber discernir bien». El buscador de
+  alojamiento deja de ser un asiento; las zonas las marca el de la ruta. En `asientos.md`.
+- **Las puertas, explicadas** (el PM): «me tendrás que decir qué están midiendo esas puertas y por qué lo van a medir
+  bien». En `puertas.md`: lo que miden bien (las cuentas y la forma, de dónde sale cada cosa y que las piezas casen), lo
+  que no (si un juicio es acertado) y con qué se cubre (el banco, dos fuentes, otra pasada a ciegas y el viajero).
+
 ## Pendientes
+
+- **La fuente de datos de la búsqueda** (22-nov): traer todos los alojamientos de un radio con sus datos pide una
+  fuente que el código pueda consultar, y buscando en la web a mano no se puede. Choca con «web primero, API después»
+  del 21-nov: la sesión recomienda una fuente de datos desde la primera versión, para el alojamiento y para el
+  transporte. Cuál, sus condiciones y su precio, por mirar; decide el PM, porque puede gastar.
+- **El transporte, también código**: lo propone la sesión; decide el PM.
 
 - **La salida en la web**: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. En su etapa, antes
   de construirla.
