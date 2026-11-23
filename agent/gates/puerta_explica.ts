@@ -4,7 +4,7 @@
 // pierde, que lo que no se sabe está dicho, y que lo que se entrega lleva el aviso de IA y el de los precios. No
 // mide si el texto engaña sin números: eso lo cubre un revisor que no lo escribió.
 
-import { AVISOS } from "../data/palabras.ts";
+import { avisosDe } from "../data/palabras.ts";
 import type { ParaExplicar } from "../scripts/explica.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { numerosEn } from "./puerta_cruce.ts";
@@ -118,7 +118,7 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
 
   // Los avisos de siempre, que pone la casa.
   // En el idioma del viajero si están escritos en él; si no, en inglés: nunca sin ellos.
-  const deSiempre = Object.hasOwn(AVISOS, m.viaje.language) ? AVISOS[m.viaje.language] : AVISOS.en;
+  const deSiempre = avisosDe(m.viaje.language);
   if (!m.avisos.includes(deSiempre.ia)) rojo("avisos", "falta el aviso de que está hecho con IA");
   if (!m.avisos.includes(deSiempre.precios)) rojo("avisos", "falta el aviso de que los precios son orientativos");
   return { verde: rojos.length === 0, rojos };

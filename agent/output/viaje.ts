@@ -3,6 +3,7 @@
 // forma, y lo que el código puede comprobar de ella antes de enseñarla.
 
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
+import { avisosDe } from "../data/palabras.ts";
 
 export type Punto = { lat: number; lon: number };
 
@@ -290,6 +291,15 @@ export function comprobarViaje(v: Viaje): Pega[] {
   }
   if (new Set(v.maneras.map((m) => m.moneda)).size > 1) pega("maneras", "mezclan monedas");
   for (const p of v.palancas) if (!(p.ahorra > 0)) pega(`palancas.${p.id}`, "una palanca que no ahorra no se cuenta");
+
+  // Los avisos: cada uno, una frase, y entre ellos los dos de siempre, en el idioma del viaje.
+  if (!Array.isArray(v.avisos) || !v.avisos.every((a) => typeof a === "string" && a.trim() !== ""))
+    pega("avisos", "un aviso no es una frase");
+  else {
+    const deSiempre = avisosDe(v.idioma);
+    if (!v.avisos.includes(deSiempre.ia)) pega("avisos", "falta el aviso de que está hecho con IA");
+    if (!v.avisos.includes(deSiempre.precios)) pega("avisos", "falta el aviso de que los precios son orientativos");
+  }
 
   return pegas;
 }

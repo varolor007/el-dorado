@@ -2,6 +2,7 @@
 // dos alojamientos y dos maneras de hacerlo. Para probar sin internet y sin gastar.
 
 import type { Suceso, Viaje } from "../../../agent/output/viaje.ts";
+import { AVISOS } from "../../../agent/data/palabras.ts";
 
 const VISTO = "2026-11-23T10:00:00.000Z";
 const origen = { fuente: "inventada", visto: VISTO, enlace: null };
@@ -155,7 +156,7 @@ export function viajeInventado(): Viaje {
         aCambio: "Una noche menos de fin de semana.",
       },
     ],
-    avisos: ["En esas fechas llueve a menudo."],
+    avisos: [AVISOS.es.ia, AVISOS.es.precios, "En esas fechas llueve a menudo."],
     vistazo: {
       devueltos: 10,
       pasan: 6,

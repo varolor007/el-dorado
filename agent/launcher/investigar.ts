@@ -50,6 +50,7 @@ import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from 
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
 import { carpetaDeLaMesa } from "./mesa.ts";
+import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 
@@ -496,6 +497,9 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     guardar(run, PARADO, { paso, rojos });
     return { esperan: [], hecho: false, parado: { paso, rojos }, avisos };
   };
+  // Lo entendido se mira antes de gastar nada: un dato mal escrito no llega ni a una fuente ni a un asiento.
+  const claro = puertaEntendido(viaje);
+  if (!claro.verde) return para("lo entendido (puerta 1)", claro.rojos);
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
@@ -590,6 +594,11 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   }
 
   // 6. El que explica y, con lo suyo, el viaje para la web.
+  if (!hay(run, "viaje.json") && hay(run, "explica.json")) {
+    // Lo que explicó y ya pasó su puerta no se vuelve a juzgar: se lee, y con ello se monta el viaje.
+    const pegas = montarElViaje(run, viaje, leer<Guardado<EntregaDeExplicar>>(run, "explica.json").entrega);
+    if (pegas.length > 0) return para("el viaje para la web", pegas);
+  }
   if (!hay(run, "viaje.json")) {
     const dado = loQueSeExplica(run, viaje);
     const piezas: Pieza[] = [
@@ -616,6 +625,12 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
 
 /** Abre un run en la mesa con lo que he entendido de un viaje, y devuelve su carpeta. */
 export function empezar(entendido: string, cuando: Date = new Date()): string {
+  // Lo entendido se mira antes de abrir nada, y con la fecha de hoy: un viaje que ya pasó no se abre.
+  const claro = puertaEntendido(JSON.parse(readFileSync(resolve(entendido), "utf8")), {
+    hoy: cuando.toISOString().slice(0, 10),
+  });
+  if (!claro.verde)
+    throw new Error(`lo entendido no está claro: ${claro.rojos.map((r) => `${r.donde}: ${r.que}`).join("; ")}`);
   const run = join(carpetaDeLaMesa(), `${cuando.toISOString().replace(/[:.]/g, "-")}-viaje`);
   mkdirSync(run, { recursive: true });
   cpSync(resolve(entendido), join(run, "entendido.json"));

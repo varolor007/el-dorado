@@ -15,6 +15,7 @@ import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } 
 import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
 import type { Entendido, Tabla } from "../../agent/scripts/formas.ts";
+import { avisosDeSiempre } from "../../agent/scripts/monta_viaje.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
 import { ALOJAMIENTOS, ESTANCIA, fuenteInventada, MINIMOS } from "../cases/inventado/inventado.ts";
 import {
@@ -26,6 +27,7 @@ import {
   SITIOS,
   vueloInventado,
 } from "../cases/inventado/investigacion.ts";
+import { viajeInventado } from "../cases/inventado/viaje.ts";
 
 /** La fuente inventada, con los alojamientos repartidos en los dos barrios: los tres primeros, en el viejo. */
 function fuenteDeDosBarrios(): FuenteAlojamiento {
@@ -534,4 +536,43 @@ test("si la casa se corta a medio preparar los puestos de mirar, al retomar sigu
   } finally {
     rmSync(run, { recursive: true, force: true });
   }
+});
+
+test("lo entendido mal escrito para el run antes de buscar nada y de lanzar a nadie", async () => {
+  const run = runNuevo({ ...ENTENDIDO, pace: "relaxed" as never });
+  try {
+    let llamadas = 0;
+    const cuenta = (): Fuentes => ({
+      ...fuentesInventadas(),
+      sitios: async () => {
+        llamadas++;
+        return SITIOS;
+      },
+    });
+    const { estado, lanzados } = await investiga(run, undefined, cuenta);
+    assert.equal(estado.parado?.paso, "lo entendido (puerta 1)");
+    assert.deepEqual(lanzados, []);
+    assert.equal(llamadas, 0);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("los dos avisos de siempre no se pierden con un idioma que no es un idioma", () => {
+  for (const idioma of ["constructor", "toString", "__proto__", "ja"])
+    assert.deepEqual(avisosDeSiempre(idioma), [AVISOS.en.ia, AVISOS.en.precios], idioma);
+  assert.deepEqual(avisosDeSiempre("es"), [AVISOS.es.ia, AVISOS.es.precios]);
+  // Y un viaje sin ellos, o con un aviso que no es una frase, no pasa su comprobación.
+  const sin = viajeInventado();
+  sin.avisos = sin.avisos.filter((a) => a !== AVISOS.es.ia);
+  assert.deepEqual(
+    comprobarViaje(sin).map((p) => p.que),
+    ["falta el aviso de que está hecho con IA"],
+  );
+  const conNulo = viajeInventado();
+  conNulo.avisos = [null as never, ...conNulo.avisos];
+  assert.deepEqual(
+    comprobarViaje(conNulo).map((p) => p.que),
+    ["un aviso no es una frase"],
+  );
 });

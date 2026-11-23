@@ -67,3 +67,8 @@ export const AVISOS: Record<string, { ia: string; precios: string }> = {
     precios: "Los precios son orientativos: cada uno dice el día en que se vio y puede haber cambiado.",
   },
 };
+
+/** Los dos avisos de siempre, en el idioma del viajero; si en el suyo no están escritos, en inglés: nunca sin ellos. */
+export function avisosDe(idioma: string): { ia: string; precios: string } {
+  return Object.hasOwn(AVISOS, idioma) ? AVISOS[idioma] : AVISOS.en;
+}

@@ -19,7 +19,7 @@ import type {
   Viaje,
   Vistazo,
 } from "../output/viaje.ts";
-import { AVISOS } from "../data/palabras.ts";
+import { avisosDe } from "../data/palabras.ts";
 import { MENCIONES, OTRO_TEMA, TEMAS_DE_OPINIONES, TONOS } from "../data/niveles.ts";
 import { MANERAS, PRUEBAS } from "../output/viaje.ts";
 import { elegirFotos } from "../tools/fotos.ts";
@@ -226,7 +226,8 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     transportes: d.transportes ?? [],
     maneras,
     palancas: d.palancas,
-    avisos: d.avisos,
+    // Los dos avisos de siempre los pone aquí la casa, en cualquier viaje que monte: no dependen de quien lo decidió.
+    avisos: [...avisosDeSiempre(d.idioma), ...d.avisos.filter((a) => !avisosDeSiempre(d.idioma).includes(a))],
     vistazo: vistazoDe(b),
   };
 }
@@ -289,7 +290,7 @@ export function sucesosDe(b: Busqueda, v: Viaje): Suceso[] {
 
 /** Los avisos que lleva siempre lo que se entrega, en el idioma del viajero; si no los hay en el suyo, en inglés. */
 export function avisosDeSiempre(idioma: string): string[] {
-  const a = AVISOS[idioma] ?? AVISOS.en;
+  const a = avisosDe(idioma);
   return [a.ia, a.precios];
 }
 
@@ -382,7 +383,7 @@ export function montarViajeHecho(h: Hecho): Viaje {
     transportes,
     deCadaAlojamiento,
     palancas,
-    avisos: [...avisosDeSiempre(h.viaje.language), ...h.explica.unknowns],
+    avisos: h.explica.unknowns,
     mirados: h.mirados,
   });
 }
