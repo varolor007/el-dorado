@@ -10,6 +10,7 @@ import type {
   Habitacion,
   Minimos,
   OfertaDeZona,
+  Opinion,
   Precio,
 } from "../tools/fuentes/tipos.ts";
 import { casar } from "./cruce.ts";
@@ -25,6 +26,8 @@ export type Ficha = {
   /** La habitación de ese precio, que es la que hay que mirar; no la mejor del hotel. */
   habitacion: Habitacion | null;
   detalle: Detalle | null;
+  /** Las opiniones leídas, enteras: las lee después el asiento que mira el alojamiento. */
+  opiniones: Opinion[];
   temas: Recuento;
   opinionesLeidas: number;
   opinionesDesde: string | null;
@@ -86,6 +89,7 @@ export async function buscarAlojamiento(
       precioCompleto: completo(f.precio),
       habitacion: null,
       detalle: null,
+      opiniones: [],
       temas: {},
       opinionesLeidas: 0,
       opinionesDesde: null,
@@ -103,6 +107,7 @@ export async function buscarAlojamiento(
     }
     try {
       const opiniones = await fuente.opiniones(f.alojamiento.id, o.opiniones ?? 60);
+      ficha.opiniones = opiniones;
       ficha.temas = porTemas(opiniones);
       ficha.opinionesLeidas = opiniones.length;
       const fechas = entreFechas(opiniones);

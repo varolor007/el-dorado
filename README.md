@@ -13,6 +13,10 @@ fuente, comprueba los mínimos, pone el precio de esas noches, elige los finalis
 de cada uno (la habitación de ese precio con sus metros y sus fotos, las opiniones por temas y lo que piden otros
 vendedores), con su puerta en verde o en rojo. Y los vuelos guardados para esas fechas y los días baratos del mes.
 
+Y el primer asiento de IA, el que mira el alojamiento: su contrato, en inglés; su puesto, a ciegas (sin el nombre, el
+precio, la nota ni las estrellas), con las fotos de la habitación de ese precio y las opiniones; y sus dos puertas, la
+de todos y la 5, que comprueban desde fuera que cada nivel de su ficha es de su lista y tiene su prueba.
+
 ## Cómo se usa
 
 ```bash
@@ -22,6 +26,16 @@ node tests/bateria.mjs      # la batería: las pruebas y los tipos, en segundos,
 node agent/launcher/buscar.ts --pais PT --lat 38.7107 --lon -9.1390 \
   --entrada 2027-02-12 --salida 2027-02-15 --lugar "Baixa, Lisbon" --origen MAD --destino LIS
 ```
+
+Para mirar los finalistas de una búsqueda ya guardada:
+
+```bash
+node agent/launcher/mirar.ts preparar <busqueda.json> --pasadas 2   # baja las fotos y monta los puestos, a ciegas
+node agent/launcher/mirar.ts recoger <carpeta del run>              # pasa las puertas y compara las pasadas
+```
+
+Entre una orden y otra alguien lanza a los asientos, con la orden que queda en `ordenes/`: ese código no llama a
+ninguna IA y no gasta.
 
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`

@@ -580,7 +580,7 @@ Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de u
 | 2. ¿Algún papel bloquea? | Empezar, El transporte y Cambios | La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes; si bloquea, se para antes de buscar | en borrador |
 | 3. ¿Las noches suman? | El primer viaje | Las noches, los traslados con su duración y su fuente, dos noches por base y lo imprescindible, dentro | en borrador |
 | 4. ¿La búsqueda es de fiar? | El primer viaje y El alojamiento | Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio | en parte |
-| 5. ¿Cada nivel, con su prueba? | El primer viaje y El alojamiento | Cada nivel, de su lista y con su foto o su opinión; sin prueba, «no se sabe» | en borrador |
+| 5. ¿Cada nivel, con su prueba? | El primer viaje y El alojamiento | Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe» | hecho |
 | 6. ¿Cada número sale de la tabla? | El primer viaje, El transporte y Cambios | Los números, iguales a los del código; las piezas, de las mismas fechas; cada palanca, con su estado; dos rondas | en borrador |
 | 7. ¿Sin promesas y con su aviso? | El primer viaje y Elegir | Los números del texto, en la tabla; ninguna palabra prohibida; el aviso de IA y el de los precios | en borrador |
 | 8. ¿Todo cuadra? | Elegir y reservar | Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado | en borrador |
@@ -621,7 +621,7 @@ Todos piensan igual, en seis pasos, y cada paso deja su archivo: acuse, plan, no
 | El del calendario | El tiempo, la temporada, las fiestas y lo que se agota; avisa y propone fechas mejores | Sí | en borrador |
 | El de los papeles | Contesta la lista fija de requisitos para cada pasaporte, cada destino y cada escala, con fuente oficial | Sí | en borrador |
 | El de la ruta | Dónde duermes cada noche, por dónde entras y sales, y en qué zonas buscar | Sí | en borrador |
-| El que mira el alojamiento | Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas | Sí | lo siguiente |
+| El que mira el alojamiento | Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas. Hecho, a ciegas y sin salir a internet; falta el contraste con otras webs | Sí | en parte |
 | El que cruza | Lee la tabla del código, prueba palancas y cierra los tres viajes | No | en borrador |
 | El que explica | Escribe qué ganas y qué pierdes con cada viaje; los números se los da el código | No | en borrador |
 | El conductor | Vigila el run y devuelve cada rojo a su dueño | No | en borrador |
@@ -661,10 +661,10 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 |---|---|---|
 | El recolector | En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio | hecho |
 | Los pasos de código | En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera | en parte |
-| Las puertas | En `agent/gates/`. La de la búsqueda y la de todos, con sus trampas | en parte |
+| Las puertas | En `agent/gates/`. La de la búsqueda, la de todos y la 5, con sus trampas | en parte |
 | Lo que lanza | En `agent/launcher/`. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden | en parte |
 | La mesa | Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones | en parte |
-| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hecho, el método común | en parte |
+| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y el del que mira el alojamiento | en parte |
 | La web y el mapa | Dónde vive y con qué se pinta | por decidir |
 | La IA | Con cuál piensa cada asiento, quién la paga y dónde corre el agente | por decidir |
 

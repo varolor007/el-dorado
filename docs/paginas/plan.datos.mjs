@@ -81,7 +81,7 @@ const bloques = [
     firma: "al ver los tres viajes de Lisboa",
     puntos: [
       { n: "4.1", b: "La búsqueda de alojamiento y su puerta.", t: "Sin IA: la lista, los mínimos, el precio, los finalistas y su ficha de datos; la puerta 4, con dieciocho trampas.", estado: "hecho" },
-      { n: "4.2", b: "El que mira el alojamiento.", t: "Su contrato, sus niveles y la puerta 5; probado con los finalistas de Lisboa, para ver si saca lo que ves tú.", estado: "siguiente" },
+      { n: "4.2", b: "El que mira el alojamiento.", t: "Hecho: su contrato, en inglés; sus ocho campos con sus niveles, escritos también como código; su material a ciegas (sin el nombre, el precio, la nota ni las estrellas); la puerta 5, con veinticinco pruebas, y la comparación de dos pasadas a ciegas. En curso, la prueba con los cinco finalistas de Lisboa, para ver si saca lo que ves tú.", estado: "parte" },
       { n: "4.3", b: "Las cribas y los gustos.", t: "Lo que descarta, lo que se suma al precio y la nota, con los pesos de partida; y el cruce de los niveles con tus gustos.", estado: "pendiente" },
       { n: "4.4", b: "La búsqueda de transporte.", t: "La parrilla de aeropuertos y de días, con la fuente que haya.", estado: "pendiente" },
       { n: "4.5", b: "El de la ruta.", t: "Las bases, las noches, la entrada y la salida y las zonas donde buscar; la puerta 3.", estado: "pendiente" },
@@ -262,7 +262,7 @@ export const plan = {
   sub: "**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.",
   aqui: {
     punto: "la tanda 1, el primer asiento de IA",
-    texto: "Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4), cómo se lanza un asiento (2.3) y las fotos (3.6). Falta **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.",
+    texto: "Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4), cómo se lanza un asiento (2.3) y las fotos (3.6). De **el que mira el alojamiento** (4.2), hecho el asiento y su puerta; en curso, su prueba con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.",
   },
   orden: {
     intro: "Por tandas: lo que no te necesita va seguido, cada punto con su commit y la batería en verde, y cada tanda acaba enseñándote algo. La siguiente no empieza sin tu visto bueno.",

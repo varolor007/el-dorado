@@ -8,10 +8,11 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 |---|---|---|
 | `agent/tools/fuentes/` | El recolector: la salida a internet, los tipos comunes y un enchufe por fuente de datos (LiteAPI, Aviasales y Parallel). Cada enchufe se apaga sin tocar lo demás | Las bases, del 23-nov |
 | `agent/tools/` | Las herramientas que no son una fuente. Hoy, las fotos (`fotos.ts`): cuáles se le pasan al asiento que mira, con su tope, y cómo se bajan | Las fotos, con el punto 3.6 |
-| `agent/scripts/` | Los pasos que hace el código, sin IA: los mínimos, los finalistas, las opiniones por temas, el cruce entre fuentes y la búsqueda de alojamiento entera | Las bases, del 23-nov |
+| `agent/scripts/` | Los pasos que hace el código, sin IA: los mínimos, los finalistas, las opiniones por temas, el cruce entre fuentes y la búsqueda de alojamiento entera. Y lo del que mira: los niveles escritos como código (`niveles.ts`), el material que se le da a ciegas (`para_mirar.ts`) y la comparación de dos pasadas (`acuerdo.ts`) | Lo del que mira, con el punto 4.2 |
 | `agent/contracts/common/` | El método común de los asientos, en inglés: el orden de lectura, los seis pasos, las diez normas de todos, cómo se entrega y la orden que abre un asiento | Hecho, con el punto 2.4 |
-| `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La de la búsqueda de alojamiento y la de todos, que mira el método de cualquier asiento | La de todos, con el punto 2.4 |
-| `agent/launcher/` | Lo que lanza el agente: una búsqueda desde la terminal; la mesa, donde queda lo que saca, y cómo se lanza un asiento (su puesto, su sello, la orden que lo abre, su tope y la recogida) | El asiento, con el punto 2.3 |
+| `agent/contracts/lodging-viewer/` | El contrato del que mira el alojamiento, en inglés: qué recibe y qué no ve, su guía paso a paso, sus seis normas y su entrega, campo a campo y nivel a nivel | Hecho, con el punto 4.2 |
+| `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La de la búsqueda de alojamiento (la 4), la de todos, que mira el método de cualquier asiento, y la de cómo es (la 5), que mira que cada nivel tenga su prueba | La 5, con el punto 4.2 |
+| `agent/launcher/` | Lo que lanza el agente: una búsqueda desde la terminal (`buscar.ts`); la mesa, donde queda lo que saca; cómo se lanza un asiento (su puesto, su sello, la orden que lo abre, su tope y la recogida), y lo que prepara y recoge al que mira el alojamiento (`mirar.ts`) | `mirar.ts`, con el punto 4.2 |
 | `tests/cases/inventado/` | El caso inventado: una ciudad y unos alojamientos que no existen, para probar sin internet y sin gastar | Las bases, del 23-nov |
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |

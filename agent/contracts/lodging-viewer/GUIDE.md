@@ -1,0 +1,55 @@
+# The lodging viewer: step by step
+
+The steps below are your steps 3 to 5 of the common method. Look first, judge afterwards.
+
+## 1. Inventory the photos
+
+Open every file in `in/photos/` and note, for each one, what it shows: `room`, `bathroom`, `view`, `gym`, `pool`,
+`common` (lobby, corridors, terrace, bar), `food`, `exterior` or `other`. All of them are official photos: they show
+the lodging at its best, shot wide. Keep that in mind when you judge size.
+
+
+## 2. Look by checklist, without judging yet
+
+For each photo, note what is there, thing by thing.
+
+- **The room** (`room-NN` photos only): the floor and the walls; the furniture and its edges; the bedding; the
+  screen; the air conditioning; sockets by the bed; the window and what is seen through it; and how much free floor
+  there is around the bed.
+- **The bathroom**: a walk-in shower with a glass screen or a bathtub with a curtain; the taps; the joints and the
+  sealant; the washbasin and its counter.
+- **The gym**: how many machines you can count and of what kind (treadmills, bikes, ellipticals); free weights, a
+  bench, a rack or cable machines; whether the machines look current or worn; natural light or a basement.
+- **The pool**: its size, using people, loungers or doors as a measure; indoor or outdoor; the state of the basin and
+  of what surrounds it.
+
+Count, do not estimate. Write `three treadmills and one bike`, not `a decent gym`.
+
+## 3. Read the reviews by theme
+
+Go through `in/reviews.json` and note what guests say about the room, its size, noise, cleanliness, the bathroom, the
+view, the gym, the pool and whether the place feels new or tired. For each theme note whether one, a few or several
+reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest ones. Read
+the complaints with care: what is repeated matters; one isolated complaint does not.
+
+Note apart anything that exists but may not be there for this stay: a pool closed for the season, a gym or a lift
+under works, a service paid apart. Look at the dates of the stay in the sheet: an outdoor pool in winter is a warning
+to raise, labelled `deduced`, not a fact.
+
+## 4. Give each field its level
+
+For each field of `DELIVERY.md`, choose one level from its list, from your notes, and attach the evidence that
+supports it: the photo, the review or the line of the sheet. If you have no evidence, the level is `unknown`. A
+service that the sheet lists but that no photo and no review shows is `unknown`, not an average level.
+
+The room's size comes from the sheet when the sheet gives it; in the photos you count what fits.
+
+## 5. Cross the photos with the reviews
+
+Where the photos and the reviews disagree, the recent reviews win: the level follows them, and you record the
+disagreement in `conflicts`.
+
+## 6. Self-critique
+
+Before delivering: is any level resting on an impression instead of a note? Did a well-shot photo make you generous?
+Did you judge a room field from a photo that is not of this room? Is everything you could not see marked `unknown`?

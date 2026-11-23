@@ -639,7 +639,7 @@ Resaltar lo que está por decidir</button></div>
 <tr><td>2. ¿Algún papel bloquea?</td><td>Empezar, El transporte y Cambios</td><td>La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes; si bloquea, se para antes de buscar</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>3. ¿Las noches suman?</td><td>El primer viaje</td><td>Las noches, los traslados con su duración y su fuente, dos noches por base y lo imprescindible, dentro</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>4. ¿La búsqueda es de fiar?</td><td>El primer viaje y El alojamiento</td><td>Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio</td><td><span class="estado parte">en parte</span></td></tr>
-<tr><td>5. ¿Cada nivel, con su prueba?</td><td>El primer viaje y El alojamiento</td><td>Cada nivel, de su lista y con su foto o su opinión; sin prueba, «no se sabe»</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>5. ¿Cada nivel, con su prueba?</td><td>El primer viaje y El alojamiento</td><td>Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe»</td><td><span class="estado hecho">hecho</span></td></tr>
 <tr><td>6. ¿Cada número sale de la tabla?</td><td>El primer viaje, El transporte y Cambios</td><td>Los números, iguales a los del código; las piezas, de las mismas fechas; cada palanca, con su estado; dos rondas</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>7. ¿Sin promesas y con su aviso?</td><td>El primer viaje y Elegir</td><td>Los números del texto, en la tabla; ninguna palabra prohibida; el aviso de IA y el de los precios</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>8. ¿Todo cuadra?</td><td>Elegir y reservar</td><td>Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado</td><td><span class="estado borrador">en borrador</span></td></tr>
@@ -676,7 +676,7 @@ Resaltar lo que está por decidir</button></div>
 <tr><td>El del calendario</td><td>El tiempo, la temporada, las fiestas y lo que se agota; avisa y propone fechas mejores</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>El de los papeles</td><td>Contesta la lista fija de requisitos para cada pasaporte, cada destino y cada escala, con fuente oficial</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>El de la ruta</td><td>Dónde duermes cada noche, por dónde entras y sales, y en qué zonas buscar</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
-<tr><td>El que mira el alojamiento</td><td>Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas</td><td>Sí</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr><td>El que mira el alojamiento</td><td>Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas. Hecho, a ciegas y sin salir a internet; falta el contraste con otras webs</td><td>Sí</td><td><span class="estado parte">en parte</span></td></tr>
 <tr><td>El que cruza</td><td>Lee la tabla del código, prueba palancas y cierra los tres viajes</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>El que explica</td><td>Escribe qué ganas y qué pierdes con cada viaje; los números se los da el código</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
 <tr><td>El conductor</td><td>Vigila el run y devuelve cada rojo a su dueño</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
@@ -708,10 +708,10 @@ Resaltar lo que está por decidir</button></div>
 <div class="tbl-wrap" role="region" tabindex="0" aria-label="Parte"><table class="tbl"><thead><tr><th>Parte</th><th>Dónde vive y qué hace</th><th>Estado</th></tr></thead><tbody>
 <tr><td>El recolector</td><td>En <code>agent/tools/fuentes/</code>. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio</td><td><span class="estado hecho">hecho</span></td></tr>
 <tr><td>Los pasos de código</td><td>En <code>agent/scripts/</code>: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera</td><td><span class="estado parte">en parte</span></td></tr>
-<tr><td>Las puertas</td><td>En <code>agent/gates/</code>. La de la búsqueda y la de todos, con sus trampas</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Las puertas</td><td>En <code>agent/gates/</code>. La de la búsqueda, la de todos y la 5, con sus trampas</td><td><span class="estado parte">en parte</span></td></tr>
 <tr><td>Lo que lanza</td><td>En <code>agent/launcher/</code>. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden</td><td><span class="estado parte">en parte</span></td></tr>
 <tr><td>La mesa</td><td>Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones</td><td><span class="estado parte">en parte</span></td></tr>
-<tr><td>Los contratos de los asientos</td><td>En <code>agent/contracts/</code>, en inglés: el método común y uno por asiento. Hecho, el método común</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Los contratos de los asientos</td><td>En <code>agent/contracts/</code>, en inglés: el método común y uno por asiento. Hechos, el método común y el del que mira el alojamiento</td><td><span class="estado parte">en parte</span></td></tr>
 <tr class="new"><td>La web y el mapa</td><td>Dónde vive y con qué se pinta</td><td><span class="estado decidir">por decidir</span></td></tr>
 <tr class="new"><td>La IA</td><td>Con cuál piensa cada asiento, quién la paga y dónde corre el agente</td><td><span class="estado decidir">por decidir</span></td></tr>
 </tbody></table></div>
