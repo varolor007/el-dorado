@@ -432,7 +432,7 @@ const flujo = [
       k: "busqueda_alojamiento",
       x: "todos los de cada zona, los mínimos y el precio",
       titulo: "La búsqueda de alojamiento",
-      d: "Sin IA. Trae de la fuente todos los alojamientos de cada zona para esas noches y ese grupo; quita los que no llegan a los mínimos, comprobándolos uno a uno aunque la fuente ya filtre; pone a cada uno el precio de esas noches; elige los finalistas por regla y deja la ficha de datos de cada uno: la habitación de ese precio, con sus metros y sus fotos, las opiniones por temas y lo que piden otros vendedores. La misma entrada da siempre la misma lista. Construida el 23-nov: Lisboa, en unos veinte segundos.",
+      d: "Sin IA. Trae de la fuente todos los alojamientos de cada zona para esas noches y ese grupo; quita los que no llegan a los mínimos, comprobándolos uno a uno aunque la fuente ya filtre; pone a cada uno el precio de esas noches; elige los finalistas por regla y deja la ficha de datos de cada uno: la habitación de ese precio, con sus metros y sus fotos, las opiniones por temas y lo que piden otros vendedores. La misma entrada da siempre la misma lista. Si el viajero marcó como imprescindible algo que la fuente declara (el gimnasio, la piscina), lo que no lo declara se descarta antes de elegir a quién mirar. Y los mínimos van en escalera: si con los de partida no quedan bastantes con precio, como pasa en un pueblo, se baja un escalón, y se dice. Construida el 23-nov: una ciudad, en unos veinte segundos.",
     },
     {
       tipo: "codigo",
@@ -449,7 +449,7 @@ const flujo = [
       k: "sitios",
       x: "lo que hay que ver en cada zona, con su foto",
       titulo: "Los sitios que ver",
-      d: "Sin IA. Trae de datos abiertos (Wikidata, Wikipedia y OpenStreetMap) lo que hay que ver en cada zona de la ruta: su nombre, dónde está, qué es y cuánto se habla de él; y de Wikimedia Commons, una foto con su autor y su licencia. No guarda una base propia: lo pide en el momento, como todo.",
+      d: "Sin IA. Trae de datos abiertos (Wikidata, Wikipedia y OpenStreetMap) lo que hay que ver en cada zona de la ruta: su nombre, dónde está, qué es y cuánto se habla de él; y de Wikimedia Commons, una foto con su autor y su licencia. Si el destino es pequeño y no salen bastantes sitios, pide cada vez menos fama, hasta lo que tenga un solo artículo. No guarda una base propia: lo pide en el momento, como todo.",
     },
     {
       tipo: "puerta",

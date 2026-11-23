@@ -12,6 +12,13 @@ export const IMPRESCINDIBLES_POR_NOCHE = 2;
 /** Cuántos sitios de los datos abiertos se le dan a elegir al asiento. */
 export const SITIOS_PARA_ELEGIR = 60;
 
+/**
+ * De cuánto se tiene que hablar de un sitio para traerlo: en cuántos idiomas tiene artículo. Se empieza pidiendo
+ * mucho; si el destino es pequeño y no salen bastantes sitios, se pide menos, hasta lo que tenga un solo artículo.
+ */
+export const ESCALERA_DE_ENLACES = [5, 2, 1];
+export const SITIOS_QUE_BASTAN = 25;
+
 /** Lo que cabe en un día entero, en minutos, contando las visitas y lo que se anda entre ellas. */
 export const DIA_ENTERO = 600;
 

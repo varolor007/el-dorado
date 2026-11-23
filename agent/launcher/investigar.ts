@@ -11,7 +11,7 @@
 
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { FINALISTAS, MINIMOS_DE_PARTIDA } from "../data/cribas.ts";
+import { CANDIDATOS_QUE_BASTAN, ESCALERA_DE_MINIMOS, FINALISTAS } from "../data/cribas.ts";
 import { COSAS } from "../data/gustos.ts";
 import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
@@ -21,7 +21,7 @@ import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
 import { puertaRuta } from "../gates/puerta_ruta.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
-import { anadirOfertas, buscarEnZonas, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
+import { anadirOfertas, buscarConEscalera, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
 import { paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
 import { paraExplicar } from "../scripts/explica.ts";
 import type {
@@ -197,7 +197,7 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
   const imprescindibles = viaje.tastes
     .filter((g) => g.weight === "must" && COSAS[g.thing] !== undefined && COSAS[g.thing].campo in INSTALACIONES)
     .map((g) => COSAS[g.thing].campo);
-  const busqueda = await buscarEnZonas(f.alojamiento, e, dondeBuscar, MINIMOS_DE_PARTIDA, {
+  const busqueda = await buscarConEscalera(f.alojamiento, e, dondeBuscar, ESCALERA_DE_MINIMOS, CANDIDATOS_QUE_BASTAN, {
     finalistas: FINALISTAS,
     imprescindibles,
   });

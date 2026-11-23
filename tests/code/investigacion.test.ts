@@ -6,12 +6,13 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { ESCALERA_DE_MINIMOS } from "../../agent/data/cribas.ts";
 import { AVISOS } from "../../agent/data/palabras.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
 import { estanciaDe, sigue, VUELTAS, type Estado, type Fuentes } from "../../agent/launcher/investigar.ts";
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } from "../../agent/output/viaje.ts";
-import { buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
+import { buscarConEscalera, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
 import type { Tabla } from "../../agent/scripts/formas.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
@@ -226,6 +227,23 @@ test("lo que no declara un imprescindible se descarta antes de mirarlo; lo que n
   // Sin imprescindibles, nadie se descarta por lo que declara.
   const sin = await buscarEnZonas(conLoQueDeclaran, ESTANCIA, zonas, MINIMOS);
   assert.ok(sin.dentro.some((a) => a.id === "a1"));
+});
+
+test("la escalera de mínimos: con bastantes alojamientos vale el primer escalón; si no, baja, y lo dice", async () => {
+  const zonas = [{ id: "z1", nombre: "Todo", lat: SITIOS[1].punto.lat, lon: SITIOS[1].punto.lon, radio: 3000 }];
+  // Con el primer escalón quedan seis con precio. Si bastan cinco, no se baja.
+  const sobra = await buscarConEscalera(fuenteDeDosBarrios(), ESTANCIA, zonas, ESCALERA_DE_MINIMOS, 5);
+  assert.deepEqual(sobra.minimos, ESCALERA_DE_MINIMOS[0]);
+  assert.ok(!sobra.avisos.some((x) => x.includes("se bajan los mínimos")));
+  // Si hacen falta ocho, baja escalón a escalón hasta el último, y cuenta cada bajada.
+  const escasa = await buscarConEscalera(fuenteDeDosBarrios(), ESTANCIA, zonas, ESCALERA_DE_MINIMOS, 8);
+  assert.deepEqual(escasa.minimos, ESCALERA_DE_MINIMOS[ESCALERA_DE_MINIMOS.length - 1]);
+  assert.equal(escasa.avisos.filter((x) => x.includes("se bajan los mínimos")).length, ESCALERA_DE_MINIMOS.length - 1);
+  assert.match(escasa.avisos[0], /con nota 8\.5, 200 opiniones y 4 estrellas quedaban 6 con precio/);
+  // Con los mínimos del último escalón pasan los que antes caían por pocas opiniones o por no llevar estrellas.
+  assert.ok(escasa.dentro.length > sobra.dentro.length);
+  assert.equal(escasa.dentro.length + escasa.fuera.length, escasa.devueltos);
+  await assert.rejects(buscarConEscalera(fuenteDeDosBarrios(), ESTANCIA, zonas, [], 5), /no hay mínimos/);
 });
 
 test("la investigación inventada, entera: de lo entendido al viaje, por cada asiento y cada puerta", async () => {

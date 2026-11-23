@@ -111,6 +111,30 @@ export async function buscarEnZonas(
   return { ...b, zonas: porZona };
 }
 
+/**
+ * La búsqueda por zonas, bajando los mínimos por su escalera hasta que queden bastantes alojamientos con precio. Se
+ * queda con el primer escalón que basta; si ninguno basta, con el último, que es el que más trae. Dice con qué
+ * mínimos se quedó y por qué bajó.
+ */
+export async function buscarConEscalera(
+  fuente: FuenteAlojamiento,
+  e: Estancia,
+  zonas: ZonaDeBusqueda[],
+  escalera: Minimos[],
+  bastan: number,
+  o: Opciones = {},
+): Promise<Busqueda> {
+  if (escalera.length === 0) throw new Error("no hay mínimos con los que buscar");
+  const bajadas: string[] = [];
+  for (const [i, m] of escalera.entries()) {
+    const b = await buscarEnZonas(fuente, e, zonas, m, o);
+    if (b.conPrecio.length >= bastan || i === escalera.length - 1) return { ...b, avisos: [...bajadas, ...b.avisos] };
+    const habia = `con nota ${m.nota}, ${m.opiniones} opiniones y ${m.estrellas} estrellas quedaban`;
+    bajadas.push(`${habia} ${b.conPrecio.length} con precio: se bajan los mínimos un escalón`);
+  }
+  throw new Error("la escalera de mínimos se acabó sin buscar");
+}
+
 async function completar(
   fuente: FuenteAlojamiento,
   e: Estancia,

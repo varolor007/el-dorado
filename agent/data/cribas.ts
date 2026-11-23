@@ -61,6 +61,19 @@ export const NOTA_MINIMA = 5;
  */
 export const PRECIO_POR_GASTO: Record<string, number> = { tight: 10, medium: 6, comfortable: 3 };
 
-/** Los mínimos de partida de un alojamiento para seguir adelante, y cuántos se miran de cerca. Se ajustan con casos. */
-export const MINIMOS_DE_PARTIDA = { nota: 8.5, opiniones: 200, estrellas: 4 };
+/**
+ * Los mínimos de un alojamiento para seguir adelante, en escalera. Se empieza por el primer escalón; si con él no
+ * quedan bastantes con precio, se baja al siguiente, y se dice. En una gran ciudad sobra con el primero; en un pueblo
+ * o en un sitio con poca oferta, sin la escalera no habría viaje. Son de partida: se ajustan con casos.
+ */
+export const ESCALERA_DE_MINIMOS = [
+  { nota: 8.5, opiniones: 200, estrellas: 4 },
+  { nota: 8, opiniones: 100, estrellas: 3 },
+  { nota: 7.5, opiniones: 30, estrellas: 2 },
+  { nota: 7, opiniones: 10, estrellas: 0 },
+];
+export const MINIMOS_DE_PARTIDA = ESCALERA_DE_MINIMOS[0];
+
+/** Con cuántos alojamientos con precio se da un escalón por bueno, y cuántos se miran de cerca. */
+export const CANDIDATOS_QUE_BASTAN = 8;
 export const FINALISTAS = 5;

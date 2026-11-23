@@ -27,3 +27,9 @@ test("cada descarte dice su motivo, y un dato que falta no se da por bueno", () 
 test("el que está justo en el mínimo pasa", () => {
   assert.equal(motivoDeDescarte({ ...ALOJAMIENTOS[0], nota: 8.5, opiniones: 200, estrellas: 4 }, MINIMOS), null);
 });
+
+test("si no se piden estrellas, no hace falta saberlas: hay alojamientos que no las llevan", () => {
+  const sinEstrellas = { ...ALOJAMIENTOS[0], estrellas: null };
+  assert.equal(motivoDeDescarte(sinEstrellas, { nota: 7, opiniones: 10, estrellas: 0 }), null);
+  assert.equal(motivoDeDescarte(sinEstrellas, { nota: 7, opiniones: 10, estrellas: 1 }), "sin estrellas");
+});

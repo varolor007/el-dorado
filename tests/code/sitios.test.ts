@@ -11,6 +11,7 @@ import {
   leerResumenes,
   leerSitios,
   resumenesDe,
+  sitiosConEscalera,
   sitiosDe,
   type Respuesta,
 } from "../../agent/tools/sitios.ts";
@@ -238,4 +239,24 @@ test("los resúmenes se piden por el título en inglés y vuelven por el identif
   assert.equal(resumenes.get("Q1"), "A museum of salt.");
   assert.equal(resumenes.size, 1);
   assert.match(red.pedidas[0], /^https:\/\/en\.wikipedia\.org\/w\/api\.php\?/);
+});
+
+test("de un destino pequeño se pide cada vez menos fama, hasta que salen bastantes sitios", async () => {
+  const pocos = { results: { bindings: DE_WIKIDATA.results.bindings.slice(0, 1) } };
+  const red = falsa([bien(pocos), bien(DE_WIKIDATA)]);
+  const sitios = await sitiosConEscalera(CAJA, [5, 2, 1], 3, {}, { traer: red.traer });
+  assert.equal(sitios.length, 3);
+  assert.equal(red.pedidas.length, 2);
+  assert.match(decodeURIComponent(red.pedidas[0]), /\?enlaces >= 5/);
+  assert.match(decodeURIComponent(red.pedidas[1]), /\?enlaces >= 2/);
+});
+
+test("si ningún escalón basta, se queda con el que más trajo; y si el primero basta, no pide más", async () => {
+  const pocos = { results: { bindings: DE_WIKIDATA.results.bindings.slice(0, 1) } };
+  const escasa = falsa([bien(DE_WIKIDATA), bien(pocos), bien(pocos)]);
+  assert.equal((await sitiosConEscalera(CAJA, [5, 2, 1], 50, {}, { traer: escasa.traer })).length, 3);
+  assert.equal(escasa.pedidas.length, 3);
+  const sobrada = falsa([bien(DE_WIKIDATA)]);
+  assert.equal((await sitiosConEscalera(CAJA, [5, 2, 1], 2, {}, { traer: sobrada.traer })).length, 3);
+  assert.equal(sobrada.pedidas.length, 1);
 });

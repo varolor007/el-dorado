@@ -278,6 +278,27 @@ export async function sitiosDe(caja: Encuadre, p: Pedido = {}, o: Salida = {}): 
   return leerSitios(await pedir(url, o), new Date().toISOString(), p.cuantos ?? 120);
 }
 
+/**
+ * Los sitios de un destino, pidiendo cada vez menos fama hasta que salgan bastantes: de una capital sobran con el
+ * primer escalón; de un pueblo o de un valle, hay que bajar. Se queda con el primer escalón que basta o, si ninguno
+ * basta, con el que más trajo.
+ */
+export async function sitiosConEscalera(
+  caja: Encuadre,
+  escalera: number[],
+  bastan: number,
+  p: Pedido = {},
+  o: Salida = {},
+): Promise<Sitio[]> {
+  let mejor: Sitio[] = [];
+  for (const minimoDeEnlaces of escalera) {
+    const sitios = await sitiosDe(caja, { ...p, minimoDeEnlaces }, o);
+    if (sitios.length > mejor.length) mejor = sitios;
+    if (sitios.length >= bastan) break;
+  }
+  return mejor;
+}
+
 function tandas<T>(todos: T[], de: number): T[][] {
   const salida: T[][] = [];
   for (let i = 0; i < todos.length; i += de) salida.push(todos.slice(i, i + de));

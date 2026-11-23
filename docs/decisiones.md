@@ -227,9 +227,34 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
 - **Menos fotos no abarata la mirada.** Con veinticuatro fotos y no cuarenta y dos, cada mirada sigue tardando de
   once a dieciséis minutos. Lo que pesa es el método de seis pasos lanzado como una sesión entera, no las fotos.
 
+- **Todo, generalista** (el PM, 23-nov, con Lisboa a medio hacer: «esto se hace de forma generalista; no adaptes
+  absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje»). Se repasó todo lo
+  hecho en la tanda buscando lo pegado al caso o a un país, y se quitó:
+  - La moneda, el pasaporte y el mercado de los vuelos se suponían de un viajero español. Ahora son datos del
+    viajero, y sin ellos no se busca.
+  - La puerta 7 dejaba en rojo a un idioma sin avisos escritos. Ahora los lleva en inglés.
+  - Los mínimos de un alojamiento eran fijos, y en un pueblo no pasaría casi nadie. Van en escalera: se baja un
+    escalón si no quedan bastantes, y se dice. Y lo mismo con la fama que se le pide a un sitio que ver.
+  - Los sitios que ver se clasificaban por palabras, algunas sacadas de los datos de una ciudad. Pasan a
+    clasificarse por la identidad de su clase en la fuente, que no depende del idioma, y entran los de naturaleza.
+  - La escala de la zona se había ajustado con un solo viaje: se queda, dicha como lo que es, de partida, y se
+    calibra con varios destinos en el ensayo.
+  Lo que sigue pegado a dos idiomas (las palabras prohibidas, las quejas graves que se buscan en las opiniones) y a
+  dos países (la semilla de dominios oficiales) queda dicho abajo, en lo pendiente.
+
 ## Pendientes
 
 Lo que deja la tanda 3, a decisión del PM:
+
+- **Lo que solo vale en inglés y en español**: las palabras prohibidas que mira la puerta 7, los dos avisos de
+  siempre y las quejas graves que se buscan por palabras en las opiniones. Con un viajero de otro idioma, la puerta
+  mira menos. Hay que decidir en qué idiomas se vende, o que lo mire un asiento.
+- **Los dominios oficiales de los papeles**: hoy, una semilla con dos países. Con el asiento de los papeles hay que
+  decidir cómo se sabe qué es oficial en cualquier país.
+- **Un viaje con varias bases** (una ruta por un país) todavía no se puede buscar: falta de dónde sacar los tiempos
+  de un traslado. Hoy la investigación se para y lo dice.
+- **Probarlo con destinos distintos**: hasta ahora, uno. Una gran ciudad de otro continente, un pueblo, un sitio de
+  naturaleza y un país entero, antes de darlo por general.
 
 - **Encoger las fotos**: pide una dependencia para funcionar en el agente. Con su sí expreso.
 - **Cómo se llama a la IA en el producto**: cada asiento tarda de once a quince minutos lanzado como una sesión
