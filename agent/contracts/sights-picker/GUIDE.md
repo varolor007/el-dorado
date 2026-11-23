@@ -44,7 +44,8 @@ each one give:
 
 If a traveller with these wishes would expect something that the list does not have, say it in `missing`, by what
 it is: for instance somewhere to swim, a place with live music or an easy walk for small children. You do not name
-a place that is not in the list and you do not add it to `go`: the house looks for it in its sources.
+a place that is not in the list and you do not add it to `go`. Today the house keeps what you say is missing but
+does not yet look for it in other sources: it is not added to the trip.
 
 ## 6. Self-critique
 

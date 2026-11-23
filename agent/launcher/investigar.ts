@@ -215,9 +215,7 @@ function piezasDeLaRuta(run: string, viaje: Entendido): Pieza[] {
 type DeLaRuta = { entrega: EntregaDeRuta; zonas: ZonaResuelta[] };
 
 async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]> {
-  const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
-  if (entrega.bases.length !== 1)
-    return [{ donde: "ruta", que: "un viaje con varias bases todavía no se sabe buscar: llega con los traslados" }];
+  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const e = estanciaDe(viaje);
   const dondeBuscar = zonas.map((z) => ({
     id: z.id,
@@ -533,6 +531,20 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     if ("parado" in r) return para("la ruta (puerta 3)", r.parado);
     guardar(run, "ruta.json", { entrega: r.entrega, zonas: resolverZonas(r.entrega, lugares) });
   }
+
+  // Un viaje de varias bases todavía no se puede planear: la casa no sabe lo que dura ir de una a otra ni buscar
+  // en más de una. Se para aquí y se dice, con un solo asiento gastado: no se devuelve la ruta para que la meta
+  // en una base, que sería otro viaje.
+  const deLaRuta = leer<DeLaRuta>(run, "ruta.json").entrega;
+  if (deLaRuta.bases.length > 1)
+    return para("la ruta", [
+      {
+        donde: "bases",
+        que:
+          `este viaje pide ${deLaRuta.bases.length} bases, y El Dorado todavía no sabe medir los traslados entre ` +
+          "bases ni buscar alojamiento en más de una: aún no puede planearlo",
+      },
+    ]);
 
   // 3. La búsqueda de alojamiento en las zonas de la ruta, y su puerta.
   if (!hay(run, "busqueda.json")) {

@@ -227,7 +227,28 @@ test("trampa: falta un traslado entre dos bases, o no tiene su duración, o no e
       e.transfers[0].minutes = "unknown";
       e.transfers[0].source = "unknown";
     }, DE_CUATRO),
-    ["transfers[0]: no tiene su duración o su fuente: sin ellas no se sabe si los días caben"],
+    ["transfers[0]: no tiene su duración o su fuente, y su material trae traslados: sin ellas no se sabe si caben"],
+  );
+  // Sin traslados en su material, el asiento no lo puede saber: pone «unknown», como dice su contrato, y lo cuenta.
+  const sinTraslados: MaterialDeRuta = { ...DE_CUATRO, traslados: [] };
+  const sinSaber = (e: Entrega): void => {
+    conDosBases(e);
+    e.transfers[0].minutes = "unknown";
+    e.transfers[0].source = "unknown";
+  };
+  assert.deepEqual(
+    rojosDe((e) => {
+      sinSaber(e);
+      e.unknowns = ["How long the transfer between the two bases takes."];
+    }, sinTraslados),
+    [],
+  );
+  assert.deepEqual(
+    rojosDe((e) => {
+      sinSaber(e);
+      e.unknowns = [];
+    }, sinTraslados),
+    ["transfers[0]: no se sabe lo que dura y no lo dice en lo que no se sabe"],
   );
   assert.deepEqual(
     rojosDe((e) => {

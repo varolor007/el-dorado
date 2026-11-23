@@ -11,4 +11,8 @@ These rules win over the guide.
   tell.
 - **CR6. A new country or a new stopover goes back to the papers.** If a way or a lever brings one, say it in
   `checks`.
-- **CR7. The different way is told apart by a lever with a name**, and says what it changes and what is lost.
+- **CR7. The different way is told apart by a lever with a name**, and says what it changes and what is lost. Its
+  row has a `score` that is a number and is not below `minimum_score`, like the other two ways: a row below the
+  minimum, or with no score, is not offered as any way.
+- **CR8. You do not ask twice for the same thing.** Two entries of `requests` with the same lever, row and change
+  are one request.

@@ -18,6 +18,14 @@ after you, and it searches where you say.
 - `transfers.json`: travel times between places, each with its reference (`t1`, `t2`, and so on), when the house has
   them. It may be an empty list.
 
+## A trip of several bases
+
+If the trip needs more than one base, deliver the route it needs. Do not squeeze it into one base to make it fit:
+that would be another trip. When `transfers.json` is empty you cannot know how long each transfer takes: put
+`unknown`, as RU3 says, and say so in `unknowns`. Today the house cannot yet measure transfers nor search lodging in
+more than one base: with a route of several bases it stops there and tells the traveller that it cannot plan that
+trip yet. That is the right outcome, and it is not a fault of yours.
+
 ## What you do not see, and why
 
 You do not see prices, hotels or flights. A route chosen by looking at one cheap hotel is a bad route: you decide

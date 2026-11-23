@@ -114,8 +114,15 @@ export function puertaRuta(entrega: unknown, m: MaterialDeRuta): Veredicto {
     const de = idsDeBase.indexOf(String(cruda.from));
     if (de < 0 || idsDeBase[de + 1] !== cruda.to) rojo(donde, "no va de una base a la siguiente");
     if (!esTexto(cruda.by) || !MEDIOS.includes(cruda.by)) rojo(donde, "no dice en qué se va, de su lista");
-    if (cruda.minutes === SIN_SABER || cruda.source === SIN_SABER)
-      return rojo(donde, "no tiene su duración o su fuente: sin ellas no se sabe si los días caben");
+    if (cruda.minutes === SIN_SABER || cruda.source === SIN_SABER) {
+      // Sin traslados en su material el asiento no puede saber lo que duran, y su contrato le dice que ponga
+      // «unknown» y lo cuente: no es un rojo suyo. Que un viaje así no se puede planear todavía lo dice la casa.
+      if (m.traslados.length > 0)
+        rojo(donde, "no tiene su duración o su fuente, y su material trae traslados: sin ellas no se sabe si caben");
+      else if (lista(entrega.unknowns).length === 0)
+        rojo(donde, "no se sabe lo que dura y no lo dice en lo que no se sabe");
+      return;
+    }
     if (!esTexto(cruda.source) || !sabidos.has(cruda.source))
       return rojo(donde, `cita el traslado ${String(cruda.source)}, que no está en su material`);
     if (cruda.minutes !== sabidos.get(cruda.source)) rojo(donde, "su duración no es la de su fuente");

@@ -576,3 +576,33 @@ test("los dos avisos de siempre no se pierden con un idioma que no es un idioma"
     ["un aviso no es una frase"],
   );
 });
+
+test("un viaje que pide varias bases se para tras la ruta, con un solo asiento gastado, y dice por qué", async () => {
+  // Cuatro noches, para que quepan dos bases de dos. El asiento entrega la ruta que el viaje necesita, con el
+  // traslado sin saber, como le dice su contrato: no es un rojo suyo, y no se le devuelve para que la encoja.
+  const cuatro = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_out: "2027-03-09" } };
+  const run = runNuevo(cuatro);
+  try {
+    const { estado, lanzados } = await investiga(run, (asiento, entrega) => {
+      if (asiento !== "route-planner") return;
+      entrega.shape = "route";
+      entrega.bases[0].nights = 2;
+      entrega.bases.push({
+        id: "b2",
+        name: "Otro Pueblo Inventado",
+        nights: 2,
+        why: "the castle is there",
+        zones: [{ id: "z9", name: "El castillo", anchors: ["Q8"], radius_m: 800, near: ["Q8"], why: "by the castle" }],
+      });
+      entrega.transfers = [{ from: "b1", to: "b2", minutes: "unknown", by: "car", source: "unknown" }];
+      entrega.exit.base = "b2";
+      entrega.unknowns = ["How long it takes to go from one base to the other."];
+    });
+    assert.equal(estado.parado?.paso, "la ruta");
+    assert.match(estado.parado!.rojos[0].que, /pide 2 bases.*aún no puede planearlo/);
+    assert.deepEqual(lanzados, ["ruta-v1"]);
+    assert.equal(leerJson(join(run, "ruta-v1.puertas.json")).verde, true);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});

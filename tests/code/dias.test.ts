@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { DIA_ENTERO, MINUTOS_DE_VISITA, RESERVAR, SALTO_MAXIMO } from "../../agent/data/dias.ts";
+import { LARGO_DE_UN_TEXTO } from "../../agent/data/palabras.ts";
 import { puertaDias, puertaSitios, type MaterialDeSitios, type Repartido } from "../../agent/gates/puerta_dias.ts";
 import { pegasDelTexto } from "../../agent/gates/textos.ts";
 import type { Foto } from "../../agent/output/viaje.ts";
@@ -33,9 +34,14 @@ test("el contrato nombra los minutos, las horas y lo de reservar que el código 
     assert.ok(entrega.includes("`" + valor + "`"), String(valor));
 });
 
-test("las normas del que elige los sitios van de la DI1 a la DI7, y el contrato dice lo que no ve", () => {
+test("las normas del que elige los sitios van de la DI1 a la DI8, y el contrato dice lo que no ve", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(DI\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["DI1", "DI2", "DI3", "DI4", "DI5", "DI6", "DI7"]);
+  assert.deepEqual(codigos, ["DI1", "DI2", "DI3", "DI4", "DI5", "DI6", "DI7", "DI8"]);
+  // Lo que pide la puerta, lo dice el contrato: el largo de un porqué y de dónde salen sus números.
+  assert.ok(leer("RULES.md").includes(`at most ${LARGO_DE_UN_TEXTO} characters`));
+  assert.match(leer("RULES.md"), /A\s+number in a `why` is a number of the `name` or the `about`/);
+  // Y no promete lo que la casa no hace: lo que falta se apunta, pero todavía no se busca.
+  assert.match(leer("GUIDE.md"), /does not yet look for it in other sources/);
   assert.match(leer("README.md"), /You do not see prices or lodgings/);
   assert.match(leer("README.md"), /You do not use the internet/);
 });
