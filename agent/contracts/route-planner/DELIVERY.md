@@ -20,7 +20,7 @@
 "zones": [ ... ] }`
 
 - `id`: `b1`, `b2`, and so on, in order.
-- `name`: the city, town or area where the traveller sleeps.
+- `name`: the city, town or area where the traveller sleeps. A name: one line, 80 characters at most, no links.
 - `nights`: a whole number, 1 or more. With more than one base, 2 or more. The nights of all the bases add up to
   `nights` in `in/days.json`.
 - `why`: why sleep here, in facts.
@@ -32,6 +32,8 @@
 "Q333", "Q444"], "why": "between the cathedral and the river, with the market two streets away" }`
 
 - `id`: `z1`, `z2`, and so on. No two zones share an id, in any base.
+- `name`: how a traveller would call the area. A name, not a description: one line, 80 characters at most, no
+  links. What is there goes in `why`.
 - `anchors`: one to three `id`s of `in/places.json`.
 - `radius_m`: one of `500`, `800`, `1200`, `1500`, `2000`, `3000`.
 - `near`: up to eight `id`s of `in/places.json`, the most important for this traveller first. May be empty.

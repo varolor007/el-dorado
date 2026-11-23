@@ -13,5 +13,8 @@ export const NOCHES_POR_BASE = 2;
 
 export const MEDIOS = ["train", "bus", "car", "ferry", "flight"];
 
+/** Lo más que mide el nombre de una base o de una zona, en letras. Lo dice también el contrato. */
+export const LETRAS_DE_UN_NOMBRE = 80;
+
 /** Cuántos sitios de los datos abiertos se le dan al asiento de la ruta. */
 export const LUGARES_PARA_LA_RUTA = 60;

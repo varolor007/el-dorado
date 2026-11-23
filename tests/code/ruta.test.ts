@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { MEDIOS, RADIOS } from "../../agent/data/ruta.ts";
+import { LETRAS_DE_UN_NOMBRE, MEDIOS, RADIOS } from "../../agent/data/ruta.ts";
 import { imprescindiblesDeLaRuta, puertaRuta, type MaterialDeRuta } from "../../agent/gates/puerta_ruta.ts";
 import { FORMAS_DE_VIAJE, type EntregaDeRuta } from "../../agent/scripts/formas.ts";
 import { diasDe, lugarDe, resolverZonas } from "../../agent/scripts/ruta.ts";
@@ -50,6 +50,8 @@ test("el contrato nombra las formas, los radios y los medios que el código acep
   for (const forma of FORMAS_DE_VIAJE) assert.ok(entrega.includes("`" + forma + "`"), forma);
   for (const radio of RADIOS) assert.ok(entrega.includes("`" + radio + "`"), String(radio));
   for (const medio of MEDIOS) assert.ok(entrega.includes("`" + medio + "`"), medio);
+  // Lo que la puerta pide de un nombre, el contrato lo dice: un rojo por una regla que no está escrita no es justo.
+  assert.equal(entrega.split(`${LETRAS_DE_UN_NOMBRE} characters at most`).length - 1, 2);
 });
 
 test("las normas del asiento de la ruta van de la RU1 a la RU7, y el contrato dice lo que no ve", () => {
@@ -174,7 +176,7 @@ test("trampa: una zona cuyo nombre no es un nombre: sale a buscar a otras fuente
     ["bases[0].zones[0]: no tiene un nombre corto, de una línea y sin direcciones"],
   );
   assert.deepEqual(
-    rojosDe((e) => (e.bases[0].zones[0].name = "x".repeat(61))),
+    rojosDe((e) => (e.bases[0].zones[0].name = "x".repeat(LETRAS_DE_UN_NOMBRE + 1))),
     ["bases[0].zones[0]: no tiene un nombre corto, de una línea y sin direcciones"],
   );
   assert.deepEqual(
