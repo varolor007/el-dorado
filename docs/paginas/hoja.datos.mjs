@@ -461,10 +461,11 @@ const flujo = [
     },
     {
       tipo: "codigo",
+      hecho: true,
       k: "cribas",
       x: "descarta, suma y pone nota",
       titulo: "Las tres cribas",
-      d: "Primera: lo que no vale se descarta, con su motivo (una escala demasiado corta, billetes separados sin margen, un alojamiento donde no cabe el grupo o al que le falta algo imprescindible para ti). Segunda: todo lo que tiene precio se suma al precio (la maleta, el asiento, llegar al aeropuerto, la tasa turística, la limpieza). Tercera: lo que no tiene precio recibe una nota de 0 a 10, con pesos que se mueven con el viajero. Hoy los finalistas salen por una regla provisional.",
+      d: "Primera: lo que no vale se descarta, con su motivo (una escala demasiado corta, billetes separados sin margen, un alojamiento donde no cabe el grupo o al que le falta algo imprescindible para ti). Segunda: todo lo que tiene precio se suma al precio (la maleta, el asiento, llegar al aeropuerto, la tasa turística, la limpieza). Tercera: lo que no tiene precio recibe una nota de 0 a 10, con pesos que se mueven con el viajero. Hechas para el alojamiento: lo imprescindible y las quejas graves que se repiten descartan; el total lleva lo que se paga aparte, y la nota sale de la zona, de cómo es, de las opiniones corregidas y de las condiciones. Lo que no tiene dato no cuenta y se dice «sin confirmar». Las del vuelo esperan a la búsqueda de transporte.",
       n: "Los pesos son de partida y se ajustan en el ensayo, con casos reales.",
     },
     {
@@ -577,6 +578,7 @@ const flujo = [
     },
     {
       tipo: "codigo",
+      hecho: true,
       k: "gustos",
       x: "cruza los niveles con lo que marcaste",
       titulo: "Los gustos",
@@ -1025,7 +1027,7 @@ const secciones = [
         estados: true,
         filas: [
           ["El recolector", "En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio", "hecho"],
-          ["Los pasos de código", "En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera", "parte"],
+          ["Los pasos de código", "En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición, la búsqueda de alojamiento entera, las cribas con los gustos, las cuentas de la ruta, las paradas y el ritmo", "parte"],
           ["Las puertas", "En `agent/gates/`. La de la búsqueda, la de todos y la 5, con sus trampas", "parte"],
           ["Lo que lanza", "En `agent/launcher/`. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden", "parte"],
           ["La mesa", "Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones", "parte"],

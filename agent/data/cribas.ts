@@ -48,3 +48,9 @@ export const OPINIONES = { media: 8, comoSiHubiera: 150, notaDeCero: 6, notaDeDi
 
 /** La más barata se elige entre las que pasan de esta nota. */
 export const NOTA_MINIMA = 5;
+
+/**
+ * La mejor por lo que cuesta: cuántos puntos de nota vale pagar el doble, según lo que el viajero quiere gastar.
+ * Si va ajustado, el precio pesa mucho; si va cómodo, poco.
+ */
+export const PRECIO_POR_GASTO: Record<string, number> = { tight: 10, medium: 6, comfortable: 3 };

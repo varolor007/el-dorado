@@ -2,7 +2,13 @@
 // asiento si trabajara bien. Con ella se prueba toda la cadena sin internet y sin gastar. Nada sale de una fuente de
 // verdad.
 
-import type { EntregaDeRuta, EntregaDeSitios, Entendido, Lugar } from "../../../agent/scripts/formas.ts";
+import type {
+  EntregaDeMirar,
+  EntregaDeRuta,
+  EntregaDeSitios,
+  Entendido,
+  Lugar,
+} from "../../../agent/scripts/formas.ts";
 import { lugarDe } from "../../../agent/scripts/ruta.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
 import { ESTANCIA, VISTO } from "./inventado.ts";
@@ -133,5 +139,39 @@ export function entregaDeSitios(): EntregaDeSitios {
     ],
     missing: [{ what: "a beach for an afternoon", why: "the list has no beach" }],
     unknowns: [],
+  };
+}
+
+const NIVELES_DE_PARTIDA: Record<string, string> = {
+  look: "good_condition",
+  upkeep: "well_kept",
+  style: "chain",
+  room_space: "fits",
+  room_light: "average",
+  bathroom: "correct",
+  view: "street",
+  gym: "token",
+  pool: "none",
+};
+
+/** La ficha de cómo es que entregaría el que mira, con los niveles que se le digan y los demás de partida. */
+export function miradoInventado(id: string, niveles: Record<string, string> = {}): EntregaDeMirar {
+  const fields: EntregaDeMirar["fields"] = {};
+  for (const [campo, nivel] of Object.entries({ ...NIVELES_DE_PARTIDA, ...niveles })) {
+    const evidence = nivel === "unknown" ? [] : [{ kind: "photo", ref: "room-01.jpg", what: `${campo}: ${nivel}` }];
+    fields[campo] = { level: nivel, evidence, note: "" };
+  }
+  return {
+    seat: "lodging-viewer",
+    lodging_id: id,
+    room_id: "h1",
+    photos: [{ file: "room-01.jpg", shows: "room", seen: ["a double bed"] }],
+    fields,
+    review_themes: [],
+    conflicts: [],
+    warnings: [],
+    unknowns: [],
+    summary_good: "A room in good condition.",
+    summary_bad: "unknown",
   };
 }
