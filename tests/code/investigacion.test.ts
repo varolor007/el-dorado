@@ -14,7 +14,7 @@ import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } from "../../agent/output/viaje.ts";
 import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
-import type { Tabla } from "../../agent/scripts/formas.ts";
+import type { Entendido, Tabla } from "../../agent/scripts/formas.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
 import { ALOJAMIENTOS, ESTANCIA, fuenteInventada, MINIMOS } from "../cases/inventado/inventado.ts";
 import {
@@ -138,22 +138,23 @@ function trabaja(run: string, id: string, estropea: (asiento: string, entrega: O
 async function investiga(
   run: string,
   estropea?: (asiento: string, entrega: Objeto, puesto: string) => void,
+  fuentes: () => Fuentes = fuentesInventadas,
 ): Promise<{ estado: Estado; lanzados: string[] }> {
   const lanzados: string[] = [];
-  let estado = await sigue(run, fuentesInventadas());
+  let estado = await sigue(run, fuentes());
   for (let i = 0; i < 30 && estado.esperan.length > 0; i++) {
     for (const id of estado.esperan) {
       trabaja(run, id, (asiento, entrega) => estropea?.(asiento, entrega, id));
       lanzados.push(id);
     }
-    estado = await sigue(run, fuentesInventadas());
+    estado = await sigue(run, fuentes());
   }
   return { estado, lanzados };
 }
 
-function runNuevo(): string {
+function runNuevo(entendido: Entendido = ENTENDIDO): string {
   const run = mkdtempSync(join(tmpdir(), "el-dorado-viaje-"));
-  writeFileSync(join(run, "entendido.json"), JSON.stringify(ENTENDIDO));
+  writeFileSync(join(run, "entendido.json"), JSON.stringify(entendido));
   return run;
 }
 
@@ -426,6 +427,110 @@ test("si el que cruza pide más precios, hay una segunda ronda con ellos en la t
     assert.equal(pedida.change.days_moved, -1);
     assert.notEqual(pedida.base_row, primera.levers[0].base_row);
     assert.ok(existsSync(join(run, "puestos", "cruce-2-v1", "in", "previous.json")));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("un rojo de una puerta de código deja el run parado: la llamada siguiente no pasa por encima", async () => {
+  const run = runNuevo();
+  try {
+    // La fuente contesta en otra moneda que la del viajero: la puerta 4 lo para.
+    const enOtraMoneda = (): Fuentes => {
+      const f = fuentesInventadas();
+      const precios = f.alojamiento.precios.bind(f.alojamiento);
+      f.alojamiento.precios = async (ids, e) => (await precios(ids, e)).map((p) => ({ ...p, moneda: "USD" }));
+      return f;
+    };
+    const { estado, lanzados } = await investiga(run, undefined, enOtraMoneda);
+    assert.equal(estado.parado?.paso, "la búsqueda (puerta 4)");
+    assert.deepEqual(lanzados, ["ruta-v1"]);
+    const puestos = puestosDe(run).length;
+    // Se llame las veces que se llame, y aunque la fuente ya conteste bien, sigue parado y no monta nada más.
+    for (const fuentes of [enOtraMoneda, fuentesInventadas]) {
+      const otraVez = await sigue(run, fuentes());
+      assert.equal(otraVez.hecho, false);
+      assert.deepEqual(otraVez.esperan, []);
+      assert.equal(otraVez.parado?.paso, "la búsqueda (puerta 4)");
+    }
+    assert.equal(puestosDe(run).length, puestos);
+    assert.ok(!existsSync(join(run, "viaje.json")));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("sin sitios en los datos se para antes de gastar un asiento, y dice por qué", async () => {
+  const run = runNuevo();
+  try {
+    const { estado, lanzados } = await investiga(run, undefined, () => ({
+      ...fuentesInventadas(),
+      sitios: async () => [],
+    }));
+    assert.equal(estado.parado?.paso, "los sitios que ver");
+    assert.deepEqual(lanzados, []);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("sin ningún alojamiento con precio se para tras la búsqueda: ni se mira ni se cruza ni se explica", async () => {
+  const run = runNuevo();
+  try {
+    const sinPrecios = (): Fuentes => {
+      const f = fuentesInventadas();
+      f.alojamiento.precios = async () => [];
+      return f;
+    };
+    const { estado, lanzados } = await investiga(run, undefined, sinPrecios);
+    assert.equal(estado.parado?.paso, "la búsqueda de alojamiento");
+    assert.match(estado.parado!.rojos[0].que, /ninguno tiene precio para esas noches y ese grupo/);
+    assert.deepEqual(lanzados, ["ruta-v1"]);
+    assert.ok(!existsSync(join(run, "viaje.json")));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("una entrega con una forma que rompería la puerta es un rojo con su vuelta, no una excepción", async () => {
+  const run = runNuevo();
+  try {
+    const { estado, lanzados } = await investiga(run, (asiento, entrega, puesto) => {
+      if (asiento === "route-planner" && puesto.endsWith("-v1")) entrega.bases = { toString: 1 };
+    });
+    assert.equal(estado.hecho, true);
+    assert.ok(lanzados.includes("ruta-v2"));
+    assert.equal(leerJson(join(run, "ruta-v1.puertas.json")).verde, false);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("si la casa se corta a medio preparar los puestos de mirar, al retomar sigue con lo que quedó", async () => {
+  const run = runNuevo();
+  try {
+    // Hasta la búsqueda; después, un corte: un puesto montado y sellado, otro a medio montar y sin `mirar.json`.
+    let estado = await sigue(run, fuentesInventadas());
+    trabaja(run, "ruta-v1");
+    let cortes = 0;
+    const seCorta = (): Fuentes => ({
+      ...fuentesInventadas(),
+      bajarFotos: {
+        segura: () => true,
+        traer: async () => {
+          if (++cortes > 3) throw new Error("corte");
+          return JPEG;
+        },
+      },
+    });
+    await sigue(run, seCorta());
+    rmSync(join(run, "mirar.json"), { force: true });
+    rmSync(join(run, "sellos", "a2-p1.json"), { force: true });
+    assert.ok(existsSync(join(run, "puestos", "a2-p1")));
+    estado = await sigue(run, fuentesInventadas());
+    assert.equal(estado.parado, null);
+    assert.deepEqual([...estado.esperan].sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
+    assert.ok(existsSync(join(run, "sellos", "a2-p1.json")) && existsSync(join(run, "ordenes", "a2-p1.txt")));
   } finally {
     rmSync(run, { recursive: true, force: true });
   }

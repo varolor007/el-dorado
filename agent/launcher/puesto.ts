@@ -2,7 +2,16 @@
 // de su asiento), su material (solo lo que puede leer) y su salida, vacía. Al montarlo, la casa apunta fuera del
 // puesto la huella de todo lo que le dio: con ella, la puerta de todos ve después si se tocó algo.
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { huella, type Sello } from "../gates/puerta_metodo.ts";
 import { dentroDelRepositorio } from "./mesa.ts";
@@ -41,7 +50,15 @@ export function montarPuesto(run: string, id: string, asiento: string, piezas: P
   if (malas.length > 0) throw new Error(`una pieza se sale del material: ${malas.join(", ")}`);
 
   const carpeta = join(resolve(run), "puestos", id);
-  if (existsSync(carpeta)) throw new Error(`el puesto ${id} ya existe`);
+  const sello = join(resolve(run), "sellos", `${id}.json`);
+  // Un puesto se sella al final. Si la casa se cortó a medio montarlo, queda una carpeta sin sello en la que nadie
+  // ha trabajado: se rehace. Con sello, o con algo ya escrito en su salida, es de un asiento y no se toca.
+  if (existsSync(carpeta)) {
+    const salida = join(carpeta, "out");
+    const trabajado = existsSync(salida) && readdirSync(salida).length > 0;
+    if (existsSync(sello) || trabajado) throw new Error(`el puesto ${id} ya existe`);
+    rmSync(carpeta, { recursive: true, force: true });
+  }
 
   copiarCarpeta(join(contratos, "common"), join(carpeta, "contract", "common"));
   copiarCarpeta(join(contratos, asiento), join(carpeta, "contract", "seat"));
@@ -57,10 +74,11 @@ export function montarPuesto(run: string, id: string, asiento: string, piezas: P
   }
   mkdirSync(join(carpeta, "out"));
 
-  const sello = join(resolve(run), "sellos", `${id}.json`);
   mkdirSync(dirname(sello), { recursive: true });
   const apuntado: Sello = { asiento, archivos: huella(carpeta) };
-  writeFileSync(sello, JSON.stringify(apuntado, null, 2));
+  // El sello, de una vez: escrito aparte y con su nombre al final, para que un corte no deje medio sello.
+  writeFileSync(`${sello}.a-medias`, JSON.stringify(apuntado, null, 2));
+  renameSync(`${sello}.a-medias`, sello);
   return { id, asiento, carpeta, sello };
 }
 

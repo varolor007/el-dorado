@@ -7,7 +7,7 @@
 // todos y la puerta 5 sobre lo que entregó cada puesto y compara las pasadas. Entre una y otra alguien tiene que
 // lanzar los asientos: este archivo no llama a ninguna IA y no gasta.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { puertaComoEs, type Material } from "../gates/puerta_como_es.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
@@ -33,8 +33,25 @@ export async function prepararMirar(
   const puestos: Puesto[] = [];
   const quienes: Quien[] = [];
   const avisos: string[] = [];
+  const montados = puestosDe(run);
   for (const [i, ficha] of b.finalistas.entries()) {
     const clave = `a${i + 1}`;
+    const pasadas = Array.from({ length: o.pasadas ?? 1 }, (_, n) => n + 1);
+    const quien = (puesto: string, pasada: number): Quien => ({
+      puesto,
+      alojamiento: ficha.alojamiento.id,
+      nombre: ficha.alojamiento.nombre,
+      pasada,
+    });
+    // Si la casa se cortó a medio preparar, lo que ya quedó montado y sellado vale: no se baja ni se monta otra vez.
+    const yaEstan = pasadas.map((n) => montados.find((p) => p.id === `${clave}-p${n}`));
+    if (yaEstan.every((p) => p !== undefined)) {
+      yaEstan.forEach((p, n) => {
+        puestos.push(p!);
+        quienes.push(quien(p!.id, pasadas[n]));
+      });
+      continue;
+    }
     const elegidas = elegirFotos(ficha.habitacion?.fotos ?? [], ficha.detalle?.fotos ?? []);
     const { bajadas, fallos } = await bajarFotos(elegidas.pedidas, join(run, "fotos", clave), o.fotos);
     if (fallos.length > 0) avisos.push(`${clave}: ${fallos.length} fotos no se pudieron bajar`);
@@ -47,13 +64,14 @@ export async function prepararMirar(
       { ruta: "reviews.json", contenido: JSON.stringify(opinionesParaMirar(ficha.opiniones), null, 2) },
       ...bajadas.map((x) => ({ ruta: x.archivo, copiaDe: join(run, "fotos", clave, x.archivo) })),
     ];
-    for (let pasada = 1; pasada <= (o.pasadas ?? 1); pasada++) {
-      const puesto = montarPuesto(run, `${clave}-p${pasada}`, ASIENTO, piezas);
+    for (const pasada of pasadas) {
+      const puesto = yaEstan[pasada - 1] ?? montarPuesto(run, `${clave}-p${pasada}`, ASIENTO, piezas);
       puestos.push(puesto);
-      quienes.push({ puesto: puesto.id, alojamiento: ficha.alojamiento.id, nombre: ficha.alojamiento.nombre, pasada });
+      quienes.push(quien(puesto.id, pasada));
     }
   }
-  writeFileSync(join(run, "mirar.json"), JSON.stringify({ quienes, avisos }, null, 2));
+  writeFileSync(join(run, ".mirar.json.a-medias"), JSON.stringify({ quienes, avisos }, null, 2));
+  renameSync(join(run, ".mirar.json.a-medias"), join(run, "mirar.json"));
   mkdirSync(join(run, "ordenes"), { recursive: true });
   for (const p of puestos) writeFileSync(join(run, "ordenes", `${p.id}.txt`), ordenDeApertura(p));
   return { puestos, quienes, avisos };

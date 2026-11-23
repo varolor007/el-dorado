@@ -9,7 +9,7 @@
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. Es la versión de mano de lo que lanza los pasos: la casa de
 // verdad, que los lanza sola y lo cuenta en vivo, llega con su tanda.
 
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   CANDIDATOS_QUE_BASTAN,
@@ -71,12 +71,16 @@ export type Fuentes = {
 /** Cuántas veces vuelve un trabajo en rojo a su asiento antes de pararse: dos, como dice la hoja. */
 export const VUELTAS = 2;
 
+type Parado = { paso: string; rojos: Rojo[] };
+/** Donde queda escrito que un run se paró, y por qué. */
+export const PARADO = "parado.json";
+
 export type Estado = {
   /** Los puestos que esperan a su asiento. Vacío si no se espera a nadie. */
   esperan: string[];
   hecho: boolean;
   /** Si una puerta paró la investigación y ya no quedan vueltas, cuál y por qué. */
-  parado: { paso: string; rojos: Rojo[] } | null;
+  parado: Parado | null;
   avisos: string[];
 };
 
@@ -85,8 +89,12 @@ type Guardado<T> = { entrega: T; rojos: Rojo[] };
 const ruta = (run: string, nombre: string): string => join(run, nombre);
 const hay = (run: string, nombre: string): boolean => existsSync(ruta(run, nombre));
 const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(ruta(run, nombre), "utf8")) as T;
-const guardar = (run: string, nombre: string, dato: unknown): void =>
-  writeFileSync(ruta(run, nombre), JSON.stringify(dato, null, 2));
+/** Guarda de una vez: se escribe aparte y se cambia el nombre, para que un corte no deje un archivo a medias. */
+function guardar(run: string, nombre: string, dato: unknown): void {
+  const aparte = ruta(run, `.${nombre}.a-medias`);
+  writeFileSync(aparte, JSON.stringify(dato, null, 2));
+  renameSync(aparte, ruta(run, nombre));
+}
 const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
 
 /**
@@ -131,6 +139,15 @@ const entregado = (p: Puesto): boolean => existsSync(join(p.carpeta, "out", "del
 
 type DelAsiento<T> = { espera: string } | { parado: Rojo[] } | { entrega: T };
 
+/** Una entrega con una forma que la puerta no esperaba es un rojo, con su vuelta: nunca rompe la casa. */
+function sinRomperse(puerta: (e: unknown) => Rojo[], entrega: unknown): Rojo[] {
+  try {
+    return puerta(entrega);
+  } catch {
+    return [{ donde: "delivery", que: "la entrega no tiene la forma de su contrato: la puerta no la pudo leer" }];
+  }
+}
+
 /**
  * Recoge a un asiento: si no ha entregado, se le espera; si su entrega pasa la puerta de todos y la suya, se da por
  * buena; si no, vuelve a su asiento con lo que estaba mal, dos veces como mucho.
@@ -144,9 +161,17 @@ function recoger<T>(
 ): DelAsiento<T> {
   const puesto = puestoDe(run, base);
   if (puesto === null) return { espera: montar(run, base, asiento, piezas).id };
-  if (!entregado(puesto)) return { espera: puesto.id };
+  if (!entregado(puesto)) {
+    // Si la casa se cortó entre sellar el puesto y dejar su orden, la orden se deja ahora.
+    const orden = join(run, "ordenes", `${puesto.id}.txt`);
+    if (!existsSync(orden)) {
+      mkdirSync(join(run, "ordenes"), { recursive: true });
+      writeFileSync(orden, ordenDeApertura(puesto));
+    }
+    return { espera: puesto.id };
+  }
   const metodo = recogerAsiento(puesto);
-  const rojos = [...metodo.rojos, ...(metodo.entrega === null ? [] : puerta(metodo.entrega))];
+  const rojos = [...metodo.rojos, ...(metodo.entrega === null ? [] : sinRomperse(puerta, metodo.entrega))];
   guardar(run, `${puesto.id}.puertas.json`, { verde: rojos.length === 0, rojos });
   if (rojos.length === 0) return { entrega: metodo.entrega as T };
   const vuelta = Number(/-v(\d+)$/.exec(puesto.id)?.[1] ?? 1);
@@ -238,6 +263,17 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
   const puerta = puertaBusqueda(busqueda, FINALISTAS);
   guardar(run, "busqueda.json", { busqueda, vuelos, puerta, avisos });
   return puerta.rojos;
+}
+
+/** Por qué una búsqueda no deja a nadie: no hay nada, nada pasa los mínimos o nada tiene precio para ese grupo. */
+function sinAlojamiento(b: Busqueda): string {
+  if (b.devueltos === 0) return "la fuente no tiene ningún alojamiento en las zonas de la ruta";
+  if (b.dentro.length === 0)
+    return `de ${b.devueltos} alojamientos, ninguno llega a los mínimos, ni bajándolos hasta el último escalón`;
+  return (
+    `de ${b.dentro.length} alojamientos que pasan los mínimos, ninguno tiene precio para esas noches y ese grupo: ` +
+    "puede ser por las fechas o por los que viajan en una sola habitación"
+  );
 }
 
 /** El transporte del viaje: el más barato que se sabe para sus fechas, o ninguno. */
@@ -434,21 +470,31 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
 
 /** Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. */
 export async function sigue(run: string, f: Fuentes): Promise<Estado> {
-  const viaje = leer<Entendido>(run, "entendido.json");
   const avisos: string[] = [];
+  // Un run parado sigue parado: quien lo retome lee por qué, y no pasa por encima de una puerta en rojo. Reabrirlo
+  // es una decisión de quien lo lleva, que quita `parado.json` cuando ha arreglado la causa.
+  if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };
+  const viaje = leer<Entendido>(run, "entendido.json");
   const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
-  const para = (paso: string, rojos: Rojo[]): Estado => ({
-    esperan: [],
-    hecho: false,
-    parado: { paso, rojos },
-    avisos,
-  });
+  const para = (paso: string, rojos: Rojo[]): Estado => {
+    guardar(run, PARADO, { paso, rojos });
+    return { esperan: [], hecho: false, parado: { paso, rojos }, avisos };
+  };
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
   if (!hay(run, "ruta.json")) {
     const { sitios } = leer<DeLosSitios>(run, "sitios.json");
     const lugares = lugaresParaLaRuta(sitios);
+    // Sin sitios en los datos no hay con qué anclar una zona: la ruta no podría pasar su puerta, la escriba quien
+    // la escriba. Se para aquí, antes de gastar un asiento.
+    if (lugares.length === 0)
+      return para("los sitios que ver", [
+        {
+          donde: "sitios",
+          que: "los datos abiertos no traen ningún sitio de este destino: no hay con qué hacer la ruta",
+        },
+      ]);
     const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
     const r = recoger<EntregaDeRuta>(
       run,
@@ -467,6 +513,10 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     const rojos = await buscar(run, viaje, f);
     if (rojos.length > 0) return para("la búsqueda (puerta 4)", rojos);
   }
+  // Sin ningún alojamiento con precio no hay viaje que cruzar: se para aquí y se dice por qué, antes de gastar más.
+  const encontrado = leer<{ busqueda: Busqueda }>(run, "busqueda.json").busqueda;
+  if (encontrado.finalistas.length === 0)
+    return para("la búsqueda de alojamiento", [{ donde: "alojamiento", que: sinAlojamiento(encontrado) }]);
 
   // 4. A la vez: mirar cada finalista y elegir los sitios. Después, los días y su puerta.
   if (!hay(run, "dias.json")) {
