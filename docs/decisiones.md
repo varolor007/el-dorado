@@ -152,12 +152,14 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   Wikipedia y OpenStreetMap; sus fotos, de Wikimedia Commons, con su autor y su licencia; el mapa, con MapLibre y
   OpenFreeMap; el buscador, Photon. Ninguno garantiza el servicio: se enchufan como las demás fuentes. Los datos de
   Google no caben: cuestan y no dejan pintarlos sobre un mapa que no sea el suyo.
+- **La versión 2, firmada** (el PM, 23-nov: «okay»). Desde aquí manda, y empieza la tanda 2: la web, en seco.
+- **El primer vistazo, sin cuenta** (la sesión; el PM lo dejó «a lo que veas»): lo que no gasta IA se ve sin
+  registrarse. Si las consultas a las fuentes se disparan, se le pone un tope.
 
 ## Pendientes
 
 Lo que pide la versión 2, a decisión del PM:
 
-- **El primer vistazo, sin cuenta** (23-nov): lo propone la sesión. No gasta IA, pero sí consultas a las fuentes.
 - **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de la tanda 4.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
 - **Dónde se reserva un precio de LiteAPI** (23-nov): no tiene página pública. Hoy se enlazaría a otra agencia cuando

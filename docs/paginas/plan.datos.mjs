@@ -6,7 +6,7 @@ const bloques = [
   {
     n: 0,
     nombre: "El orden",
-    estado: "parte",
+    estado: "hecho",
     intro: "Antes de construir, cada cosa en su sitio y las reglas por escrito.",
     deja: "el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias",
     prueba: "la prueba del repositorio, dentro de la batería",
@@ -18,7 +18,7 @@ const bloques = [
       { n: "0.4", b: "Las dos biblias, pintadas de sus datos.", t: "La hoja y el plan se escriben una vez y de ahí salen su página y su texto; una prueba dice si se quedan atrás y si alguna caja de la hoja no tiene su punto.", estado: "hecho" },
       { n: "0.5", b: "Tu firma de la hoja y del plan.", t: "Con ella mandan: lo que se construya tiene que caber en ellas. Firmadas el 23-nov, con tu «dale, sí».", estado: "hecho" },
       { n: "0.6", b: "La hoja y el plan, versión 2.", t: "Con la web entera, como la contaste el 23-nov: nueve momentos, el día a día diseñado, la guía, la cuenta y la clave. Antes se miró cómo presenta Cortex a sus agentes, la portada de DaVi, y las webs de mapas y de viajes premiadas.", estado: "hecho" },
-      { n: "0.7", b: "Tu firma de la versión 2.", t: "Y tus respuestas a lo que queda por decidir que frena la primera tanda de la web.", estado: "siguiente" },
+      { n: "0.7", b: "Tu firma de la versión 2.", t: "Firmada el 23-nov, con tu «okay». El primer vistazo, sin cuenta: lo dejaste «a lo que veas», y va sin cuenta.", estado: "hecho" },
     ],
   },
   {
@@ -355,12 +355,12 @@ const cajas = [
 export const plan = {
   url: "https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t",
   titulo: "Plan de El Dorado",
-  kicker: "Plan de El Dorado, versión 2, a tu firma (23 de noviembre de 2026)",
+  kicker: "Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026",
   h1: "El plan de El Dorado",
   sub: "**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.",
   aqui: {
-    punto: "el 0.7, tu firma de la versión 2",
-    texto: "La tanda 1 está hecha. Con lo que contaste el 23-nov, la hoja y el plan pasan a su **versión 2**, con la web entera. Con tu firma empieza la tanda 2: **la web, en seco**, con un viaje de Lisboa ya grabado. Lo primero que verás es la identidad de El Dorado; después, la portada, el mapa del mundo, la investigación en vivo y el viaje por días.",
+    punto: "la tanda 2, la web en seco",
+    texto: "Firmada la versión 2 el 23-nov. En curso, la tanda 2: **la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado. Lo primero que verás es la identidad de El Dorado, puesta ya en sus primeras pantallas; después, la investigación en vivo, el viaje por días y la portada.",
   },
 
   orden: {

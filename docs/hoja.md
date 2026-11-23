@@ -2,7 +2,7 @@
 
 > La primera biblia: qué es El Dorado. Se genera de sus datos, [paginas/hoja.datos.mjs](paginas/hoja.datos.mjs), con `node docs/paginas/pinta.mjs`, igual que su página, [paginas/hoja.html](paginas/hoja.html), publicada en https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73. No se edita a mano.
 
-Hoja de El Dorado, versión 2, a tu firma (23 de noviembre de 2026).
+Hoja de El Dorado, versión 2, firmada el 23 de noviembre de 2026.
 
 **Buscas a dónde quieres ir en un mapa del mundo, pulsas un botón y ves cómo se investiga tu viaje en vivo, hasta que queda dibujado en el mapa, día a día y al mejor precio.** La primera vez corre de una tirada. Después lo usas a ratos: vuelves al alojamiento, al transporte o a un día y lo cambias, lo cierras con sus enlaces de reserva y te llevas tu guía. Cada momento despierta solo a los asientos que necesita; la IA no recuerda nada de una vez a otra, y la casa le da cada vez lo suyo de lo guardado. **Para el viajero es uno solo: El Dorado.** Por dentro trabajan los asientos, y esta hoja, que es nuestra, los llama por su nombre. En violeta, lo que está por decidir o por diseñar. Lo marcado como hecho ya está construido; lo demás está diseñado y sale de lo que decidiste. Pulsa un paso para ver su detalle.
 
@@ -13,13 +13,12 @@ Hoja de El Dorado, versión 2, a tu firma (23 de noviembre de 2026).
 - **El día a día, diseñado**: un asiento dice qué merece tu tiempo y qué no; el código lo reparte por días, a tu ritmo. Puerta 9.
 - **Ya no son tres viajes: es tu viaje, con tres maneras de hacerlo.** Los días son los mismos; cambia dónde duermes y cómo llegas. Y las palancas: lo que ahorras con un día antes, otro hotel u otra zona, aunque tus fechas sean fijas.
 - **Menos pasos.** Dónde y cuándo, un botón, y las preguntas mientras ya busca. Desaparece el segundo botón, «Buscar mi viaje».
-- **La IA es Claude, con la clave de cada viajero**, como en DaVi. Lo que no gasta IA (el primer vistazo y el viaje de ejemplo) se puede ver sin clave.
+- **La IA es Claude, con la clave de cada viajero**, como en DaVi. Lo que no gasta IA (el primer vistazo y el viaje de ejemplo) se ve sin cuenta y sin clave.
 - **Una web propia**, como la de DaVi, en este repositorio. Cortex no tiene todavía ni cuentas ni páginas por agente.
 - **Lo ya construido sigue valiendo**: el recolector, la búsqueda de alojamiento, el que mira el alojamiento y sus puertas.
 
 ## Por decidir
 
-- **El primer vistazo, sin cuenta:** lo propone la sesión, para quitar fricción. No gasta IA, pero sí consultas a las fuentes. *(por decidir)*
 - **Las cuentas:** con qué se guardan, y dónde corren la web y la casa. *(por decidir)*
 - **El precio** de El Dorado y cómo se cobra. La IA va aparte, con la clave del viajero. *(por decidir)*
 - **Dónde se reserva un precio de LiteAPI:** no tiene página pública. Hoy se enlaza a otra agencia cuando casa y, si no, a la web del hotel. *(por decidir)*
@@ -136,7 +135,7 @@ el mapa del mundo: dónde y cuándo. Se abre: cada vez que empiezas un viaje.
 
 1. **Tú, el mapa del mundo** (tú). Te recibe el mapa del mundo, en plano, con una barra arriba, como la de un buscador de hoteles: dónde quieres ir y en qué fechas. También puedes tocar el destino en el mapa. Son los dos únicos datos que hacen falta para empezar.
 2. **El buscador de lugares** (código de la casa). Mientras escribes, propone ciudades, regiones y países. Al elegir, el mapa vuela hasta el destino y lo encuadra: la ciudad, si es una ciudad; el país entero, si es un país.
-3. **El primer vistazo** (código de la casa) *(por decidir)*. Sin IA y sin gastar: en segundos, sobre el mapa, cuántos alojamientos pasan unos mínimos de partida y desde qué precio para tus noches, por zonas, y los días baratos para volar ese mes. Es lo que ves antes de decidir si investigas.
+3. **El primer vistazo** (código de la casa). Sin IA y sin gastar: en segundos, sobre el mapa, cuántos alojamientos pasan unos mínimos de partida y desde qué precio para tus noches, por zonas, y los días baratos para volar ese mes. Es lo que ves antes de decidir si investigas, y no pide cuenta: quita fricción y no gasta IA, solo consultas a las fuentes.
 4. **Tú, «Empezar la investigación»** (tú). Un solo botón. Dice lo que va a hacer y que usa tu clave de IA. Nada que gaste arranca sin él. Desde que lo pulsas, el mapa ya está vivo: las búsquedas de código corren mientras contestas.
 5. **Tú, cinco toques** (tú). Las preguntas base, con toques y sin escribir, en una hoja al lado del mapa: de dónde sales (propuesto por tu ubicación), quiénes vais (con la edad de los niños y el pasaporte de cada uno), si tus fechas son fijas, cuánto quieres gastar y qué buscas. En un país o una región, además: si quieres ver más de una ciudad, si te vale salir del país y cuánto quieres moverte. Y una casilla, «Ya tengo algo reservado». Son una base, no una lista cerrada. Mientras contestas, el código ya busca con lo más probable y corrige si cambias algo.
 6. **Tú, la caja libre** (tú) *(solo si hace falta)*. Lo que quieras añadir con tus palabras: «quiero vistas al mar», «no vuelo de noche», «voy con mi madre, que anda poco». De aquí salen tus gustos y tus límites.

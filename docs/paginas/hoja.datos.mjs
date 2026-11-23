@@ -325,8 +325,7 @@ const flujo = [
       k: "primer_vistazo",
       x: "en segundos y sin IA: lo que hay y desde cuánto",
       titulo: "El primer vistazo",
-      d: "Sin IA y sin gastar: en segundos, sobre el mapa, cuántos alojamientos pasan unos mínimos de partida y desde qué precio para tus noches, por zonas, y los días baratos para volar ese mes. Es lo que ves antes de decidir si investigas.",
-      n: "Propuesta de la sesión: que el primer vistazo no pida cuenta. Quita fricción y no gasta IA; sí gasta consultas a las fuentes.",
+      d: "Sin IA y sin gastar: en segundos, sobre el mapa, cuántos alojamientos pasan unos mínimos de partida y desde qué precio para tus noches, por zonas, y los días baratos para volar ese mes. Es lo que ves antes de decidir si investigas, y no pide cuenta: quita fricción y no gasta IA, solo consultas a las fuentes.",
     },
     {
       tipo: "tu",
@@ -1128,7 +1127,7 @@ const secciones = [
 export const hoja = {
   url: "https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73",
   titulo: "Hoja de El Dorado",
-  kicker: "Hoja de El Dorado, versión 2, a tu firma (23 de noviembre de 2026)",
+  kicker: "Hoja de El Dorado, versión 2, firmada el 23 de noviembre de 2026",
   h1: "El Dorado, el agente de viajes, de una tirada y por momentos",
   sub: [
     "**Buscas a dónde quieres ir en un mapa del mundo, pulsas un botón y ves cómo se investiga tu viaje en vivo, hasta que queda dibujado en el mapa, día a día y al mejor precio.** La primera vez corre de una tirada. Después lo usas a ratos: vuelves al alojamiento, al transporte o a un día y lo cambias, lo cierras con sus enlaces de reserva y te llevas tu guía. Cada momento despierta solo a los asientos que necesita; la IA no recuerda nada de una vez a otra, y la casa le da cada vez lo suyo de lo guardado. **Para el viajero es uno solo: El Dorado.** Por dentro trabajan los asientos, y esta hoja, que es nuestra, los llama por su nombre.",
@@ -1159,7 +1158,7 @@ export const hoja = {
         "**El día a día, diseñado**: un asiento dice qué merece tu tiempo y qué no; el código lo reparte por días, a tu ritmo. Puerta 9.",
         "**Ya no son tres viajes: es tu viaje, con tres maneras de hacerlo.** Los días son los mismos; cambia dónde duermes y cómo llegas. Y las palancas: lo que ahorras con un día antes, otro hotel u otra zona, aunque tus fechas sean fijas.",
         "**Menos pasos.** Dónde y cuándo, un botón, y las preguntas mientras ya busca. Desaparece el segundo botón, «Buscar mi viaje».",
-        "**La IA es Claude, con la clave de cada viajero**, como en DaVi. Lo que no gasta IA (el primer vistazo y el viaje de ejemplo) se puede ver sin clave.",
+        "**La IA es Claude, con la clave de cada viajero**, como en DaVi. Lo que no gasta IA (el primer vistazo y el viaje de ejemplo) se ve sin cuenta y sin clave.",
         "**Una web propia**, como la de DaVi, en este repositorio. Cortex no tiene todavía ni cuentas ni páginas por agente.",
         "**Lo ya construido sigue valiendo**: el recolector, la búsqueda de alojamiento, el que mira el alojamiento y sus puertas.",
       ],
@@ -1168,7 +1167,6 @@ export const hoja = {
       id: "decidir",
       titulo: "Por decidir",
       items: [
-        { t: "**El primer vistazo, sin cuenta:** lo propone la sesión, para quitar fricción. No gasta IA, pero sí consultas a las fuentes.", n: true },
         { t: "**Las cuentas:** con qué se guardan, y dónde corren la web y la casa.", n: true },
         { t: "**El precio** de El Dorado y cómo se cobra. La IA va aparte, con la clave del viajero.", n: true },
         { t: "**Dónde se reserva un precio de LiteAPI:** no tiene página pública. Hoy se enlaza a otra agencia cuando casa y, si no, a la web del hotel.", n: true },

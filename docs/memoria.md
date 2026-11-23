@@ -3,17 +3,17 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: el 0.7, la firma del PM de la versión 2 de la hoja y del plan** (el estado, punto a punto, en
-[plan.md](plan.md)). El 23-nov, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo
-se imagina el viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada
-tanda. Con eso se rehicieron las dos biblias:
+**Estamos aquí: la tanda 2, la web en seco** (el estado, punto a punto, en [plan.md](plan.md)). El 23-nov, con la
+tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el viaje del usuario; dio
+libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se rehicieron las dos
+biblias, y las firmó ese mismo día («okay»):
 
 - **La hoja, versión 2**: nueve momentos (la portada y tu panel, empezar, la investigación, el alojamiento, el
   transporte, el día a día, cerrar el viaje, la guía y cambios), una sección nueva con la web (sus principios y sus
   pantallas), el día a día diseñado y la guía.
 - **El plan, versión 2**: cuatro bloques nuevos (10, la web; 11, la cuenta y tu panel; 12, la guía; 13, enseñarlo) y
-  ocho tandas. La siguiente, con su firma, es **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje
-  de Lisboa ya grabado. Lo primero que se le enseña es la identidad de El Dorado.
+  ocho tandas. En curso, **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado.
+  Lo primero que se le enseña es la identidad de El Dorado, y no se sigue sin su visto bueno a ella.
 
 Lo que se miró antes de rehacerlas, para no repetirlo: `aurora-web` no tiene cuentas, ni pago, ni páginas por agente;
 DaVi vive en su propia web (portada con precios y lista de espera, entrada aparte, y la IA con la clave de cada
