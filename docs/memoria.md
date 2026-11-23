@@ -17,6 +17,8 @@ asientos los lanza a mano quien lleva el run, con la orden de `ordenes/<puesto>.
 `tabla-N.json`, `cruce-N.json`, `explica.json` y, al final, `viaje.json` y `sucesos.json`. Si se para, `parado.json`
 dice dónde y por qué, y el run sigue parado hasta que se quita ese archivo.
 
+La página de la revisión, con sus capturas: https://claude.ai/artifact/MUuPbQ6TDhxMkibR8NeViZ.
+
 Al cerrarla, la revisaron tres adversarios que no la hicieron: su informe, hallazgo a hallazgo y con lo que se hizo,
 en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394. Lo que hay que saber de
 cómo quedó:
