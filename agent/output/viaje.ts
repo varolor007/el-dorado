@@ -19,7 +19,7 @@ export type Precio = { total: number; moneda: string; vendedor: string | null; v
 export type Parada = {
   id: string;
   nombre: string;
-  /** Qué es, en una palabra: monument, museum, viewpoint, market, neighbourhood, park, church, beach. */
+  /** Qué es, en una palabra de las de `data/sitios.ts`: museum, castle, worship, viewpoint, nature, park, landmark. */
   clase: string;
   punto: Punto;
   /** Por qué ir, en el idioma del viajero. */

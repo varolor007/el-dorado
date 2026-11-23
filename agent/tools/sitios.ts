@@ -3,6 +3,7 @@
 // (Wikimedia Commons). No se guarda una base propia: se pide cada vez. Son datos libres y piden citar la fuente: cada
 // sitio la lleva. Aquí no se elige qué merece el tiempo del viajero: eso es de un asiento.
 
+import { ATRACCION, BLANDAS, DIVISIONES, GENERICA, NO_SE_VA_A_VER, RAICES } from "../data/sitios.ts";
 import type { Encuadre, Foto, Punto } from "../output/viaje.ts";
 
 export type Sitio = {
@@ -11,7 +12,7 @@ export type Sitio = {
   nombre: string;
   /** Qué es, en una palabra de las nuestras. */
   clase: string;
-  /** Lo que dice Wikidata que es, con sus palabras. */
+  /** Lo que dice la fuente que es, con sus palabras: para leerlo, no para decidir con ello. */
   clases: string[];
   punto: Punto;
   /** En cuántos idiomas tiene artículo: cuánto se habla de él. */
@@ -26,44 +27,21 @@ export type Sitio = {
   visto: string;
 };
 
-/** Qué es un sitio, por cómo se le nombra. El orden importa: gana la primera que casa. */
-export const CLASES: [string, RegExp][] = [
-  ["museum", /museum|art gallery|aquarium|planetarium/i],
-  ["palace", /palace|manor house/i],
-  ["castle", /castle|\bfort\b|fortress|fortified tower|citadel|city walls?/i],
-  ["church", /church|cathedral|basilica|monastery|convent|chapel|synagogue|mosque|temple|abbey|shrine/i],
-  ["viewpoint", /viewpoint|observation (deck|tower)|lookout|belvedere/i],
-  ["market", /market/i],
-  ["park", /\bpark\b|garden|botanical|\bzoo\b|nature reserve/i],
-  ["beach", /beach/i],
-  ["square", /\bsquare\b|plaza/i],
-  ["bridge", /bridge|aqueduct/i],
-  ["neighbourhood", /neighbou?rhood|\bquarter\b|city district|bairro|old town|urban ensemble|historic cent(re|er)/i],
-  ["street", /\bstreet\b|avenue|promenade|boulevard/i],
-  ["theatre", /theat(re|er)|opera house|concert hall/i],
-  ["monument", /monument|memorial|statue|\btower\b|triumphal arch|fountain|lighthouse|mausoleum|pantheon/i],
-  ["monument", /elevator|funicular|tourist attraction|heritage|landmark|archaeological site|ruins/i],
-];
-
-/** Lo que tiene sitio en el mapa y se nombra mucho, pero no se va a ver. */
-export const NO_ES_UN_SITIO =
-  /stadium|\barena\b|\bstation\b|stock exchange|regulated market|airport|aerodrome|universit|race track|motorsport/i;
-
-/** Lo que es una división del mapa (un distrito, un municipio, una parroquia) y no un sitio al que ir. */
-export const ES_UNA_DIVISION =
-  /^district of|freguesia|civil parish|municipality|sovereign state|^country$|province|^locality$|administrative/i;
-
 /**
- * La clase nuestra de un sitio, o null si nada de lo que es lo hace un sitio que ver. Manda cómo se llama; después,
- * cómo se describe, y al final, lo que dice Wikidata que es, que mezcla lo que fue con lo que es.
+ * La clase nuestra de un sitio, o null si nada de lo que es lo hace un sitio que ver. No mira cómo se llama ni en
+ * qué idioma: mira de qué clases desciende lo que la fuente dice que es, y gana la primera de la lista. Lo que no es
+ * de ninguna (una empresa, un suceso) no es un sitio. El árbol de clases de la fuente tiene ruido, así que lo que
+ * quita solo quita a lo que no es de una clase concreta: una ciudad o un distrito no entran como barrio ni como
+ * patrimonio, y un estadio o una estación no entran por ser patrimonio, salvo que la fuente diga que son una
+ * atracción. Un castillo, un anfiteatro o una isla siguen siendo sitios.
  */
-export function claseDe(nombre: string, descripcion: string | null, clases: string[]): string | null {
-  if ([descripcion ?? "", ...clases].some((c) => NO_ES_UN_SITIO.test(c))) return null;
-  if (clases.some((c) => ES_UNA_DIVISION.test(c))) return null;
-  for (const texto of [nombre, descripcion ?? ""])
-    for (const [clase, patron] of CLASES) if (patron.test(texto)) return clase;
-  for (const [clase, patron] of CLASES) if (clases.some((c) => patron.test(c))) return clase;
-  return null;
+export function claseDe(clases: string[], raicesDe: Map<string, string[]>): string | null {
+  const raices = new Set(clases.flatMap((c) => raicesDe.get(c) ?? []));
+  const clase = RAICES.find((r) => raices.has(r.raiz))?.clase ?? null;
+  if (clase === null || !BLANDAS.includes(clase)) return clase;
+  if (DIVISIONES.some((d) => raices.has(d.raiz))) return null;
+  if (clase === GENERICA && NO_SE_VA_A_VER.some((n) => raices.has(n.raiz)) && !raices.has(ATRACCION)) return null;
+  return clase;
 }
 
 export type Pedido = { minimoDeEnlaces?: number; cuantos?: number; idioma?: string };
@@ -95,7 +73,8 @@ export function consultaDeSitios(caja: Encuadre, p: Pedido = {}): string {
   return `SELECT ?item ?lat ?lon ?enlaces
   (SAMPLE(?nombreSuyo) AS ?nombre) (SAMPLE(?nombreIngles) AS ?nombreEn) (SAMPLE(?descripcion) AS ?about)
   (SAMPLE(?articuloSuyo) AS ?articulo) (SAMPLE(?articuloIngles) AS ?articuloEn) (SAMPLE(?imagen) AS ?foto)
-  (GROUP_CONCAT(DISTINCT ?claseNombre; separator="|") AS ?clases) WHERE {
+  (GROUP_CONCAT(DISTINCT ?claseNombre; separator="|") AS ?clases)
+  (GROUP_CONCAT(DISTINCT STRAFTER(STR(?clase), "/entity/"); separator="|") AS ?clasesQ) WHERE {
   SERVICE wikibase:box {
     ?item wdt:P625 ?donde .
     bd:serviceParam wikibase:cornerSouthWest "Point(${caja.oeste} ${caja.sur})"^^geo:wktLiteral .
@@ -104,7 +83,10 @@ export function consultaDeSitios(caja: Encuadre, p: Pedido = {}): string {
   ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${minimo})
   BIND(geof:latitude(?donde) AS ?lat) BIND(geof:longitude(?donde) AS ?lon)
   OPTIONAL { ?item wdt:P18 ?imagen . }
-  OPTIONAL { ?item wdt:P31 ?clase . ?clase rdfs:label ?claseNombre . FILTER(LANG(?claseNombre) = "en") }
+  OPTIONAL { ?item wdt:P31 ?clase . }
+  OPTIONAL {
+    ?item wdt:P31 ?claseConNombre . ?claseConNombre rdfs:label ?claseNombre . FILTER(LANG(?claseNombre) = "en")
+  }
   OPTIONAL { ?item rdfs:label ?nombreSuyo . FILTER(LANG(?nombreSuyo) = "${idioma}") }
   OPTIONAL { ?item rdfs:label ?nombreIngles . FILTER(LANG(?nombreIngles) = "en") }
   OPTIONAL { ?item schema:description ?descripcion . FILTER(LANG(?descripcion) = "en") }
@@ -136,9 +118,14 @@ function deWikimedia(url: string | null): string | null {
   }
 }
 
-/** Lo que devuelve Wikidata, leído sin fiarse de su forma: un sitio por identificador, y solo lo que es un sitio. */
-export function leerSitios(json: unknown, visto: string, cuantos = 120): Sitio[] {
-  const sitios = new Map<string, Sitio>();
+/** Lo que hay en la caja, antes de saber si es un sitio que ver: lo que dice la fuente, y sus clases por su número. */
+export type Candidato = Omit<Sitio, "clase"> & { clasesQ: string[] };
+
+const esQ = (v: string): boolean => /^Q\d+$/.test(v);
+
+/** Lo que devuelve Wikidata de una caja, leído sin fiarse de su forma: un candidato por identificador. */
+export function leerCandidatos(json: unknown, visto: string): Candidato[] {
+  const candidatos = new Map<string, Candidato>();
   for (const cruda of lista(objeto(objeto(json).results).bindings)) {
     const fila = objeto(cruda);
     const id = /\/(Q\d+)$/.exec(valor(fila, "item") ?? "")?.[1];
@@ -146,18 +133,15 @@ export function leerSitios(json: unknown, visto: string, cuantos = 120): Sitio[]
     const lon = Number(valor(fila, "lon"));
     const enlaces = Number(valor(fila, "enlaces"));
     const nombre = valor(fila, "nombre") ?? valor(fila, "nombreEn");
-    if (id === undefined || sitios.has(id) || nombre === null) continue;
+    if (id === undefined || candidatos.has(id) || nombre === null) continue;
     if (!(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180) || !(enlaces >= 0)) continue;
-    const clases = (valor(fila, "clases") ?? "").split("|").filter((c) => c !== "");
-    const clase = claseDe(valor(fila, "nombreEn") ?? nombre, valor(fila, "about"), clases);
-    if (clase === null) continue;
     const foto = valor(fila, "foto");
     const archivo = foto === null ? null : (foto.split("/Special:FilePath/")[1] ?? null);
-    sitios.set(id, {
+    candidatos.set(id, {
       id,
       nombre,
-      clase,
-      clases,
+      clases: (valor(fila, "clases") ?? "").split("|").filter((c) => c !== ""),
+      clasesQ: (valor(fila, "clasesQ") ?? "").split("|").filter(esQ),
       punto: { lat: Number(lat.toFixed(6)), lon: Number(lon.toFixed(6)) },
       enlaces,
       descripcion: valor(fila, "about"),
@@ -168,7 +152,42 @@ export function leerSitios(json: unknown, visto: string, cuantos = 120): Sitio[]
       visto,
     });
   }
-  return [...sitios.values()].sort((a, b) => b.enlaces - a.enlaces || a.id.localeCompare(b.id)).slice(0, cuantos);
+  return [...candidatos.values()];
+}
+
+/** La consulta que dice, de unas clases, de cuáles de las nuestras desciende cada una. */
+export function consultaDeRaices(clases: string[]): string {
+  const nuestras = [...new Set([...RAICES, ...NO_SE_VA_A_VER, ...DIVISIONES].map((r) => r.raiz)), ATRACCION];
+  const valores = (qs: string[]): string =>
+    [...new Set(qs)]
+      .filter(esQ)
+      .map((q) => `wd:${q}`)
+      .join(" ");
+  const deCuales = `VALUES ?c { ${valores(clases)} } VALUES ?raiz { ${valores(nuestras)} }`;
+  return `SELECT ?c ?raiz WHERE { ${deCuales} ?c wdt:P279* ?raiz . }`;
+}
+
+/** Lo que devuelve esa consulta: de cada clase, las nuestras de las que desciende. */
+export function leerRaices(json: unknown, raicesDe: Map<string, string[]> = new Map()): Map<string, string[]> {
+  for (const cruda of lista(objeto(objeto(json).results).bindings)) {
+    const fila = objeto(cruda);
+    const c = /\/(Q\d+)$/.exec(valor(fila, "c") ?? "")?.[1];
+    const raiz = /\/(Q\d+)$/.exec(valor(fila, "raiz") ?? "")?.[1];
+    if (c === undefined || raiz === undefined) continue;
+    const suyas = raicesDe.get(c) ?? [];
+    if (!suyas.includes(raiz)) raicesDe.set(c, [...suyas, raiz]);
+  }
+  return raicesDe;
+}
+
+/** De los candidatos, los que son un sitio que ver, con su clase; lo más conocido antes, y hasta el tope. */
+export function clasificar(candidatos: Candidato[], raicesDe: Map<string, string[]>, cuantos = 120): Sitio[] {
+  const sitios: Sitio[] = [];
+  for (const { clasesQ, ...c } of candidatos) {
+    const clase = claseDe(clasesQ, raicesDe);
+    if (clase !== null) sitios.push({ ...c, clase });
+  }
+  return sitios.sort((a, b) => b.enlaces - a.enlaces || a.id.localeCompare(b.id)).slice(0, cuantos);
 }
 
 const sinMarcas = (html: unknown): string | null => {
@@ -275,7 +294,15 @@ const COMMONS = "https://commons.wikimedia.org/w/api.php";
 /** Los sitios de una caja del mapa, lo más conocido antes. */
 export async function sitiosDe(caja: Encuadre, p: Pedido = {}, o: Salida = {}): Promise<Sitio[]> {
   const url = `${WIKIDATA}?format=json&query=${encodeURIComponent(consultaDeSitios(caja, p))}`;
-  return leerSitios(await pedir(url, o), new Date().toISOString(), p.cuantos ?? 120);
+  const candidatos = leerCandidatos(await pedir(url, o), new Date().toISOString());
+  // De qué desciende cada clase se pregunta aparte, de cien en cien: así no depende de cómo se llame ni en qué idioma.
+  const clases = [...new Set(candidatos.flatMap((c) => c.clasesQ))].sort();
+  const raicesDe = new Map<string, string[]>();
+  for (let i = 0; i < clases.length; i += 100) {
+    const consulta = consultaDeRaices(clases.slice(i, i + 100));
+    leerRaices(await pedir(`${WIKIDATA}?format=json&query=${encodeURIComponent(consulta)}`, o), raicesDe);
+  }
+  return clasificar(candidatos, raicesDe, p.cuantos ?? 120);
 }
 
 /**

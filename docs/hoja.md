@@ -777,7 +777,7 @@ Los datos se sacan en el momento, cuando se piden; el viajero no trae nada, no h
 | El precio de un vuelo en vivo, con sus escalas y su maleta | Sin fuente todavía | por decidir |
 | Las fotos de viajeros | Sin fuente segura todavía | por decidir |
 | Los papeles, las fiestas y lo que se agota | Las webs oficiales y el buscador de la IA | en borrador |
-| Los sitios que ver | Wikidata y Wikipedia, pedidos en el momento: qué es cada sitio, dónde está, cuánto se habla de él y lo que dice su artículo. Son libres: piden citar la fuente. OpenStreetMap, sin enchufar todavía | en parte |
+| Los sitios que ver | Wikidata y Wikipedia, pedidos en el momento: qué es cada sitio, dónde está, cuánto se habla de él y lo que dice su artículo. Qué es un sitio lo dice la clase de la que desciende en la fuente, no su nombre ni su idioma: vale igual para una capital, un pueblo o un valle. Son libres: piden citar la fuente. OpenStreetMap, sin enchufar todavía | en parte |
 | La foto de cada sitio | Wikimedia Commons, con su autor y su licencia al pie. Una foto sin autor o sin licencia no se enseña | hecho |
 | El mapa y el buscador de lugares | Mapas abiertos, sin clave y sin coste: el mapa, con MapLibre y OpenFreeMap; el buscador, Photon. No garantizan el servicio | pendiente |
 | Lo que se anda entre dos paradas | El código, en línea recta y con un margen; la ruta exacta, un enlace a Google Maps | hecho |
