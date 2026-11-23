@@ -43,9 +43,9 @@ export const MAS_POR_GUSTO = 3;
 
 /** La zona: los minutos andando a los que queda la mitad de lo que se va a ver. Hasta aquí, diez; desde aquí, cero. */
 /**
- * Ajustada con Lisboa (23-nov): con el cero a cuarenta minutos, un hotel a treinta y cinco andando del centro, que
- * son diez en metro, sacaba casi un cero. Solo se sabe lo que se anda: mientras no haya transporte público en los
- * datos, la escala es larga, y una hora andando es el cero.
+ * Solo se sabe lo que se anda: no hay transporte público en los datos. Por eso la escala es larga, y el cero está en
+ * una hora andando: un sitio a media hora a pie del centro de una ciudad no es un mal sitio. Es de partida, puesta
+ * con un solo viaje de prueba: se calibra con varios destinos distintos, en el ensayo.
  */
 export const ZONA = { minutosDeDiez: 10, minutosDeCero: 60 } as const;
 
@@ -64,6 +64,3 @@ export const PRECIO_POR_GASTO: Record<string, number> = { tight: 10, medium: 6, 
 /** Los mínimos de partida de un alojamiento para seguir adelante, y cuántos se miran de cerca. Se ajustan con casos. */
 export const MINIMOS_DE_PARTIDA = { nota: 8.5, opiniones: 200, estrellas: 4 };
 export const FINALISTAS = 5;
-
-/** La moneda en la que se piden los precios mientras el viajero no diga otra. */
-export const MONEDA_DE_PARTIDA = "EUR";

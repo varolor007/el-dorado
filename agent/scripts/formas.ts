@@ -24,6 +24,8 @@ export const GASTOS = ["tight", "medium", "comfortable"] as const;
 export type Entendido = {
   /** El idioma del viajero, en dos letras: en él se escribe lo que lee. */
   language: string;
+  /** La moneda en la que el viajero ve los precios, con sus tres letras. Es suya: no hay una de partida. */
+  currency: string;
   destination: {
     name: string;
     country: string;

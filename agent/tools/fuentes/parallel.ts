@@ -63,7 +63,7 @@ export function cuerpoDeZona(
   return cuerpo;
 }
 
-/** Los alojamientos de una zona dicha con palabras («Baixa, Lisbon»), con sus ofertas. Cuarenta como mucho. */
+/** Los alojamientos de una zona dicha con palabras (un sitio y su ciudad), con sus ofertas. Cuarenta como mucho. */
 export async function ofertasDeZona(
   lugar: string,
   e: Estancia,

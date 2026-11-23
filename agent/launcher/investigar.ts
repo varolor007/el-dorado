@@ -11,7 +11,7 @@
 
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { FINALISTAS, MINIMOS_DE_PARTIDA, MONEDA_DE_PARTIDA } from "../data/cribas.ts";
+import { FINALISTAS, MINIMOS_DE_PARTIDA } from "../data/cribas.ts";
 import { COSAS } from "../data/gustos.ts";
 import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
@@ -83,8 +83,16 @@ const guardar = (run: string, nombre: string, dato: unknown): void =>
   writeFileSync(ruta(run, nombre), JSON.stringify(dato, null, 2));
 const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
 
-/** La estancia que se busca, sacada de lo que he entendido. */
+/**
+ * La estancia que se busca, sacada de lo que he entendido. La moneda y el pasaporte son del viajero: si faltan, no
+ * se supone ninguno, porque de ellos depende el precio que da la fuente.
+ */
 export function estanciaDe(viaje: Entendido): Estancia {
+  const pasaporte = viaje.travellers.passports[0] ?? viaje.origin?.country;
+  if (pasaporte === undefined || !/^[A-Za-z]{2}$/.test(pasaporte))
+    throw new Error("no se sabe con qué pasaporte viaja el viajero ni de qué país sale: sin eso no hay precio");
+  if (!/^[A-Za-z]{3}$/.test(viaje.currency ?? ""))
+    throw new Error("no se sabe en qué moneda ve los precios el viajero");
   return {
     lat: viaje.destination.centre.lat,
     lon: viaje.destination.centre.lon,
@@ -93,8 +101,8 @@ export function estanciaDe(viaje: Entendido): Estancia {
     salida: viaje.dates.check_out,
     adultos: viaje.travellers.adults,
     ninos: viaje.travellers.children,
-    moneda: MONEDA_DE_PARTIDA,
-    nacionalidad: (viaje.travellers.passports[0] ?? viaje.origin?.country ?? "ES").toUpperCase(),
+    moneda: viaje.currency.toUpperCase(),
+    nacionalidad: pasaporte.toUpperCase(),
     pais: viaje.destination.country.toUpperCase(),
   };
 }

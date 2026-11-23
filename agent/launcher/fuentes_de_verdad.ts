@@ -8,7 +8,6 @@ import { encendida } from "../tools/fuentes/enchufes.ts";
 import { liteapi } from "../tools/fuentes/liteapi.ts";
 import { ofertasDeZona } from "../tools/fuentes/parallel.ts";
 import { conMargen, fotosDe, resumenesDe, sitiosDe } from "../tools/sitios.ts";
-import { MONEDA_DE_PARTIDA } from "../data/cribas.ts";
 import type { Fuentes } from "./investigar.ts";
 
 /** El margen que se le da a la caja del destino al pedir sus sitios: un kilómetro, más o menos. */
@@ -33,15 +32,19 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     desde: manana,
   };
   if (encendida("aviasales"))
-    fuentes.vuelos = (viaje, ida, vuelta) =>
-      vuelosPorFechas({
-        origen: viaje.origin?.airport ?? "",
-        destino: viaje.destination.airport ?? "",
+    fuentes.vuelos = async (viaje, ida, vuelta) => {
+      // Sin saber de dónde se sale y a dónde se llega no hay vuelo que buscar; el mercado es el del país de salida.
+      const origen = viaje.origin;
+      if (origen === null || origen.airport === null || viaje.destination.airport === null) return [];
+      return vuelosPorFechas({
+        origen: origen.airport,
+        destino: viaje.destination.airport,
         ida,
         vuelta,
-        moneda: MONEDA_DE_PARTIDA,
-        mercado: (viaje.origin?.country ?? "es").toLowerCase(),
+        moneda: viaje.currency.toUpperCase(),
+        mercado: origen.country.toLowerCase(),
       });
+    };
   if (encendida("parallel")) fuentes.ofertas = (lugar, e) => ofertasDeZona(lugar, e);
   return fuentes;
 }

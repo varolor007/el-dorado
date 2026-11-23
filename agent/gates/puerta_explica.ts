@@ -85,11 +85,9 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
     rojo("unknowns", "hay cosas sin confirmar y no se le dicen al viajero");
 
   // Los avisos de siempre, que pone la casa.
-  const deSiempre = AVISOS[m.viaje.language];
-  if (deSiempre === undefined) rojo("avisos", `no hay avisos escritos en ${m.viaje.language}`);
-  else {
-    if (!m.avisos.includes(deSiempre.ia)) rojo("avisos", "falta el aviso de que está hecho con IA");
-    if (!m.avisos.includes(deSiempre.precios)) rojo("avisos", "falta el aviso de que los precios son orientativos");
-  }
+  // En el idioma del viajero si están escritos en él; si no, en inglés: nunca sin ellos.
+  const deSiempre = AVISOS[m.viaje.language] ?? AVISOS.en;
+  if (!m.avisos.includes(deSiempre.ia)) rojo("avisos", "falta el aviso de que está hecho con IA");
+  if (!m.avisos.includes(deSiempre.precios)) rojo("avisos", "falta el aviso de que los precios son orientativos");
   return { verde: rojos.length === 0, rojos };
 }

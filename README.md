@@ -24,8 +24,8 @@ de todos y la 5, que comprueban desde fuera que cada nivel de su ficha es de su 
 npm install                 # una vez: solo trae el comprobador de tipos y el formateador
 node tests/bateria.mjs      # la batería: las pruebas y los tipos, en segundos, sin internet y sin gastar
 
-node agent/launcher/buscar.ts --pais PT --lat 38.7107 --lon -9.1390 \
-  --entrada 2027-02-12 --salida 2027-02-15 --lugar "Baixa, Lisbon" --origen MAD --destino LIS
+node agent/launcher/buscar.ts --pais <país> --lat <latitud> --lon <longitud> \
+  --entrada AAAA-MM-DD --salida AAAA-MM-DD --moneda <tres letras> --nacionalidad <país del pasaporte>
 ```
 
 Para mirar los finalistas de una búsqueda ya guardada:

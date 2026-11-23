@@ -162,6 +162,18 @@ test("la estancia que se busca sale de lo que he entendido", () => {
     { entrada: e.entrada, salida: e.salida, adultos: e.adultos, pais: e.pais, nacionalidad: e.nacionalidad },
     { entrada: ESTANCIA.entrada, salida: ESTANCIA.salida, adultos: 2, pais: "ZZ", nacionalidad: "YY" },
   );
+  assert.equal(e.moneda, "EUR");
+});
+
+test("la moneda y el pasaporte son del viajero: si faltan, no se supone ninguno", () => {
+  const sinMoneda = { ...ENTENDIDO, currency: "" };
+  assert.throws(() => estanciaDe(sinMoneda), /en qué moneda/);
+  const sinPasaporte = { ...ENTENDIDO, travellers: { ...ENTENDIDO.travellers, passports: [] }, origin: null };
+  assert.throws(() => estanciaDe(sinPasaporte), /con qué pasaporte/);
+  // Sin pasaporte dicho, vale el país del que sale; nunca uno puesto por el código.
+  const sinDecirlo = { ...ENTENDIDO, travellers: { ...ENTENDIDO.travellers, passports: [] } };
+  assert.equal(estanciaDe(sinDecirlo).nacionalidad, "YY");
+  assert.equal(estanciaDe({ ...ENTENDIDO, currency: "jpy" }).moneda, "JPY");
 });
 
 test("la búsqueda por zonas junta lo de cada zona sin repetir, y el más barato de cada una se mira", async () => {

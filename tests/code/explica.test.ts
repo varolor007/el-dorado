@@ -161,3 +161,17 @@ test("trampa: en otro idioma, o sin los avisos de siempre", () => {
     ["avisos: falta el aviso de que está hecho con IA", "avisos: falta el aviso de que los precios son orientativos"],
   );
 });
+
+test("en un idioma sin avisos escritos, van en inglés: nunca sin ellos, y nunca un rojo por el idioma", () => {
+  const enFrances = structuredClone(MATERIAL);
+  enFrances.viaje.language = "fr";
+  enFrances.avisos = [AVISOS.en.ia, AVISOS.en.precios];
+  assert.deepEqual(
+    rojosDe((e) => (e.language = "fr"), enFrances),
+    [],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.language = "fr"), { ...enFrances, avisos: [] }),
+    ["avisos: falta el aviso de que está hecho con IA", "avisos: falta el aviso de que los precios son orientativos"],
+  );
+});

@@ -25,6 +25,7 @@ import { ESTANCIA, fuenteInventada, MINIMOS, VISTO } from "./inventado.ts";
 /** Lo que he entendido: tres noches para dos, con un gimnasio de verdad y el faro como imprescindibles. */
 export const ENTENDIDO: Entendido = {
   language: "es",
+  currency: "EUR",
   destination: {
     name: "Villa Inventada",
     country: "ZZ",

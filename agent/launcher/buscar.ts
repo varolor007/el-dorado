@@ -1,7 +1,8 @@
 // Lanza una búsqueda desde la terminal y deja lo que saca en la mesa, fuera del repositorio.
 //
-//   node agent/launcher/buscar.ts --pais PT --lat 38.7107 --lon -9.1390 --entrada 2027-02-12 --salida 2027-02-15 \
-//     --lugar "Baixa, Lisbon" --origen MAD --destino LIS
+//   node agent/launcher/buscar.ts --pais <país del destino> --lat <latitud> --lon <longitud> \
+//     --entrada AAAA-MM-DD --salida AAAA-MM-DD --moneda <tres letras> --nacionalidad <país del pasaporte> \
+//     [--lugar "<zona, ciudad>"] [--origen <aeropuerto> --destino <aeropuerto> --mercado <país de salida>]
 //
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. No usa IA: solo las fuentes de datos.
 
@@ -35,6 +36,17 @@ function fecha(a: Record<string, string>, nombre: string): string {
   return a[nombre];
 }
 
+/** Lo que es del viajero (su moneda, su pasaporte, el país del que sale) se dice: no se supone ninguno. */
+function dosLetras(a: Record<string, string>, nombre: string): string {
+  if (!/^[A-Za-z]{2}$/.test(a[nombre] ?? "")) throw new Error(`falta --${nombre}, un país en dos letras`);
+  return a[nombre].toUpperCase();
+}
+
+function tresLetras(a: Record<string, string>, nombre: string): string {
+  if (!/^[A-Za-z]{3}$/.test(a[nombre] ?? "")) throw new Error(`falta --${nombre}, una moneda en tres letras`);
+  return a[nombre].toUpperCase();
+}
+
 function noches(e: Estancia): number {
   return Math.round((Date.parse(e.salida) - Date.parse(e.entrada)) / 86_400_000);
 }
@@ -53,8 +65,8 @@ async function principal(): Promise<number> {
       .split(",")
       .filter((x) => x !== "")
       .map(Number),
-    moneda: (a.moneda ?? "EUR").toUpperCase(),
-    nacionalidad: (a.nacionalidad ?? "ES").toUpperCase(),
+    moneda: tresLetras(a, "moneda"),
+    nacionalidad: dosLetras(a, "nacionalidad"),
     pais: a.pais.toUpperCase(),
   };
   if (noches(estancia) < 1) throw new Error("la salida tiene que ser después de la entrada");
@@ -87,7 +99,7 @@ async function principal(): Promise<number> {
       ida: estancia.entrada,
       vuelta: estancia.salida,
       moneda: estancia.moneda,
-      mercado: (a.mercado ?? "es").toLowerCase(),
+      mercado: dosLetras(a, "mercado").toLowerCase(),
     };
     try {
       vuelos = await vuelosPorFechas(trayecto);
