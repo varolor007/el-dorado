@@ -2,51 +2,57 @@
 
 > La segunda biblia: cómo se construye El Dorado. Se genera de sus datos, [paginas/plan.datos.mjs](paginas/plan.datos.mjs), con `node docs/paginas/pinta.mjs`, igual que su página, [paginas/plan.html](paginas/plan.html), publicada en https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t. No se edita a mano.
 
-Plan de El Dorado, versión 1, firmado el 23 de noviembre de 2026.
+Plan de El Dorado, versión 2, a tu firma (23 de noviembre de 2026).
 
-**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
+**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 1, hecha, a tu visto bueno.** Hechos los cuatro puntos de la primera tanda: el método común (2.4), cómo se lanza un asiento (2.3), las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los cinco finalistas de Lisboa. Tienes la ficha de cómo es de cada uno, con sus fotos, para compararla con tus ojos. Deja tres decisiones tuyas: si «descuidado» se parte en dos campos, cómo se abarata la mirada y con quién piensa cada asiento. Con tu visto bueno empieza la tanda 2: de alojamientos a viajes.
+**Estamos aquí: el 0.7, tu firma de la versión 2.** La tanda 1 está hecha. Con lo que contaste el 23-nov, la hoja y el plan pasan a su **versión 2**, con la web entera. Con tu firma empieza la tanda 2: **la web, en seco**, con un viaje de Lisboa ya grabado. Lo primero que verás es la identidad de El Dorado; después, la portada, el mapa del mundo, la investigación en vivo y el viaje por días.
 
 ## El estado
 
 | Bloque | Estado |
 |---|---|
-| 0. El orden | hecho |
+| 0. El orden | en parte |
 | 1. Los planos | en parte |
 | 2. Los cimientos | en parte |
 | 3. Las herramientas | en parte |
-| 4. El primer viaje, entero | en parte |
+| 4. La investigación, entera | en parte |
 | 5. Empezar, entero | pendiente |
 | 6. Todo junto, en seco | pendiente |
 | 7. El ensayo | pendiente |
 | 8. Por momentos | pendiente |
 | 9. Antes de vender | pendiente |
+| 10. La web | pendiente |
+| 11. La cuenta y tu panel | pendiente |
+| 12. La guía | pendiente |
+| 13. Enseñarlo | pendiente |
 
 ## Por dónde vamos, y por qué en este orden
 
-Por tandas: lo que no te necesita va seguido, cada punto con su commit y la batería en verde, y cada tanda acaba enseñándote algo. La siguiente no empieza sin tu visto bueno.
+Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y la siguiente no empieza sin tu visto bueno. Dentro de cada una, lo que no te necesita va seguido, cada punto con su commit y la batería en verde. Al cerrar cada bloque, lo revisan tres adversarios que no lo hicieron.
 
 | Tanda | Puntos | Por qué ahora | Lo que ves al acabar |
 |---|---|---|---|
-| 1. El primer asiento | 2.3, 2.4, 3.6 y 4.2 | Es lo que más riesgo tiene y lo que más te importa: si la IA mira bien una habitación y un gimnasio | La ficha de cómo es de cinco alojamientos de verdad, para compararla con tus ojos |
-| 2. De alojamientos a viajes | 1.1, 1.4, 4.3, 4.6 y 4.7 | Sin sumar y cruzar no hay «mejor precio» | Tres viajes de Lisboa con sus números, y qué ganas y qué pierdes con cada uno |
-| 3. Del destino al viaje | 1.2, 2.1, 2.2, 4.4, 4.5 y el bloque 5 | Para que el viaje arranque de tus toques y no de una ficha escrita a mano | El run entero, de las preguntas a los tres viajes |
-| 4. La salida | 2.6 y 4.8 | Espera tu decisión: dónde vive el mapa | Tus tres viajes, en el mapa |
-| 5. En seco y el ensayo | Los bloques 6 y 7 | Primero se construye y después se prueba; lo que gasta, al final | Tres viajes tuyos de verdad, con lo que tardan y lo que cuestan |
-| 6. Por momentos | El bloque 8 | Es la segunda parte: usarlo a ratos | Cambiar el hotel o el vuelo de un viaje ya hecho |
+| 1. El primer asiento (hecha) | 2.3, 2.4, 3.6 y 4.2 | Era lo que más riesgo tenía: si la IA mira bien una habitación y un gimnasio | La ficha de cómo es de cinco alojamientos de verdad, con dos pasadas a ciegas |
+| 2. La web, en seco | 1.5 y el bloque 10 | Es lo que quieres ver, y fija la forma del viaje que el agente tiene que producir | La web entera, navegable con un viaje grabado: la portada, el mapa del mundo, la investigación en vivo y el viaje por días. Antes, la identidad |
+| 3. El agente hace el viaje | 1.1, 1.4, 3.8, 3.10, 3.12, 4.3, 4.5 a 4.11 | Sin sumar, cruzar y repartir los días no hay viaje; y mirar un alojamiento tiene que dejar de tardar catorce minutos | El viaje de Lisboa hecho por el agente, con sus días, sus tres maneras y sus palancas, en la web |
+| 4. La casa en vivo y tu cuenta | 1.2, 2.1, 2.2, 2.5 a 2.8, 3.11, 4.4 y los bloques 5 y 11 | Para que arranque de tu búsqueda y corra con tu clave. Es la primera que gasta de una clave: pide tu adelante | Entras, pones tu clave, buscas un destino y la investigación corre de verdad, en vivo |
+| 5. Cerrar el viaje y la guía | 3.13, 8.4 y el bloque 12 | Es lo que te llevas | Los enlaces de reserva con los precios de hoy, y tu cuaderno |
+| 6. Por momentos | El resto del bloque 8 | Es la segunda parte: usarlo a ratos | Cambiar el hotel, el vuelo o un día de un viaje ya hecho |
+| 7. En seco y el ensayo | Los bloques 6 y 7 | Primero se construye y después se prueba; lo que más gasta, al final | Tres viajes tuyos de verdad, con lo que tardan y lo que cuestan |
+| 8. Enseñarlo | Los bloques 9 y 13 | Lo último: lo legal, el precio, el vídeo y su sitio en Cortex | El Dorado, listo para enseñar |
 
-- **CRITERIO 1. Lo que se usa, antes.** Un contrato tiene que saber qué hace ya el código: por eso la búsqueda fue antes que el asiento que mira.
-- **CRITERIO 2. El riesgo, antes.** Lo que puede no salir se prueba pronto, para que falle barato: el primer asiento de IA va el primero.
+- **CRITERIO 1. Lo que se usa, antes.** Un contrato tiene que saber qué hace ya el código: por eso la búsqueda fue antes que el asiento que mira, y la forma del viaje va antes que la web y que el agente.
+- **CRITERIO 2. El riesgo, antes.** Lo que puede no salir se prueba pronto, para que falle barato: el primer asiento de IA fue el primero, y la web se enseña en seco antes de enchufarla.
 - **CRITERIO 3. Lo que ves, cuanto antes.** Cada tanda acaba en algo que puedes mirar y juzgar, no en una pieza de dentro.
 
 ## 0. El orden
 
-*hecho.* Antes de construir, cada cosa en su sitio y las reglas por escrito.
+*en parte.* Antes de construir, cada cosa en su sitio y las reglas por escrito.
 
 - **Deja**: el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias
 - **Se prueba**: la prueba del repositorio, dentro de la batería
-- **Tu visto bueno**: la hoja y el plan (0.5)
+- **Tu visto bueno**: la hoja y el plan (0.5), y su versión 2 (0.7)
 
 | Punto | Qué | Estado |
 |---|---|---|
@@ -55,6 +61,8 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 0.3 | **La batería.** Las pruebas del código con el caso inventado, los tipos y la prueba del repositorio, en segundos y sin gastar; GitHub la pasa en cada subida. | hecho |
 | 0.4 | **Las dos biblias, pintadas de sus datos.** La hoja y el plan se escriben una vez y de ahí salen su página y su texto; una prueba dice si se quedan atrás y si alguna caja de la hoja no tiene su punto. | hecho |
 | 0.5 | **Tu firma de la hoja y del plan.** Con ella mandan: lo que se construya tiene que caber en ellas. Firmadas el 23-nov, con tu «dale, sí». | hecho |
+| 0.6 | **La hoja y el plan, versión 2.** Con la web entera, como la contaste el 23-nov: nueve momentos, el día a día diseñado, la guía, la cuenta y la clave. Antes se miró cómo presenta Cortex a sus agentes, la portada de DaVi, y las webs de mapas y de viajes premiadas. | hecho |
+| 0.7 | **Tu firma de la versión 2.** Y tus respuestas a lo que queda por decidir que frena la primera tanda de la web. | lo siguiente |
 
 ## 1. Los planos
 
@@ -70,14 +78,15 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 1.2 | **La carpeta de cada viaje.** Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa. | pendiente |
 | 1.3 | **El viaje inventado, entero.** De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado. | en parte |
 | 1.4 | **Lo nuestro, en datos.** La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales. | pendiente |
+| 1.5 | **La forma del viaje para la web.** Lo que la casa le entrega a la web y lo que le cuenta en vivo: el viaje con sus días, sus paradas, sus tres maneras y sus palancas, y la lista de sucesos de la investigación. Es el contrato entre las dos: la web se construye contra él, y el agente tiene que producirlo. | pendiente |
 
 ## 2. Los cimientos
 
 *en parte.* Lo que usan todos los momentos. Va pronto porque todo lo usa y porque ahí está el riesgo: sesiones de IA que tienen que ver solo lo suyo y entregar en su sitio.
 
-- **Deja**: la mesa, lo que lanza los pasos, cómo se lanza un asiento, el método común y el conductor
+- **Deja**: la mesa, lo que lanza los pasos y lo cuenta en vivo, cómo se lanza un asiento, el método común, el conductor y la puerta a la web
 - **Se prueba**: con el viaje inventado y una IA de mentira, sin gastar
-- **Tu visto bueno**: al ver la salida con el viaje inventado (2.6)
+- **Tu visto bueno**: tu adelante antes de la primera investigación con una clave de verdad
 
 | Punto | Qué | Estado |
 |---|---|---|
@@ -86,7 +95,9 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 2.3 | **Cómo se lanza un asiento.** Su puesto, fuera del repositorio, con su contrato, solo el material que puede leer (las fotos, como archivos) y su salida; el sello de lo que se le dio, guardado fuera del puesto; la orden que lo abre; su tope de tiempo, y la recogida, que pasa la puerta de todos. Doce pruebas, con un asiento inventado. Quién piensa en el asiento se enchufa aparte: en esta tanda lo lanza la sesión, a mano. | hecho |
 | 2.4 | **El método común.** En inglés, en `agent/contracts/common/`: los seis pasos, las diez normas de todos y la orden que abre un asiento. Y la puerta de todos, con diecinueve pruebas: cada paso dejó su archivo y en su orden, el acuse nombra cada pieza, cada nota lleva su etiqueta y lo visto cita un archivo que existe, y nada se escribió fuera de la salida. | hecho |
 | 2.5 | **El conductor.** Cada rojo, a su dueño, dos vueltas como mucho; deja el acta del run. | pendiente |
-| 2.6 | **La salida, con el viaje inventado.** El mapa con tres viajes inventados, para verla pronto. Espera a saber dónde vive. | por decidir |
+| 2.6 | **Los sucesos, en vivo.** La casa cuenta cada paso mientras lo da (qué, dónde y cuánto), con frases que escribe el código, y lo deja guardado para que la web lo pinte en vivo o lo vuelva a enseñar. | pendiente |
+| 2.7 | **El asiento, con la IA de verdad.** El lanzador que habla con Claude con la clave del viajero. El asiento solo puede abrir su puesto, que es lo que hoy solo se le pide; mide lo que gasta cada turno. | pendiente |
+| 2.8 | **La puerta de la casa a la web.** Lo único que la web puede pedir, y cada viaje solo a su dueño; y por dónde escucha la web lo que pasa en vivo. | pendiente |
 
 ## 3. Las herramientas
 
@@ -105,16 +116,20 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 3.5 | **El buscador y el lector de webs.** Con la memoria de lo consultado, para que ninguna nota cite lo que no se leyó. | pendiente |
 | 3.6 | **Las fotos.** Elige y baja, fuera del repositorio, las de la habitación de ese precio (las doce primeras, con el dormitorio, el baño y la vista por delante) y las del hotel (hasta treinta, repartidas por toda su lista), y dice cuántas da de cuántas hay. Solo baja imágenes de verdad y de direcciones de fiar. Probado con un finalista de Lisboa: treinta y cinco fotos en un segundo. Las del hotel vienen sin pie y solo en grande: verlas todas pide encogerlas, que es una decisión. | hecho |
 | 3.7 | **Los vuelos en vivo.** Elegir de dónde sale el precio de ahora, con sus escalas y su maleta. | por decidir |
-| 3.8 | **Los mapas abiertos.** Distancias y tiempos entre sitios. | pendiente |
+| 3.8 | **Las distancias.** Lo que se anda entre dos sitios, en línea recta y con un margen. La ruta exacta se deja a Google Maps. | pendiente |
 | 3.9 | **Los enlaces de afiliado.** Si cada enlace lleva nuestra marca. Va con lo legal. | por decidir |
+| 3.10 | **Los sitios que ver.** De datos abiertos (Wikidata, Wikipedia y OpenStreetMap), por zona y en el momento: qué es, dónde está y cuánto se habla de él; y su foto, de Wikimedia Commons, con su autor y su licencia. | pendiente |
+| 3.11 | **El mapa y el buscador de lugares.** El mapa abierto (MapLibre con OpenFreeMap) y el buscador que completa lo que escribes (Photon). Sin clave y sin coste; si un día fallan, se cambian sin tocar lo demás. | pendiente |
+| 3.12 | **Las palancas.** Pide el precio de las mismas noches movidas un día o dos, el de los otros finalistas y el de otra zona, y deja la tabla de lo que ahorra cada cambio. | pendiente |
+| 3.13 | **Los enlaces de reserva.** Cada precio, con el enlace de donde se encontró, y cada parada y cada día, con el suyo a Google Maps. | pendiente |
 
-## 4. El primer viaje, entero
+## 4. La investigación, entera
 
-*en parte.* El momento que corre de una tirada, de la ruta a los tres viajes. Va antes que «Empezar» porque tiene más riesgo: si la IA mira bien un alojamiento y si los viajes se cruzan y se suman bien. Mientras, lo que he entendido del viaje se escribe a mano.
+*en parte.* El momento que corre de una tirada, de la ruta a tu viaje en el mapa. Va antes que «Empezar» porque tiene más riesgo: si la IA mira bien un alojamiento, si elige bien qué ver y si el viaje se cruza y se suma bien. Mientras, lo que he entendido del viaje se escribe a mano.
 
-- **Deja**: tres viajes completos de un destino de verdad, con sus números y sus pruebas
+- **Deja**: un viaje completo de un destino de verdad, con sus días, sus tres maneras, sus palancas y sus pruebas
 - **Se prueba**: cada paso, con el viaje inventado; y con Lisboa, a mano
-- **Tu visto bueno**: al ver los tres viajes de Lisboa
+- **Tu visto bueno**: al ver el viaje de Lisboa en la web
 
 | Punto | Qué | Estado |
 |---|---|---|
@@ -123,9 +138,12 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 4.3 | **Las cribas y los gustos.** Lo que descarta, lo que se suma al precio y la nota, con los pesos de partida; y el cruce de los niveles con tus gustos. | pendiente |
 | 4.4 | **La búsqueda de transporte.** La parrilla de aeropuertos y de días, con la fuente que haya. | pendiente |
 | 4.5 | **El de la ruta.** Las bases, las noches, la entrada y la salida y las zonas donde buscar; la puerta 3. | pendiente |
-| 4.6 | **El cruce y el que cruza.** La tabla de viajes completos, las palancas, dos rondas y los tres viajes; la puerta 6. | pendiente |
-| 4.7 | **El que explica.** Qué ganas y qué pierdes con cada uno; la puerta 7. | pendiente |
-| 4.8 | **La salida.** Los tres viajes, en el mapa. | por decidir |
+| 4.6 | **El cruce y el que cruza.** La tabla del viaje completo, las palancas, dos rondas y las tres maneras de hacerlo; la puerta 6. | pendiente |
+| 4.7 | **El que explica.** Qué ganas y qué pierdes con cada manera; la puerta 7. | pendiente |
+| 4.8 | **El viaje, listo para la web.** Junta lo que dejó cada paso en la forma del viaje para la web (1.5). | pendiente |
+| 4.9 | **El del día a día.** Su contrato: qué merece tu tiempo y qué no, en qué orden y cuánto lleva, sin inventar sitios; la puerta 9. | pendiente |
+| 4.10 | **El ritmo.** Código: reparte las paradas por días, por cercanía y a tu ritmo, las ordena y calcula lo que se anda. Misma entrada, mismos días. | pendiente |
+| 4.11 | **Abaratar al que mira.** De catorce minutos por alojamiento a menos de uno: menos fotos y mejor elegidas, y la IA llamada sin rodeos. Con tu decisión sobre «descuidado». | por decidir |
 
 ## 5. Empezar, entero
 
@@ -137,7 +155,8 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 
 | Punto | Qué | Estado |
 |---|---|---|
-| 5.1 | **Las preguntas.** Los cinco toques, la casilla y la caja libre, y lo que dejan. | pendiente |
+| 5.1 | **Las preguntas.** Los cinco toques, lo de moverse (más ciudades, salir del país), la casilla y la caja libre, y lo que dejan. Se contestan mientras el código ya busca con lo más probable. | pendiente |
+| 5.5 | **El primer vistazo.** Sin IA: con el destino y las fechas, cuántos alojamientos pasan los mínimos y desde cuánto, por zonas, y los días baratos para volar. | pendiente |
 | 5.2 | **El que escucha.** Su contrato, la puerta 1 y tu confirmación. | pendiente |
 | 5.3 | **El del calendario.** Los avisos de las fechas y las ventanas mejores. | pendiente |
 | 5.4 | **El de los papeles.** La tabla, la lista de dominios oficiales y la puerta 2. | pendiente |
@@ -184,16 +203,16 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 8.1 | **La casa por momentos.** El estado de cada pieza, quién te responde, tus elecciones, el impacto y las versiones. | pendiente |
 | 8.2 | **El alojamiento.** Tus gustos, otro candidato y tu elección. | pendiente |
 | 8.3 | **El transporte.** Otro día, otro aeropuerto u otro horario, y lo que cambia. | pendiente |
-| 8.4 | **Elegir y reservar.** Los precios de hoy, el orden de las reservas y la puerta 8. | pendiente |
-| 8.5 | **Cambios y Al volver.** Lo que se rehace con cada cambio y dónde lo dejaste. | pendiente |
-| 8.6 | **El día a día.** Diseñarlo y construirlo: es el momento que falta por hablar. | por decidir |
+| 8.4 | **Cerrar el viaje.** Los precios de hoy, el orden de las reservas y la puerta 8. | pendiente |
+| 8.5 | **Cambios.** Lo que se rehace con cada cambio, con tu adelante si gasta. | pendiente |
+| 8.6 | **El día a día, a ratos.** Abrir un día, mover el ritmo, quitar, añadir o mover una parada, y pedir un cambio con tus palabras. | pendiente |
 | 8.7 | **Vigilar el precio.** Avisarte sin que entres. | por decidir |
 
 ## 9. Antes de vender
 
 *pendiente.* Lo que hoy no hace falta, porque es un MVP sin uso comercial, y hará falta el día que se venda.
 
-- **Deja**: El Dorado en Cortex, con sus fuentes en regla
+- **Deja**: El Dorado en su web, con sus fuentes en regla
 - **Se prueba**: con el abogado y con las claves de verdad
 - **Tu visto bueno**: todo: son decisiones tuyas
 
@@ -201,9 +220,73 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 |---|---|---|
 | 9.1 | **Lo legal de las fuentes.** La IA sobre sus fotos, cruzar sus datos y guardar resultados; y los acuerdos con las grandes. | pendiente |
 | 9.2 | **Las claves de producción.** Precios de verdad, con los datos de la empresa. | pendiente |
-| 9.3 | **La IA.** Con cuál piensa cada asiento, quién la paga y dónde corre. | por decidir |
-| 9.4 | **Dónde vive.** En Cortex, y cómo se conecta. | por decidir |
+| 9.3 | **El precio y el cobro.** Lo que cuesta El Dorado y cómo se cobra. La IA va aparte: Claude, con la clave de cada viajero (tu decisión del 23-nov). | por decidir |
+| 9.4 | **Dónde corre.** En qué servidores viven la web y la casa, y con qué dirección. | por decidir |
 | 9.5 | **La carpeta de entrega.** El README, el mapa y cómo conectarlo. | pendiente |
+
+## 10. La web
+
+*pendiente.* Lo que ve el viajero. Se construye primero en seco, con un viaje de verdad ya grabado, para que la veas pronto y para fijar la forma del viaje que el agente tiene que producir. Después se enchufa a la casa.
+
+- **Deja**: la web entera, navegable: la portada, el mapa del mundo, la investigación en vivo y tu viaje por días
+- **Se prueba**: con el viaje grabado, sin IA y sin fuentes; y con capturas, pantalla a pantalla
+- **Tu visto bueno**: tu visto bueno a la identidad (10.2) y a la web en seco
+
+| Punto | Qué | Estado |
+|---|---|---|
+| 10.1 | **Dónde vive y con qué se hace.** Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex. Lleva sus dependencias; el agente sigue sin ninguna. | pendiente |
+| 10.2 | **La identidad y el sistema de diseño.** El color, la letra y la manera de moverse de El Dorado; sus piezas (el botón, la tarjeta, la ficha, la hoja de abajo en el móvil); en claro y en oscuro. Se te enseña antes de seguir. | pendiente |
+| 10.3 | **El viaje grabado.** Lisboa, con lo que ya salió de verdad (la búsqueda y las fichas de cómo es) y un día a día hecho a mano y marcado como muestra, para construir y enseñar la web sin gastar. | pendiente |
+| 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, el vuelo del mapa hasta el destino y el primer vistazo. | pendiente |
+| 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. | pendiente |
+| 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. | pendiente |
+| 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada. | pendiente |
+| 10.8 | **La portada.** Qué es, el viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta. En inglés y en español. | pendiente |
+| 10.9 | **En el móvil, para todos y rápida.** La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla. | pendiente |
+| 10.10 | **La revisión con capturas.** Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas. | pendiente |
+
+## 11. La cuenta y tu panel
+
+*pendiente.* Lo que hace que tu viaje sea tuyo y siga ahí: entrar, tu clave de IA y tus viajes.
+
+- **Deja**: registro, sesión, tu clave guardada cifrada y un panel con tus viajes y su gasto
+- **Se prueba**: con cuentas inventadas; la seguridad, con su adversario
+- **Tu visto bueno**: tu decisión de con qué se guardan las cuentas, antes de empezar
+
+| Punto | Qué | Estado |
+|---|---|---|
+| 11.1 | **El registro y la sesión.** Con qué se guardan las cuentas y cómo se entra. | por decidir |
+| 11.2 | **Tu clave de IA.** La pestaña donde pegas tu clave de Claude: se comprueba, se guarda cifrada, no se enseña entera y se borra cuando quieras. | pendiente |
+| 11.3 | **Tu panel.** Tus viajes, dónde dejaste cada uno y lo que te espera. | pendiente |
+| 11.4 | **El gasto de tu clave.** Lo que ha gastado cada viaje, y lo que va a gastar lo siguiente. | pendiente |
+| 11.5 | **Compartir un viaje.** Un enlace para que lo vea quien viaja contigo, sin poder cambiarlo. Lo propone la sesión. | por decidir |
+
+## 12. La guía
+
+*pendiente.* Lo que te llevas: tu viaje, en un cuaderno.
+
+- **Deja**: una guía de tu viaje, para descargar
+- **Se prueba**: con el viaje grabado; la puerta 10, con sus trampas
+- **Tu visto bueno**: al ver la primera guía
+
+| Punto | Qué | Estado |
+|---|---|---|
+| 12.1 | **El que escribe la guía.** Su contrato y la puerta 10: solo cuenta lo que hay en tu viaje. | pendiente |
+| 12.2 | **La maqueta.** El cuaderno: la portada, el viaje de un vistazo y una doble página por día, pintado como una página y guardado como documento. | pendiente |
+| 12.3 | **Los dibujos.** Una colección propia o generados para cada viaje. | por decidir |
+
+## 13. Enseñarlo
+
+*pendiente.* Lo último: que se vea fuera.
+
+- **Deja**: el vídeo de El Dorado y su sitio en Cortex
+- **Se prueba**: contigo
+- **Tu visto bueno**: todo: son decisiones tuyas
+
+| Punto | Qué | Estado |
+|---|---|---|
+| 13.1 | **El vídeo.** Una pieza corta que enseña la investigación y el viaje en el mapa. | pendiente |
+| 13.2 | **Su sitio en Cortex.** Su tarjeta entre los agentes, con el enlace a su web. Se hace en el repositorio de las webs, que desde aquí solo se lee: pide tu permiso. | por decidir |
 
 ## Cada caja de la hoja, en su punto
 
@@ -211,8 +294,19 @@ Cada caja del flujo de la hoja, con el punto que la construye. La prueba del rep
 
 | Momento | Caja de la hoja | Puntos |
 |---|---|---|
-| Empezar | Tú, el destino y las fechas | 5.1 |
-| Empezar | Tú, cinco toques | 5.1 |
+| La portada y tu panel | Tú llegas | 10.8 |
+| La portada y tu panel | El viaje de ejemplo | 10.3, 10.8 |
+| La portada y tu panel | Tú, tu cuenta | 11.1 |
+| La portada y tu panel | Tú, tu clave de IA | 11.2 |
+| La portada y tu panel | Tu panel: donde lo dejaste | 11.3 |
+| La portada y tu panel | Los precios de hoy | 8.4, 8.7 |
+| La portada y tu panel | El gasto de tu clave | 2.7, 11.4 |
+| La portada y tu panel | Retomas | 11.3 |
+| Empezar | Tú, el mapa del mundo | 10.4 |
+| Empezar | El buscador de lugares | 3.11, 10.4 |
+| Empezar | El primer vistazo | 5.5, 10.4 |
+| Empezar | Tú, «Empezar la investigación» | 2.2, 10.4 |
+| Empezar | Tú, cinco toques | 5.1, 10.5 |
 | Empezar | Tú, la caja libre | 5.1 |
 | Empezar | El que escucha | 5.2 |
 | Empezar | Puerta 1: ¿el viaje, claro? | 5.2 |
@@ -221,23 +315,27 @@ Cada caja del flujo de la hoja, con el punto que la construye. La prueba del rep
 | Empezar | El de los papeles | 5.4 |
 | Empezar | Puerta 2: ¿algún papel bloquea? | 5.4 |
 | Empezar | Tú, las fechas | 5.3 |
-| El primer viaje | Tú, «Buscar mi viaje» | 2.2 |
-| El primer viaje | El de la ruta | 4.5 |
-| El primer viaje | Puerta 3: ¿las noches suman? | 4.5 |
-| El primer viaje | La búsqueda de alojamiento | 3.2, 4.1 |
-| El primer viaje | La búsqueda de transporte | 3.3, 3.7, 4.4 |
-| El primer viaje | Puerta 4: ¿la búsqueda es de fiar? | 4.1 |
-| El primer viaje | Las tres cribas | 1.4, 4.3 |
-| El primer viaje | El que mira el alojamiento | 2.3, 2.4, 3.6, 4.2 |
-| El primer viaje | Puerta 5: ¿cada nivel, con su prueba? | 4.2 |
-| El primer viaje | El cruce | 3.4, 4.6 |
-| El primer viaje | El que cruza | 4.6 |
-| El primer viaje | Puerta 6: ¿cada número sale de la tabla? | 4.6 |
-| El primer viaje | El que explica | 4.7 |
-| El primer viaje | Puerta 7: ¿sin promesas y con su aviso? | 4.7 |
-| El primer viaje | La salida, en el mapa | 2.6, 4.8 |
-| El primer viaje | Salen tus tres viajes | 4.8 |
-| El alojamiento | Tú abres el alojamiento | 8.2 |
+| La investigación | La investigación, en vivo | 1.5, 2.6, 10.5 |
+| La investigación | El de la ruta | 4.5 |
+| La investigación | Puerta 3: ¿las noches suman? | 4.5 |
+| La investigación | La búsqueda de alojamiento | 3.2, 4.1 |
+| La investigación | La búsqueda de transporte | 3.3, 3.7, 4.4 |
+| La investigación | Los sitios que ver | 3.10 |
+| La investigación | Puerta 4: ¿la búsqueda es de fiar? | 4.1 |
+| La investigación | Las tres cribas | 1.4, 4.3 |
+| La investigación | El que mira el alojamiento | 2.3, 2.4, 3.6, 4.2, 4.11 |
+| La investigación | Puerta 5: ¿cada nivel, con su prueba? | 4.2 |
+| La investigación | El del día a día | 4.9 |
+| La investigación | El ritmo | 3.8, 4.10 |
+| La investigación | Puerta 9: ¿cada día cabe? | 4.9 |
+| La investigación | El cruce | 3.4, 3.12, 4.6 |
+| La investigación | El que cruza | 4.6 |
+| La investigación | Puerta 6: ¿cada número sale de la tabla? | 4.6 |
+| La investigación | El que explica | 4.7 |
+| La investigación | Puerta 7: ¿sin promesas y con su aviso? | 4.7 |
+| La investigación | El viaje, en el mapa | 1.5, 4.8, 10.6 |
+| La investigación | Sale tu viaje, en el mapa | 10.6 |
+| El alojamiento | Tú abres el alojamiento | 8.2, 10.7 |
 | El alojamiento | Tú, tus gustos | 8.2 |
 | El alojamiento | La búsqueda de alojamiento, otra vez | 4.1, 8.2 |
 | El alojamiento | Los gustos | 4.3 |
@@ -245,24 +343,31 @@ Cada caja del flujo de la hoja, con el punto que la construye. La prueba del rep
 | El alojamiento | El que cruza | 8.2 |
 | El alojamiento | Las puertas 4 y 5, otra vez | 8.2 |
 | El alojamiento | Tu elección | 8.1 |
-| El transporte | Tú abres el transporte | 8.3 |
+| El transporte | Tú abres el transporte | 8.3, 10.7 |
 | El transporte | La búsqueda de transporte, otra vez | 4.4, 8.3 |
 | El transporte | El que cruza | 8.3 |
 | El transporte | El de los papeles | 8.3 |
 | El transporte | Las puertas 2 y 6, otra vez | 8.3 |
 | El transporte | Tu elección | 8.1 |
-| El día a día | Tú abres un día | 8.6 |
-| El día a día | El del día a día | 8.6 |
-| El día a día | Las distancias | 3.8, 8.6 |
+| El día a día | Tú abres un día | 8.6, 10.6 |
+| El día a día | Tú, el ritmo | 4.10, 10.6 |
+| El día a día | Tú quitas, añades o mueves | 8.6 |
+| El día a día | Los sitios que ver, otra vez | 3.10, 8.6 |
+| El día a día | El del día a día | 4.9, 8.6 |
+| El día a día | El ritmo, otra vez | 4.10 |
 | El día a día | El del calendario | 8.6 |
-| El día a día | La puerta del día a día | 8.6 |
-| El día a día | Tu aprobación | 8.6 |
-| Elegir y reservar | Tú, «Me quedo con este» | 8.4 |
-| Elegir y reservar | Los precios de hoy | 8.4 |
-| Elegir y reservar | El que explica | 8.4 |
-| Elegir y reservar | Puerta 8: ¿todo cuadra? | 8.4 |
-| Elegir y reservar | Los enlaces | 3.9 |
-| Elegir y reservar | Sale tu viaje | 8.4 |
+| El día a día | La puerta 9, otra vez | 4.9 |
+| Cerrar el viaje | Tú, «Me quedo con este» | 8.4 |
+| Cerrar el viaje | Los precios de hoy | 8.4 |
+| Cerrar el viaje | El que explica | 8.4 |
+| Cerrar el viaje | Puerta 8: ¿todo cuadra? | 8.4 |
+| Cerrar el viaje | Los enlaces | 3.9, 3.13 |
+| Cerrar el viaje | Sale tu viaje | 8.4 |
+| La guía | Tú, «Quiero mi guía» | 12.2 |
+| La guía | El que escribe la guía | 12.1 |
+| La guía | La maqueta de la guía | 12.2, 12.3 |
+| La guía | Puerta 10: ¿la guía dice lo que dice el viaje? | 12.1 |
+| La guía | Sale tu guía | 12.2 |
 | Cambios | Tú cambias algo | 8.5 |
 | Cambios | El impacto | 8.1 |
 | Cambios | Tu adelante | 8.5 |
@@ -270,11 +375,8 @@ Cada caja del flujo de la hoja, con el punto que la construye. La prueba del rep
 | Cambios | El de los papeles | 8.5 |
 | Cambios | Las búsquedas, otra vez | 8.5 |
 | Cambios | El que cruza | 8.5 |
+| Cambios | El ritmo, otra vez | 4.10, 8.5 |
 | Cambios | La versión | 8.1 |
-| Al volver | Tú entras | 8.5 |
-| Al volver | Donde lo dejaste | 8.5 |
-| Al volver | Los precios de hoy | 8.5, 8.7 |
-| Al volver | Retomas | 8.5 |
 
 ## Las reglas de la obra
 

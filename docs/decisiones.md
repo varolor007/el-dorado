@@ -123,8 +123,48 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   https://claude.ai/artifact/G2ATff6Kp9J9fq4hVn7xpE.
 - **Una nota puede hablar de toda una carpeta** (la sesión, por lo que enseñó la primera entrega): «ninguna foto
   enseña un gimnasio» cita la carpeta de las fotos. El método y la puerta de todos lo aceptan.
+- **Seguimos con el agente entero, con su web** (el PM): «medio veo que las cosas empiezan a funcionar: sigamos con
+  el agente per se, la página web y todo. Te voy a dar libertad para gestionarlo E2E». La web tiene que quitar
+  fricción y ser «award winning en diseño».
+- **Cómo se imagina el viaje del usuario** (el PM): un mapa del mundo en plano con una barra arriba (dónde y cuándo,
+  «como un buscador de Booking»); el mapa hace zoom al destino; un botón para empezar; la investigación se ve, con
+  partículas y hallazgos, y va preguntando; la salida, el mapa del destino con una capa por día, paradas con su
+  foto en un círculo, flechas de una a otra y enlace a Google Maps, y cuántas cosas al día según el ritmo; dónde
+  dormir y sus opciones; lo que se ahorra con un día antes, otro hotel u otra zona, «aunque nos haya puesto que esos
+  días no son variables»; al cerrar, los enlaces de donde se encontró cada precio; y una mini guía para descargar.
+- **Portada, cuenta, clave y panel** (el PM): una portada que presente al agente, registro e inicio de sesión, una
+  pestaña para la clave de IA, «de momento solo con Claude», y un panel: «como van a funcionar todos nuestros
+  agentes».
+- **Visto bueno, de tanda en tanda** (el PM): «me vas pidiendo confirmación cuando termines de bloque en bloque, y
+  vamos haciendo sign-offs». Y revisar la web con capturas antes de enseñarla. El vídeo, lo último.
+- **Una web propia, como la de DaVi** (la sesión, con lo que se leyó en `aurora-web`): Cortex no tiene todavía ni
+  cuentas, ni pago, ni páginas por agente; DaVi vive en su propia web, con su portada, sus precios y su entrada, y la
+  IA se paga aparte, con la clave de cada uno. El Dorado hace lo mismo, en `web/`, con el mismo montaje que el
+  ensamblador: la web solo habla con la casa, y la casa le cuenta en vivo lo que pasa.
+- **La hoja y el plan, versión 2** (la sesión, a la firma del PM): nueve momentos (entran la portada con el panel y
+  la guía; «Al volver» pasa al panel); el día a día, diseñado, con su puerta 9; la guía, con su puerta 10; ya no son
+  tres viajes sino un viaje con tres maneras de hacerlo y sus palancas; un solo botón para empezar; y el plan gana
+  cuatro bloques (la web, la cuenta, la guía y enseñarlo) y ocho tandas.
+- **Lo que se mueve en el mapa es trabajo de verdad** (la sesión): cada pulso es una búsqueda de verdad en ese sitio,
+  y lo que se dice en vivo lo escribe el código con sus datos, no una IA. Es la respuesta a las «partículas»: que
+  expliquen, no que adornen.
+- **Los datos de los sitios y del mapa, abiertos y sin clave** (la sesión, tras mirarlo): los sitios, de Wikidata,
+  Wikipedia y OpenStreetMap; sus fotos, de Wikimedia Commons, con su autor y su licencia; el mapa, con MapLibre y
+  OpenFreeMap; el buscador, Photon. Ninguno garantiza el servicio: se enchufan como las demás fuentes. Los datos de
+  Google no caben: cuestan y no dejan pintarlos sobre un mapa que no sea el suyo.
 
 ## Pendientes
+
+Lo que pide la versión 2, a decisión del PM:
+
+- **El primer vistazo, sin cuenta** (23-nov): lo propone la sesión. No gasta IA, pero sí consultas a las fuentes.
+- **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de la tanda 4.
+- **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
+- **Dónde se reserva un precio de LiteAPI** (23-nov): no tiene página pública. Hoy se enlazaría a otra agencia cuando
+  casa y, si no, a la web del hotel. Antes de la tanda 5.
+- **Los dibujos de la guía** (23-nov): una colección propia o generados para cada viaje. Antes de la tanda 5.
+- **Compartir un viaje** con quien viaja contigo (23-nov): lo propone la sesión.
+- **La tarjeta de El Dorado en Cortex** (23-nov): se hace en `aurora-web`, que desde aquí solo se lee. Al final.
 
 Lo que deja la tanda 1, a decisión del PM:
 

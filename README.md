@@ -1,7 +1,8 @@
 # El Dorado
 
-El agente de viajes de Cortex: planifica un viaje entero al mejor precio. Le cuentas a dónde quieres ir, cuándo, con
-quién y cuánto quieres gastar, y te propone dos o tres viajes completos, ordenados por su precio total, en un mapa.
+El agente de viajes de Cortex: planifica un viaje entero al mejor precio. Buscas a dónde quieres ir en un mapa del
+mundo, das tus fechas y ves cómo se investiga tu viaje en vivo, hasta que queda dibujado en el mapa, día a día, con
+dónde duermes, cómo llegas y lo que ahorras con cada cambio.
 
 Es un MVP, sin uso comercial todavía. Qué es, en la hoja ([docs/hoja.md](docs/hoja.md)); cómo se construye y por dónde
 vamos, en el plan ([docs/plan.md](docs/plan.md)); dónde va cada cosa, en [MAP.md](MAP.md).

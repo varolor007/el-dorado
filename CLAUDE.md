@@ -1,7 +1,8 @@
 # El Dorado: lo que tiene que saber cada sesión
 
 Este repositorio (`varolor007/el-dorado`) es el taller de El Dorado, el agente de viajes de Cortex: planifica un viaje
-entero al mejor precio. Se vende en Cortex, la plataforma de agentes de la web de Cognitive, que vive en
+entero al mejor precio y lo dibuja en un mapa, día a día. Tiene su propia web, como DaVi (la portada, el panel y el
+mapa), y su sitio entre los agentes de Cortex, la plataforma de la web de Cognitive, que vive en
 `varolor007/aurora-web`. Nada de aquí está publicado.
 
 Antes de nada, lee [docs/memoria.md](docs/memoria.md): qué es, dónde vive cada cosa y cómo se retoma. Mandan las dos
@@ -33,7 +34,8 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
    `node docs/paginas/pinta.mjs` y se publican sus páginas en su misma dirección. La batería avisa si se quedan atrás
    o si una caja de la hoja no tiene su punto en el plan.
 4. **Se trabaja por tandas.** Lo que no necesita al PM va seguido; solo se para para su firma, una decisión suya o un
-   gasto. Cada tanda acaba con su punto de situación, en la memoria y al PM.
+   gasto. Cada tanda acaba en algo que el PM puede mirar, con su punto de situación en la memoria, y la siguiente no
+   empieza sin su visto bueno (el PM, 23-nov: «me vas pidiendo confirmación, y vamos haciendo sign-offs»).
 5. **Nada que gaste sin el visto bueno explícito del PM**: ni una sesión del agente, ni un run, ni una prueba con un
    modelo, ni una API de pago. Lanzar es siempre una decisión suya. Lo que gasta la propia sesión de trabajo, y las
    pruebas con las tres fuentes que ya aprobó (LiteAPI, Aviasales y Parallel), no esperan su visto bueno cada vez (el
@@ -45,6 +47,9 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 8. **Ningún dato de un viajero ni de un cliente en el repositorio**, ni lo que devuelve una fuente, ni una clave: lo
    que saca una búsqueda va a la mesa, fuera, y las pruebas usan el caso inventado.
 9. **Ningún identificador de modelo en el repositorio**: ni en el código, ni en los documentos, ni en los commits.
+   Con qué modelo piensa cada asiento se dice en el entorno, no aquí.
+10. **La web se mira antes de enseñarla** (el PM, 23-nov): cada pantalla y cada animación, con capturas, en ancho y en
+    móvil, en claro y en oscuro. Lo que no cuadra se arregla antes.
 
 ## Cómo se trabaja
 
@@ -59,7 +64,8 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 ## Cómo se escribe
 
 - El código, en TypeScript sobre Node 22 (Node ejecuta los `.ts` sin compilar), a 120 caracteres por línea, con
-  `npx prettier --write` para el formato, y sin dependencias para funcionar: solo las de desarrollo.
+  `npx prettier --write` para el formato. El agente (`agent/`), sin dependencias para funcionar: solo las de
+  desarrollo. La web (`web/`) lleva las suyas, en su propia carpeta.
 - Los contratos de los asientos, en inglés; lo que ve el cliente en la web, en inglés, como la web de Cortex; el agente
   responde al viajero en su idioma. Todo lo demás, en español.
 - En ningún texto, tampoco en el chat, rayas largas, puntos medios ni el carácter de puntos suspensivos.

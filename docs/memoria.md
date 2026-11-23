@@ -3,16 +3,34 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 1, hecha, al visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)). La
-hoja y el plan, firmados por el PM el 23-nov. Ese mismo día se cerró la primera tanda, el primer asiento de IA:
+**Estamos aquí: el 0.7, la firma del PM de la versión 2 de la hoja y del plan** (el estado, punto a punto, en
+[plan.md](plan.md)). El 23-nov, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo
+se imagina el viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada
+tanda. Con eso se rehicieron las dos biblias:
 
-- **2.4, el método común**: su contrato, en inglés, en `agent/contracts/common/`, y la puerta de todos
-  (`agent/gates/puerta_metodo.ts`).
-- **2.3, cómo se lanza un asiento**: `agent/launcher/puesto.ts` y `asiento.ts`.
-- **3.6, las fotos**: `agent/tools/fotos.ts`.
-- **4.2, el que mira el alojamiento**: su contrato, en `agent/contracts/lodging-viewer/`; sus niveles, en
-  `agent/scripts/niveles.ts`; la puerta 5, en `agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge,
-  `agent/launcher/mirar.ts`.
+- **La hoja, versión 2**: nueve momentos (la portada y tu panel, empezar, la investigación, el alojamiento, el
+  transporte, el día a día, cerrar el viaje, la guía y cambios), una sección nueva con la web (sus principios y sus
+  pantallas), el día a día diseñado y la guía.
+- **El plan, versión 2**: cuatro bloques nuevos (10, la web; 11, la cuenta y tu panel; 12, la guía; 13, enseñarlo) y
+  ocho tandas. La siguiente, con su firma, es **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje
+  de Lisboa ya grabado. Lo primero que se le enseña es la identidad de El Dorado.
+
+Lo que se miró antes de rehacerlas, para no repetirlo: `aurora-web` no tiene cuentas, ni pago, ni páginas por agente;
+DaVi vive en su propia web (portada con precios y lista de espera, entrada aparte, y la IA con la clave de cada
+uno); el ensamblador corre con una web que solo habla con su motor y lo escucha en vivo. El mapa abierto (MapLibre
+con OpenFreeMap) y el buscador (Photon) no piden clave; los sitios salen de Wikidata, Wikipedia y OpenStreetMap, y
+sus fotos, de Wikimedia Commons, con autor y licencia.
+
+Las tandas hechas:
+
+- **Tanda 1, el primer asiento de IA** (23-nov):
+  - 2.4, el método común: su contrato, en inglés, en `agent/contracts/common/`, y la puerta de todos
+    (`agent/gates/puerta_metodo.ts`).
+  - 2.3, cómo se lanza un asiento: `agent/launcher/puesto.ts` y `asiento.ts`.
+  - 3.6, las fotos: `agent/tools/fotos.ts`.
+  - 4.2, el que mira el alojamiento: su contrato, en `agent/contracts/lodging-viewer/`; sus niveles, en
+    `agent/scripts/niveles.ts`; la puerta 5, en `agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge,
+    `agent/launcher/mirar.ts`.
 
 **El punto de situación de la tanda 1.** Se probó con los cinco finalistas de Lisboa, dos pasadas a ciegas por
 alojamiento, lanzadas a mano por la sesión: diez fichas, las dos puertas en verde en las diez, y las dos pasadas
@@ -20,8 +38,8 @@ coinciden en 38 de 40 campos. Cada asiento tardó unos catorce minutos. La pági
 ojos, en https://claude.ai/artifact/G2ATff6Kp9J9fq4hVn7xpE (sus fotos y sus fichas son datos de una búsqueda: viven en
 la mesa y en esa página, no aquí). Lo que enseñó, en [datos.md](datos.md). Deja tres decisiones del PM, en el
 registro: si «descuidado» se parte en dos campos (cómo se ve y cómo lo mantienen), cómo se abarata la mirada (encoger
-las fotos) y con quién piensa cada asiento en el producto. **La tanda 2 (de alojamientos a viajes: 1.1, 1.4, 4.3, 4.6
-y 4.7) no empieza sin su visto bueno.**
+las fotos) y con quién piensa cada asiento en el producto. Lo tercero ya está decidido: Claude, con la clave de cada
+viajero. Las otras dos van en el punto 4.11, en la tanda 3.
 
 Lo de antes: el 23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de
 alojamiento, con su puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos
@@ -33,10 +51,11 @@ manda la hoja. Lo que trae cada fuente y lo que enseñaron las pruebas, en [dato
 
 ## 1. Qué es
 
-El Dorado es el agente de viajes de Cortex, para venderlo a cualquier viajero. Le cuentas a dónde quieres ir, cuándo,
-con quién y cuánto quieres gastar, y te propone dos o tres viajes completos, ordenados por su precio total: el
-transporte, el alojamiento y el día a día, en un mapa interactivo en la web. Cada precio, con su enlace y su fecha; no
-reserva ni paga.
+El Dorado es el agente de viajes de Cortex, para venderlo a cualquier viajero. Buscas a dónde quieres ir en un mapa
+del mundo, das tus fechas, pulsas un botón y ves cómo se investiga tu viaje en vivo, hasta que queda dibujado en el
+mapa: cada día en su capa, con sus paradas; dónde duermes y cómo llegas, de tres maneras, y lo que ahorras con cada
+cambio. Cada precio, con su enlace y su fecha; no reserva ni paga. Al cerrarlo, te llevas sus enlaces de reserva y
+una guía. Tiene su propia web, con su portada y su panel, y la IA la pone cada viajero, con su clave.
 
 Primero corre de una tirada, de punta a punta. Después, el viajero vuelve por momentos a cada vertical (el transporte,
 el alojamiento, el día a día) y la cambia, como en DaVi.
@@ -45,8 +64,8 @@ el alojamiento, el día a día) y la cambia, como en DaVi.
 
 | Biblia | Qué dice | Página publicada | En el repositorio |
 |---|---|---|---|
-| La hoja | Qué es El Dorado: sus ocho momentos en columnas, las mismas filas en todos, el flujo con una caja por paso, la casa, las puertas, los asientos, los datos y lo decidido. En violeta, lo que está por decidir; marcado, lo ya hecho | https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73 | [hoja.md](hoja.md), de `paginas/hoja.datos.mjs` |
-| El plan | Cómo se construye: diez bloques en orden, cada punto con su estado, las tandas y cada caja de la hoja en su punto | https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t | [plan.md](plan.md), de `paginas/plan.datos.mjs` |
+| La hoja | Qué es El Dorado: sus nueve momentos en columnas, las mismas filas en todos, el flujo con una caja por paso, la casa, las puertas, los asientos, los datos y lo decidido. En violeta, lo que está por decidir; marcado, lo ya hecho | https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73 | [hoja.md](hoja.md), de `paginas/hoja.datos.mjs` |
+| El plan | Cómo se construye: catorce bloques, cada punto con su estado, las ocho tandas (el orden y dónde va el visto bueno del PM) y cada caja de la hoja en su punto | https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t | [plan.md](plan.md), de `paginas/plan.datos.mjs` |
 
 Las dos se escriben en sus datos y se pintan con `node docs/paginas/pinta.mjs`: de ahí salen la página, que se publica
 en su misma dirección, y el texto. No se editan a mano, y la batería avisa si se quedan atrás. El formato
