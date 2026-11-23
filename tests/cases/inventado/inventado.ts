@@ -113,7 +113,7 @@ export function detalleDe(id: string): Detalle {
         vistas: ["Sea view"],
       },
     ],
-    fotos: ["https://fotos.invalid/hotel-1.jpg"],
+    fotos: ["https://fotos.invalid/hotel-1.jpg", "https://fotos.invalid/hotel-2.jpg"],
     servicios: ["Fitness center", "Outdoor pool"],
     entradaDesde: "03:00 PM",
     salidaHasta: "12:00 PM",

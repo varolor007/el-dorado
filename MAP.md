@@ -7,6 +7,7 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | Carpeta | Qué va | Estado |
 |---|---|---|
 | `agent/tools/fuentes/` | El recolector: la salida a internet, los tipos comunes y un enchufe por fuente de datos (LiteAPI, Aviasales y Parallel). Cada enchufe se apaga sin tocar lo demás | Las bases, del 23-nov |
+| `agent/tools/` | Las herramientas que no son una fuente. Hoy, las fotos (`fotos.ts`): cuáles se le pasan al asiento que mira, con su tope, y cómo se bajan | Las fotos, con el punto 3.6 |
 | `agent/scripts/` | Los pasos que hace el código, sin IA: los mínimos, los finalistas, las opiniones por temas, el cruce entre fuentes y la búsqueda de alojamiento entera | Las bases, del 23-nov |
 | `agent/contracts/common/` | El método común de los asientos, en inglés: el orden de lectura, los seis pasos, las diez normas de todos, cómo se entrega y la orden que abre un asiento | Hecho, con el punto 2.4 |
 | `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La de la búsqueda de alojamiento y la de todos, que mira el método de cualquier asiento | La de todos, con el punto 2.4 |

@@ -129,6 +129,11 @@ Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
 - **Los acuerdos con las grandes** (Booking.com y demás): el PM, con un abogado, cuando el agente funcione.
 - **El transporte, también código**: lo propone la sesión; decide el PM.
 
+- **Encoger las fotos** (23-nov): las del hotel vienen sin pie y solo en grande, y la IA no puede mirar un centenar
+  en grande por alojamiento. Hoy van treinta, repartidas, y lo que no se ve es «no se sabe». Para verlas todas hay que
+  encogerlas antes, con una pieza que el código no lleva (una dependencia para funcionar, que hoy no hay ninguna), o
+  dar un primer vistazo aparte. Decide el PM, con lo que salga de la tanda 1.
+
 - **La salida en la web**: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. En su etapa, antes
   de construirla.
 - **Los momentos**: qué verticales exactamente, qué se guarda de un viaje y quién trabaja en cada una. Al diseñar el

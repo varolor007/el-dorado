@@ -58,6 +58,7 @@ export type Habitacion = {
   nombre: string;
   metros: number | null;
   camas: string[];
+  /** Las fotos de esta habitación, con lo que más enseña de ella por delante. */
   fotos: string[];
   vistas: string[];
 };
@@ -74,6 +75,7 @@ export type Opinion = {
 export type Detalle = Origen & {
   id: string;
   habitaciones: Habitacion[];
+  /** Las fotos del alojamiento en general. No dicen de qué son. */
   fotos: string[];
   servicios: string[];
   entradaDesde: string | null;

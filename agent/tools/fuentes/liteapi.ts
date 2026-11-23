@@ -91,6 +91,9 @@ export function leerPrecios(json: unknown, e: Estancia, visto: string): Precio[]
   return salida;
 }
 
+/** Las clases de foto de una habitación que van por delante, por lo que enseñan de ella. */
+const PRIMERO = ["bedroom", "hotel room", "bathroom", "view", "window"];
+
 function leerHabitacion(crudo: unknown): Habitacion | null {
   const r = objeto(crudo);
   if (r.id === undefined || r.id === null) return null;
@@ -100,11 +103,16 @@ function leerHabitacion(crudo: unknown): Habitacion | null {
     const tipo = texto(cama.bedType);
     if (tipo !== null) camas.push(`${numero(cama.quantity) ?? 1} x ${tipo}`);
   }
-  const fotos: string[] = [];
+  const conClase: { url: string; orden: number }[] = [];
   for (const f of lista(r.photos)) {
-    const url = texto(objeto(f).url);
-    if (url !== null) fotos.push(url);
+    const foto = objeto(f);
+    const url = texto(foto.url);
+    if (url === null || conClase.some((x) => x.url === url)) continue;
+    const clase = PRIMERO.indexOf((texto(foto.imageClass1) ?? "").toLowerCase());
+    conClase.push({ url, orden: foto.mainPhoto === true ? -1 : clase < 0 ? PRIMERO.length : clase });
   }
+  // El orden de la fuente se respeta dentro de cada clase: la ordenación de Node no baraja los iguales.
+  const fotos = conClase.sort((a, b) => a.orden - b.orden).map((x) => x.url);
   const vistas: string[] = [];
   for (const v of lista(r.views)) {
     const nombre = typeof v === "string" ? texto(v) : (texto(objeto(v).view) ?? texto(objeto(v).name));
@@ -130,7 +138,7 @@ export function leerDetalle(json: unknown, visto: string): Detalle {
   const fotos: string[] = [];
   for (const f of lista(d.hotelImages)) {
     const url = texto(objeto(f).url);
-    if (url !== null) fotos.push(url);
+    if (url !== null && !fotos.includes(url)) fotos.push(url);
   }
   const servicios: string[] = [];
   for (const s of [...lista(d.facilities), ...lista(d.hotelFacilities)]) {

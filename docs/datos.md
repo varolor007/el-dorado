@@ -221,6 +221,20 @@ opiniones y cuatro estrellas. Lo que enseñó:
   alrededor, sí (trece días de febrero, de 19 a 43 EUR la ida y vuelta desde Madrid). Para las fechas exactas hace
   falta una fuente en vivo.
 
+## Las fotos, bajadas de verdad (23-nov)
+
+Con el punto 3.6 se bajaron las fotos de un finalista de Lisboa. Lo que enseñó:
+
+- **Las de la habitación** vienen por tipo de habitación, en grande (3.000 puntos de ancho) y con una clase que les
+  pone la fuente (dormitorio, baño, vista, minibar). Con esa clase, el código pone por delante lo que más enseña.
+- **Las del hotel** vienen sin pie y solo en grande: de 47 a 144 por alojamiento. La fuente solo tiene en pequeño la
+  foto principal, no las demás.
+- **Lo que cuesta**: treinta y cinco fotos son unos doce megas y se bajan en un segundo. Lo caro no es bajarlas, sino
+  que la IA las mire en grande: por eso hay tope (doce de la habitación y treinta del hotel).
+- **Lo que queda abierto**: con treinta de un centenar, el gimnasio o la piscina pueden no estar entre las que ve el
+  asiento, y entonces dice «no se sabe». Verlas todas pide encogerlas antes, y eso necesita una pieza que hoy el
+  código no lleva: por decidir.
+
 ## Lo que se ve en el mapa
 
 - **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13). Sus salidas

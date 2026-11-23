@@ -5,8 +5,8 @@ Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de an
 
 **Estamos aquí: la tanda 1, el primer asiento de IA** (el estado, punto a punto, en [plan.md](plan.md)). La hoja y el
 plan, firmados por el PM el 23-nov. De la tanda, hechos el método común de los asientos (2.4: su contrato, en inglés,
-en `agent/contracts/common/`, y la puerta de todos, `agent/gates/puerta_metodo.ts`) y cómo se lanza un asiento (2.3:
-`agent/launcher/puesto.ts` y `asiento.ts`). El
+en `agent/contracts/common/`, y la puerta de todos, `agent/gates/puerta_metodo.ts`) cómo se lanza un asiento (2.3:
+`agent/launcher/puesto.ts` y `asiento.ts`) y las fotos (3.6: `agent/tools/fotos.ts`). El
 23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de alojamiento, con su
 puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos biblias, versión 1: la
 hoja ([hoja.md](hoja.md)), con el formato de las hojas de Cortex, por momentos, y el plan ([plan.md](plan.md)), que

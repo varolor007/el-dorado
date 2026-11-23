@@ -6,7 +6,7 @@ Plan de El Dorado, versión 1, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 1, el primer asiento de IA.** Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4) y cómo se lanza un asiento (2.3). Faltan las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.
+**Estamos aquí: la tanda 1, el primer asiento de IA.** Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4), cómo se lanza un asiento (2.3) y las fotos (3.6). Falta **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.
 
 ## El estado
 
@@ -103,7 +103,7 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 3.3 | **Aviasales.** Los vuelos guardados para unas fechas y los días baratos del mes, cada precio con el día en que se vio. | hecho |
 | 3.4 | **Parallel.** Las ofertas de otros vendedores por zona, casadas por posición y por nombre. En Lisboa casan dos de cinco: falta pedir más zonas. | en parte |
 | 3.5 | **El buscador y el lector de webs.** Con la memoria de lo consultado, para que ninguna nota cite lo que no se leyó. | pendiente |
-| 3.6 | **Las fotos.** Bajar las de la habitación de ese precio y las del hotel, y pasárselas al asiento, con un tope por alojamiento. | lo siguiente |
+| 3.6 | **Las fotos.** Elige y baja, fuera del repositorio, las de la habitación de ese precio (las doce primeras, con el dormitorio, el baño y la vista por delante) y las del hotel (hasta treinta, repartidas por toda su lista), y dice cuántas da de cuántas hay. Solo baja imágenes de verdad y de direcciones de fiar. Probado con un finalista de Lisboa: treinta y cinco fotos en un segundo. Las del hotel vienen sin pie y solo en grande: verlas todas pide encogerlas, que es una decisión. | hecho |
 | 3.7 | **Los vuelos en vivo.** Elegir de dónde sale el precio de ahora, con sus escalas y su maleta. | por decidir |
 | 3.8 | **Los mapas abiertos.** Distancias y tiempos entre sitios. | pendiente |
 | 3.9 | **Los enlaces de afiliado.** Si cada enlace lleva nuestra marca. Va con lo legal. | por decidir |

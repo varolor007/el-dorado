@@ -120,6 +120,7 @@ test("LiteAPI: el detalle trae las habitaciones con sus metros y sus fotos, y lo
     fotos: ["https://fotos.invalid/a.jpg"],
     vistas: [],
   });
+  assert.deepEqual(d.fotos, ["https://fotos.invalid/h.jpg"]);
   assert.deepEqual(d.servicios, ["Fitness center", "Pool"]);
   assert.equal(d.entradaDesde, "03:00 PM");
   assert.equal(d.web, null);
