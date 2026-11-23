@@ -10,12 +10,13 @@ every difference included, was computed by the house: you copy it.
 ## What you receive, in `in/`
 
 - `trip.json`: what the traveller asked for, with their own words, and `language`: the language they read.
-- `ways.json`: the ways of doing the trip, each with its `id` (`cheapest`, `best_value`, `different`), its lodging,
-  its zone, its totals, its score, `walk_minutes` (half of what they will see is within that many minutes on
-  foot), whether it can be cancelled, what
-  could not be confirmed, what the lodging is like (its levels, each with what was seen or said), its best and its
-  worst, its warnings, and `versus_cheapest`: what it costs more, how many minutes on foot it saves and how much
-  higher its score is. For the different way, the lever that tells it apart and why it was chosen.
+- `ways.json`: the currency of every amount (`currency`), the nights of the trip (`nights`) and the ways of doing
+  it (`ways`), each with its `id` (`cheapest`, `best_value`, `different`), its lodging, its zone, its totals, its
+  score, `walk_minutes` (half of what they will see is within that many minutes on foot), whether it can be
+  cancelled, what could not be confirmed, what the lodging is like (its levels, each with what was seen or said),
+  its best and its worst, its warnings, and `versus_cheapest`: what it costs more, how many minutes on foot it
+  saves and how much higher its score is. For the different way, the lever that tells it apart and why it was
+  chosen.
 - `levers.json`: the savings to tell, each with its `lever_row`, what it applies to (`applies_to`: the lodging the
   change starts from and, if it is the lodging of a way, which one), what changes (other dates, with their
   weekdays; another lodging; another zone), what it saves, and how the walk and the score change.

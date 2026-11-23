@@ -18,19 +18,23 @@ comes from. Note what is unconfirmed.
 For each way, three short texts in the traveller's language:
 
 - `why`: why this way is this one. One sentence.
-- `gains`: what is gained with it compared with the cheapest, in facts and numbers: `55 euros more, four minutes
-  closer on foot and a gym with free weights`. For the cheapest itself: what makes it the one to take if money comes
-  first.
+- `gains`: what is gained with it compared with the cheapest, in facts and numbers. Two examples of the form, in
+  English and of two different kinds, so that you copy neither: `<amount> <currency> more, <minutes> minutes closer
+  on foot and a gym with free weights`, or `<amount> <currency> more, a pool to swim in and it can be cancelled`.
+  `<amount>` and `<minutes>` are numbers of your material, and `<currency>` is the currency of the trip, from
+  `in/ways.json`. For the cheapest itself: what makes it the one to take if money comes first.
 - `loses`: what is lost with it. For the cheapest: what the other ways have and it does not.
 
-Only the differences that matter. No adjective without its fact: not `quiet`, but `on a pedestrian street`; and
-only if the material says so.
+Only the differences that matter. No adjective without its fact: not `quiet` but `the room looks onto an inner
+courtyard`, not `spacious` but `room for a desk besides the bed`; and only if the material says so.
 
 ## 4. Write each saving
 
 For each entry of `in/levers.json`, two short texts:
 
-- `what`: what the traveller would do and what it saves: `Leaving on Thursday instead of Friday saves 81 euros`.
+- `what`: what the traveller would do and what it saves. Two examples of the form, in English and of two different
+  kinds: `Leaving a day earlier, on the <weekday>, saves <amount> <currency>`, or `Sleeping in <the other zone>
+  saves <amount> <currency>`.
 - `in_exchange`: what it costs them: other dates, a longer walk, one night less. If it costs nothing that the
   material shows, say that nothing else changes in what was looked at.
 
