@@ -113,11 +113,36 @@ test("la misma entrada da siempre los mismos días", () => {
 });
 
 test("lo que quitas no vuelve solo, y su sitio lo ocupa la siguiente", () => {
-  const r = repartir(paradas(), FECHAS, "calm", BASE, ["centro-2"]);
+  const r = repartir(paradas(), FECHAS, "calm", BASE, { quitadas: ["centro-2", "no-existe"] });
   const puestas = r.dias.flatMap((d) => d.paradas);
   assert.ok(!puestas.includes("centro-2"));
   assert.ok(r.fuera.includes("centro-2"));
   assert.ok(puestas.includes("centro-4"));
+});
+
+test("lo que añades entra en su zona aunque el día ya esté lleno", () => {
+  const antes = repartir(paradas(), FECHAS, "calm", BASE);
+  assert.ok(antes.fuera.includes("este-4"));
+  const r = repartir(paradas(), FECHAS, "calm", BASE, { anadidas: ["este-4"] });
+  const delEste = r.dias.find((d) => d.paradas.includes("este-1"));
+  assert.ok(delEste?.paradas.includes("este-4"));
+  assert.equal(delEste?.paradas.length, 4);
+  assert.ok(!r.fuera.includes("este-4"));
+  // Las demás siguen donde estaban.
+  assert.deepEqual(r.fuera.sort(), ["centro-4", "oeste-4"]);
+});
+
+test("lo que mueves a un día se queda en ese día, y ese día sigue teniendo su zona", () => {
+  const antes = repartir(paradas(), FECHAS, "normal", BASE);
+  const eraDelDia = antes.dias.findIndex((d) => d.paradas.includes("oeste-2"));
+  const otro = (eraDelDia + 1) % FECHAS.length;
+  const r = repartir(paradas(), FECHAS, "normal", BASE, { fijadas: { "oeste-2": otro, "no-existe": 0, "este-2": 9 } });
+  assert.ok(r.dias[otro].paradas.includes("oeste-2"));
+  assert.equal(r.dias.flatMap((d) => d.paradas).filter((id) => id === "oeste-2").length, 1);
+  const puestas = r.dias.flatMap((d) => d.paradas);
+  assert.equal(new Set(puestas).size, puestas.length);
+  assert.equal(puestas.length + r.fuera.length, 12);
+  for (const id of ["oeste-1", "centro-1", "este-1"]) assert.ok(puestas.includes(id));
 });
 
 test("sin días o sin paradas no se rompe", () => {

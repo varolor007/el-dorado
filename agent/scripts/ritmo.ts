@@ -102,18 +102,25 @@ function enOrden(paradas: Parada[], base: Punto): Parada[] {
   return orden;
 }
 
+/** Lo que el viajero ha cambiado a mano: lo que quitó, lo que añadió de lo que se quedó fuera y lo que movió de día. */
+export type Cambios = { quitadas?: string[]; anadidas?: string[]; fijadas?: Record<string, number> };
+
 /**
  * Reparte las paradas en los días. Las paradas llegan por orden de importancia: las primeras entran antes, y las
- * imprescindibles, antes que ninguna. `quitadas` son las que el viajero no quiere: no vuelven solas.
+ * imprescindibles, antes que ninguna. Lo que el viajero cambió a mano manda sobre el ritmo: lo que quitó no vuelve
+ * solo, lo que movió a un día se queda en ese día y lo que añadió entra aunque el día ya esté lleno.
  */
 export function repartir(
   paradas: Parada[],
   fechas: string[],
   ritmo: Ritmo,
   base: Punto,
-  quitadas: string[] = [],
+  cambios: Cambios = {},
 ): Reparto {
   const cabe = CABE[ritmo];
+  const quitadas = (cambios.quitadas ?? []).filter((id) => paradas.some((p) => p.id === id));
+  const anadidas = cambios.anadidas ?? [];
+  const fijadas = cambios.fijadas ?? {};
   const porImportancia = [
     ...paradas.filter((p) => p.imprescindible),
     ...paradas.filter((p) => !p.imprescindible),
@@ -122,12 +129,35 @@ export function repartir(
   const fuera: string[] = [...quitadas];
   if (dias.length === 0) return { dias: [], fuera: [...fuera, ...porImportancia.map((p) => p.id)] };
 
-  // Las semillas: una parada por día, las más separadas entre sí de entre las más importantes, para que cada día
-  // tenga su zona. La primera, la más importante; cada una de las siguientes, la más lejana a las ya puestas.
-  const candidatas = porImportancia.slice(0, dias.length * cabe.paradas);
+  const puestas = new Set<string>();
+  const pon = (i: number, p: Parada): void => {
+    dias[i].paradas.push(p);
+    dias[i].minutos += p.minutos;
+    puestas.add(p.id);
+  };
+  const conParadas = (): { i: number; centro: Punto }[] =>
+    dias.flatMap((d, i) => (d.paradas.length === 0 ? [] : [{ i, centro: centro(puntosDe(d)) }]));
+  const masCercano = (p: Parada): number => {
+    const zonas = conParadas().sort((a, b) => enLineaRecta(a.centro, p.punto) - enLineaRecta(b.centro, p.punto));
+    return zonas[0]?.i ?? 0;
+  };
+
+  // 1. Lo que el viajero movió a un día va a ese día, quepa o no.
+  for (const p of porImportancia) {
+    const i = fijadas[p.id];
+    if (i !== undefined && Number.isInteger(i) && i >= 0 && i < dias.length) pon(i, p);
+  }
+
+  // 2. Las semillas: una parada para cada día que sigue vacío, las más separadas entre sí y de los días ya ocupados
+  // de entre las más importantes, para que cada día tenga su zona. La primera, la más importante.
+  const libres = porImportancia.filter((p) => !puestas.has(p.id));
+  const candidatas = libres.slice(0, dias.length * cabe.paradas);
+  const vacios = dias.flatMap((d, i) => (d.paradas.length === 0 ? [i] : []));
+  const ocupados = conParadas().map((z) => z.centro);
   const semillas: Parada[] = [];
-  while (semillas.length < dias.length && semillas.length < candidatas.length) {
-    if (semillas.length === 0) {
+  while (semillas.length < vacios.length && semillas.length < candidatas.length) {
+    const yaHay = [...ocupados, ...semillas.map((s) => s.punto)];
+    if (yaHay.length === 0) {
       semillas.push(candidatas[0]);
       continue;
     }
@@ -135,7 +165,7 @@ export function repartir(
     let lejos = -1;
     for (const c of candidatas) {
       if (semillas.includes(c)) continue;
-      const d = Math.min(...semillas.map((s) => enLineaRecta(s.punto, c.punto)));
+      const d = Math.min(...yaHay.map((s) => enLineaRecta(s, c.punto)));
       if (d > lejos) {
         lejos = d;
         mejor = c;
@@ -144,20 +174,16 @@ export function repartir(
     if (mejor === null) break;
     semillas.push(mejor);
   }
-  // Los días van de la zona más cercana a la base a la más lejana: el primero, sin prisa por llegar.
+  // Los días vacíos se llenan de la zona más cercana a la base a la más lejana: el primero, sin prisa por llegar.
   semillas.sort((a, b) => enLineaRecta(base, a.punto) - enLineaRecta(base, b.punto));
-  semillas.forEach((s, i) => {
-    dias[i].paradas.push(s);
-    dias[i].minutos += s.minutos;
-  });
+  semillas.forEach((s, n) => pon(vacios[n], s));
 
-  // Las demás, por importancia: cada una va al día de su zona, la más cercana, si todavía cabe. Si no cabe, solo va
-  // a otro día que le quede a menos de un salto: antes fuera que cruzar la ciudad por rellenar un hueco.
+  // 3. Las demás, por importancia: cada una va al día de su zona, la más cercana, si todavía cabe. Si no cabe, solo
+  // va a otro día que le quede a menos de un salto: antes fuera que cruzar la ciudad por rellenar un hueco.
   for (const p of porImportancia) {
-    if (semillas.includes(p)) continue;
-    const porCercania = dias
-      .map((d, i) => ({ i, d, lejos: d.paradas.length === 0 ? Infinity : enLineaRecta(centro(puntosDe(d)), p.punto) }))
-      .filter((x) => x.d.paradas.length > 0)
+    if (puestas.has(p.id) || anadidas.includes(p.id)) continue;
+    const porCercania = conParadas()
+      .map((z) => ({ i: z.i, d: dias[z.i], lejos: enLineaRecta(z.centro, p.punto) }))
       .sort((a, b) => a.lejos - b.lejos);
     const cabeEn = (d: (typeof dias)[number]): boolean =>
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
@@ -169,8 +195,12 @@ export function repartir(
       fuera.push(p.id);
       continue;
     }
-    dias[destino].paradas.push(p);
-    dias[destino].minutos += p.minutos;
+    pon(destino, p);
+  }
+
+  // 4. Lo que el viajero añadió entra al final en su zona, aunque el día ya esté lleno: no le quita el sitio a nadie.
+  for (const p of libres) {
+    if (anadidas.includes(p.id) && !puestas.has(p.id)) pon(masCercano(p), p);
   }
 
   return {
