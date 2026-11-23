@@ -49,7 +49,7 @@ test("la tabla: cada fila dice su zona, lo que se anda y lo que no se pudo confi
   assert.equal(fila("a2").zone, "z1");
   assert.equal(fila("a6").zone, "z2");
   assert.equal(typeof fila("a2").walk_minutes, "number");
-  assert.deepEqual(fila("a2").unconfirmed, ["encaje"]);
+  assert.deepEqual(fila("a2").unconfirmed, ["fit_with_the_group"]);
 });
 
 test("las palancas: otro alojamiento y otra zona, con lo que ahorran o cuestan sobre la fila de partida", () => {
@@ -78,6 +78,8 @@ test("las palancas: las mismas noches movidas, con el alojamiento y el transport
   assert.equal(unDiaAntes.saves, 376 - 295);
   assert.equal(unDiaAntes.status, "priced");
   assert.equal(unDiaAntes.change.check_in, "2027-03-04");
+  assert.equal(unDiaAntes.change.check_in_weekday, "thursday");
+  assert.equal(unDiaAntes.change.check_out_weekday, "sunday");
   const unaMenos = TABLA.levers.find((l) => l.lever === "nights" && l.change.nights_changed === -1)!;
   assert.equal(unaMenos.total, 140 + 6 + 160);
 });

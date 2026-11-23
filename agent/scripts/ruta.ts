@@ -12,13 +12,18 @@ const DIAS_DE_LA_SEMANA = ["sunday", "monday", "tuesday", "wednesday", "thursday
 
 export type Dias = { nights: number; days: { date: string; weekday: string }[] };
 
+/** El día de la semana de una fecha, en inglés, como lo lee un asiento. */
+export function diaDeLaSemana(fecha: string): string {
+  return DIAS_DE_LA_SEMANA[new Date(fecha + "T00:00:00Z").getUTCDay()];
+}
+
 /** Los días del viaje, contados: las noches y cada día con su fecha y su día de la semana. */
 export function diasDe(entrada: string, salida: string): Dias {
   const fechas = fechasDe(entrada, salida);
   if (fechas.length < 2) throw new Error("la salida tiene que ser después de la entrada");
   return {
     nights: fechas.length - 1,
-    days: fechas.map((date) => ({ date, weekday: DIAS_DE_LA_SEMANA[new Date(date + "T00:00:00Z").getUTCDay()] })),
+    days: fechas.map((date) => ({ date, weekday: diaDeLaSemana(date) })),
   };
 }
 

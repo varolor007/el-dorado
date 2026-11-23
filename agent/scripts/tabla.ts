@@ -10,6 +10,7 @@ import type { Vuelo } from "../tools/fuentes/tipos.ts";
 import type { PrecioMovido } from "../tools/palancas.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
 import { cribar, imprescindiblesSinSaber, laMasBarata, laMejorPorLoQueCuesta, type Contexto } from "./cribas.ts";
+import { diaDeLaSemana } from "./ruta.ts";
 import {
   SIN_SABER,
   type Entendido,
@@ -39,6 +40,15 @@ export type PiezasDeLaTabla = {
 };
 
 const dinero = (v: number): number => Math.round(v * 100) / 100;
+
+/** Las partes de la nota, como las lee el asiento en la tabla. */
+const PARTE: Record<string, string> = {
+  zona: "zone",
+  comoEs: "what_it_is_like",
+  opiniones: "reviews",
+  encaje: "fit_with_the_group",
+  condiciones: "conditions",
+};
 
 /** En qué zona de la ruta cae un alojamiento: la más cercana de las que lo tienen dentro; si no, la más cercana. */
 export function zonaDe(punto: Punto, zonas: ZonaResuelta[]): ZonaResuelta | null {
@@ -77,7 +87,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
       total: dinero(cribado.total + (deTransporte ?? 0)),
       currency: e.moneda,
       score: cribado.nota.nota ?? SIN_SABER,
-      unconfirmed: [...cribado.nota.sinConfirmar, ...sinSaber],
+      unconfirmed: [...cribado.nota.sinConfirmar.map((parte) => PARTE[parte] ?? parte), ...sinSaber],
       walk_minutes: cribado.minutosAndando ?? SIN_SABER,
       cancellable: f.precio.cancelable ?? SIN_SABER,
       marks: [],
@@ -141,7 +151,15 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
       palanca({
         lever: m.palanca,
         base_row: sobre.id,
-        change: { check_in: m.entrada, check_out: m.salida, days_moved: m.dias, nights_changed: m.noches },
+        // A unas fechas nuevas se les pone su día de la semana: es como las entiende quien viaja.
+        change: {
+          check_in: m.entrada,
+          check_in_weekday: diaDeLaSemana(m.entrada),
+          check_out: m.salida,
+          check_out_weekday: diaDeLaSemana(m.salida),
+          days_moved: m.dias,
+          nights_changed: m.noches,
+        },
         status: total === null ? "no_price" : "priced",
         total: total ?? SIN_SABER,
         saves: total === null ? SIN_SABER : dinero(sobre.total - total),
