@@ -57,7 +57,12 @@ function entregaBuena(): Entrega {
       { file: "hotel-02.jpg", shows: "pool", seen: ["an outdoor pool with eight loungers"] },
     ],
     fields: {
-      state: { level: "well_kept", evidence: [foto("room-01.jpg", "clean walls and floor, nothing worn")], note: "" },
+      look: { level: "good_condition", evidence: [foto("room-01.jpg", "walls and floor with nothing worn")], note: "" },
+      upkeep: {
+        level: "well_kept",
+        evidence: [{ kind: "review", ref: "r1", what: "clean, everything works" }],
+        note: "",
+      },
       style: { level: "chain", evidence: [foto("room-01.jpg", "standard functional furniture")], note: "" },
       room_space: {
         level: "fits",
@@ -191,8 +196,8 @@ test("una ficha de cómo es bien hecha pasa la puerta 5", () => {
 
 test("trampa: un nivel que no es de su lista", () => {
   assert.deepEqual(
-    rojosDe((e) => (e.fields.state.level = "nice")),
-    ['fields.state: el nivel "nice" no es de su lista'],
+    rojosDe((e) => (e.fields.look.level = "nice")),
+    ['fields.look: el nivel "nice" no es de su lista'],
   );
   assert.deepEqual(
     rojosDe((e) => (e.fields.view.level = "swim")),
@@ -209,8 +214,8 @@ test("trampa: un nivel sin prueba", () => {
 
 test("trampa: la prueba cita una foto o una opinión que no recibió", () => {
   assert.deepEqual(
-    rojosDe((e) => (e.fields.state.evidence[0].ref = "room-09.jpg")),
-    ["fields.state.evidence[0]: cita la foto room-09.jpg, que no recibió"],
+    rojosDe((e) => (e.fields.style.evidence[0].ref = "room-09.jpg")),
+    ["fields.style.evidence[0]: cita la foto room-09.jpg, que no recibió"],
   );
   assert.deepEqual(
     rojosDe((e) => (e.fields.gym.evidence[1].ref = "r99")),
@@ -394,11 +399,39 @@ test("trampa: el resumen, en blanco", () => {
   );
 });
 
+test("trampa: cómo se ve, sin una foto de la habitación", () => {
+  assert.deepEqual(
+    rojosDe((e) => (e.fields.look.evidence = [{ kind: "review", ref: "r2", what: "guests say it looks new" }])),
+    ["fields.look: dice cómo se ve sin una foto de la habitación"],
+  );
+});
+
+test("trampa: cómo lo mantienen, probado con una foto oficial o sin ninguna opinión", () => {
+  assert.deepEqual(
+    rojosDe((e) => e.fields.upkeep.evidence.push({ kind: "photo", ref: "room-01.jpg", what: "it looks spotless" })),
+    ["fields.upkeep.evidence[1]: prueba upkeep con una foto: eso solo lo cuentan los viajeros"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.fields.upkeep.evidence = [{ kind: "sheet", ref: "services", what: "daily housekeeping" }])),
+    ["fields.upkeep: dice cómo lo mantienen sin una opinión que lo cuente"],
+  );
+});
+
+test("lo que se ve y lo que cuentan los viajeros no se pisan: nueva en las fotos y descuidada en las opiniones", () => {
+  assert.deepEqual(
+    rojosDe((e) => {
+      e.fields.look.level = "new_or_renovated";
+      e.fields.upkeep.level = "neglected";
+    }),
+    [],
+  );
+});
+
 // Otra pasada a ciegas.
 
 test("dos pasadas se comparan campo a campo: igual, vecino, distinto y lo que una no sabe", () => {
   const otra = entregaBuena();
-  otra.fields.state.level = "new_or_renovated";
+  otra.fields.look.level = "new_or_renovated";
   otra.fields.style.level = "modern_plain";
   otra.fields.gym.level = "full";
   otra.fields.pool.level = "unknown";
@@ -406,7 +439,8 @@ test("dos pasadas se comparan campo a campo: igual, vecino, distinto y lo que un
   const a = acuerdo(entregaBuena(), otra);
   const parecidos = Object.fromEntries(a.campos.map((c) => [c.campo, c.parecido]));
   assert.deepEqual(parecidos, {
-    state: "vecino",
+    look: "vecino",
+    upkeep: "igual",
     style: "distinto",
     room_space: "igual",
     room_light: "igual",
@@ -415,8 +449,8 @@ test("dos pasadas se comparan campo a campo: igual, vecino, distinto y lo que un
     gym: "distinto",
     pool: "uno no sabe",
   });
-  assert.equal(a.iguales, 3);
-  assert.equal(a.de, 8);
+  assert.equal(a.iguales, 4);
+  assert.equal(a.de, 9);
 });
 
 // De la búsqueda al puesto, y del puesto a la ficha recogida.
@@ -467,7 +501,7 @@ test("de una búsqueda salen los puestos a ciegas, y lo que entregan se recoge p
       [[], []],
     ],
   );
-  assert.equal(mirado.acuerdo?.iguales, 8);
+  assert.equal(mirado.acuerdo?.iguales, 9);
   // Lo que no se entregó queda en rojo, y el conjunto también.
   assert.equal(r.alojamientos[1].pasadas[0].comoEs.rojos[0].que, "no hay entrega que mirar");
   assert.equal(r.alojamientos[1].acuerdo, null);

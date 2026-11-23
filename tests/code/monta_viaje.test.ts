@@ -23,7 +23,7 @@ assert.ok(FICHA !== undefined);
 
 const MIRADO = {
   fields: {
-    state: { level: "well_kept", evidence: [{ kind: "photo", ref: "room-01.jpg", what: "nothing worn" }] },
+    look: { level: "good_condition", evidence: [{ kind: "photo", ref: "room-01.jpg", what: "nothing worn" }] },
     gym: { level: "token", evidence: [{ kind: "review", ref: "r1", what: "a guest says the gym is tiny" }] },
     pool: { level: "unknown", evidence: [] },
     roto: "esto no es un campo",
@@ -70,7 +70,7 @@ test("un alojamiento sale con el precio completo, su habitación y lo que dijo e
   assert.equal(a.precio.total, FICHA.precioCompleto);
   assert.equal(a.habitacion, "Doble");
   assert.deepEqual(a.comoEs, [
-    { campo: "state", nivel: "well_kept", prueba: "nothing worn", foto: "https://fotos.invalid/h1-1.jpg" },
+    { campo: "look", nivel: "good_condition", prueba: "nothing worn", foto: "https://fotos.invalid/h1-1.jpg" },
     { campo: "gym", nivel: "token", prueba: "a guest says the gym is tiny", foto: null },
     { campo: "pool", nivel: "unknown", prueba: null, foto: null },
   ]);

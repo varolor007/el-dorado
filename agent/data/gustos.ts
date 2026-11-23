@@ -13,7 +13,7 @@ export const COSAS: Record<string, Cosa> = {
   space: { campo: "room_space", cumplen: ["roomy"] },
   light: { campo: "room_light", cumplen: ["bright"] },
   bathroom: { campo: "bathroom", cumplen: ["modern"] },
-  new: { campo: "state", cumplen: ["new_or_renovated"] },
+  new: { campo: "look", cumplen: ["new_or_renovated"] },
 };
 
 /** Lo que vale cada nivel de un campo con orden, de 0 a 10: el mejor, 10; el peor, 0; los de en medio, repartidos. */

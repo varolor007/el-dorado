@@ -472,7 +472,7 @@ const flujo = [
       hecho: true,
       k: "El que mira el alojamiento",
       x: "las fotos de la habitación de ese precio y las opiniones",
-      d: "De cada finalista: primero mira y después juzga. Hace el inventario de las fotos, mira por lista y sin opinar (el suelo, los muebles, el baño, la ventana, el sitio junto a la cama; en el gimnasio, cuántas máquinas y de qué tipo), lee las opiniones por temas y pone a cada campo su nivel, de los escritos, con la foto o la opinión que lo prueba. El estado se juzga; el estilo solo se nombra. No ve el precio ni la nota, para no sesgarse. Y contrasta con otras webs lo que el dato tapa: una nota distinta en otra agencia, una piscina que en tus fechas está cerrada.",
+      d: "De cada finalista: primero mira y después juzga. Hace el inventario de las fotos, mira por lista y sin opinar (el suelo, los muebles, el baño, la ventana, el sitio junto a la cama; en el gimnasio, cuántas máquinas y de qué tipo), lee las opiniones por temas y pone a cada campo su nivel, de los escritos, con la foto o la opinión que lo prueba. Cómo se ve sale de las fotos de la habitación, y cómo lo mantienen, de lo que cuentan los viajeros: son dos campos, y los dos se juzgan; el estilo solo se nombra. No ve el precio ni la nota, para no sesgarse. Y contrasta con otras webs lo que el dato tapa: una nota distinta en otra agencia, una piscina que en tus fechas está cerrada.",
     },
     {
       tipo: "puerta",
@@ -1118,6 +1118,13 @@ const secciones = [
               { b: "Visto bueno, de tanda en tanda.", t: "«Tienes libertad y tiempo. Cuando vayas cerrando bloques me pides confirmación, y vamos haciendo sign-offs.» Y revisar la web con capturas antes de enseñarla." },
             ],
           },
+          {
+            etiqueta: "De la tanda 2 (23 de noviembre)",
+            items: [
+              { b: "La web en seco, con tu visto bueno.", t: "«Okay», a la tanda 2 y a lo que proponía para empezar la 3." },
+              { b: "«Descuidado», en dos campos.", t: "Salía en hoteles cuyas fotos se ven nuevas, porque mandaban las opiniones. Ahora cómo se ve sale de las fotos de la habitación, y cómo lo mantienen, de lo que cuentan los viajeros." },
+            ],
+          },
         ],
       },
     ],
@@ -1171,7 +1178,7 @@ export const hoja = {
         { t: "**El precio** de El Dorado y cómo se cobra. La IA va aparte, con la clave del viajero.", n: true },
         { t: "**Dónde se reserva un precio de LiteAPI:** no tiene página pública. Hoy se enlaza a otra agencia cuando casa y, si no, a la web del hotel.", n: true },
         { t: "**Los vuelos en vivo:** hoy solo hay precios guardados de hace días, y a veces ninguno para las fechas exactas.", n: true },
-        { t: "**Abaratar la mirada:** un alojamiento tarda catorce minutos; el objetivo es menos de uno. Y si «descuidado» se parte en dos campos.", n: true },
+        { t: "**Abaratar la mirada:** un alojamiento tardaba catorce minutos; el objetivo es menos de uno. Ya van menos fotos y mejor elegidas. Falta encogerlas antes de mirarlas, que pide una pieza que el agente no lleva y tu sí expreso, y llamar a la IA sin rodeos.", n: true },
         { t: "**Los dibujos de la guía:** una colección propia o generados para cada viaje.", n: true },
         { t: "**Las fotos de los hoteles en la web** y las de viajeros: con qué derechos se enseñan.", n: true },
         { t: "**Los pesos, los mínimos y los topes:** son de partida, y se ajustan con casos reales.", n: true },

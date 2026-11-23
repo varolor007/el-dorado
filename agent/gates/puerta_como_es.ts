@@ -14,7 +14,9 @@ import {
   INSTALACIONES,
   MENCIONES,
   MUESTRA,
+  PIDEN_FOTO,
   SIN_SABER,
+  SOLO_DE_OPINIONES,
   TONOS,
 } from "../data/niveles.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -81,7 +83,7 @@ export function puertaComoEs(entrega: unknown, m: Material): Veredicto {
   const existe = (ref: unknown): boolean =>
     esTexto(ref) && (m.fotos.includes(ref) || m.opiniones.includes(ref) || deLaHoja(m.hoja, ref) !== undefined);
 
-  // 3. Los campos: los ocho, cada uno con un nivel de su lista y con su prueba.
+  // 3. Los campos: todos, cada uno con un nivel de su lista y con su prueba.
   const campos = esObjeto(entrega.fields) ? entrega.fields : {};
   for (const campo of Object.keys(campos))
     if (!(campo in CAMPOS)) rojo(`fields.${campo}`, "no es un campo de la ficha");
@@ -111,6 +113,8 @@ export function puertaComoEs(entrega: unknown, m: Material): Veredicto {
       const ref = cruda.ref;
       if (cruda.kind === "photo") {
         if (!esTexto(ref) || !m.fotos.includes(ref)) return rojo(aqui, `cita la foto ${String(ref)}, que no recibió`);
+        if (SOLO_DE_OPINIONES.includes(campo))
+          return rojo(aqui, `prueba ${campo} con una foto: eso solo lo cuentan los viajeros`);
         if (DE_LA_HABITACION.includes(campo) && !esDeLaHabitacion(ref))
           return rojo(aqui, `prueba algo de la habitación con ${ref}, que no es una foto de esa habitación`);
         const ensena = inventario.get(ref);
@@ -125,6 +129,13 @@ export function puertaComoEs(entrega: unknown, m: Material): Veredicto {
       }
       clases.add(`${cruda.kind}:${String(ref)}`);
     });
+
+    // Lo que se ve se prueba con una foto, y lo que cuentan los viajeros, con una opinión.
+    const clasesDePrueba = [...clases].map((x) => x.split(":")[0]);
+    if (nivel !== SIN_SABER && PIDEN_FOTO.includes(campo) && !clasesDePrueba.includes("photo"))
+      rojo(donde, "dice cómo se ve sin una foto de la habitación");
+    if (nivel !== SIN_SABER && SOLO_DE_OPINIONES.includes(campo) && !clasesDePrueba.includes("review"))
+      rojo(donde, "dice cómo lo mantienen sin una opinión que lo cuente");
 
     // El tamaño no va solo a ojo: si la ficha dice los metros, la prueba los cita.
     if (campo === "room_space" && nivel !== SIN_SABER && deLaHoja(m.hoja, "room.size_m2") !== undefined) {

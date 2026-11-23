@@ -28,7 +28,8 @@ Count, do not estimate. Write `three treadmills and one bike`, not `a decent gym
 ## 3. Read the reviews by theme
 
 Go through `in/reviews.json` and note what guests say about the room, its size, noise, cleanliness, the bathroom, the
-view, the gym, the pool and whether the place feels new or tired. For each theme note whether one, a few or several
+view, the gym, the pool, whether the place feels new or tired, and what guests found dirty, broken or left
+unrepaired. For each theme note whether one, a few or several
 reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest ones. Read
 the complaints with care: what is repeated matters; one isolated complaint does not.
 
@@ -46,8 +47,13 @@ The room's size comes from the sheet when the sheet gives it; in the photos you 
 
 ## 5. Cross the photos with the reviews
 
-Where the photos and the reviews disagree, the recent reviews win: the level follows them, and you record the
-disagreement in `conflicts`.
+How the room looks and how the place is kept are two different things, and each has its field. `look` follows the
+photos of the room. `upkeep` follows what recent guests report about cleanliness and maintenance. A room that looks
+new in its photos and that several recent guests found dirty is `new_or_renovated` and `neglected`: both are true,
+and you record the disagreement in `conflicts`.
+
+For every other field, where the photos and the reviews disagree, the recent reviews win: the level follows them, and
+you record the disagreement in `conflicts`.
 
 ## 6. Self-critique
 

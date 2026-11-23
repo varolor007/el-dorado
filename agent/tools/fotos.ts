@@ -1,5 +1,5 @@
 // Las fotos: elegir cuáles se le pasan al asiento que mira un alojamiento, con un tope, y bajarlas a una carpeta de
-// fuera del repositorio. De la habitación de ese precio van las primeras, que la fuente ya ordena por lo que enseñan.
+// fuera del repositorio. De la habitación de ese precio van las primeras, que el enchufe ordena por lo que enseñan.
 // Las del alojamiento no dicen de qué son: si no caben todas, van repartidas por toda la lista. El código no mira
 // ninguna: solo las elige por regla y las baja.
 
@@ -8,7 +8,8 @@ import { dirname, join } from "node:path";
 import { dentroDelRepositorio } from "../launcher/mesa.ts";
 
 export type Tope = { habitacion: number; hotel: number };
-export const TOPE: Tope = { habitacion: 12, hotel: 30 };
+/** Menos fotos y mejor elegidas: mirar cuarenta en grande, una a una, es lo que más tarda y más gasta. */
+export const TOPE: Tope = { habitacion: 8, hotel: 16 };
 
 /** Una foto por bajar: su sitio en el material, sin la extensión, que la dice la propia foto al llegar. */
 export type Pedida = { ruta: string; url: string };

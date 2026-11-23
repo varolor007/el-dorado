@@ -186,6 +186,14 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   móvil, en claro y en oscuro, con su vídeo y sus capturas en https://claude.ai/artifact/12YETqmymoYMjmMVnWd41r. Del
   bloque 10 quedan, para su tanda, la ficha del transporte y el precio en la portada. La tanda 3 no empieza sin su
   visto bueno.
+- **La tanda 2, con el visto bueno del PM** (23-nov: «Okay»), y con él sus dos propuestas para empezar la 3:
+  - **«Descuidado» se parte en dos campos**: cómo se ve (`look`, de las fotos de la habitación) y cómo lo mantienen
+    (`upkeep`, solo de lo que cuentan los viajeros). Son nueve campos y no ocho. Cambian el contrato del que mira, sus
+    niveles, la puerta 5 y la hoja.
+  - **Encoger las fotos antes de mirarlas**, con una pieza que el agente no lleva. Al ir a instalarla, el control de
+    permisos de la sesión lo paró: un «okay» a tres cosas a la vez no le basta para meter una dependencia en un agente
+    que no lleva ninguna. No se fuerza: se le pide al PM de forma expresa. Mientras, van menos fotos y mejor elegidas
+    (veinticuatro y no cuarenta y dos, con una de cada clase de la habitación por turnos) y treinta opiniones.
 
 ## Pendientes
 
@@ -204,12 +212,9 @@ Lo que pide la versión 2, a decisión del PM:
 
 Lo que deja la tanda 1, a decisión del PM:
 
-- **«Descuidado», ¿un campo o dos?** (23-nov): el estado sale «descuidado» en dos hoteles cuyas fotos se ven nuevas,
-  porque varias opiniones recientes hablan de averías sin arreglar o de desgaste y la norma dice que mandan las
-  opiniones. Las dos pasadas lo hicieron igual. La sesión propone partirlo en dos: cómo se ve (de las fotos) y cómo
-  lo mantienen (de las opiniones). Cambia la hoja: decide el PM.
-- **Abaratar la mirada** (23-nov): unos catorce minutos y mucha lectura por alojamiento es demasiado para el producto.
-  Lo que más pesa son las fotos en grande. Va con «Encoger las fotos», más abajo.
+- **Encoger las fotos** (23-nov): pide meter una dependencia para funcionar en el agente, que hoy no lleva ninguna.
+  El control de permisos de la sesión no deja instalarla sin un sí expreso del PM. Y llamar a la IA sin rodeos, con el
+  2.7.
 - **Con quién piensa cada asiento en el producto**: en la tanda 1 lo hizo la sesión de trabajo. Es la fila «La IA» de
   la hoja, por decidir.
 
@@ -231,11 +236,6 @@ Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
   vuelos, la Data API de Aviasales. En `fuentes.md`.
 - **Los acuerdos con las grandes** (Booking.com y demás): el PM, con un abogado, cuando el agente funcione.
 - **El transporte, también código**: lo propone la sesión; decide el PM.
-
-- **Encoger las fotos** (23-nov): las del hotel vienen sin pie y solo en grande, y la IA no puede mirar un centenar
-  en grande por alojamiento. Hoy van treinta, repartidas, y lo que no se ve es «no se sabe». Para verlas todas hay que
-  encogerlas antes, con una pieza que el código no lleva (una dependencia para funcionar, que hoy no hay ninguna), o
-  dar un primer vistazo aparte. Decide el PM, con lo que salga de la tanda 1.
 
 - **La salida en la web**: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. En su etapa, antes
   de construirla.

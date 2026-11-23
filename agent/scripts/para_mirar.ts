@@ -7,7 +7,7 @@ import type { Eleccion } from "../tools/fotos.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
 import { SIN_SABER } from "../data/niveles.ts";
 
-export const TOPE_DE_OPINIONES = 40;
+export const TOPE_DE_OPINIONES = 30;
 const TOPE_DE_LETRAS = 700;
 
 export type HojaDeDatos = {

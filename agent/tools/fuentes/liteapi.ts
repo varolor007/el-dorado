@@ -94,6 +94,21 @@ export function leerPrecios(json: unknown, e: Estancia, visto: string): Precio[]
 /** Las clases de foto de una habitación que van por delante, por lo que enseñan de ella. */
 const PRIMERO = ["bedroom", "hotel room", "bathroom", "view", "window"];
 
+/**
+ * El orden de las fotos de una habitación: la principal y, después, una de cada clase por turnos (el dormitorio, la
+ * habitación, el baño, la vista y la ventana), para que las primeras enseñen de todo y no ocho veces la cama. Lo demás
+ * va al final. Dentro de cada clase se respeta el orden de la fuente.
+ */
+export function porTurnos(fotos: { url: string; orden: number }[]): string[] {
+  const principal = fotos.filter((f) => f.orden < 0).map((f) => f.url);
+  const resto = fotos.filter((f) => f.orden >= PRIMERO.length).map((f) => f.url);
+  const colas = PRIMERO.map((_, clase) => fotos.filter((f) => f.orden === clase).map((f) => f.url));
+  const turnos: string[] = [];
+  while (colas.some((cola) => cola.length > 0))
+    for (const cola of colas) if (cola.length > 0) turnos.push(cola.shift()!);
+  return [...principal, ...turnos, ...resto];
+}
+
 function leerHabitacion(crudo: unknown): Habitacion | null {
   const r = objeto(crudo);
   if (r.id === undefined || r.id === null) return null;
@@ -111,8 +126,7 @@ function leerHabitacion(crudo: unknown): Habitacion | null {
     const clase = PRIMERO.indexOf((texto(foto.imageClass1) ?? "").toLowerCase());
     conClase.push({ url, orden: foto.mainPhoto === true ? -1 : clase < 0 ? PRIMERO.length : clase });
   }
-  // El orden de la fuente se respeta dentro de cada clase: la ordenación de Node no baraja los iguales.
-  const fotos = conClase.sort((a, b) => a.orden - b.orden).map((x) => x.url);
+  const fotos = porTurnos(conClase);
   const vistas: string[] = [];
   for (const v of lista(r.views)) {
     const nombre = typeof v === "string" ? texto(v) : (texto(objeto(v).view) ?? texto(objeto(v).name));

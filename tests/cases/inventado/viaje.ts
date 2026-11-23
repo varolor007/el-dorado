@@ -88,7 +88,7 @@ export function viajeInventado(): Viaje {
         precio: precio(240),
         otrasOfertas: [precio(255)],
         fotos: ["https://fotos.invalid/h1.jpg"],
-        comoEs: [{ campo: "state", nivel: "well_kept", prueba: "nothing worn in the room photos", foto: null }],
+        comoEs: [{ campo: "look", nivel: "good_condition", prueba: "nothing worn in the room photos", foto: null }],
         loMejor: "Una habitación cuidada.",
         loPeor: "Da a una calle con ruido.",
         avisos: [],

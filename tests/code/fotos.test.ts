@@ -47,10 +47,11 @@ test("el tope se cumple, y dice cuántas se dan de cuántas hay", () => {
   assert.deepEqual(e.hotel, { dadas: TOPE.hotel, total: 144 });
   assert.equal(e.pedidas.length, TOPE.habitacion + TOPE.hotel);
   // De la habitación, las primeras; del hotel, repartidas por toda la lista, y no solo las del principio.
-  assert.equal(e.pedidas[TOPE.habitacion - 1].url, url("r11.jpg"));
+  assert.equal(e.pedidas[TOPE.habitacion - 1].url, url(`r${TOPE.habitacion - 1}.jpg`));
   const delHotel = e.pedidas.filter((p) => p.ruta.startsWith("photos/hotel-")).map((p) => p.url);
   assert.equal(delHotel[0], url("h0.jpg"));
-  assert.ok(delHotel.includes(url("h139.jpg")));
+  const ultima = Math.floor(((TOPE.hotel - 1) * 144) / TOPE.hotel);
+  assert.ok(ultima > 120 && delHotel.includes(url(`h${ultima}.jpg`)));
   assert.equal(new Set(delHotel).size, TOPE.hotel);
 });
 
@@ -159,7 +160,7 @@ test("trampa: las fotos no se bajan dentro del repositorio", async () => {
   await assert.rejects(() => bajarFotos([], dentro), /dentro del repositorio/);
 });
 
-test("LiteAPI: las fotos de la habitación, con lo que más enseña por delante, y ninguna repetida", () => {
+test("LiteAPI: las fotos de la habitación, la principal y una de cada clase por turnos, y ninguna repetida", () => {
   const sitio = "https://fotos.example.com";
   const d = leerDetalle(
     {
@@ -186,7 +187,7 @@ test("LiteAPI: las fotos de la habitación, con lo que más enseña por delante,
   );
   assert.deepEqual(
     d.habitaciones[0].fotos.map((f) => f.slice(-5, -4)),
-    ["3", "4", "5", "2", "1", "6"],
+    ["3", "4", "2", "5", "1", "6"],
   );
   assert.deepEqual(d.fotos, [`${sitio}/h/10.jpg`, `${sitio}/h/11.jpg`]);
 });

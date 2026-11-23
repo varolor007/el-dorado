@@ -37,19 +37,27 @@ one bike and a rack of dumbbells in a room with a window" } ], "note": "" }`
   `pool` one you inventoried as `pool`, and the fields of the room one you inventoried as `room`, `bathroom` or `view`.
 - `note`: anything the house should know about this level. May be empty.
 
-The fields `state`, `style`, `room_space`, `room_light`, `bathroom` and `view` are of the room being offered: a
+The fields `look`, `style`, `room_space`, `room_light`, `bathroom` and `view` are of the room being offered: a
 `photo` entry in their evidence must be a `room-NN` file. When the sheet gives `room.size_m2`, the evidence of
 `room_space` must include it. A level of `gym` or `pool` other than `none` and `unknown` needs a photo or a review:
 the sheet alone is not enough.
+
+`look` is what the photos of the room show: its evidence must include a `room-NN` photo, and reviews may be added to
+it. `upkeep` is what recent guests report about cleanliness and maintenance: its evidence is reviews only, never a
+photo, because official photos do not show how a place is kept. With no review that speaks of it, `upkeep` is
+`unknown`.
 
 ## The fields and their levels
 
 | Field | Level | It means |
 |---|---|---|
-| `state` | `new_or_renovated` | Finishes, furniture and bathroom look recent; no visible wear |
-| | `well_kept` | Not new, but cared for: nothing worn, stained or patched |
-| | `dated` | Clean and working, but clearly from another decade: old finishes, old screen, old bathroom |
-| | `neglected` | Visible wear, stains, damage or repairs left undone, in photos or repeated in reviews |
+| `look` | `new_or_renovated` | In the photos, finishes, furniture and bathroom look recent; no visible wear |
+| | `good_condition` | Not new, but nothing in the photos looks worn, stained or patched |
+| | `dated` | Clearly from another decade: old finishes, old screen, old bathroom |
+| | `worn` | Wear, stains, damage or repairs left undone are visible in the photos |
+| `upkeep` | `well_kept` | Recent guests say it is clean and that things work; no repeated complaint about maintenance |
+| | `some_complaints` | A few recent reviews report something dirty, broken or worn; it is not a pattern |
+| | `neglected` | Several recent reviews report dirt, damage, mould, smells or repairs left undone |
 | `style` | `modern_plain` | Clean lines, few colours, little decoration |
 | | `classic` | Traditional furniture, mouldings, heavy fabrics |
 | | `character` | A look of its own: design pieces, local materials, a clear idea |
@@ -76,7 +84,7 @@ the sheet alone is not enough.
 | | `dip` | A plunge pool or a tub-sized pool |
 | | `none` | The sheet lists no pool, and no photo or review shows one |
 
-Every one of the eight fields must be present. The level `none` needs its evidence too: `kind` `sheet`, `ref`
+Every one of the nine fields must be present. The level `none` needs its evidence too: `kind` `sheet`, `ref`
 `services`. If any level is `unknown`, `unknowns` says why in a sentence.
 
 ## An entry of `review_themes`

@@ -90,7 +90,7 @@ const bloques = [
     firma: "al ver el viaje de Lisboa en la web",
     puntos: [
       { n: "4.1", b: "La búsqueda de alojamiento y su puerta.", t: "Sin IA: la lista, los mínimos, el precio, los finalistas y su ficha de datos; la puerta 4, con dieciocho trampas.", estado: "hecho" },
-      { n: "4.2", b: "El que mira el alojamiento.", t: "Su contrato, en inglés; sus ocho campos con sus niveles, escritos también como código; su material a ciegas (sin el nombre, el precio, la nota ni las estrellas); la puerta 5, con veinticinco pruebas, y la comparación de dos pasadas a ciegas. Probado con los cinco finalistas de Lisboa: diez fichas, las dos puertas en verde en todas, y las dos pasadas coinciden en 38 de 40 campos. Falta tu mirada: si saca lo que ves tú.", estado: "hecho" },
+      { n: "4.2", b: "El que mira el alojamiento.", t: "Su contrato, en inglés; sus campos con sus niveles, escritos también como código (nueve desde el 23-nov, al partirse «descuidado» en dos); su material a ciegas (sin el nombre, el precio, la nota ni las estrellas); la puerta 5, con sus trampas, y la comparación de dos pasadas a ciegas. Probado con los cinco finalistas de Lisboa: diez fichas, las dos puertas en verde en todas, y las dos pasadas coinciden en 38 de 40 campos. Falta tu mirada: si saca lo que ves tú.", estado: "hecho" },
       { n: "4.3", b: "Las cribas y los gustos.", t: "Lo que descarta, lo que se suma al precio y la nota, con los pesos de partida; y el cruce de los niveles con tus gustos.", estado: "pendiente" },
       { n: "4.4", b: "La búsqueda de transporte.", t: "La parrilla de aeropuertos y de días, con la fuente que haya.", estado: "pendiente" },
       { n: "4.5", b: "El de la ruta.", t: "Las bases, las noches, la entrada y la salida y las zonas donde buscar; la puerta 3.", estado: "pendiente" },
@@ -99,7 +99,7 @@ const bloques = [
       { n: "4.8", b: "El viaje, listo para la web.", t: "Junta lo que dejó cada paso en la forma del viaje para la web (1.5).", estado: "pendiente" },
       { n: "4.9", b: "El del día a día.", t: "Su contrato: qué merece tu tiempo y qué no, en qué orden y cuánto lleva, sin inventar sitios; la puerta 9.", estado: "pendiente" },
       { n: "4.10", b: "El ritmo.", t: "Código, en `agent/scripts/ritmo.ts`: reparte las paradas por días, por cercanía y a tu ritmo (tres, cinco o siete al día, con un tope de minutos), ordena cada día para andar lo menos posible y dice lo que se anda. Lo que no cabe queda fuera, a mano; antes fuera que cruzar la ciudad. Misma entrada, mismos días. Adelantado a la tanda 2, porque la web lo usa para su mando. Once pruebas.", estado: "hecho" },
-      { n: "4.11", b: "Abaratar al que mira.", t: "De catorce minutos por alojamiento a menos de uno: menos fotos y mejor elegidas, y la IA llamada sin rodeos. Con tu decisión sobre «descuidado».", estado: "decidir" },
+      { n: "4.11", b: "Abaratar al que mira.", t: "De catorce minutos por alojamiento a menos de uno. Hecho: «descuidado» se parte en dos campos, cómo se ve (de las fotos de la habitación) y cómo lo mantienen (de lo que cuentan los viajeros), con tu visto bueno del 23-nov; y van veinticuatro fotos y no cuarenta y dos, con una de cada clase de la habitación por turnos, y treinta opiniones. Falta: encogerlas antes de mirarlas, que pide una pieza que el agente no lleva y tu sí expreso (el control de permisos de la sesión no dejó instalarla), y la IA llamada sin rodeos, que va con el 2.7. Lo que tarda ahora se mide con el viaje de Lisboa.", estado: "parte" },
     ],
   },
   {

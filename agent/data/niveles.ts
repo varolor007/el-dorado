@@ -6,7 +6,8 @@ export const SIN_SABER = "unknown";
 
 /** Cada campo de la ficha, con sus niveles de mejor a peor; los del estilo no tienen orden: solo se nombra. */
 export const CAMPOS: Record<string, string[]> = {
-  state: ["new_or_renovated", "well_kept", "dated", "neglected"],
+  look: ["new_or_renovated", "good_condition", "dated", "worn"],
+  upkeep: ["well_kept", "some_complaints", "neglected"],
   style: ["modern_plain", "classic", "character", "chain", "rustic"],
   room_space: ["roomy", "fits", "tight"],
   room_light: ["bright", "average", "dark"],
@@ -20,14 +21,21 @@ export const CAMPOS: Record<string, string[]> = {
 export const SIN_ORDEN = ["style"];
 
 /** Los campos que son de la habitación de ese precio: una foto del hotel en general no los prueba. */
-export const DE_LA_HABITACION = ["state", "style", "room_space", "room_light", "bathroom", "view"];
+export const DE_LA_HABITACION = ["look", "style", "room_space", "room_light", "bathroom", "view"];
+
+/** Lo que se ve: su prueba lleva al menos una foto. Cómo se ve la habitación no lo dice una opinión sola. */
+export const PIDEN_FOTO = ["look"];
+
+/** Lo que solo cuentan los viajeros: una foto oficial no lo prueba. Cómo lo mantienen no sale en las fotos. */
+export const SOLO_DE_OPINIONES = ["upkeep"];
 
 /** Lo que puede enseñar una foto, en el inventario. */
 export const MUESTRA = ["room", "bathroom", "view", "gym", "pool", "common", "food", "exterior", "other"];
 
 /** Para probar un campo, la foto tiene que estar inventariada como algo que lo enseña. */
 export const ENSENA: Record<string, string[]> = {
-  state: ["room", "bathroom", "view"],
+  look: ["room", "bathroom", "view"],
+  upkeep: [],
   style: ["room", "bathroom", "view"],
   room_space: ["room", "bathroom", "view"],
   room_light: ["room", "bathroom", "view"],
