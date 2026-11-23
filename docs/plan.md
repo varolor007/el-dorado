@@ -6,7 +6,7 @@ Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 2, la web en seco.** Firmada la versión 2 el 23-nov. En curso, la tanda 2: **la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado. Lo primero que verás es la identidad de El Dorado, puesta ya en sus primeras pantallas; después, la investigación en vivo, el viaje por días y la portada.
+**Estamos aquí: la tanda 2, a tu visto bueno a la identidad (10.2).** En curso, la tanda 2: **la web, en seco**. Hechos, la forma del viaje para la web (1.5), el ritmo (4.10, adelantado), el viaje grabado de Lisboa (10.3), el esqueleto de la web (10.1) y **la identidad de El Dorado** (10.2), puesta ya en sus primeras pantallas: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje por días y la ficha de un alojamiento. Antes de seguir con lo que falta de la tanda (las preguntas, mover paradas, la portada y el repaso para el móvil), tu visto bueno a la identidad.
 
 ## El estado
 
@@ -22,7 +22,7 @@ Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026.
 | 7. El ensayo | pendiente |
 | 8. Por momentos | pendiente |
 | 9. Antes de vender | pendiente |
-| 10. La web | pendiente |
+| 10. La web | en parte |
 | 11. La cuenta y tu panel | pendiente |
 | 12. La guía | pendiente |
 | 13. Enseñarlo | pendiente |
@@ -226,7 +226,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 
 ## 10. La web
 
-*pendiente.* Lo que ve el viajero. Se construye primero en seco, con un viaje de verdad ya grabado, para que la veas pronto y para fijar la forma del viaje que el agente tiene que producir. Después se enchufa a la casa.
+*en parte.* Lo que ve el viajero. Se construye primero en seco, con un viaje de verdad ya grabado, para que la veas pronto y para fijar la forma del viaje que el agente tiene que producir. Después se enchufa a la casa.
 
 - **Deja**: la web entera, navegable: la portada, el mapa del mundo, la investigación en vivo y tu viaje por días
 - **Se prueba**: con el viaje grabado, sin IA y sin fuentes; y con capturas, pantalla a pantalla
@@ -234,13 +234,13 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 
 | Punto | Qué | Estado |
 |---|---|---|
-| 10.1 | **Dónde vive y con qué se hace.** Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex. Lleva sus dependencias; el agente sigue sin ninguna. | pendiente |
-| 10.2 | **La identidad y el sistema de diseño.** El color, la letra y la manera de moverse de El Dorado; sus piezas (el botón, la tarjeta, la ficha, la hoja de abajo en el móvil); en claro y en oscuro. Se te enseña antes de seguir. | pendiente |
+| 10.1 | **Dónde vive y con qué se hace.** Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex (Next.js y React) y el mapa abierto (MapLibre con OpenFreeMap). Lleva sus dependencias; el agente sigue sin ninguna. Lee la forma del viaje y el ritmo de la carpeta del agente, y sus tipos entran en la batería. | hecho |
+| 10.2 | **La identidad y el sistema de diseño.** De la familia de Cortex toma la tinta, el gris y las letras de leer y de contar; lo suyo es el oro, que solo se usa para lo que el agente encuentra, la cursiva de mapa antiguo para los lugares y un mapa callado, propio. Con sus piezas (el buscador, la hoja, los mandos, las tarjetas y las marcas del mapa), en claro y en oscuro, en ancho y en móvil. Hecha y puesta en las primeras pantallas: a tu visto bueno. | hecho |
 | 10.3 | **El viaje grabado.** Lisboa, con lo que ya salió de verdad (la búsqueda, las fichas de cómo es y dieciocho sitios de datos abiertos, con su foto, su autor y su licencia) y con lo que aún no decide el agente hecho a mano y marcado como muestra: qué sitios, por qué, y las tres maneras. Lo junta `agent/scripts/monta_viaje.ts` y lo graba `agent/launcher/grabar.ts`, en la mesa, fuera del repositorio. Siete pruebas, con el caso inventado. | hecho |
-| 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, el vuelo del mapa hasta el destino y el primer vistazo. | pendiente |
-| 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. | pendiente |
-| 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. | pendiente |
-| 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada. | pendiente |
+| 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, que completa lo que escribes; el vuelo del mapa hasta el destino, y el primer vistazo. Primera versión, en seco. Falta decidir contigo si el mundo se abre plano o como un globo. | en parte |
+| 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. Primera versión, con los sucesos grabados; faltan las preguntas. | en parte |
+| 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. Primera versión; faltan quitar, añadir y mover una parada. | en parte |
+| 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada. Hecha la del alojamiento, en su primera versión. | en parte |
 | 10.8 | **La portada.** Qué es, el viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta. En inglés y en español. | pendiente |
 | 10.9 | **En el móvil, para todos y rápida.** La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla. | pendiente |
 | 10.10 | **La revisión con capturas.** Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas. | pendiente |

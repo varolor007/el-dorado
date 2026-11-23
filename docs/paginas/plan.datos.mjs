@@ -184,19 +184,19 @@ const bloques = [
   {
     n: 10,
     nombre: "La web",
-    estado: "pendiente",
+    estado: "parte",
     intro: "Lo que ve el viajero. Se construye primero en seco, con un viaje de verdad ya grabado, para que la veas pronto y para fijar la forma del viaje que el agente tiene que producir. Después se enchufa a la casa.",
     deja: "la web entera, navegable: la portada, el mapa del mundo, la investigación en vivo y tu viaje por días",
     prueba: "con el viaje grabado, sin IA y sin fuentes; y con capturas, pantalla a pantalla",
     firma: "tu visto bueno a la identidad (10.2) y a la web en seco",
     puntos: [
-      { n: "10.1", b: "Dónde vive y con qué se hace.", t: "Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex. Lleva sus dependencias; el agente sigue sin ninguna.", estado: "pendiente" },
-      { n: "10.2", b: "La identidad y el sistema de diseño.", t: "El color, la letra y la manera de moverse de El Dorado; sus piezas (el botón, la tarjeta, la ficha, la hoja de abajo en el móvil); en claro y en oscuro. Se te enseña antes de seguir.", estado: "pendiente" },
+      { n: "10.1", b: "Dónde vive y con qué se hace.", t: "Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex (Next.js y React) y el mapa abierto (MapLibre con OpenFreeMap). Lleva sus dependencias; el agente sigue sin ninguna. Lee la forma del viaje y el ritmo de la carpeta del agente, y sus tipos entran en la batería.", estado: "hecho" },
+      { n: "10.2", b: "La identidad y el sistema de diseño.", t: "De la familia de Cortex toma la tinta, el gris y las letras de leer y de contar; lo suyo es el oro, que solo se usa para lo que el agente encuentra, la cursiva de mapa antiguo para los lugares y un mapa callado, propio. Con sus piezas (el buscador, la hoja, los mandos, las tarjetas y las marcas del mapa), en claro y en oscuro, en ancho y en móvil. Hecha y puesta en las primeras pantallas: a tu visto bueno.", estado: "hecho" },
       { n: "10.3", b: "El viaje grabado.", t: "Lisboa, con lo que ya salió de verdad (la búsqueda, las fichas de cómo es y dieciocho sitios de datos abiertos, con su foto, su autor y su licencia) y con lo que aún no decide el agente hecho a mano y marcado como muestra: qué sitios, por qué, y las tres maneras. Lo junta `agent/scripts/monta_viaje.ts` y lo graba `agent/launcher/grabar.ts`, en la mesa, fuera del repositorio. Siete pruebas, con el caso inventado.", estado: "hecho" },
-      { n: "10.4", b: "El mapa del mundo y el buscador.", t: "La barra de dónde y cuándo, el vuelo del mapa hasta el destino y el primer vistazo.", estado: "pendiente" },
-      { n: "10.5", b: "La investigación, en vivo.", t: "Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa.", estado: "pendiente" },
-      { n: "10.6", b: "Tu viaje, en el mapa.", t: "Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas.", estado: "pendiente" },
-      { n: "10.7", b: "Las fichas.", t: "La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada.", estado: "pendiente" },
+      { n: "10.4", b: "El mapa del mundo y el buscador.", t: "La barra de dónde y cuándo, que completa lo que escribes; el vuelo del mapa hasta el destino, y el primer vistazo. Primera versión, en seco. Falta decidir contigo si el mundo se abre plano o como un globo.", estado: "parte" },
+      { n: "10.5", b: "La investigación, en vivo.", t: "Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. Primera versión, con los sucesos grabados; faltan las preguntas.", estado: "parte" },
+      { n: "10.6", b: "Tu viaje, en el mapa.", t: "Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. Primera versión; faltan quitar, añadir y mover una parada.", estado: "parte" },
+      { n: "10.7", b: "Las fichas.", t: "La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada. Hecha la del alojamiento, en su primera versión.", estado: "parte" },
       { n: "10.8", b: "La portada.", t: "Qué es, el viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta. En inglés y en español.", estado: "pendiente" },
       { n: "10.9", b: "En el móvil, para todos y rápida.", t: "La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla.", estado: "pendiente" },
       { n: "10.10", b: "La revisión con capturas.", t: "Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas.", estado: "pendiente" },
@@ -359,8 +359,8 @@ export const plan = {
   h1: "El plan de El Dorado",
   sub: "**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.",
   aqui: {
-    punto: "la tanda 2, la web en seco",
-    texto: "Firmada la versión 2 el 23-nov. En curso, la tanda 2: **la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado. Lo primero que verás es la identidad de El Dorado, puesta ya en sus primeras pantallas; después, la investigación en vivo, el viaje por días y la portada.",
+    punto: "la tanda 2, a tu visto bueno a la identidad (10.2)",
+    texto: "En curso, la tanda 2: **la web, en seco**. Hechos, la forma del viaje para la web (1.5), el ritmo (4.10, adelantado), el viaje grabado de Lisboa (10.3), el esqueleto de la web (10.1) y **la identidad de El Dorado** (10.2), puesta ya en sus primeras pantallas: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje por días y la ficha de un alojamiento. Antes de seguir con lo que falta de la tanda (las preguntas, mover paradas, la portada y el repaso para el móvil), tu visto bueno a la identidad.",
   },
 
   orden: {

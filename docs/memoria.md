@@ -15,6 +15,22 @@ biblias, y las firmó ese mismo día («okay»):
   ocho tandas. En curso, **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado.
   Lo primero que se le enseña es la identidad de El Dorado, y no se sigue sin su visto bueno a ella.
 
+**Por dónde va la tanda 2** (23-nov). Hechos: la forma del viaje para la web (1.5, `agent/output/viaje.ts`), el
+ritmo (4.10, `agent/scripts/ritmo.ts`, adelantado porque la web lo usa), el viaje grabado de Lisboa (10.3,
+`agent/scripts/monta_viaje.ts` y `agent/launcher/grabar.ts`), el esqueleto de la web (10.1) y su identidad (10.2),
+puesta en las primeras pantallas de `/plan`: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje
+por días y la ficha de un alojamiento. **Está parada en el visto bueno del PM a la identidad**, con un vídeo y doce
+capturas en una página suya. Falta de la tanda: las preguntas dentro de la investigación, quitar, añadir y mover
+paradas, las fichas de una parada y del transporte, la portada (10.8), el repaso del móvil y de la accesibilidad
+(10.9) y la revisión final con capturas (10.10).
+
+Cómo se ve la web: el viaje grabado vive en la mesa (`<mesa>/grabado/viaje.json` y `sucesos.json`), fuera del
+repositorio, porque lleva datos de una búsqueda de verdad; si la mesa se pierde, se vuelve a grabar con `grabar.ts`
+(hace falta el run con su `como_es.json` y la muestra a mano, `muestra.json`). La web se arranca en `web/` con
+`ELDORADO_MESA` puesta (y `NODE_USE_ENV_PROXY=1` en la nube) y se abre en `/plan`. Para mirar una pantalla suelta:
+`?at=look`, `?at=live` o `?at=trip`, con `&day=2`, `&stay=3`, `&lang=es` y `&globe=1`. Las fotos de fuera pasan por el
+servidor de la web, que las encoge; Wikimedia corta si se le piden muchas seguidas, así que algunas tardan.
+
 Lo que se miró antes de rehacerlas, para no repetirlo: `aurora-web` no tiene cuentas, ni pago, ni páginas por agente;
 DaVi vive en su propia web (portada con precios y lista de espera, entrada aparte, y la IA con la clave de cada
 uno); el ensamblador corre con una web que solo habla con su motor y lo escucha en vivo. El mapa abierto (MapLibre

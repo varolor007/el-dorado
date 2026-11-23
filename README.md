@@ -38,6 +38,14 @@ node agent/launcher/mirar.ts recoger <carpeta del run>              # pasa las p
 Entre una orden y otra alguien lanza a los asientos, con la orden que queda en `ordenes/`: ese código no llama a
 ninguna IA y no gasta.
 
+Para ver la web, en seco, con el viaje grabado:
+
+```bash
+node agent/launcher/grabar.ts <carpeta del run> <muestra.json> --palancas   # deja el viaje en la mesa
+cd web && npm install                                                       # una vez
+ELDORADO_MESA=<la mesa> npm run dev                                         # y abrir /plan
+```
+
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`
 delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). Una fuente se apaga con

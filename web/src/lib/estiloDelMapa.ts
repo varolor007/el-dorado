@@ -1,0 +1,222 @@
+// El mapa de El Dorado: callado, para que lo que encuentra el agente sea lo único que brilla. Se pinta con las teselas
+// abiertas de OpenFreeMap (datos de OpenStreetMap) y con los colores de la identidad, en claro y en oscuro.
+
+import type { StyleSpecification } from "maplibre-gl";
+
+export type Tema = "claro" | "oscuro";
+
+const COLORES: Record<Tema, Record<string, string>> = {
+  claro: {
+    tierra: "#ECEEF0",
+    agua: "#CBD5DA",
+    verde: "#DCE5DD",
+    calle: "#FAFBFC",
+    calleMenor: "#F4F6F7",
+    edificio: "#E1E5E8",
+    frontera: "#A9B1B8",
+    letra: "#5A636C",
+    letraFuerte: "#0E1217",
+    letraAgua: "#7C8F99",
+    halo: "#ECEEF0",
+  },
+  oscuro: {
+    tierra: "#171D24",
+    agua: "#090C10",
+    verde: "#18221E",
+    calle: "#2A333D",
+    calleMenor: "#212932",
+    edificio: "#1D242C",
+    frontera: "#4A5560",
+    letra: "#8A929B",
+    letraFuerte: "#E9EBED",
+    letraAgua: "#4E5E69",
+    halo: "#171D24",
+  },
+};
+
+export function estiloDelMapa(tema: Tema): StyleSpecification {
+  const c = COLORES[tema];
+  const letra = { "text-color": c.letra, "text-halo-color": c.halo, "text-halo-width": 1.4 };
+  return {
+    version: 8,
+    glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+    sources: {
+      mundo: { type: "vector", url: "https://tiles.openfreemap.org/planet" },
+    },
+    layers: [
+      { id: "tierra", type: "background", paint: { "background-color": c.tierra } },
+      {
+        id: "verde",
+        type: "fill",
+        source: "mundo",
+        "source-layer": "park",
+        paint: { "fill-color": c.verde, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0, 9, 1] },
+      },
+      {
+        id: "bosque",
+        type: "fill",
+        source: "mundo",
+        "source-layer": "landcover",
+        filter: ["in", ["get", "class"], ["literal", ["wood", "grass"]]],
+        paint: { "fill-color": c.verde, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0, 11, 0.7] },
+      },
+      { id: "agua", type: "fill", source: "mundo", "source-layer": "water", paint: { "fill-color": c.agua } },
+      {
+        id: "rios",
+        type: "line",
+        source: "mundo",
+        "source-layer": "waterway",
+        minzoom: 9,
+        paint: { "line-color": c.agua, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 0.6, 15, 3] },
+      },
+      {
+        id: "edificios",
+        type: "fill",
+        source: "mundo",
+        "source-layer": "building",
+        minzoom: 14,
+        paint: { "fill-color": c.edificio, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15.5, 1] },
+      },
+      {
+        id: "calles-menores",
+        type: "line",
+        source: "mundo",
+        "source-layer": "transportation",
+        minzoom: 12,
+        filter: ["in", ["get", "class"], ["literal", ["minor", "service", "path", "track", "pier"]]],
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": c.calleMenor,
+          "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 12, 0.4, 17, 7],
+        },
+      },
+      {
+        id: "calles",
+        type: "line",
+        source: "mundo",
+        "source-layer": "transportation",
+        minzoom: 6,
+        filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary"]]],
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": c.calle,
+          "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 0.3, 12, 1.6, 17, 12],
+        },
+      },
+      {
+        id: "vias",
+        type: "line",
+        source: "mundo",
+        "source-layer": "transportation",
+        minzoom: 11,
+        filter: ["==", ["get", "class"], "rail"],
+        paint: { "line-color": c.frontera, "line-width": 0.6, "line-dasharray": [3, 3], "line-opacity": 0.6 },
+      },
+      {
+        id: "fronteras",
+        type: "line",
+        source: "mundo",
+        "source-layer": "boundary",
+        filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], 1]],
+        paint: {
+          "line-color": c.frontera,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 1, 0.4, 8, 1.2],
+          "line-opacity": 0.7,
+        },
+      },
+      {
+        id: "nombres-de-agua",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "water_name",
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Italic"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 2, 10, 10, 13],
+          "text-letter-spacing": 0.12,
+          "text-max-width": 7,
+        },
+        paint: { "text-color": c.letraAgua, "text-halo-color": c.agua, "text-halo-width": 1 },
+      },
+      {
+        id: "nombres-de-calle",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "transportation_name",
+        minzoom: 15,
+        layout: {
+          "symbol-placement": "line",
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10.5,
+        },
+        paint: { ...letra, "text-opacity": 0.8 },
+      },
+      {
+        id: "barrios",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "place",
+        minzoom: 11,
+        filter: ["in", ["get", "class"], ["literal", ["suburb", "quarter", "neighbourhood"]]],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Italic"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 11, 10, 15, 13],
+          "text-letter-spacing": 0.08,
+          "text-transform": "uppercase",
+          "text-max-width": 7,
+        },
+        paint: { ...letra, "text-opacity": 0.75 },
+      },
+      {
+        id: "pueblos",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "place",
+        minzoom: 6,
+        filter: ["in", ["get", "class"], ["literal", ["town", "village"]]],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 6, 10, 12, 13],
+          "text-max-width": 7,
+        },
+        paint: letra,
+      },
+      {
+        id: "ciudades",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "place",
+        filter: ["==", ["get", "class"], "city"],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Bold"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10, 8, 14, 13, 18],
+          "symbol-sort-key": ["coalesce", ["get", "rank"], 10],
+          "text-max-width": 7,
+        },
+        paint: { "text-color": c.letraFuerte, "text-halo-color": c.halo, "text-halo-width": 1.6 },
+      },
+      {
+        id: "paises",
+        type: "symbol",
+        source: "mundo",
+        "source-layer": "place",
+        maxzoom: 6,
+        filter: ["==", ["get", "class"], "country"],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 1, 9, 5, 13],
+          "text-letter-spacing": 0.14,
+          "text-transform": "uppercase",
+          "symbol-sort-key": ["coalesce", ["get", "rank"], 10],
+          "text-max-width": 6,
+        },
+        paint: { ...letra, "text-opacity": 0.85 },
+      },
+    ],
+  };
+}
