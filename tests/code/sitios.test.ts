@@ -240,6 +240,9 @@ test("una división del mapa no entra como barrio ni como patrimonio; un castill
   assert.equal(clase("Q9005"), "neighbourhood");
   // El árbol de la fuente cuelga a un castillo, más arriba, de una división: no por eso deja de ser un sitio.
   assert.equal(clase("Q9008"), "castle");
+  // Y si es un barrio dentro de una división y además un museo, es un museo: lo concreto no cede por lo blando.
+  assert.equal(clase("Q9012", "Q9001"), "museum");
+  assert.equal(clase("Q9001", "Q9012"), "museum");
   assert.ok(BLANDAS.includes("neighbourhood") && BLANDAS.includes(GENERICA));
 });
 
@@ -449,4 +452,20 @@ test("si ningún escalón basta, se queda con el que más trajo; y si el primero
   const sobrada = falsa([bien(DE_WIKIDATA), raices]);
   assert.equal((await sitiosConEscalera(CAJA, [5, 2, 1], 2, {}, { traer: sobrada.traer })).length, 3);
   assert.equal(sobrada.pedidas.length, 2);
+});
+
+test("trampa: una fila sin sus coordenadas, o sin lo que se habla de ella, no es un sitio en medio del mar", () => {
+  const json = {
+    results: {
+      bindings: [
+        fila("Q31", { nombre: "Sin coordenadas", enlaces: 7 }),
+        { ...fila("Q32", { nombre: "Con una en blanco", lon: 20, enlaces: 7 }), lat: { value: "" } },
+        fila("Q33", { nombre: "Entera", lat: 10.05, lon: 20.05, enlaces: 7 }),
+      ],
+    },
+  };
+  assert.deepEqual(
+    leerCandidatos(json, VISTO).map((c) => c.id),
+    ["Q33"],
+  );
 });

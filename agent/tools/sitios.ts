@@ -38,7 +38,9 @@ export type Sitio = {
  */
 export function claseDe(clases: string[], raicesDe: Map<string, string[]>): string | null {
   const raices = new Set(clases.flatMap((c) => raicesDe.get(c) ?? []));
-  const clase = RAICES.find((r) => raices.has(r.raiz))?.clase ?? null;
+  const suyas = RAICES.filter((r) => raices.has(r.raiz)).map((r) => r.clase);
+  // Gana la primera de la lista que sea concreta; una blanda (un barrio, un patrimonio a secas) solo si no hay otra.
+  const clase = suyas.find((c) => !BLANDAS.includes(c)) ?? suyas[0] ?? null;
   if (clase === null || !BLANDAS.includes(clase)) return clase;
   if (DIVISIONES.some((d) => raices.has(d.raiz))) return null;
   if (clase === GENERICA && NO_SE_VA_A_VER.some((n) => raices.has(n.raiz)) && !raices.has(ATRACCION)) return null;
@@ -142,9 +144,14 @@ export function leerCandidatos(json: unknown, visto: string): Candidato[] {
   for (const cruda of lista(objeto(objeto(json).results).bindings)) {
     const fila = objeto(cruda);
     const id = /\/(Q\d+)$/.exec(valor(fila, "item") ?? "")?.[1];
-    const lat = Number(valor(fila, "lat"));
-    const lon = Number(valor(fila, "lon"));
-    const enlaces = Number(valor(fila, "enlaces"));
+    // Lo que falta no es un cero: una fila sin sus coordenadas no es un sitio en medio del mar.
+    const numero = (campo: string): number => {
+      const crudo = valor(fila, campo);
+      return crudo === null || crudo === undefined || String(crudo).trim() === "" ? Number.NaN : Number(crudo);
+    };
+    const lat = numero("lat");
+    const lon = numero("lon");
+    const enlaces = numero("enlaces");
     // La etiqueta la escribe quien quiera en los datos abiertos, y de aquí va a la pantalla del viajero y, como
     // nombre de zona, a otra fuente: si no es un nombre (corto, en una línea y sin direcciones), la cosa no entra.
     const nombre = nombreDeFuera(valor(fila, "nombre") ?? valor(fila, "nombreEn") ?? "");
