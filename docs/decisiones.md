@@ -241,6 +241,9 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
     calibra con varios destinos en el ensayo.
   Lo que sigue pegado a dos idiomas (las palabras prohibidas, las quejas graves que se buscan en las opiniones) y a
   dos países (la semilla de dominios oficiales) queda dicho abajo, en lo pendiente.
+- **La imagen de relleno de una fuente no es una foto.** Donde una habitación no tiene foto, LiteAPI pone un dibujo
+  de relleno, y la web lo enseñaba como si fuera la habitación. Se quita en el enchufe, que es quien conoce a su
+  fuente: así la casa sabe que de esa habitación no hay nada que mirar, y lo dice.
 
 ## Pendientes
 

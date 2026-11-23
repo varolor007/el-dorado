@@ -120,6 +120,25 @@ test("LiteAPI: de cada alojamiento, la tarifa más barata contando lo que se pag
   assert.equal(precios[0].adultos, ESTANCIA.adultos);
 });
 
+test("LiteAPI: la imagen de relleno de la fuente no es una foto, ni de la habitación ni del alojamiento", () => {
+  const relleno = "https://fotos.invalid/rooms-large-pictures/room-placeholder.jpg";
+  const json = {
+    data: {
+      id: "x1",
+      rooms: [
+        { id: 1, roomName: "Solo relleno", photos: [{ url: relleno, mainPhoto: true }] },
+        { id: 2, roomName: "Con foto", photos: [{ url: relleno }, { url: "https://fotos.invalid/placeholder/a.jpg" }] },
+      ],
+      hotelImages: [{ url: "https://fotos.invalid/Placeholder.png?w=640" }, { url: "https://fotos.invalid/h.jpg" }],
+    },
+  };
+  const d = leerDetalle(json, VISTO);
+  assert.deepEqual(d.habitaciones[0].fotos, []);
+  // Lo dice el nombre del archivo, no la carpeta: una foto de verdad en una carpeta con ese nombre se queda.
+  assert.deepEqual(d.habitaciones[1].fotos, ["https://fotos.invalid/placeholder/a.jpg"]);
+  assert.deepEqual(d.fotos, ["https://fotos.invalid/h.jpg"]);
+});
+
 test("LiteAPI: el detalle trae las habitaciones con sus metros y sus fotos, y los servicios sin repetir", () => {
   const json = {
     data: {

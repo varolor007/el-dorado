@@ -114,6 +114,16 @@ export function leerPrecios(json: unknown, e: Estancia, visto: string): Precio[]
   return salida;
 }
 
+/**
+ * Donde una habitación o un alojamiento no tiene foto, la fuente pone una imagen de relleno, y lo dice el nombre de
+ * su archivo. No es una foto de nada: si pasara, la casa creería que hay algo que mirar y el viajero vería un dibujo
+ * como si fuera su habitación.
+ */
+export function esDeRelleno(url: string): boolean {
+  const archivo = url.split(/[?#]/)[0].split("/").pop() ?? "";
+  return /placeholder/i.test(archivo);
+}
+
 /** Las clases de foto de una habitación que van por delante, por lo que enseñan de ella. */
 const PRIMERO = ["bedroom", "hotel room", "bathroom", "view", "window"];
 
@@ -145,7 +155,7 @@ function leerHabitacion(crudo: unknown): Habitacion | null {
   for (const f of lista(r.photos)) {
     const foto = objeto(f);
     const url = texto(foto.url);
-    if (url === null || conClase.some((x) => x.url === url)) continue;
+    if (url === null || esDeRelleno(url) || conClase.some((x) => x.url === url)) continue;
     const clase = PRIMERO.indexOf((texto(foto.imageClass1) ?? "").toLowerCase());
     conClase.push({ url, orden: foto.mainPhoto === true ? -1 : clase < 0 ? PRIMERO.length : clase });
   }
@@ -175,7 +185,7 @@ export function leerDetalle(json: unknown, visto: string): Detalle {
   const fotos: string[] = [];
   for (const f of lista(d.hotelImages)) {
     const url = texto(objeto(f).url);
-    if (url !== null && !fotos.includes(url)) fotos.push(url);
+    if (url !== null && !esDeRelleno(url) && !fotos.includes(url)) fotos.push(url);
   }
   const servicios: string[] = [];
   for (const s of [...lista(d.facilities), ...lista(d.hotelFacilities)]) {
