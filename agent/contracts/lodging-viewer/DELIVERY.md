@@ -92,6 +92,12 @@ Every one of the nine fields must be present. The level `none` needs its evidenc
 `{ "theme": "noise", "tone": "bad", "mentions": "several", "says": "tram noise at night in the rooms facing the
 street", "refs": ["r4", "r19"] }`
 
+`theme` is one of: `cleanliness`, `maintenance`, `noise`, `room_size`, `bed`, `bathroom`, `light`, `temperature`,
+`smell`, `view`, `breakfast`, `food`, `staff`, `location`, `access`, `parking`, `wifi`, `gym`, `pool`,
+`common_areas`, `kitchen`, `privacy`, `safety`, `value`, or `other` when none of them fits. The list is closed
+because the house shows the theme to the traveller in their language; what the theme is about goes in `says`, which
+the traveller does not read. One entry per theme and tone: do not repeat a theme with the same tone.
+
 `tone` is `good`, `bad` or `mixed`. `mentions` is `one`, `a_few` or `several`: do not write a number, the house
 counts. `refs` are references that exist in `in/reviews.json`.
 

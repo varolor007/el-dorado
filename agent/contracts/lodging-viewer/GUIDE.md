@@ -28,10 +28,10 @@ Count, do not estimate. Write `three treadmills and one bike`, not `a decent gym
 ## 3. Read the reviews by theme
 
 Go through `in/reviews.json` and note what guests say about the room, its size, noise, cleanliness, the bathroom, the
-view, the gym, the pool, whether the place feels new or tired, and what guests found dirty, broken or left
-unrepaired. For each theme note whether one, a few or several
-reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest ones. Read
-the complaints with care: what is repeated matters; one isolated complaint does not.
+view, the gym, the pool, whether the place feels new or tired, what guests found dirty, broken or left unrepaired,
+and any other theme of the list in `contract/DELIVERY.md` that they bring up. For each theme note whether one, a few
+or several reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest
+ones. Read the complaints with care: what is repeated matters; one isolated complaint does not.
 
 Note apart anything that exists but may not be there for this stay: a pool closed for the season, a gym or a lift
 under works, a service paid apart. Look at the dates of the stay in the sheet: an outdoor pool in winter is a warning

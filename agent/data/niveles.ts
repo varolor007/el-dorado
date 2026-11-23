@@ -51,6 +51,38 @@ export const INSTALACIONES: Record<string, RegExp> = {
   pool: /\bpool\b(?!\s*table)|swimming/i,
 };
 
+/**
+ * De qué hablan las opiniones. La lista es cerrada para que la web lo diga en el idioma del viajero sin que pase por
+ * ella una frase del asiento; lo que no cabe en ninguno va en `other`, que no se enseña.
+ */
+export const OTRO_TEMA = "other";
+export const TEMAS_DE_OPINIONES = [
+  "cleanliness",
+  "maintenance",
+  "noise",
+  "room_size",
+  "bed",
+  "bathroom",
+  "light",
+  "temperature",
+  "smell",
+  "view",
+  "breakfast",
+  "food",
+  "staff",
+  "location",
+  "access",
+  "parking",
+  "wifi",
+  "gym",
+  "pool",
+  "common_areas",
+  "kitchen",
+  "privacy",
+  "safety",
+  "value",
+  OTRO_TEMA,
+];
 export const TONOS = ["good", "bad", "mixed"];
 export const MENCIONES = ["one", "a_few", "several"];
 export const CLASES_DE_PRUEBA = ["photo", "review", "sheet"];

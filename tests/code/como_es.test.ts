@@ -18,6 +18,7 @@ import {
   ETIQUETAS_DE_AVISO,
   MENCIONES,
   MUESTRA,
+  TEMAS_DE_OPINIONES,
   TONOS,
 } from "../../agent/data/niveles.ts";
 import { hojaDeDatos, opinionesParaMirar } from "../../agent/scripts/para_mirar.ts";
@@ -375,6 +376,31 @@ test("trampa: en las opiniones cuenta él, pone un tono suyo o cita una que no r
     rojosDe((e) => (e.review_themes[0].refs = [])),
     ["review_themes[0]: no cita ninguna opinión"],
   );
+});
+
+test("trampa: un tema de las opiniones que no es de la lista, o el mismo tema dos veces con el mismo tono", () => {
+  const ruido = { theme: "noise", tone: "bad", mentions: "one", says: "the street is noisy", refs: ["r1"] };
+  assert.deepEqual(
+    rojosDe((e) => (e.review_themes = [{ ...ruido, theme: "evening light show" }])),
+    ["review_themes[0]: el tema no es de su lista"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.review_themes = [ruido, { ...ruido, says: "again" }])),
+    ["review_themes[1]: repite un tema con el mismo tono"],
+  );
+  // El mismo tema para bien y para mal son dos cosas, y lo que no cabe en la lista va en «other», cuantas veces sea.
+  const otro = { ...ruido, theme: "other" };
+  assert.deepEqual(
+    rojosDe((e) => (e.review_themes = [ruido, { ...ruido, tone: "good" }, otro, otro])),
+    [],
+  );
+});
+
+test("el contrato lista los mismos temas de las opiniones que el código, y ninguno más", () => {
+  const entrega = leer("DELIVERY.md");
+  const parrafo = entrega.slice(entrega.indexOf("`theme` is one of:"), entrega.indexOf("The list is closed"));
+  const delContrato = [...parrafo.matchAll(/`([a-z_]+)`/g)].map((m) => m[1]).filter((t) => t !== "theme");
+  assert.deepEqual(delContrato, TEMAS_DE_OPINIONES);
 });
 
 test("trampa: un choque o un aviso sin nada que lo sostenga, o un aviso sin su etiqueta", () => {

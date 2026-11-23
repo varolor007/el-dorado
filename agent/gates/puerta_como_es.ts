@@ -17,6 +17,8 @@ import {
   PIDEN_FOTO,
   SIN_SABER,
   SOLO_DE_OPINIONES,
+  OTRO_TEMA,
+  TEMAS_DE_OPINIONES,
   TONOS,
 } from "../data/niveles.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -159,10 +161,17 @@ export function puertaComoEs(entrega: unknown, m: Material): Veredicto {
     }
   }
 
-  // 4. Lo que dicen las opiniones, por temas: cada tema, con opiniones que existen.
+  // 4. Lo que dicen las opiniones, por temas: cada tema, de su lista y con opiniones que existen.
+  const dichos = new Set<string>();
   lista(entrega.review_themes).forEach((cruda, i) => {
     const donde = `review_themes[${i}]`;
     if (!esObjeto(cruda) || !esTexto(cruda.theme) || !esTexto(cruda.says)) return rojo(donde, "no dice de qué habla");
+    if (!TEMAS_DE_OPINIONES.includes(cruda.theme)) rojo(donde, "el tema no es de su lista");
+    else if (cruda.theme !== OTRO_TEMA) {
+      const par = `${cruda.theme}:${String(cruda.tone)}`;
+      if (dichos.has(par)) rojo(donde, "repite un tema con el mismo tono");
+      dichos.add(par);
+    }
     if (!esTexto(cruda.tone) || !TONOS.includes(cruda.tone)) rojo(donde, "el tono no es de su lista");
     if (!esTexto(cruda.mentions) || !MENCIONES.includes(cruda.mentions))
       rojo(donde, "cuántas lo dicen no es de su lista: contar es cosa del código");

@@ -244,6 +244,10 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
 - **La imagen de relleno de una fuente no es una foto.** Donde una habitación no tiene foto, LiteAPI pone un dibujo
   de relleno, y la web lo enseñaba como si fuera la habitación. Se quita en el enchufe, que es quien conoce a su
   fuente: así la casa sabe que de esa habitación no hay nada que mirar, y lo dice.
+- **Los temas de las opiniones, de una lista cerrada.** El que mira ponía a cada tema el nombre que quería, en
+  inglés. Ahora elige de una lista (la limpieza, el ruido, la cama, el personal y veinte más, y «otro» para lo que
+  no quepa), y la puerta 5 lo comprueba. Así lo que se dice de un alojamiento se puede enseñar en cualquier idioma
+  sin que viaje una frase suya.
 
 ## Pendientes
 
