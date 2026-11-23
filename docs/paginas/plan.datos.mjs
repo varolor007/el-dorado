@@ -98,7 +98,7 @@ const bloques = [
       { n: "4.7", b: "El que explica.", t: "Qué ganas y qué pierdes con cada manera; la puerta 7.", estado: "pendiente" },
       { n: "4.8", b: "El viaje, listo para la web.", t: "Junta lo que dejó cada paso en la forma del viaje para la web (1.5).", estado: "pendiente" },
       { n: "4.9", b: "El del día a día.", t: "Su contrato: qué merece tu tiempo y qué no, en qué orden y cuánto lleva, sin inventar sitios; la puerta 9.", estado: "pendiente" },
-      { n: "4.10", b: "El ritmo.", t: "Código: reparte las paradas por días, por cercanía y a tu ritmo, las ordena y calcula lo que se anda. Misma entrada, mismos días.", estado: "pendiente" },
+      { n: "4.10", b: "El ritmo.", t: "Código, en `agent/scripts/ritmo.ts`: reparte las paradas por días, por cercanía y a tu ritmo (tres, cinco o siete al día, con un tope de minutos), ordena cada día para andar lo menos posible y dice lo que se anda. Lo que no cabe queda fuera, a mano; antes fuera que cruzar la ciudad. Misma entrada, mismos días. Adelantado a la tanda 2, porque la web lo usa para su mando. Once pruebas.", estado: "hecho" },
       { n: "4.11", b: "Abaratar al que mira.", t: "De catorce minutos por alojamiento a menos de uno: menos fotos y mejor elegidas, y la IA llamada sin rodeos. Con tu decisión sobre «descuidado».", estado: "decidir" },
     ],
   },
@@ -192,7 +192,7 @@ const bloques = [
     puntos: [
       { n: "10.1", b: "Dónde vive y con qué se hace.", t: "Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex. Lleva sus dependencias; el agente sigue sin ninguna.", estado: "pendiente" },
       { n: "10.2", b: "La identidad y el sistema de diseño.", t: "El color, la letra y la manera de moverse de El Dorado; sus piezas (el botón, la tarjeta, la ficha, la hoja de abajo en el móvil); en claro y en oscuro. Se te enseña antes de seguir.", estado: "pendiente" },
-      { n: "10.3", b: "El viaje grabado.", t: "Lisboa, con lo que ya salió de verdad (la búsqueda y las fichas de cómo es) y un día a día hecho a mano y marcado como muestra, para construir y enseñar la web sin gastar.", estado: "pendiente" },
+      { n: "10.3", b: "El viaje grabado.", t: "Lisboa, con lo que ya salió de verdad (la búsqueda, las fichas de cómo es y dieciocho sitios de datos abiertos, con su foto, su autor y su licencia) y con lo que aún no decide el agente hecho a mano y marcado como muestra: qué sitios, por qué, y las tres maneras. Lo junta `agent/scripts/monta_viaje.ts` y lo graba `agent/launcher/grabar.ts`, en la mesa, fuera del repositorio. Siete pruebas, con el caso inventado.", estado: "hecho" },
       { n: "10.4", b: "El mapa del mundo y el buscador.", t: "La barra de dónde y cuándo, el vuelo del mapa hasta el destino y el primer vistazo.", estado: "pendiente" },
       { n: "10.5", b: "La investigación, en vivo.", t: "Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa.", estado: "pendiente" },
       { n: "10.6", b: "Tu viaje, en el mapa.", t: "Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas.", estado: "pendiente" },

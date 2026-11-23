@@ -142,7 +142,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | 4.7 | **El que explica.** Qué ganas y qué pierdes con cada manera; la puerta 7. | pendiente |
 | 4.8 | **El viaje, listo para la web.** Junta lo que dejó cada paso en la forma del viaje para la web (1.5). | pendiente |
 | 4.9 | **El del día a día.** Su contrato: qué merece tu tiempo y qué no, en qué orden y cuánto lleva, sin inventar sitios; la puerta 9. | pendiente |
-| 4.10 | **El ritmo.** Código: reparte las paradas por días, por cercanía y a tu ritmo, las ordena y calcula lo que se anda. Misma entrada, mismos días. | pendiente |
+| 4.10 | **El ritmo.** Código, en `agent/scripts/ritmo.ts`: reparte las paradas por días, por cercanía y a tu ritmo (tres, cinco o siete al día, con un tope de minutos), ordena cada día para andar lo menos posible y dice lo que se anda. Lo que no cabe queda fuera, a mano; antes fuera que cruzar la ciudad. Misma entrada, mismos días. Adelantado a la tanda 2, porque la web lo usa para su mando. Once pruebas. | hecho |
 | 4.11 | **Abaratar al que mira.** De catorce minutos por alojamiento a menos de uno: menos fotos y mejor elegidas, y la IA llamada sin rodeos. Con tu decisión sobre «descuidado». | por decidir |
 
 ## 5. Empezar, entero
@@ -236,7 +236,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 |---|---|---|
 | 10.1 | **Dónde vive y con qué se hace.** Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex. Lleva sus dependencias; el agente sigue sin ninguna. | pendiente |
 | 10.2 | **La identidad y el sistema de diseño.** El color, la letra y la manera de moverse de El Dorado; sus piezas (el botón, la tarjeta, la ficha, la hoja de abajo en el móvil); en claro y en oscuro. Se te enseña antes de seguir. | pendiente |
-| 10.3 | **El viaje grabado.** Lisboa, con lo que ya salió de verdad (la búsqueda y las fichas de cómo es) y un día a día hecho a mano y marcado como muestra, para construir y enseñar la web sin gastar. | pendiente |
+| 10.3 | **El viaje grabado.** Lisboa, con lo que ya salió de verdad (la búsqueda, las fichas de cómo es y dieciocho sitios de datos abiertos, con su foto, su autor y su licencia) y con lo que aún no decide el agente hecho a mano y marcado como muestra: qué sitios, por qué, y las tres maneras. Lo junta `agent/scripts/monta_viaje.ts` y lo graba `agent/launcher/grabar.ts`, en la mesa, fuera del repositorio. Siete pruebas, con el caso inventado. | hecho |
 | 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, el vuelo del mapa hasta el destino y el primer vistazo. | pendiente |
 | 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. | pendiente |
 | 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. | pendiente |

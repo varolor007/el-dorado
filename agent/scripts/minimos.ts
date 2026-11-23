@@ -3,7 +3,8 @@
 
 import type { Alojamiento, Minimos } from "../tools/fuentes/tipos.ts";
 
-export type Descarte = { id: string; nombre: string; motivo: string };
+/** Lo que no pasa: quién es, dónde está (para pintarlo en el mapa mientras se investiga) y por qué. */
+export type Descarte = { id: string; nombre: string; lat: number; lon: number; motivo: string };
 
 /** Por qué no pasa un alojamiento, o null si pasa. Un dato que falta no se da por bueno. */
 export function motivoDeDescarte(a: Alojamiento, m: Minimos): string | null {
@@ -22,7 +23,7 @@ export function separar(todos: Alojamiento[], m: Minimos): { dentro: Alojamiento
   for (const a of todos) {
     const motivo = motivoDeDescarte(a, m);
     if (motivo === null) dentro.push(a);
-    else fuera.push({ id: a.id, nombre: a.nombre, motivo });
+    else fuera.push({ id: a.id, nombre: a.nombre, lat: a.lat, lon: a.lon, motivo });
   }
   return { dentro, fuera };
 }
