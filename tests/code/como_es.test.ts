@@ -19,7 +19,7 @@ import {
   MENCIONES,
   MUESTRA,
   TONOS,
-} from "../../agent/scripts/niveles.ts";
+} from "../../agent/data/niveles.ts";
 import { hojaDeDatos, opinionesParaMirar } from "../../agent/scripts/para_mirar.ts";
 import { elegirFotos } from "../../agent/tools/fotos.ts";
 import type { Opinion } from "../../agent/tools/fuentes/tipos.ts";

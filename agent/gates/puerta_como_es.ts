@@ -16,7 +16,7 @@ import {
   MUESTRA,
   SIN_SABER,
   TONOS,
-} from "../scripts/niveles.ts";
+} from "../data/niveles.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
 /** Lo que tuvo delante el asiento: su ficha de datos, los nombres de sus fotos y las referencias de sus opiniones. */

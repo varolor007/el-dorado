@@ -2,7 +2,7 @@
 // niveles, campo a campo. No dice quién acierta: dice dónde dos miradas iguales no ven lo mismo, que es donde un
 // nivel está mal escrito o la prueba no alcanza.
 
-import { CAMPOS, SIN_ORDEN, SIN_SABER } from "./niveles.ts";
+import { CAMPOS, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
 
 export type Parecido = "igual" | "vecino" | "distinto" | "uno no sabe" | "ninguno sabe" | "falta";
 export type Comparado = { campo: string; a: string | null; b: string | null; parecido: Parecido };

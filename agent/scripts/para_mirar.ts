@@ -5,7 +5,7 @@
 import type { Estancia, Opinion } from "../tools/fuentes/tipos.ts";
 import type { Eleccion } from "../tools/fotos.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
-import { SIN_SABER } from "./niveles.ts";
+import { SIN_SABER } from "../data/niveles.ts";
 
 export const TOPE_DE_OPINIONES = 40;
 const TOPE_DE_LETRAS = 700;

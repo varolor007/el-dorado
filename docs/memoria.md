@@ -55,7 +55,7 @@ Las tandas hechas:
   - 2.3, cómo se lanza un asiento: `agent/launcher/puesto.ts` y `asiento.ts`.
   - 3.6, las fotos: `agent/tools/fotos.ts`.
   - 4.2, el que mira el alojamiento: su contrato, en `agent/contracts/lodging-viewer/`; sus niveles, en
-    `agent/scripts/niveles.ts`; la puerta 5, en `agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge,
+    `agent/data/niveles.ts`; la puerta 5, en `agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge,
     `agent/launcher/mirar.ts`.
 
 **El punto de situación de la tanda 1.** Se probó con los cinco finalistas de Lisboa, dos pasadas a ciegas por
