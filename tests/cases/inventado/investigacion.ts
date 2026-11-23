@@ -31,6 +31,7 @@ export const ENTENDIDO: Entendido = {
     kind: "city",
     centre: { lat: ESTANCIA.lat, lon: ESTANCIA.lon },
     box: { west: 19.97, south: 9.98, east: 20.03, north: 10.03 },
+    airport: "VVV",
   },
   origin: { name: "Origen Inventado", country: "YY", airport: "OOO" },
   dates: { check_in: ESTANCIA.entrada, check_out: ESTANCIA.salida, flexible: false },

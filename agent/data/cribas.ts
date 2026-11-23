@@ -1,20 +1,21 @@
 // Las cribas, en datos: lo que descarta, lo que se suma al precio y los pesos de partida de la nota. Son de partida:
 // se ajustan con casos reales, en el ensayo. Ninguna regla lleva el nombre de un país, una aerolínea o un hotel.
 
-/** Criba 1. Lo que descarta un alojamiento, con el motivo que se le dice al viajero. */
+/**
+ * Criba 1. Lo que descarta un alojamiento, por su clase. El motivo va en inglés porque lo lee un asiento, en la
+ * tabla; al viajero se lo dice la web, en su idioma, con la clase.
+ */
 export const DESCARTA = {
-  sin_precio: "no tiene precio para esas noches",
-  le_falta_un_imprescindible: "le falta algo que marcaste como imprescindible",
-  no_cabe_el_grupo: "no cabe el grupo",
-  quejas_graves: "tiene quejas graves que se repiten",
+  missing_must: "missing something the traveller marked as a must",
+  serious_complaints: "serious complaints repeated in recent reviews",
 } as const;
 
 /** Las quejas que descartan si se repiten en las opiniones recientes: cómo las nombra quien las escribe. */
 export const QUEJAS_GRAVES: Record<string, RegExp> = {
-  chinches: /\b(bed ?bugs?|chinches)\b/i,
-  cucarachas: /\b(cockroach(es)?|roach(es)?|cucarachas?)\b/i,
-  moho: /\b(mould|mold|moho)\b/i,
-  engano: /\b(scam|estafa|fraud)\b/i,
+  bed_bugs: /\b(bed ?bugs?|chinches)\b/i,
+  cockroaches: /\b(cockroach(es)?|roach(es)?|cucarachas?)\b/i,
+  mould: /\b(mould|mold|moho)\b/i,
+  scam: /\b(scam|estafa|fraud)\b/i,
 };
 /** Cuántas opiniones tienen que decirlo para que cuente como repetido. */
 export const QUEJA_REPETIDA = 3;
@@ -54,3 +55,10 @@ export const NOTA_MINIMA = 5;
  * Si va ajustado, el precio pesa mucho; si va cómodo, poco.
  */
 export const PRECIO_POR_GASTO: Record<string, number> = { tight: 10, medium: 6, comfortable: 3 };
+
+/** Los mínimos de partida de un alojamiento para seguir adelante, y cuántos se miran de cerca. Se ajustan con casos. */
+export const MINIMOS_DE_PARTIDA = { nota: 8.5, opiniones: 200, estrellas: 4 };
+export const FINALISTAS = 5;
+
+/** La moneda en la que se piden los precios mientras el viajero no diga otra. */
+export const MONEDA_DE_PARTIDA = "EUR";

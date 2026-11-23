@@ -14,7 +14,8 @@ import type {
   Precio,
 } from "../tools/fuentes/tipos.ts";
 import { casar } from "./cruce.ts";
-import { completo, elegir, type ConPrecio } from "./finalistas.ts";
+import { enLineaRecta } from "../tools/distancias.ts";
+import { completo, elegir, type ConPrecio, type Finalista } from "./finalistas.ts";
 import { separar, type Descarte } from "./minimos.ts";
 import { entreFechas, porTemas, type Recuento } from "./temas.ts";
 
@@ -37,10 +38,15 @@ export type Ficha = {
   avisos: string[];
 };
 
+/** Una zona donde se busca: la marca el asiento de la ruta, y su centro lo pone el código. */
+export type ZonaDeBusqueda = { id: string; nombre: string; lat: number; lon: number; radio: number };
+
 export type Busqueda = {
   estancia: Estancia;
   minimos: Minimos;
   fuente: string;
+  /** Las zonas donde se buscó, con lo que devolvió cada una, cuando se buscó por zonas. */
+  zonas?: (ZonaDeBusqueda & { devueltos: number })[];
   devueltos: number;
   dentro: Alojamiento[];
   fuera: Descarte[];
@@ -61,8 +67,50 @@ export async function buscarAlojamiento(
   m: Minimos,
   o: Opciones = {},
 ): Promise<Busqueda> {
+  return completar(fuente, e, m, await fuente.lista(e, m), o, []);
+}
+
+/** La zona en la que cae un alojamiento: la más cercana de las que lo tienen dentro; si no, la más cercana. */
+function zonaDe(a: Alojamiento, zonas: ZonaDeBusqueda[]): string | null {
+  if (zonas.length === 0) return null;
+  const lejos = zonas.map((z) => ({ z, metros: enLineaRecta({ lat: a.lat, lon: a.lon }, { lat: z.lat, lon: z.lon }) }));
+  const dentro = lejos.filter((x) => x.metros <= x.z.radio);
+  return (dentro.length > 0 ? dentro : lejos).sort((x, y) => x.metros - y.metros || x.z.id.localeCompare(y.z.id))[0].z
+    .id;
+}
+
+/**
+ * La misma búsqueda, en varias zonas: trae la lista de cada una, las junta sin repetir y sigue igual. Para que cada
+ * zona tenga quien la represente, su alojamiento más barato pasa a mirarse de cerca; el resto, por la regla de todos.
+ */
+export async function buscarEnZonas(
+  fuente: FuenteAlojamiento,
+  e: Estancia,
+  zonas: ZonaDeBusqueda[],
+  m: Minimos,
+  o: Opciones = {},
+): Promise<Busqueda> {
+  if (zonas.length === 0) throw new Error("no hay ninguna zona donde buscar");
+  const devueltos: Alojamiento[] = [];
+  const porZona: (ZonaDeBusqueda & { devueltos: number })[] = [];
+  for (const z of zonas) {
+    const lista = await fuente.lista({ ...e, lat: z.lat, lon: z.lon, radio: z.radio }, m);
+    porZona.push({ ...z, devueltos: lista.length });
+    for (const a of lista) if (!devueltos.some((x) => x.id === a.id)) devueltos.push(a);
+  }
+  const b = await completar(fuente, e, m, devueltos, o, zonas);
+  return { ...b, zonas: porZona };
+}
+
+async function completar(
+  fuente: FuenteAlojamiento,
+  e: Estancia,
+  m: Minimos,
+  devueltos: Alojamiento[],
+  o: Opciones,
+  zonas: ZonaDeBusqueda[],
+): Promise<Busqueda> {
   const avisos: string[] = [];
-  const devueltos = await fuente.lista(e, m);
   const { dentro, fuera } = separar(devueltos, m);
   if (fuera.length > 0) avisos.push(`la fuente devolvió ${fuera.length} que no cumplen los mínimos; descartados`);
 
@@ -80,8 +128,24 @@ export async function buscarAlojamiento(
   }
   if (conPrecio.length < dentro.length) avisos.push(`${dentro.length - conPrecio.length} sin precio para esas noches`);
 
+  // Con varias zonas, el más barato de cada una pasa primero; los demás, por la regla de todos.
+  const cuantos = o.finalistas ?? 5;
+  const elegidos: Finalista[] = [];
+  if (zonas.length > 1) {
+    for (const z of zonas) {
+      const deLaZona = conPrecio
+        .filter((c) => completo(c.precio) > 0 && zonaDe(c.alojamiento, zonas) === z.id)
+        .filter((c) => !elegidos.some((x) => x.alojamiento.id === c.alojamiento.id))
+        .sort((a, b) => completo(a.precio) - completo(b.precio) || a.alojamiento.id.localeCompare(b.alojamiento.id));
+      if (deLaZona.length > 0 && elegidos.length < cuantos)
+        elegidos.push({ ...deLaZona[0], motivo: "el más barato de su zona" });
+    }
+  }
+  const resto = conPrecio.filter((c) => !elegidos.some((x) => x.alojamiento.id === c.alojamiento.id));
+  elegidos.push(...elegir(resto, cuantos - elegidos.length, m.nota - 0.5));
+
   const finalistas: Ficha[] = [];
-  for (const f of elegir(conPrecio, o.finalistas ?? 5, m.nota - 0.5)) {
+  for (const f of elegidos) {
     const ficha: Ficha = {
       motivo: f.motivo,
       alojamiento: f.alojamiento,

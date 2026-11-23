@@ -30,8 +30,10 @@ export type PiezasDeLaTabla = {
   paradas: Punto[];
   /** El transporte del viaje para esas fechas: el más barato que se sabe, o null si no hay. */
   transporte: Vuelo | null;
-  /** Lo que contestaron las fuentes a cada cambio de fechas. */
+  /** Lo que contestaron las fuentes a cada cambio de fechas, para todos los finalistas. */
   movidos: PrecioMovido[];
+  /** Lo que pidió el que cruza para otra ronda, ya contestado: cada uno es una palanca sobre su propia fila. */
+  pedidos?: PrecioMovido[];
   ronda: number;
   notas: string[];
 };
@@ -133,20 +135,25 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
       });
     }
     // Las fechas: lo mismo, para otras noches. El total lleva el transporte de esas fechas, o no hay total.
-    for (const m of p.movidos.filter((x) => x.alojamiento === partida.lodging)) {
-      const faltaTransporte = partida.transport !== null && m.transporte === null;
+    const deFechas = (m: PrecioMovido, sobre: FilaDelCruce): void => {
+      const faltaTransporte = sobre.transport !== null && m.transporte === null;
       const total = m.total === null || faltaTransporte ? null : dinero(m.total + (m.transporte ?? 0));
       palanca({
         lever: m.palanca,
-        base_row: partida.id,
+        base_row: sobre.id,
         change: { check_in: m.entrada, check_out: m.salida, days_moved: m.dias, nights_changed: m.noches },
         status: total === null ? "no_price" : "priced",
         total: total ?? SIN_SABER,
-        saves: total === null ? SIN_SABER : dinero(partida.total - total),
+        saves: total === null ? SIN_SABER : dinero(sobre.total - total),
         walk_minutes_change: 0,
-        score: partida.score,
+        score: sobre.score,
         note: m.nota,
       });
+    };
+    for (const m of p.movidos.filter((x) => x.alojamiento === partida.lodging)) deFechas(m, partida);
+    for (const m of p.pedidos ?? []) {
+      const sobre = rows.find((r) => r.lodging === m.alojamiento && r.discarded === "");
+      if (sobre !== undefined) deFechas(m, sobre);
     }
   }
 

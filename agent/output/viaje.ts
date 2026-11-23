@@ -59,6 +59,14 @@ export type Alojamiento = {
   loMejor: string | null;
   loPeor: string | null;
   avisos: string[];
+  /** La zona de la ruta en la que está, por su nombre. */
+  zona?: string | null;
+  /** Lo que se anda, de media, hasta las paradas del viaje, en minutos. */
+  andando?: number | null;
+  /** Nuestra nota, de 0 a 10: la zona, cómo es, las opiniones y las condiciones. */
+  puntos?: number | null;
+  /** Si una criba lo descarta para este viajero, por qué: la frase la monta la web. */
+  descartado?: { clase: string; cosa: string; detalle: string } | null;
 };
 
 export type Transporte = {
@@ -85,6 +93,8 @@ export type Manera = {
   moneda: string;
   gana: string;
   pierde: string;
+  /** Por qué es esta manera, en una frase. */
+  porQue?: string;
 };
 
 /** Lo que ahorra un cambio: un día antes, otro hotel, otra zona. La resta la hace el código. */

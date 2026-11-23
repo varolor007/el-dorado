@@ -63,7 +63,7 @@ test("trampa: la más barata no es la que marcó el código, o es una fila desca
   assert.deepEqual(
     rojosDe((e) => (e.ways.cheapest = { row: "r1", total: 346 })),
     [
-      "ways.cheapest: la fila r1 está descartada: le falta algo que marcaste como imprescindible: gym (token)",
+      "ways.cheapest: la fila r1 está descartada: missing something the traveller marked as a must: gym (token)",
       "ways.cheapest: es la fila r1 y el código marcó la r2",
     ],
   );

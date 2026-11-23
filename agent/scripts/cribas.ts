@@ -26,9 +26,13 @@ export type Contexto = { gustos: Gusto[]; paradas: Punto[] };
 
 export type Parte = keyof typeof PESOS_DEL_ALOJAMIENTO;
 export type Nota = { nota: number | null; partes: Record<Parte, number | null>; sinConfirmar: string[] };
+/** Por qué se descarta un alojamiento: su clase, la cosa que falla y su detalle (el nivel, o cuántas lo dicen). */
+export type Descarte = { clase: keyof typeof DESCARTA; cosa: string; detalle: string };
+
 export type Cribado = {
   id: string;
   /** Por qué se descarta, o null si sigue. */
+  descarte: Descarte | null;
   descartado: string | null;
   /** Lo que se paga de verdad: el total más lo que se cobra aparte. */
   total: number;
@@ -45,19 +49,28 @@ function nivelDe(mirado: EntregaDeMirar | null, campo: string): string | null {
 }
 
 /** Criba 1. Por qué no vale un alojamiento para este viajero, o null si vale. */
-export function motivoDeDescarte(c: Candidato, ctx: Contexto): string | null {
+export function descarteDe(c: Candidato, ctx: Contexto): Descarte | null {
   for (const g of ctx.gustos) {
     const cosa = COSAS[g.thing];
     if (g.weight !== "must" || cosa === undefined) continue;
     const nivel = nivelDe(c.mirado, cosa.campo);
     if (nivel !== null && !cosa.cumplen.includes(nivel))
-      return `${DESCARTA.le_falta_un_imprescindible}: ${g.thing} (${nivel})`;
+      return { clase: "missing_must", cosa: g.thing, detalle: nivel };
   }
   for (const [queja, patron] of Object.entries(QUEJAS_GRAVES)) {
     const cuantas = c.ficha.opiniones.filter((o) => patron.test(o.malo)).length;
-    if (cuantas >= QUEJA_REPETIDA) return `${DESCARTA.quejas_graves}: ${queja}, en ${cuantas} opiniones`;
+    if (cuantas >= QUEJA_REPETIDA) return { clase: "serious_complaints", cosa: queja, detalle: `${cuantas} reviews` };
   }
   return null;
+}
+
+/** El motivo de un descarte, en una frase, como lo lee un asiento en la tabla. */
+export function motivoDe(d: Descarte | null): string | null {
+  return d === null ? null : `${DESCARTA[d.clase]}: ${d.cosa} (${d.detalle})`;
+}
+
+export function motivoDeDescarte(c: Candidato, ctx: Contexto): string | null {
+  return motivoDe(descarteDe(c, ctx));
 }
 
 /** Lo imprescindible del viajero que no se pudo comprobar en este alojamiento. */
@@ -138,9 +151,11 @@ export function cribar(candidatos: Candidato[], ctx: Contexto): Cribado[] {
   return candidatos.map((c) => {
     const a = c.ficha.alojamiento;
     const minutos = mediaAndando({ lat: a.lat, lon: a.lon }, ctx.paradas);
+    const descarte = descarteDe(c, ctx);
     return {
       id: a.id,
-      descartado: motivoDeDescarte(c, ctx),
+      descarte,
+      descartado: motivoDe(descarte),
       total: c.ficha.precioCompleto,
       nota: notaDe(c, ctx, minutos),
       minutosAndando: minutos,

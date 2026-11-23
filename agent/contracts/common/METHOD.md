@@ -6,7 +6,9 @@ house checks from outside that the files exist and were written in this order.
 
 1. **Acknowledgement** (`out/1-acknowledgement.md`). List what you received: name every file and folder at the top of
    `in/`, say what each one holds, and say what is missing. If something is missing without which you cannot work, say
-   so here, and still hand in a delivery that says what you could not do.
+   so here, and still hand in a delivery that says what you could not do. If `in/returned.json` is there, an earlier
+   delivery of this seat was returned by the house: the file holds that delivery and what was wrong with it. Do the
+   whole job again, from the material, and do not repeat what was returned.
 2. **Plan** (`out/2-plan.md`). Before looking closely, write what you are going to look at, what you expect to find
    and what would change your mind. This keeps you from stopping at the first thing you see.
 3. **Notes** (`out/3-notes.md`). Work through the material and write down what you find, as you find it. Every note

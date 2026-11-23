@@ -13,11 +13,17 @@ import type {
   Rasgo,
   Ritmo,
   Suceso,
+  Transporte,
   Viaje,
   Vistazo,
 } from "../output/viaje.ts";
+import { AVISOS } from "../data/palabras.ts";
+import { MANERAS } from "../output/viaje.ts";
 import { elegirFotos } from "../tools/fotos.ts";
+import type { Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
+import { cribar } from "./cribas.ts";
+import type { Entendido, EntregaDeCruce, EntregaDeExplicar, EntregaDeMirar, Tabla, ZonaResuelta } from "./formas.ts";
 import { fechasDe, repartir } from "./ritmo.ts";
 
 /** Lo que entregó el que mira un alojamiento, tal como sale de su puesto. */
@@ -142,8 +148,11 @@ export type Decidido = {
   ritmo: Ritmo;
   /** Los sitios, por orden de importancia. */
   paradas: Parada[];
-  /** Las maneras, sin su total: lo pone el código. */
-  maneras: Omit<Manera, "total" | "moneda">[];
+  /** Las maneras. Sin su total, se pone el del alojamiento; con el de la tabla, ese, que lleva el transporte. */
+  maneras: (Omit<Manera, "total" | "moneda"> & { total?: number })[];
+  transportes?: Transporte[];
+  /** Lo que el código sabe de cada alojamiento además de su ficha: su zona, lo que se anda, su nota y su descarte. */
+  deCadaAlojamiento?: Record<string, Pick<Alojamiento, "zona" | "andando" | "puntos" | "descartado">>;
   palancas: Palanca[];
   avisos: string[];
   /** Lo que el que mira entregó de cada alojamiento, por su identificador. */
@@ -151,10 +160,13 @@ export type Decidido = {
 };
 
 export function montarViaje(b: Busqueda, d: Decidido): Viaje {
-  const alojamientos = b.finalistas.map((f) => alojamientoParaLaWeb(f, d.mirados[f.alojamiento.id] ?? null));
+  const alojamientos = b.finalistas.map((f) => ({
+    ...alojamientoParaLaWeb(f, d.mirados[f.alojamiento.id] ?? null),
+    ...d.deCadaAlojamiento?.[f.alojamiento.id],
+  }));
   const maneras: Manera[] = d.maneras.flatMap((m) => {
     const a = alojamientos.find((x) => x.id === m.alojamiento);
-    return a === undefined ? [] : [{ ...m, total: a.precio.total, moneda: a.precio.moneda }];
+    return a === undefined ? [] : [{ ...m, total: m.total ?? a.precio.total, moneda: a.precio.moneda }];
   });
   // Los días se reparten desde donde se duerme en la manera del medio; si no la hay, desde el centro de la búsqueda.
   const base =
@@ -181,7 +193,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     dias: reparto.dias,
     fuera: reparto.fuera,
     alojamientos,
-    transportes: [],
+    transportes: d.transportes ?? [],
     maneras,
     palancas: d.palancas,
     avisos: d.avisos,
@@ -200,8 +212,24 @@ export function sucesosDe(b: Busqueda, v: Viaje): Suceso[] {
     t += ms;
     sucesos.push({ t, ...s });
   };
-  const centro = { lat: b.estancia.lat, lon: b.estancia.lon };
-  pasa(0, { clase: "zone", punto: centro, radio: b.estancia.radio, nombre: v.destino.nombre });
+  // Cada zona donde se buscó, con su nombre; si se buscó en un solo sitio, ese.
+  const zonas = b.zonas ?? [];
+  if (zonas.length === 0)
+    pasa(0, {
+      clase: "zone",
+      punto: { lat: b.estancia.lat, lon: b.estancia.lon },
+      radio: b.estancia.radio,
+      nombre: v.destino.nombre,
+    });
+  zonas.forEach((z, i) =>
+    pasa(i === 0 ? 0 : 1100, {
+      clase: "zone",
+      punto: { lat: z.lat, lon: z.lon },
+      radio: z.radio,
+      nombre: z.nombre,
+      n: z.devueltos,
+    }),
+  );
   // Los descartes de una búsqueda guardada antes de este punto no dicen dónde están: no se pintan.
   const descartados = b.fuera.filter((x) => Number.isFinite(x.lat) && Number.isFinite(x.lon)).slice(0, 300);
   pasa(1400, {
@@ -225,4 +253,106 @@ export function sucesosDe(b: Busqueda, v: Viaje): Suceso[] {
   for (const p of v.palancas) pasa(500, { clase: "lever", ref: p.id });
   pasa(900, { clase: "done" });
   return sucesos;
+}
+
+// El viaje hecho por el agente: las mismas piezas, pero decididas por sus asientos y por el código, no a mano.
+
+/** Los avisos que lleva siempre lo que se entrega, en el idioma del viajero; si no los hay en el suyo, en inglés. */
+export function avisosDeSiempre(idioma: string): string[] {
+  const a = AVISOS[idioma] ?? AVISOS.en;
+  return [a.ia, a.precios];
+}
+
+export type Hecho = {
+  id: string;
+  viaje: Entendido;
+  busqueda: Busqueda;
+  zonas: ZonaResuelta[];
+  mirados: Record<string, EntregaDeMirar | null>;
+  /** Las paradas elegidas, por orden de importancia. */
+  paradas: Parada[];
+  /** La tabla con la que cerró el que cruza. */
+  tabla: Tabla;
+  cruce: EntregaDeCruce;
+  explica: EntregaDeExplicar;
+  transporte: Vuelo | null;
+};
+
+/** Junta lo que dejó cada paso de la investigación en la forma que espera la web. No decide nada. */
+export function montarViajeHecho(h: Hecho): Viaje {
+  const fila = new Map(h.tabla.rows.map((r) => [r.id, r]));
+  const texto = new Map(h.explica.ways.map((w) => [w.id, w]));
+  const maneras: Decidido["maneras"] = [];
+  for (const id of MANERAS) {
+    const cerrada = h.cruce.ways[id];
+    const r = typeof cerrada === "string" ? undefined : fila.get(cerrada.row);
+    const t = texto.get(id);
+    if (r === undefined || t === undefined) continue;
+    maneras.push({
+      id,
+      alojamiento: r.lodging,
+      transporte: r.transport,
+      total: r.total,
+      gana: t.gains,
+      pierde: t.loses,
+      porQue: t.why,
+    });
+  }
+  const palancas: Palanca[] = h.explica.levers.flatMap((dicha) => {
+    const l = h.tabla.levers.find((x) => x.id === dicha.lever_row);
+    if (l === undefined || typeof l.saves !== "number" || !(l.saves > 0)) return [];
+    return [
+      {
+        id: l.id,
+        clase: l.lever,
+        ahorra: l.saves,
+        moneda: h.tabla.currency,
+        que: dicha.what,
+        aCambio: dicha.in_exchange,
+      },
+    ];
+  });
+  const candidatos = h.busqueda.finalistas.map((ficha) => ({ ficha, mirado: h.mirados[ficha.alojamiento.id] ?? null }));
+  const cribados = cribar(candidatos, { gustos: h.viaje.tastes, paradas: h.paradas.map((p) => p.punto) });
+  const deCadaAlojamiento: NonNullable<Decidido["deCadaAlojamiento"]> = {};
+  for (const c of cribados) {
+    const r = h.tabla.rows.find((x) => x.lodging === c.id);
+    deCadaAlojamiento[c.id] = {
+      zona: h.zonas.find((z) => z.id === r?.zone)?.name ?? null,
+      andando: c.minutosAndando,
+      puntos: c.nota.nota,
+      descartado: c.descarte,
+    };
+  }
+  const v = h.transporte;
+  const transportes: Transporte[] =
+    v === null
+      ? []
+      : [
+          {
+            id: "t1",
+            clase: "flight",
+            de: v.origen,
+            a: v.destino,
+            sale: v.sale,
+            vuelve: v.vuelve,
+            escalas: v.escalasIda,
+            precio: { total: v.precio, moneda: v.moneda, vendedor: v.aerolinea, visto: v.visto, enlace: v.enlace },
+            guardado: v.guardado,
+          },
+        ];
+  return montarViaje(h.busqueda, {
+    id: h.id,
+    idioma: h.viaje.language,
+    muestra: false,
+    destino: { nombre: h.viaje.destination.name, pais: h.viaje.destination.country },
+    ritmo: h.viaje.pace,
+    paradas: h.paradas,
+    maneras,
+    transportes,
+    deCadaAlojamiento,
+    palancas,
+    avisos: [...avisosDeSiempre(h.viaje.language), ...h.explica.unknowns],
+    mirados: h.mirados,
+  });
 }

@@ -36,7 +36,7 @@ const gusto = (thing: string, weight: Gusto["weight"]): Gusto => ({ thing, weigh
 test("criba 1: lo imprescindible descarta si el nivel no lo cumple, y dice cuál y por qué", () => {
   assert.equal(
     motivoDeDescarte(candidato("a1", { gym: "token" }), CTX),
-    "le falta algo que marcaste como imprescindible: gym (token)",
+    "missing something the traveller marked as a must: gym (token)",
   );
   assert.equal(motivoDeDescarte(candidato("a1", { gym: "maintenance" }), CTX), null);
   assert.equal(motivoDeDescarte(candidato("a1", { gym: "full" }), CTX), null);
@@ -58,7 +58,12 @@ test("criba 1: una queja grave que se repite descarta; una sola, no", () => {
   c.ficha.opiniones = [chinche];
   assert.equal(motivoDeDescarte(c, CTX), null);
   c.ficha.opiniones = [chinche, chinche, chinche];
-  assert.equal(motivoDeDescarte(c, CTX), "tiene quejas graves que se repiten: chinches, en 3 opiniones");
+  assert.equal(motivoDeDescarte(c, CTX), "serious complaints repeated in recent reviews: bed_bugs (3 reviews)");
+  assert.deepEqual(cribar([c], CTX)[0].descarte, {
+    clase: "serious_complaints",
+    cosa: "bed_bugs",
+    detalle: "3 reviews",
+  });
 });
 
 test("criba 2: lo que se compara es el total con lo que se paga aparte", () => {

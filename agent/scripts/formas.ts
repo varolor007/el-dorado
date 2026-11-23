@@ -30,6 +30,8 @@ export type Entendido = {
     kind: (typeof CLASES_DE_DESTINO)[number];
     centre: Punto;
     box: Caja;
+    /** El aeropuerto por el que se llega, si se sabe. */
+    airport: string | null;
   };
   /** De dónde sale. Sin él no hay transporte que buscar. */
   origin: { name: string; country: string; airport: string | null } | null;

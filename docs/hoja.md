@@ -229,7 +229,7 @@ en vivo y de una tirada, hasta tu viaje en el mapa. Se abre: una vez, unos minut
 17. **Puerta 6: ¿cada número sale de la tabla?** (puerta) *(hecho)*. Cada número es igual al de la tabla del código; las piezas de cada viaje son de las mismas fechas y del mismo grupo; cada palanca está probada o descartada con su motivo; dos rondas como mucho; cada país nuevo tiene sus papeles; el más barato pasa de la nota mínima, y el distinto lleva su palanca.
 18. **El que explica** (asiento de ia) *(hecho)*. Escribe, en tu idioma, por qué es cada manera de hacer el viaje y qué se gana y qué se pierde frente a la más barata: «60 euros más, cinco horas menos y llegas de día». Dice lo que hay que hacer y para cuándo, y lo que no se sabe, en el mismo sitio. Cada número, copiado de la tabla; ningún adjetivo sin su hecho; ninguna promesa.
 19. **Puerta 7: ¿sin promesas y con su aviso?** (puerta) *(hecho)*. Cada número del texto está en la tabla; ninguna palabra de la lista prohibida (las promesas y las de dentro); cada manera tiene su línea de lo que gana y lo que pierde; lo que no se sabe está dicho; y lleva el aviso de IA y el de los precios orientativos.
-20. **El viaje, en el mapa** (código de la casa). Deja el viaje listo para la web: cada día en su capa, con sus paradas numeradas, su foto redonda y la flecha de una a otra; dónde duermes y sus alternativas; por dónde llegas y te vas; las tres maneras de hacerlo y las palancas, cada una con lo que ahorra.
+20. **El viaje, en el mapa** (código de la casa) *(hecho)*. Deja el viaje listo para la web: cada día en su capa, con sus paradas numeradas, su foto redonda y la flecha de una a otra; dónde duermes y sus alternativas; por dónde llegas y te vas; las tres maneras de hacerlo y las palancas, cada una con lo que ahorra.
 21. **Sale tu viaje, en el mapa** (lo que sale). Un viaje completo: el día a día en el mapa, y tres maneras de dormir y de llegar (la más barata, la mejor por lo que cuesta y una distinta), nunca diez, cada una con su precio total, y cada precio con su enlace y su fecha. Y las palancas: «si sales un día antes ahorras 60 euros», «este hotel te deja a diez minutos andando de lo del segundo día».
 
 **Te espera**
@@ -799,10 +799,10 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 |---|---|---|
 | El recolector | En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio | hecho |
 | Los pasos de código | En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición, la búsqueda de alojamiento entera, las cribas con los gustos, las cuentas de la ruta, las paradas y el ritmo | en parte |
-| Las puertas | En `agent/gates/`. La de la búsqueda, la de todos y la 5, con sus trampas | en parte |
-| Lo que lanza | En `agent/launcher/`. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden | en parte |
+| Las puertas | En `agent/gates/`. La de todos y las de la investigación (la 3, la 4, la 5, la 6, la 7 y la 9), cada una con sus trampas | en parte |
+| Lo que lanza | En `agent/launcher/`. Una búsqueda desde la terminal, cómo se lanza un asiento, con su puesto y su sello, y la investigación entera, paso a paso y desde el disco: para cuando toca un asiento, y un rojo vuelve a su dueño dos veces como mucho. Falta que los lance sola, con la IA de verdad, y que lo cuente en vivo | en parte |
 | La mesa | Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones | en parte |
-| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y el del que mira el alojamiento | en parte |
+| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica | en parte |
 | La web | En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Solo habla con la casa | pendiente |
 | La puerta de la casa a la web | Lo que la web puede pedir y lo que la casa cuenta en vivo | pendiente |
 | La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov). El asiento solo puede abrir su puesto | pendiente |

@@ -550,6 +550,7 @@ const flujo = [
     },
     {
       tipo: "codigo",
+      hecho: true,
       k: "pinta_mapa",
       x: "tu viaje, en el mapa, con una capa por día",
       titulo: "El viaje, en el mapa",
@@ -1033,10 +1034,10 @@ const secciones = [
         filas: [
           ["El recolector", "En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio", "hecho"],
           ["Los pasos de código", "En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición, la búsqueda de alojamiento entera, las cribas con los gustos, las cuentas de la ruta, las paradas y el ritmo", "parte"],
-          ["Las puertas", "En `agent/gates/`. La de la búsqueda, la de todos y la 5, con sus trampas", "parte"],
-          ["Lo que lanza", "En `agent/launcher/`. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden", "parte"],
+          ["Las puertas", "En `agent/gates/`. La de todos y las de la investigación (la 3, la 4, la 5, la 6, la 7 y la 9), cada una con sus trampas", "parte"],
+          ["Lo que lanza", "En `agent/launcher/`. Una búsqueda desde la terminal, cómo se lanza un asiento, con su puesto y su sello, y la investigación entera, paso a paso y desde el disco: para cuando toca un asiento, y un rojo vuelve a su dueño dos veces como mucho. Falta que los lance sola, con la IA de verdad, y que lo cuente en vivo", "parte"],
           ["La mesa", "Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones", "parte"],
-          ["Los contratos de los asientos", "En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y el del que mira el alojamiento", "parte"],
+          ["Los contratos de los asientos", "En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica", "parte"],
           ["La web", "En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Solo habla con la casa", "pendiente"],
           ["La puerta de la casa a la web", "Lo que la web puede pedir y lo que la casa cuenta en vivo", "pendiente"],
           ["La IA", "Claude, con la clave de cada viajero (tu decisión del 23-nov). El asiento solo puede abrir su puesto", "pendiente"],

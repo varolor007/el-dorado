@@ -1,0 +1,560 @@
+// Lo que lleva una investigación de punta a punta, paso a paso y desde el disco: los sitios, la ruta, la búsqueda,
+// mirar los finalistas y elegir los sitios, los días, la tabla con sus palancas, las tres maneras, la explicación y el
+// viaje para la web. Cada paso de código corre solo; cuando toca un asiento, le monta su puesto, deja su orden y
+// para. Quien lance los asientos vuelve a llamar, y sigue por donde iba. Este archivo no llama a ninguna IA.
+//
+//   node agent/launcher/investigar.ts empezar <entendido.json>
+//   node agent/launcher/investigar.ts sigue <carpeta del run>
+//
+// Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. Es la versión de mano de lo que lanza los pasos: la casa de
+// verdad, que los lanza sola y lo cuenta en vivo, llega con su tanda.
+
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { FINALISTAS, MINIMOS_DE_PARTIDA, MONEDA_DE_PARTIDA } from "../data/cribas.ts";
+import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
+import { puertaBusqueda, type Rojo } from "../gates/puerta_busqueda.ts";
+import { puertaCruce } from "../gates/puerta_cruce.ts";
+import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
+import { puertaExplica } from "../gates/puerta_explica.ts";
+import { puertaRuta } from "../gates/puerta_ruta.ts";
+import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
+import { anadirOfertas, buscarEnZonas, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
+import { paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
+import { paraExplicar } from "../scripts/explica.ts";
+import type {
+  Entendido,
+  EntregaDeCruce,
+  EntregaDeExplicar,
+  EntregaDeMirar,
+  EntregaDeRuta,
+  EntregaDeSitios,
+  Tabla,
+  ZonaResuelta,
+} from "../scripts/formas.ts";
+import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_viaje.ts";
+import { fechasDe, repartir } from "../scripts/ritmo.ts";
+import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
+import { montarTabla } from "../scripts/tabla.ts";
+import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
+import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
+import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
+import type { Sitio } from "../tools/sitios.ts";
+import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
+import { carpetaDeLaMesa } from "./mesa.ts";
+import { prepararMirar, recogerMirar } from "./mirar.ts";
+import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
+
+/** Lo de fuera que usa una investigación. Se le pasa: con lo de verdad investiga, y con lo inventado se prueba. */
+export type Fuentes = {
+  alojamiento: FuenteAlojamiento;
+  sitios: (viaje: Entendido) => Promise<Sitio[]>;
+  resumenes: (sitios: Sitio[]) => Promise<Map<string, string>>;
+  fotos: (archivos: string[]) => Promise<Map<string, Foto>>;
+  /** El transporte para unas fechas. Sin él, el viaje va sin transporte, y se dice. */
+  vuelos?: (viaje: Entendido, ida: string, vuelta: string) => Promise<Vuelo[]>;
+  /** Lo que piden otros vendedores en una zona dicha con palabras. */
+  ofertas?: (lugar: string, e: Estancia) => Promise<OfertaDeZona[]>;
+  bajarFotos?: OpcionesDeFotos;
+  /** El primer día en que se puede viajar: un cambio de fechas que cae antes no se pide. */
+  desde?: string;
+};
+
+/** Cuántas veces vuelve un trabajo en rojo a su asiento antes de pararse: dos, como dice la hoja. */
+export const VUELTAS = 2;
+
+export type Estado = {
+  /** Los puestos que esperan a su asiento. Vacío si no se espera a nadie. */
+  esperan: string[];
+  hecho: boolean;
+  /** Si una puerta paró la investigación y ya no quedan vueltas, cuál y por qué. */
+  parado: { paso: string; rojos: Rojo[] } | null;
+  avisos: string[];
+};
+
+type Guardado<T> = { entrega: T; rojos: Rojo[] };
+
+const ruta = (run: string, nombre: string): string => join(run, nombre);
+const hay = (run: string, nombre: string): boolean => existsSync(ruta(run, nombre));
+const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(ruta(run, nombre), "utf8")) as T;
+const guardar = (run: string, nombre: string, dato: unknown): void =>
+  writeFileSync(ruta(run, nombre), JSON.stringify(dato, null, 2));
+const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
+
+/** La estancia que se busca, sacada de lo que he entendido. */
+export function estanciaDe(viaje: Entendido): Estancia {
+  return {
+    lat: viaje.destination.centre.lat,
+    lon: viaje.destination.centre.lon,
+    radio: 1500,
+    entrada: viaje.dates.check_in,
+    salida: viaje.dates.check_out,
+    adultos: viaje.travellers.adults,
+    ninos: viaje.travellers.children,
+    moneda: MONEDA_DE_PARTIDA,
+    nacionalidad: (viaje.travellers.passports[0] ?? viaje.origin?.country ?? "ES").toUpperCase(),
+    pais: viaje.destination.country.toUpperCase(),
+  };
+}
+
+// Los asientos de uno en uno: su puesto lleva el número de su vuelta, y un rojo lo devuelve con lo que estaba mal.
+
+function puestoDe(run: string, base: string): Puesto | null {
+  const suyos = puestosDe(run).filter((p) => new RegExp(`^${base}-v\\d+$`).test(p.id));
+  return suyos.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })).pop() ?? null;
+}
+
+function montar(run: string, base: string, asiento: string, piezas: Pieza[], vuelta = 1): Puesto {
+  const puesto = montarPuesto(run, `${base}-v${vuelta}`, asiento, piezas);
+  mkdirSync(join(run, "ordenes"), { recursive: true });
+  writeFileSync(join(run, "ordenes", `${puesto.id}.txt`), ordenDeApertura(puesto));
+  return puesto;
+}
+
+const entregado = (p: Puesto): boolean => existsSync(join(p.carpeta, "out", "delivery.json"));
+
+type Recogido<T> = { espera: string } | { parado: Rojo[] } | { entrega: T };
+
+/**
+ * Recoge a un asiento: si no ha entregado, se le espera; si su entrega pasa la puerta de todos y la suya, se da por
+ * buena; si no, vuelve a su asiento con lo que estaba mal, dos veces como mucho.
+ */
+function recoger<T>(
+  run: string,
+  base: string,
+  asiento: string,
+  piezas: Pieza[],
+  puerta: (e: unknown) => Rojo[],
+): Recogido<T> {
+  const puesto = puestoDe(run, base);
+  if (puesto === null) return { espera: montar(run, base, asiento, piezas).id };
+  if (!entregado(puesto)) return { espera: puesto.id };
+  const metodo = recogerAsiento(puesto);
+  const rojos = [...metodo.rojos, ...(metodo.entrega === null ? [] : puerta(metodo.entrega))];
+  guardar(run, `${puesto.id}.puertas.json`, { verde: rojos.length === 0, rojos });
+  if (rojos.length === 0) return { entrega: metodo.entrega as T };
+  const vuelta = Number(/-v(\d+)$/.exec(puesto.id)?.[1] ?? 1);
+  if (vuelta > VUELTAS) return { parado: rojos };
+  const devuelto: Pieza = {
+    ruta: "returned.json",
+    contenido: json({ what_was_wrong: rojos, delivery: metodo.entrega }),
+  };
+  return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1).id };
+}
+
+// Cada paso, por su orden.
+
+type DeLosSitios = { sitios: Sitio[]; resumenes: Record<string, string> };
+
+async function traerSitios(run: string, viaje: Entendido, f: Fuentes): Promise<void> {
+  const sitios = await f.sitios(viaje);
+  let resumenes = new Map<string, string>();
+  const avisos: string[] = [];
+  try {
+    resumenes = await f.resumenes(sitios);
+  } catch (error) {
+    avisos.push(`sin lo que dicen los artículos: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  guardar(run, "sitios.json", { sitios, resumenes: Object.fromEntries(resumenes), avisos });
+}
+
+function piezasDeLaRuta(run: string, viaje: Entendido): Pieza[] {
+  const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+  return [
+    { ruta: "trip.json", contenido: json(viaje) },
+    { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
+    { ruta: "places.json", contenido: json(lugaresParaLaRuta(sitios)) },
+    { ruta: "warnings.json", contenido: "[]" },
+    { ruta: "transfers.json", contenido: "[]" },
+  ];
+}
+
+type DeLaRuta = { entrega: EntregaDeRuta; zonas: ZonaResuelta[] };
+
+async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]> {
+  const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
+  if (entrega.bases.length !== 1)
+    return [{ donde: "ruta", que: "un viaje con varias bases todavía no se sabe buscar: llega con los traslados" }];
+  const e = estanciaDe(viaje);
+  const dondeBuscar = zonas.map((z) => ({
+    id: z.id,
+    nombre: z.name,
+    lat: z.centre.lat,
+    lon: z.centre.lon,
+    radio: z.radius_m,
+  }));
+  const busqueda = await buscarEnZonas(f.alojamiento, e, dondeBuscar, MINIMOS_DE_PARTIDA, { finalistas: FINALISTAS });
+  const avisos: string[] = [];
+  if (f.ofertas !== undefined) {
+    for (const z of zonas) {
+      const lugar = `${z.name}, ${viaje.destination.name}`;
+      try {
+        const casados = anadirOfertas(busqueda, await f.ofertas(lugar, e), lugar);
+        avisos.push(`otras ofertas en ${z.name}: casan ${casados}`);
+      } catch (error) {
+        avisos.push(`sin otras ofertas en ${z.name}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+  let vuelos: Vuelo[] = [];
+  if (f.vuelos !== undefined && viaje.origin?.airport && viaje.destination.airport) {
+    try {
+      vuelos = await f.vuelos(viaje, e.entrada, e.salida);
+      if (vuelos.length === 0) avisos.push("transporte: no hay ningún precio guardado para esas fechas");
+    } catch (error) {
+      avisos.push(`sin transporte: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  } else avisos.push("transporte: no se busca, porque no se sabe de dónde se sale o a dónde se llega");
+  const puerta = puertaBusqueda(busqueda, FINALISTAS);
+  guardar(run, "busqueda.json", { busqueda, vuelos, puerta, avisos });
+  return puerta.rojos;
+}
+
+/** El transporte del viaje: el más barato que se sabe para sus fechas, o ninguno. */
+function transporteDe(run: string): Vuelo | null {
+  const { vuelos } = leer<{ vuelos: Vuelo[] }>(run, "busqueda.json");
+  return [...vuelos].sort((a, b) => a.precio - b.precio)[0] ?? null;
+}
+
+function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
+  const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
+  const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const route = {
+    shape: entrega.shape,
+    bases: entrega.bases.map((b) => ({ id: b.id, name: b.name, nights: b.nights })),
+    zones: zonas,
+  };
+  return [
+    { ruta: "trip.json", contenido: json(viaje) },
+    { ruta: "route.json", contenido: json(route) },
+    { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
+    { ruta: "sights.json", contenido: json(sitiosParaElegir(sitios, new Map(Object.entries(resumenes)))) },
+    { ruta: "warnings.json", contenido: "[]" },
+  ];
+}
+
+/** Lo que entregó el que mira de cada finalista: su primera pasada que pasó las dos puertas, o nada. */
+function miradosDe(run: string): Record<string, EntregaDeMirar | null> {
+  const mirados: Record<string, EntregaDeMirar | null> = {};
+  if (!hay(run, "como_es.json")) return mirados;
+  for (const a of recogerMirar(run).alojamientos) {
+    const buena = a.pasadas.find((p) => p.entrega !== null && p.metodo.verde && p.comoEs.verde);
+    mirados[a.alojamiento] = (buena?.entrega as EntregaDeMirar | undefined) ?? null;
+  }
+  return mirados;
+}
+
+type DeLosDias = { entrega: EntregaDeSitios; paradas: Parada[] };
+
+async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDeSitios, f: Fuentes): Promise<Rojo[]> {
+  const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+  const elegidos = new Set(entrega.go.map((x) => x.id));
+  const archivos = sitios.flatMap((s) => (elegidos.has(s.id) && s.archivo !== null ? [s.archivo] : []));
+  let fotos = new Map<string, Foto>();
+  const avisos: string[] = [];
+  try {
+    fotos = await f.fotos(archivos);
+  } catch (error) {
+    avisos.push(`sin fotos de los sitios: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const paradas = paradasDe(entrega, sitios, fotos);
+  const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
+  const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre);
+  const dados = sitiosParaElegir(sitios).map((s) => s.id);
+  const puerta = puertaDias({ paradas, dias: reparto.dias, fuera: reparto.fuera, sitios: dados });
+  guardar(run, "dias.json", { entrega, paradas, reparto, puerta, avisos });
+  return puerta.rojos;
+}
+
+type DelCruce = Guardado<EntregaDeCruce>;
+
+/** Lo que el que cruza sabe de cada alojamiento de la tabla: sus niveles, lo mejor, lo peor y sus avisos. */
+function alojamientosParaCruzar(b: Busqueda, mirados: Record<string, EntregaDeMirar | null>): unknown[] {
+  return b.finalistas.map((f) => {
+    const m = mirados[f.alojamiento.id] ?? null;
+    return {
+      id: f.alojamiento.id,
+      label: f.alojamiento.nombre,
+      looked_at: m !== null,
+      levels: Object.fromEntries(Object.entries(m?.fields ?? {}).map(([campo, n]) => [campo, n.level])),
+      good: m?.summary_good ?? "unknown",
+      bad: m?.summary_bad ?? "unknown",
+      warnings: (m?.warnings ?? []).map((a) => a.what),
+      conflicts: (m?.conflicts ?? []).map((c) => c.what),
+    };
+  });
+}
+
+async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: number): Promise<Tabla> {
+  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const { paradas } = leer<DeLosDias>(run, "dias.json");
+  const transporte = transporteDe(run);
+  const e = estanciaDe(viaje);
+  const vuelos =
+    transporte === null || f.vuelos === undefined
+      ? undefined
+      : (ida: string, vuelta: string): Promise<Vuelo[]> => f.vuelos!(viaje, ida, vuelta);
+  const ids = busqueda.finalistas.map((x) => x.alojamiento.id);
+  if (!hay(run, "movidos.json")) {
+    const cambios = cambiosDePartida(DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN);
+    guardar(run, "movidos.json", await pedirPalancas(f.alojamiento, e, ids, cambios, { vuelos, desde: f.desde }));
+  }
+  // Lo que pidió el que cruza en la ronda anterior, contestado.
+  const pedidos: PrecioMovido[] = [];
+  if (ronda > 1) {
+    const anterior = leer<DelCruce>(run, `cruce-${ronda - 1}.json`).entrega;
+    const tablaAnterior = leer<Tabla>(run, `tabla-${ronda - 1}.json`);
+    for (const p of anterior.requests) {
+      const fila = tablaAnterior.rows.find((r) => r.id === p.row);
+      if (fila === undefined) continue;
+      const cambio: Cambio =
+        p.lever === "nights"
+          ? { palanca: "nights", entrada: 0, salida: p.nights ?? 0 }
+          : { palanca: "shift_dates", entrada: p.days ?? 0, salida: p.days ?? 0 };
+      pedidos.push(...(await pedirPalancas(f.alojamiento, e, [fila.lodging], [cambio], { vuelos, desde: f.desde })));
+    }
+  }
+  const notas = PALANCAS.filter((p) => !p.laPideElCodigo).map((p) => `${p.id}: not priced, it waits for ${p.espera}`);
+  if (transporte === null) notas.push("transport: no price for these dates, so every total is lodging only");
+  const tabla = montarTabla({
+    viaje,
+    busqueda,
+    zonas,
+    mirados: miradosDe(run),
+    paradas: paradas.map((p) => p.punto),
+    transporte,
+    movidos: leer<PrecioMovido[]>(run, "movidos.json"),
+    pedidos,
+    ronda,
+    notas,
+  });
+  guardar(run, `tabla-${ronda}.json`, tabla);
+  return tabla;
+}
+
+function piezasDelCruce(run: string, viaje: Entendido, ronda: number): Pieza[] {
+  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const palancas = PALANCAS.map((p) => ({
+    id: p.id,
+    what: p.what,
+    priced_by_house: p.laPideElCodigo,
+    waits_for: p.espera ?? "nothing",
+  }));
+  const piezas: Pieza[] = [
+    { ruta: "trip.json", contenido: json(viaje) },
+    { ruta: "table.json", contenido: json(leer<Tabla>(run, `tabla-${ronda}.json`)) },
+    { ruta: "levers.json", contenido: json(palancas) },
+    { ruta: "lodgings.json", contenido: json(alojamientosParaCruzar(busqueda, miradosDe(run))) },
+    { ruta: "route.json", contenido: json(zonas) },
+    { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
+  ];
+  if (ronda > 1)
+    piezas.push({ ruta: "previous.json", contenido: json(leer<DelCruce>(run, `cruce-${ronda - 1}.json`).entrega) });
+  return piezas;
+}
+
+/** La última ronda del cruce que se cerró: su tabla y lo que entregó el asiento. */
+function cruceCerrado(run: string): { tabla: Tabla; cruce: EntregaDeCruce } {
+  for (let ronda = RONDAS; ronda >= 1; ronda--)
+    if (hay(run, `cruce-${ronda}.json`))
+      return {
+        tabla: leer<Tabla>(run, `tabla-${ronda}.json`),
+        cruce: leer<DelCruce>(run, `cruce-${ronda}.json`).entrega,
+      };
+  throw new Error("el cruce no se ha cerrado");
+}
+
+function loQueSeExplica(run: string, viaje: Entendido): ReturnType<typeof paraExplicar> {
+  const { tabla, cruce } = cruceCerrado(run);
+  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const fechas = { entrada: viaje.dates.check_in, salida: viaje.dates.check_out };
+  return paraExplicar(tabla, cruce, miradosDe(run), zonas, fechas);
+}
+
+function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar): Rojo[] {
+  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const { paradas } = leer<DeLosDias>(run, "dias.json");
+  const { tabla, cruce } = cruceCerrado(run);
+  const hecho = montarViajeHecho({
+    id: `viaje-${viaje.destination.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${viaje.dates.check_in}`,
+    viaje,
+    busqueda,
+    zonas,
+    mirados: miradosDe(run),
+    paradas,
+    tabla,
+    cruce,
+    explica,
+    transporte: transporteDe(run),
+  });
+  const sucesos = sucesosDe(busqueda, hecho);
+  const pegas = [...comprobarViaje(hecho), ...comprobarSucesos(sucesos)];
+  if (pegas.length > 0) return pegas;
+  guardar(run, "viaje.json", hecho);
+  guardar(run, "sucesos.json", sucesos);
+  return [];
+}
+
+/** Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. */
+export async function sigue(run: string, f: Fuentes): Promise<Estado> {
+  const viaje = leer<Entendido>(run, "entendido.json");
+  const avisos: string[] = [];
+  const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
+  const para = (paso: string, rojos: Rojo[]): Estado => ({
+    esperan: [],
+    hecho: false,
+    parado: { paso, rojos },
+    avisos,
+  });
+
+  // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
+  if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
+  if (!hay(run, "ruta.json")) {
+    const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+    const lugares = lugaresParaLaRuta(sitios);
+    const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
+    const r = recoger<EntregaDeRuta>(
+      run,
+      "ruta",
+      "route-planner",
+      piezasDeLaRuta(run, viaje),
+      (e) => puertaRuta(e, { viaje, noches, lugares, traslados: [] }).rojos,
+    );
+    if ("espera" in r) return espera(r.espera);
+    if ("parado" in r) return para("la ruta (puerta 3)", r.parado);
+    guardar(run, "ruta.json", { entrega: r.entrega, zonas: resolverZonas(r.entrega, lugares) });
+  }
+
+  // 3. La búsqueda de alojamiento en las zonas de la ruta, y su puerta.
+  if (!hay(run, "busqueda.json")) {
+    const rojos = await buscar(run, viaje, f);
+    if (rojos.length > 0) return para("la búsqueda (puerta 4)", rojos);
+  }
+
+  // 4. A la vez: mirar cada finalista y elegir los sitios. Después, los días y su puerta.
+  if (!hay(run, "dias.json")) {
+    const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+    const pendientes: string[] = [];
+    if (!hay(run, "mirar.json")) {
+      const p = await prepararMirar(busqueda, run, { pasadas: 1, fotos: f.bajarFotos });
+      avisos.push(...p.avisos);
+      pendientes.push(...p.puestos.map((x) => x.id));
+    } else {
+      const { quienes } = leer<{ quienes: { puesto: string }[] }>(run, "mirar.json");
+      const deMirar = puestosDe(run).filter((p) => quienes.some((q) => q.puesto === p.id));
+      pendientes.push(...deMirar.filter((p) => !entregado(p)).map((p) => p.id));
+    }
+    const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+    const dados = sitiosParaElegir(sitios).map((s) => s.id);
+    const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
+    const r = recoger<EntregaDeSitios>(
+      run,
+      "sitios",
+      "sights-picker",
+      piezasDeLosSitios(run, viaje),
+      (e) => puertaSitios(e, { sitios: dados, noches }).rojos,
+    );
+    if ("parado" in r) return para("los sitios (puerta 9)", r.parado);
+    if ("espera" in r) pendientes.push(r.espera);
+    if (pendientes.length > 0 || !("entrega" in r)) return espera(...pendientes);
+    // Lo que no pasó sus puertas al mirar no para el viaje: ese alojamiento queda sin mirar, y se dice.
+    const mirado = recogerMirar(run);
+    for (const a of mirado.alojamientos)
+      if (!a.pasadas.some((p) => p.metodo.verde && p.comoEs.verde)) avisos.push(`${a.nombre}: se queda sin mirar`);
+    const rojos = await repartirLosDias(run, viaje, r.entrega, f);
+    if (rojos.length > 0) return para("los días (puerta 9)", rojos);
+  }
+
+  // 5. La tabla y sus palancas, y el que cruza: dos rondas como mucho.
+  for (let ronda = 1; ronda <= RONDAS; ronda++) {
+    if (!hay(run, `cruce-${ronda}.json`)) {
+      const tabla = hay(run, `tabla-${ronda}.json`)
+        ? leer<Tabla>(run, `tabla-${ronda}.json`)
+        : await montarLaTabla(run, viaje, f, ronda);
+      const r = recoger<EntregaDeCruce>(
+        run,
+        `cruce-${ronda}`,
+        "trip-crosser",
+        piezasDelCruce(run, viaje, ronda),
+        (e) => puertaCruce(e, { tabla, viaje }).rojos,
+      );
+      if ("espera" in r) return espera(r.espera);
+      if ("parado" in r) return para("el cruce (puerta 6)", r.parado);
+      guardar(run, `cruce-${ronda}.json`, { entrega: r.entrega, rojos: [] });
+    }
+    if (leer<DelCruce>(run, `cruce-${ronda}.json`).entrega.requests.length === 0) break;
+  }
+
+  // 6. El que explica y, con lo suyo, el viaje para la web.
+  if (!hay(run, "viaje.json")) {
+    const dado = loQueSeExplica(run, viaje);
+    const piezas: Pieza[] = [
+      { ruta: "trip.json", contenido: json(viaje) },
+      { ruta: "ways.json", contenido: json(dado.ways) },
+      { ruta: "levers.json", contenido: json(dado.levers) },
+      { ruta: "checks.json", contenido: json(dado.checks) },
+    ];
+    const r = recoger<EntregaDeExplicar>(
+      run,
+      "explica",
+      "trip-explainer",
+      piezas,
+      (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).rojos,
+    );
+    if ("espera" in r) return espera(r.espera);
+    if ("parado" in r) return para("la explicación (puerta 7)", r.parado);
+    guardar(run, "explica.json", { entrega: r.entrega, rojos: [] });
+    const pegas = montarElViaje(run, viaje, r.entrega);
+    if (pegas.length > 0) return para("el viaje para la web", pegas);
+  }
+  return { esperan: [], hecho: true, parado: null, avisos };
+}
+
+/** Abre un run en la mesa con lo que he entendido de un viaje, y devuelve su carpeta. */
+export function empezar(entendido: string, cuando: Date = new Date()): string {
+  const run = join(carpetaDeLaMesa(), `${cuando.toISOString().replace(/[:.]/g, "-")}-viaje`);
+  mkdirSync(run, { recursive: true });
+  cpSync(resolve(entendido), join(run, "entendido.json"));
+  return run;
+}
+
+async function principal(): Promise<number> {
+  const [orden, donde] = process.argv.slice(2);
+  if (orden === "empezar" && donde !== undefined) {
+    console.log(empezar(donde));
+    return 0;
+  }
+  if (orden === "sigue" && donde !== undefined) {
+    const { fuentesDeVerdad } = await import("./fuentes_de_verdad.ts");
+    const run = resolve(donde);
+    const estado = await sigue(run, fuentesDeVerdad());
+    for (const aviso of estado.avisos) console.log(`Aviso: ${aviso}`);
+    if (estado.parado !== null) {
+      console.log(`Parado en ${estado.parado.paso}:`);
+      for (const r of estado.parado.rojos) console.log(`  ${r.donde}: ${r.que}`);
+      return 1;
+    }
+    if (estado.hecho) {
+      console.log(`Hecho. El viaje, en ${join(run, "viaje.json")}`);
+      return 0;
+    }
+    console.log(`Esperan a su asiento: ${estado.esperan.join(", ")}`);
+    console.log(`La orden que abre cada uno, en ${join(run, "ordenes")}`);
+    return 0;
+  }
+  console.error("Uso: investigar.ts empezar <entendido.json>  o  investigar.ts sigue <carpeta del run>");
+  return 2;
+}
+
+if (import.meta.main) {
+  principal().then(
+    (codigo) => process.exit(codigo),
+    (e) => {
+      console.error(e instanceof Error ? e.message : e);
+      process.exit(2);
+    },
+  );
+}

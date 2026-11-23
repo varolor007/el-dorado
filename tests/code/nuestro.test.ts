@@ -81,7 +81,7 @@ test("un dominio oficial lo es con https y con lo que cuelga de él, y no lo es 
 });
 
 test("las quejas graves se cazan como las escribe quien las sufre", () => {
-  assert.ok(QUEJAS_GRAVES.chinches.test("we found bed bugs in the mattress"));
-  assert.ok(QUEJAS_GRAVES.moho.test("mould on the bathroom ceiling"));
-  assert.ok(!QUEJAS_GRAVES.chinches.test("the bed was comfortable"));
+  assert.ok(QUEJAS_GRAVES.bed_bugs.test("we found bed bugs in the mattress"));
+  assert.ok(QUEJAS_GRAVES.mould.test("mould on the bathroom ceiling"));
+  assert.ok(!QUEJAS_GRAVES.bed_bugs.test("the bed was comfortable"));
 });

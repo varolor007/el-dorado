@@ -38,7 +38,7 @@ test("la tabla: una fila por finalista, con su total, que es el alojamiento comp
 
 test("la tabla: lo que descarta una criba sigue en la tabla con su motivo, y no lleva ninguna marca", () => {
   const a1 = fila("a1");
-  assert.match(a1.discarded, /imprescindible: gym \(token\)/);
+  assert.match(a1.discarded, /marked as a must: gym \(token\)/);
   assert.deepEqual(a1.marks, []);
   // Es la más barata de todas, pero no vale: la más barata que vale es la siguiente.
   assert.ok(a1.total < fila("a2").total);
