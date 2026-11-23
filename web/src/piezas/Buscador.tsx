@@ -3,9 +3,9 @@
 // El buscador: dónde y cuándo, como el de un buscador de hoteles. Completa lo que se escribe y, al elegir, avisa.
 
 import { useEffect, useRef, useState } from "react";
+import type { Lugar } from "../lib/lugares.ts";
 import type { Textos } from "../lib/textos.ts";
 
-export type Lugar = { nombre: string; donde: string; clase: string; lat: number; lon: number; caja: number[] | null };
 export type Busqueda = { lugar: Lugar; entrada: string; salida: string };
 
 type Props = {

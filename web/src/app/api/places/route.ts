@@ -1,11 +1,10 @@
 // El buscador de lugares: completa lo que se escribe con Photon, un buscador abierto sobre OpenStreetMap, sin clave.
-// La web no le habla directamente: pasa por aquí, que solo deja pedir esto y recorta lo que vuelve.
+// La web no le habla directamente: pasa por aquí, que solo deja pedir esto y recorta lo que vuelve. Qué vale como
+// destino, y qué se comprueba de cada uno antes de darlo, está en `lib/lugares.ts`.
+
+import { lugarDe, type Lugar } from "../../../lib/lugares.ts";
 
 export const dynamic = "force-dynamic";
-
-type Lugar = { nombre: string; donde: string; clase: string; lat: number; lon: number; caja: number[] | null };
-
-const VALEN = new Set(["city", "town", "village", "country", "state", "county", "island", "locality", "district"]);
 
 export async function GET(pedido: Request): Promise<Response> {
   const url = new URL(pedido.url);
@@ -21,20 +20,13 @@ export async function GET(pedido: Request): Promise<Response> {
       signal: AbortSignal.timeout(6000),
     });
     if (!r.ok) return Response.json({ lugares: [], error: `el buscador contesta ${r.status}` }, { status: 502 });
-    const datos = (await r.json()) as {
-      features?: { geometry?: { coordinates?: number[] }; properties?: Record<string, unknown> }[];
-    };
+    const datos = (await r.json()) as { features?: unknown } | null;
     const lugares: Lugar[] = [];
-    for (const f of datos.features ?? []) {
-      const p = f.properties ?? {};
-      const [lon, lat] = f.geometry?.coordinates ?? [];
-      const clase = String(p.type ?? p.osm_value ?? "");
-      if (typeof p.name !== "string" || typeof lat !== "number" || typeof lon !== "number" || !VALEN.has(clase))
-        continue;
-      const donde = [p.state, p.country].filter((x) => typeof x === "string" && x !== p.name).join(", ");
-      if (lugares.some((l) => l.nombre === p.name && l.donde === donde)) continue;
-      const caja = Array.isArray(p.extent) && p.extent.length === 4 ? (p.extent as number[]) : null;
-      lugares.push({ nombre: p.name, donde, clase, lat, lon, caja });
+    for (const resultado of Array.isArray(datos?.features) ? datos.features : []) {
+      const lugar = lugarDe(resultado);
+      if (lugar === null) continue;
+      if (lugares.some((l) => l.nombre === lugar.nombre && l.donde === lugar.donde)) continue;
+      lugares.push(lugar);
     }
     return Response.json({ lugares: lugares.slice(0, 6) });
   } catch {
