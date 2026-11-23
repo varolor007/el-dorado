@@ -78,7 +78,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | 1.2 | **La carpeta de cada viaje.** Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa. | pendiente |
 | 1.3 | **El viaje inventado, entero.** De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado. | en parte |
 | 1.4 | **Lo nuestro, en datos.** La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales. | pendiente |
-| 1.5 | **La forma del viaje para la web.** Lo que la casa le entrega a la web y lo que le cuenta en vivo: el viaje con sus días, sus paradas, sus tres maneras y sus palancas, y la lista de sucesos de la investigación. Es el contrato entre las dos: la web se construye contra él, y el agente tiene que producirlo. | pendiente |
+| 1.5 | **La forma del viaje para la web.** En `agent/output/viaje.ts`: lo que la casa le entrega a la web (el viaje con sus paradas, sus días, sus alojamientos, sus tres maneras, sus palancas y su primer vistazo) y lo que le cuenta en vivo (los sucesos, que son solo datos: la frase la monta la web). Y lo que el código comprueba de él antes de enseñarlo: siete pruebas, con un viaje inventado. | hecho |
 
 ## 2. Los cimientos
 

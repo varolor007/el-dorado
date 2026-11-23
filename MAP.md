@@ -13,6 +13,7 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `agent/contracts/lodging-viewer/` | El contrato del que mira el alojamiento, en inglés: qué recibe y qué no ve, su guía paso a paso, sus seis normas y su entrega, campo a campo y nivel a nivel | Hecho, con el punto 4.2 |
 | `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La de la búsqueda de alojamiento (la 4), la de todos, que mira el método de cualquier asiento, y la de cómo es (la 5), que mira que cada nivel tenga su prueba | La 5, con el punto 4.2 |
 | `agent/launcher/` | Lo que lanza el agente: una búsqueda desde la terminal (`buscar.ts`); la mesa, donde queda lo que saca; cómo se lanza un asiento (su puesto, su sello, la orden que lo abre, su tope y la recogida), y lo que prepara y recoge al que mira el alojamiento (`mirar.ts`) | `mirar.ts`, con el punto 4.2 |
+| `agent/output/` | La salida: la forma del viaje para la web (`viaje.ts`), que es el contrato entre la casa y la web, con lo que el código comprueba de él | La forma, con el punto 1.5 |
 | `tests/cases/inventado/` | El caso inventado: una ciudad y unos alojamientos que no existen, para probar sin internet y sin gastar | Las bases, del 23-nov |
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |
@@ -20,8 +21,8 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 
 ## Lo que aún no existe
 
-El contrato de cada asiento (en `agent/contracts/`, junto al método común), `agent/output/` (la salida: el mapa) y
-`tests/runs/` llegan con su punto del plan.
+El contrato de cada asiento (en `agent/contracts/`, junto al método común) y `tests/runs/` llegan con su punto del
+plan.
 
 ## Lo que no va aquí
 

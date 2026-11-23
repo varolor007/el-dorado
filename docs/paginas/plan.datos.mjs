@@ -34,7 +34,7 @@ const bloques = [
       { n: "1.2", b: "La carpeta de cada viaje.", t: "Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa.", estado: "pendiente" },
       { n: "1.3", b: "El viaje inventado, entero.", t: "De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado.", estado: "parte" },
       { n: "1.4", b: "Lo nuestro, en datos.", t: "La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales.", estado: "pendiente" },
-      { n: "1.5", b: "La forma del viaje para la web.", t: "Lo que la casa le entrega a la web y lo que le cuenta en vivo: el viaje con sus días, sus paradas, sus tres maneras y sus palancas, y la lista de sucesos de la investigación. Es el contrato entre las dos: la web se construye contra él, y el agente tiene que producirlo.", estado: "pendiente" },
+      { n: "1.5", b: "La forma del viaje para la web.", t: "En `agent/output/viaje.ts`: lo que la casa le entrega a la web (el viaje con sus paradas, sus días, sus alojamientos, sus tres maneras, sus palancas y su primer vistazo) y lo que le cuenta en vivo (los sucesos, que son solo datos: la frase la monta la web). Y lo que el código comprueba de él antes de enseñarlo: siete pruebas, con un viaje inventado.", estado: "hecho" },
     ],
   },
   {

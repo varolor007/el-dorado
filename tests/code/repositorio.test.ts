@@ -7,8 +7,8 @@ import { test } from "node:test";
 import { carpetaDeLaMesa } from "../../agent/launcher/mesa.ts";
 
 const RAIZ = resolve(import.meta.dirname, "..", "..");
-const FUERA = new Set([".git", "node_modules"]);
-const DE_TEXTO = /\.(md|ts|mjs|js|css|json|html|yml|yaml|txt)$/;
+const FUERA = new Set([".git", "node_modules", ".next"]);
+const DE_TEXTO = /\.(md|ts|tsx|mjs|js|css|json|html|yml|yaml|txt)$/;
 
 function archivos(carpeta: string): string[] {
   const salida: string[] = [];
@@ -22,7 +22,7 @@ function archivos(carpeta: string): string[] {
 }
 
 const TODOS = archivos(RAIZ);
-const TEXTOS = TODOS.filter((a) => DE_TEXTO.test(a) && a !== "package-lock.json");
+const TEXTOS = TODOS.filter((a) => DE_TEXTO.test(a) && !a.endsWith("package-lock.json"));
 // La raya larga, la media, el punto medio y los puntos suspensivos, escritos por su código para no ponerlos aquí.
 const PROHIBIDOS = new RegExp("[" + [0x2014, 0x2013, 0xb7, 0x2026].map((c) => String.fromCodePoint(c)).join("") + "]");
 // Las marcas de los modelos de IA, partidas para que esta misma línea no sea un identificador.
@@ -51,7 +51,7 @@ test("ningún identificador de modelo en el repositorio", () => {
 test("el código, a 120 caracteres por línea", () => {
   const largas: string[] = [];
   // Los datos de las biblias son prosa, no código: sus frases no se parten a 120.
-  for (const a of TODOS.filter((x) => /\.(ts|mjs)$/.test(x) && !x.endsWith(".datos.mjs"))) {
+  for (const a of TODOS.filter((x) => /\.(ts|tsx|mjs)$/.test(x) && !x.endsWith(".datos.mjs"))) {
     readFileSync(join(RAIZ, a), "utf8")
       .split("\n")
       .forEach((linea, i) => {
@@ -62,9 +62,15 @@ test("el código, a 120 caracteres por línea", () => {
 });
 
 test("ningún dato de un viaje en el repositorio: solo el caso inventado", () => {
+  // Los archivos de configuración de cada paquete: el del agente, en la raíz, y el de la web, en su carpeta.
   const permitidos = new Set(["package.json", "package-lock.json", "tsconfig.json", ".prettierrc.json"]);
+  const deLaWeb = new Set(["web/package.json", "web/package-lock.json", "web/tsconfig.json"]);
   const datos = TODOS.filter(
-    (a) => /\.(json|csv|jsonl)$/.test(a) && !permitidos.has(a) && !a.startsWith("tests/cases/inventado/"),
+    (a) =>
+      /\.(json|csv|jsonl)$/.test(a) &&
+      !permitidos.has(a) &&
+      !deLaWeb.has(a) &&
+      !a.startsWith("tests/cases/inventado/"),
   );
   assert.deepEqual(datos, []);
 });

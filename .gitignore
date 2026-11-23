@@ -3,3 +3,8 @@ node_modules/
 .env.*
 mesa/
 *.log
+
+# La web
+web/node_modules/
+web/.next/
+web/tsconfig.tsbuildinfo
