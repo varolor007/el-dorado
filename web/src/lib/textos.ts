@@ -88,6 +88,8 @@ const en = {
         : `${EN.cuenta(edades.length, "child", "children")}, ${EN.plural(edades.length, "age", "ages")} ${EN.lista(edades)}`,
     // Lo que va debajo de un número en grande concuerda con él.
     encontrados: (n: number) => EN.plural(n, "place to stay in the area", "places to stay in the area"),
+    bajados: "With the starting minimums there were not enough places with a price: they were lowered to these.",
+    ensanchado: "There was little to choose from in the areas of the route: we also looked further out.",
     pasan: (n: number) => EN.plural(n, "passes the minimums", "pass the minimums"),
     desde: (noches: number) => `from, for ${tusNochesEn(noches)}`,
     minimos: (nota: number, opiniones: number, estrellas: number) =>
@@ -137,6 +139,8 @@ const en = {
     imprescindible: "Not to miss",
     // En inglés se dice igual de una parada que de varias; en español, no.
     fuera: (_n: number) => "Left out at this pace",
+    // Lo que el código dejó fuera por la distancia, no por el ritmo: ni con más paradas al día entraría.
+    fueraLejos: (_n: number) => "Too far from the rest to walk in one day",
     // Las maneras que tenga el viaje: una, dos o tres.
     maneras: (n: number) =>
       n === 0 ? "No way to do it yet" : `${conMayuscula(cuantasEn(n))} ${EN.plural(n, "way", "ways")} to do it`,
@@ -416,6 +420,8 @@ const es: Textos = {
         ? "sin niños"
         : `${ES.cuenta(edades.length, "niño", "niños")}, de ${ES.lista(edades)} ${edades.length === 1 ? ES.plural(edades[0], "año", "años") : "años"}`,
     encontrados: (n) => ES.plural(n, "alojamiento en la zona", "alojamientos en la zona"),
+    bajados: "Con los mínimos de partida no había bastantes alojamientos con precio: se han bajado a estos.",
+    ensanchado: "En las zonas de la ruta había poco donde elegir: también se ha buscado más lejos.",
     pasan: (n) => ES.plural(n, "pasa los mínimos", "pasan los mínimos"),
     desde: (noches) => `desde, por ${tusNochesEs(noches)}`,
     minimos: (nota, opiniones, estrellas) =>
@@ -460,6 +466,8 @@ const es: Textos = {
     diaEnMapas: "El día entero, en Google Maps",
     imprescindible: "Imprescindible",
     fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
+    fueraLejos: (n) =>
+      ES.plural(n, "Queda lejos de lo demás para andarlo en un día", "Quedan lejos de lo demás para andarlo en un día"),
     maneras: (n) =>
       n === 0
         ? "Todavía no hay ninguna manera de hacerlo"

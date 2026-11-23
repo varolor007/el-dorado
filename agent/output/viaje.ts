@@ -88,9 +88,12 @@ export type Alojamiento = {
   descartado?: { clase: string; cosa: string; detalle: string } | null;
 };
 
+/** En qué se llega: las clases de transporte que sabe decir la web. */
+export const TRANSPORTES = ["flight", "train", "bus", "car"] as const;
+
 export type Transporte = {
   id: string;
-  clase: "flight" | "train" | "bus" | "car";
+  clase: (typeof TRANSPORTES)[number];
   de: string;
   a: string;
   sale: string;
@@ -292,7 +295,11 @@ export function comprobarViaje(v: Viaje): Pega[] {
     for (const x of a.avisos)
       if (!AVISOS_DE_FICHA.includes(x)) pega(`alojamientos.${a.id}`, "un aviso de la ficha no es de su lista");
   }
-  for (const t of v.transportes) pegas.push(...pegasDelPrecio(t.precio, `transportes.${t.id}`));
+  for (const t of v.transportes) {
+    pegas.push(...pegasDelPrecio(t.precio, `transportes.${t.id}`));
+    if (!TRANSPORTES.includes(t.clase)) pega(`transportes.${t.id}`, "la clase de transporte no es de su lista");
+  }
+  if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
 
   // Las maneras: tres como mucho, cada una una vez, con piezas que existen y una moneda sola.
   if (v.maneras.length > MANERAS.length) pega("maneras", "hay más de tres maneras");

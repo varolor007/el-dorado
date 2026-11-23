@@ -89,6 +89,8 @@ export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
       {v !== null && (
         <p className="dato">{t.vistazo.minimos(v.minimos.nota, v.minimos.opiniones, v.minimos.estrellas)}</p>
       )}
+      {v !== null && v.bajados && <p className="aviso">{t.vistazo.bajados}</p>}
+      {v !== null && v.ensanchado && <p className="aviso">{t.vistazo.ensanchado}</p>}
       {viaje.transportes.length === 0 && <p className="aviso">{t.vistazo.sinTransporte}</p>}
     </>
   );
@@ -500,17 +502,24 @@ function Dias(x: DeViaje) {
         </div>
       )}
 
-      {fuera.length > 0 && (
-        <div className="grupo">
-          <span className="rotulo">{t.viaje.fuera(fuera.length)}</span>
-          <div className="cabecera__linea">
-            {fuera.map((id) => (
-              <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
-                + {deParada.get(id)?.nombre}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Lo que el código dejó fuera, con su porqué: no cabe con este ritmo, o queda lejos de todo lo demás. */}
+      {[
+        { ids: fuera.filter((id) => reparto.porQue[id] !== "far"), rotulo: t.viaje.fuera },
+        { ids: fuera.filter((id) => reparto.porQue[id] === "far"), rotulo: t.viaje.fueraLejos },
+      ].map(
+        (grupo, i) =>
+          grupo.ids.length > 0 && (
+            <div className="grupo" key={i}>
+              <span className="rotulo">{grupo.rotulo(grupo.ids.length)}</span>
+              <div className="cabecera__linea">
+                {grupo.ids.map((id) => (
+                  <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
+                    + {deParada.get(id)?.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ),
       )}
       {x.quitadas.length > 0 && (
         <div className="grupo">
