@@ -34,6 +34,17 @@ export function Mundo({ t, grabado, alProbar }: Comun & { grabado: string | null
   );
 }
 
+/**
+ * Cómo se llega en una manera: la clase de su transporte y si su precio es guardado. Sin transporte, su total es solo
+ * dormir. Si lleva uno que el viaje no trae, se dice que lo lleva, sin clase.
+ */
+function comoSeLlega(viaje: Viaje, manera: Manera | undefined): { clase: string; guardado: boolean } | null {
+  if (manera === undefined || manera.transporte === null) return null;
+  const suyo = viaje.transportes.find((x) => x.id === manera.transporte);
+  return { clase: suyo?.clase ?? "", guardado: suyo?.guardado ?? false };
+}
+
+/** La cabecera de un viaje: el sitio, las fechas, las noches y quiénes van, niños incluidos, todo leído del viaje. */
 function CabeceraDelViaje({ t, idioma, viaje, rotulo }: Comun & { viaje: Viaje; rotulo: string }) {
   const n = noches(viaje.entrada, viaje.salida);
   return (
@@ -46,6 +57,7 @@ function CabeceraDelViaje({ t, idioma, viaje, rotulo }: Comun & { viaje: Viaje; 
         </span>
         <span className="pastilla">{t.vistazo.noches(n)}</span>
         <span className="pastilla">{t.vistazo.adultos(viaje.adultos)}</span>
+        {viaje.ninos.length > 0 && <span className="pastilla">{t.vistazo.ninos(viaje.ninos)}</span>}
       </div>
     </div>
   );
@@ -62,22 +74,22 @@ export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
         <div className="cifras">
           <div>
             <b>{numero(v.devueltos)}</b>
-            <span>{t.vistazo.encontrados}</span>
+            <span>{t.vistazo.encontrados(v.devueltos)}</span>
           </div>
           <div>
             <b>{numero(v.pasan)}</b>
-            <span>{t.vistazo.pasan}</span>
+            <span>{t.vistazo.pasan(v.pasan)}</span>
           </div>
           <div className="oro">
             <b>{v.desde === null ? "?" : dinero(v.desde, v.moneda, idioma)}</b>
-            <span>{t.vistazo.desde}</span>
+            <span>{t.vistazo.desde(noches(viaje.entrada, viaje.salida))}</span>
           </div>
         </div>
       )}
       {v !== null && (
         <p className="dato">{t.vistazo.minimos(v.minimos.nota, v.minimos.opiniones, v.minimos.estrellas)}</p>
       )}
-      {viaje.transportes.length === 0 && <p className="aviso">{t.vistazo.sinVuelos}</p>}
+      {viaje.transportes.length === 0 && <p className="aviso">{t.vistazo.sinTransporte}</p>}
     </>
   );
 }
@@ -490,7 +502,7 @@ function Dias(x: DeViaje) {
 
       {fuera.length > 0 && (
         <div className="grupo">
-          <span className="rotulo">{t.viaje.fuera}</span>
+          <span className="rotulo">{t.viaje.fuera(fuera.length)}</span>
           <div className="cabecera__linea">
             {fuera.map((id) => (
               <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
@@ -502,7 +514,7 @@ function Dias(x: DeViaje) {
       )}
       {x.quitadas.length > 0 && (
         <div className="grupo">
-          <span className="rotulo">{t.acciones.quitadas}</span>
+          <span className="rotulo">{t.acciones.quitadas(x.quitadas.length)}</span>
           <div className="cabecera__linea">
             {x.quitadas.map((id) => (
               <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
@@ -524,7 +536,7 @@ function Dormir(x: DeViaje) {
     <>
       <div className="grupo">
         <div className="grupo__cab">
-          <h2 className="titulo">{t.viaje.maneras}</h2>
+          <h2 className="titulo">{t.viaje.maneras(viaje.maneras.length)}</h2>
         </div>
         <div className="maneras">
           {viaje.maneras.map((m) => {
@@ -565,7 +577,7 @@ function Dormir(x: DeViaje) {
       </div>
       {otros.length > 0 && (
         <div className="grupo">
-          <span className="rotulo">{t.dormir.otros}</span>
+          <span className="rotulo">{t.dormir.otros(otros.length)}</span>
           {otros.map((a) => (
             <button
               key={a.id}
@@ -590,10 +602,12 @@ function Dormir(x: DeViaje) {
 function Cuentas(x: DeViaje) {
   const { t, idioma, viaje } = x;
   const tope = Math.max(...viaje.maneras.map((m) => m.total), 1);
+  // Lo que lleva cada total depende de su manera: se dice de la que está marcada, con su transporte si lo tiene.
+  const marcada = viaje.maneras.find((m) => m.id === x.manera) ?? viaje.maneras[0];
   return (
     <>
       <div className="grupo">
-        <h2 className="titulo">{t.cuentas.lado}</h2>
+        <h2 className="titulo">{t.cuentas.lado(viaje.maneras.length)}</h2>
         <div className="barras">
           {viaje.maneras.map((m) => (
             <button
@@ -611,9 +625,9 @@ function Cuentas(x: DeViaje) {
             </button>
           ))}
         </div>
-        <p className="dato">
-          {viaje.maneras.some((m) => m.transporte !== null) ? t.cuentas.incluyeTodo : t.cuentas.incluye}
-        </p>
+        {marcada !== undefined && (
+          <p className="dato">{t.cuentas.incluye(t.viaje.manera[marcada.id], comoSeLlega(viaje, marcada))}</p>
+        )}
       </div>
       {viaje.palancas.length > 0 && (
         <div className="grupo">
@@ -657,17 +671,19 @@ export function TuViaje(x: DeViaje) {
   const puestas = reparto.dias.reduce((s, d) => s + d.paradas.length, 0);
   const andado = reparto.dias.reduce((s, d) => s + d.metros.reduce((a, m) => a + m, 0), 0);
   const pestanas: Pestana[] = ["days", "stay", "money", "notes"];
+  // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega.
+  const llega = comoSeLlega(viaje, elegida);
   return (
     <>
       <CabeceraDelViaje t={t} idioma={idioma} viaje={viaje} rotulo={t.viaje.rotulo} />
       <div className="cifras">
         <div className="oro">
           <b>{elegida ? dinero(elegida.total, elegida.moneda, idioma) : "?"}</b>
-          <span>{t.cifras.total}</span>
+          <span>{t.cifras.total(noches(viaje.entrada, viaje.salida), llega?.clase ?? null)}</span>
         </div>
         <div>
           <b>{puestas}</b>
-          <span>{t.cifras.paradas}</span>
+          <span>{t.cifras.paradas(puestas)}</span>
         </div>
         <div>
           <b>{andar(andado, idioma).lejos}</b>
@@ -701,8 +717,15 @@ function descarte(t: Textos, d: NonNullable<Alojamiento["descartado"]>): string 
   return t.dormir.quejas(t.dormir.queja[d.cosa] ?? d.cosa, d.detalle);
 }
 
-export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVolver: () => void }) {
+type DeFicha = Comun & { a: Alojamiento; nochesDelViaje: number; alVolver: () => void };
+
+/** La ficha de un alojamiento. Las noches son las del viaje, para decir de cuántas es su precio. */
+export function Ficha({ t, idioma, a, nochesDelViaje, alVolver }: DeFicha) {
   const fecha = new Intl.DateTimeFormat(idioma, { day: "numeric", month: "short" }).format(new Date(a.precio.visto));
+  // De la habitación de ese precio se dice lo que se sabe: su nombre, si lo hay, y sus metros o que no los da.
+  const habitacion = [a.habitacion, a.metros === null ? t.ficha.sinMetros : t.ficha.metros(a.metros)]
+    .filter((dato) => dato !== null && dato.trim() !== "")
+    .join(", ");
   return (
     <>
       <button type="button" className="enlace atras" onClick={alVolver}>
@@ -711,7 +734,10 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
       <div className="cabecera">
         <h1 className="titulo titulo--grande">{a.nombre}</h1>
         <div className="cabecera__linea">
-          {a.estrellas !== null && <span className="pastilla">{t.ficha.estrellas(a.estrellas)}</span>}
+          {/* Sin estrellas (una casa, un piso) no se dice «0 estrellas»: no tener categoría no es tener la peor. */}
+          {a.estrellas !== null && a.estrellas > 0 && (
+            <span className="pastilla">{t.ficha.estrellas(a.estrellas)}</span>
+          )}
           {a.nota !== null && a.opiniones !== null && (
             <span className="pastilla">{t.ficha.nota(a.nota, a.opiniones)}</span>
           )}
@@ -730,7 +756,7 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
       )}
       <div className="grupo">
         <span className="rotulo">
-          {t.ficha.habitacion}: {a.habitacion ?? ""}, {a.metros === null ? t.ficha.sinMetros : t.ficha.metros(a.metros)}
+          {t.ficha.habitacion}: {habitacion}
         </span>
         {a.avisos.map((x) => (
           <p className="aviso" key={x}>
@@ -787,14 +813,14 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
       )}
       <div className="palanca">
         <span className="palanca__ahorra">{dinero(a.precio.total, a.precio.moneda, idioma)}</span>
-        <b>{t.ficha.precio}</b>
+        <b>{t.ficha.precio(nochesDelViaje)}</b>
         <span>
           {a.precio.vendedor ?? ""} {t.ficha.visto(fecha)}
         </span>
       </div>
       {a.otrasOfertas.length > 0 && (
         <div className="grupo">
-          <span className="rotulo">{t.ficha.otras}</span>
+          <span className="rotulo">{t.ficha.otras(a.otrasOfertas.length)}</span>
           <div className="cabecera__linea">
             {a.otrasOfertas.map((o) => (
               <a

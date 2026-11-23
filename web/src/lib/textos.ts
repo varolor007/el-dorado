@@ -6,19 +6,24 @@
 // (cómo se llega, si hay niños) se dice a partir de ese dato y, si el dato no se conoce, con una palabra que no
 // suponga nada.
 
+import type { Transporte } from "../../../agent/output/viaje.ts";
+
 export const IDIOMAS = ["en", "es"] as const;
 export type Idioma = (typeof IDIOMAS)[number];
 
-/** Cómo se dicen los números en un idioma: la cifra sola, el nombre que concuerda con ella y los dos juntos. */
+/** Cómo se dicen los números en un idioma: la cifra sola, el nombre que concuerda con ella, los dos juntos y varios. */
 function numeros(idioma: Idioma) {
   const formato = new Intl.NumberFormat(idioma);
+  const enLista = new Intl.ListFormat(idioma, { type: "conjunction" });
   /** La cifra, como la escribe el idioma. */
   const cifra = (n: number): string => formato.format(n);
   /** El nombre que concuerda con el número: en los dos idiomas, solo el uno va en singular. */
   const plural = (n: number, uno: string, varios: string): string => (n === 1 ? uno : varios);
   /** La cifra con su nombre: «1 night», «3 nights». */
   const cuenta = (n: number, uno: string, varios: string): string => `${cifra(n)} ${plural(n, uno, varios)}`;
-  return { cifra, plural, cuenta };
+  /** Varias cifras seguidas: «4 and 7», «4, 7 y 9». */
+  const lista = (ns: number[]): string => enLista.format(ns.map(cifra));
+  return { cifra, plural, cuenta, lista };
 }
 
 const EN = numeros("en");
@@ -27,6 +32,30 @@ const ES = numeros("es");
 /** Las noches del viaje, cuando se nombran sin contarlas: «for your nights», o «for your night» si es una sola. */
 const tusNochesEn = (n: number): string => EN.plural(n, "your night", "your nights");
 const tusNochesEs = (n: number): string => ES.plural(n, "tu noche", "tus noches");
+
+/** Las maneras se cuentan con letra, que son tres como mucho. Si un día llegaran más, con su cifra. */
+const cuantasEn = (n: number): string => ["no", "one", "two", "three"][n] ?? EN.cifra(n);
+const cuantasEs = (n: number): string => ["ninguna", "una", "dos", "tres"][n] ?? ES.cifra(n);
+const conMayuscula = (frase: string): string => frase.slice(0, 1).toUpperCase() + frase.slice(1);
+
+// Cómo se llega, por la clase de su transporte. Si la clase no es de las de la casa, se dice sin nombrarla.
+type ClaseDeTransporte = Transporte["clase"];
+const TRANSPORTE_EN: Record<ClaseDeTransporte, string> = {
+  flight: "the flight",
+  train: "the train",
+  bus: "the bus",
+  car: "the car",
+};
+const TRANSPORTE_ES: Record<ClaseDeTransporte, string> = {
+  flight: "el vuelo",
+  train: "el tren",
+  bus: "el autobús",
+  car: "el coche",
+};
+const transporteEn = (clase: string): string =>
+  Object.hasOwn(TRANSPORTE_EN, clase) ? TRANSPORTE_EN[clase as ClaseDeTransporte] : "transport";
+const transporteEs = (clase: string): string =>
+  Object.hasOwn(TRANSPORTE_ES, clase) ? TRANSPORTE_ES[clase as ClaseDeTransporte] : "el transporte";
 
 const en = {
   buscador: {
@@ -50,16 +79,23 @@ const en = {
   },
   vistazo: {
     rotulo: "First look",
-    noches: (n: number) => `${n} nights`,
+    noches: (n: number) => EN.cuenta(n, "night", "nights"),
     adultos: (n: number) => EN.cuenta(n, "adult", "adults"),
-    encontrados: "places to stay in the area",
-    pasan: "pass the minimums",
-    desde: "from, for your nights",
+    // Los niños que lleva el viaje, con la edad de cada uno, que es lo que cambia un precio.
+    ninos: (edades: number[]) =>
+      edades.length === 0
+        ? "no children"
+        : `${EN.cuenta(edades.length, "child", "children")}, ${EN.plural(edades.length, "age", "ages")} ${EN.lista(edades)}`,
+    // Lo que va debajo de un número en grande concuerda con él.
+    encontrados: (n: number) => EN.plural(n, "place to stay in the area", "places to stay in the area"),
+    pasan: (n: number) => EN.plural(n, "passes the minimums", "pass the minimums"),
+    desde: (noches: number) => `from, for ${tusNochesEn(noches)}`,
     minimos: (nota: number, opiniones: number, estrellas: number) =>
       estrellas > 0
-        ? `Minimums: rating ${nota}, ${opiniones} reviews, ${estrellas} stars. You can change them.`
-        : `Minimums: rating ${nota}, ${opiniones} reviews. You can change them.`,
-    sinVuelos: "No saved flight price for these exact dates yet.",
+        ? `Minimums: rating ${EN.cifra(nota)}, ${EN.cuenta(opiniones, "review", "reviews")}, ${EN.cuenta(estrellas, "star", "stars")}. You can change them.`
+        : `Minimums: rating ${EN.cifra(nota)}, ${EN.cuenta(opiniones, "review", "reviews")}. You can change them.`,
+    // El viaje no lleva ningún transporte. Por qué (sin origen, en coche, sin precio aún) no lo dice el viaje.
+    sinTransporte: "There is no transport price yet: this first look is sleeping only.",
     empezar: "Start the research",
     gasta: "From here it uses your AI key. Nothing that spends starts without this button.",
   },
@@ -87,20 +123,23 @@ const en = {
   },
   viaje: {
     rotulo: "Your trip",
-    muestra:
-      "Sample: the places to stay were found and looked at by the agent; the sights and the three ways were set by hand.",
+    // El viaje solo dice si alguna parte está puesta a mano, no cuál.
+    muestra: "Sample: part of this trip was set by hand, not by the agent.",
     todos: "All",
     dia: (n: number) => `Day ${n}`,
     ritmo: "Pace",
     ritmos: { calm: "Calm", normal: "Normal", full: "Full" },
-    paradas: (n: number) => (n === 1 ? "1 stop" : `${n} stops`),
+    paradas: (n: number) => EN.cuenta(n, "stop", "stops"),
     sinParadas: "A free day.",
     andando: (lejos: string, min: number) => `${lejos} on foot, about ${min} min`,
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
     imprescindible: "Not to miss",
-    fuera: "Left out at this pace",
-    maneras: "Three ways to do it",
+    // En inglés se dice igual de una parada que de varias; en español, no.
+    fuera: (_n: number) => "Left out at this pace",
+    // Las maneras que tenga el viaje: una, dos o tres.
+    maneras: (n: number) =>
+      n === 0 ? "No way to do it yet" : `${conMayuscula(cuantasEn(n))} ${EN.plural(n, "way", "ways")} to do it`,
     manera: { cheapest: "The cheapest", best_value: "Best for what it costs", different: "A different one" },
     soloDormir: "sleeping only",
     gana: "You gain",
@@ -114,7 +153,7 @@ const en = {
   ficha: {
     volver: "Back to the trip",
     habitacion: "The room at this price",
-    metros: (m: number) => `${m} m²`,
+    metros: (m: number) => `${EN.cifra(m)} m²`,
     sinMetros: "size not given",
     comoEs: "What it is really like",
     comoEsNota: "Looked at blind: without the name, the price, the rating or the stars.",
@@ -127,11 +166,11 @@ const en = {
       no_room_photos: "The source has no photos of the room at this price, so nobody could look at it.",
       no_reviews: "There are no reviews of this place to read.",
     } as Record<string, string>,
-    precio: "Price for your nights",
+    precio: (noches: number) => `Price for ${tusNochesEn(noches)}`,
     visto: (cuando: string) => `seen on ${cuando}`,
-    otras: "Other sellers",
-    nota: (n: number, op: number) => `rated ${n} by ${op} guests`,
-    estrellas: (n: number) => `${n} stars`,
+    otras: (n: number) => EN.plural(n, "Another seller", "Other sellers"),
+    nota: (n: number, op: number) => `rated ${EN.cifra(n)} by ${EN.cuenta(op, "guest", "guests")}`,
+    estrellas: (n: number) => EN.cuenta(n, "star", "stars"),
     sinMirar: "Not looked at yet.",
   },
   campos: {
@@ -213,17 +252,23 @@ const en = {
   carril: { planear: "Plan", viajes: "Trips", clave: "AI key", portada: "El Dorado, home" },
   cargando: "Unfolding the map",
   pestanas: { days: "Days", stay: "Sleep", money: "Money", notes: "Notes" },
-  cifras: { total: "for your nights", paradas: "stops", andando: "on foot" },
+  cifras: {
+    // Lo que cubre el total de la manera elegida: las noches o, si lleva transporte, también cómo se llega.
+    total: (noches: number, transporte: string | null) =>
+      transporte === null ? `for ${tusNochesEn(noches)}` : `${tusNochesEn(noches)} and ${transporteEn(transporte)}`,
+    paradas: (n: number) => EN.plural(n, "stop", "stops"),
+    andando: "on foot",
+  },
   acciones: {
     quitar: "Remove",
     mover: "Move to day",
     anadir: "Add",
-    quitadas: "Removed by you",
+    quitadas: (_n: number) => "Removed by you",
     reponer: "Put back",
     tuya: "Added by you",
   },
   dormir: {
-    otros: "Others that passed the minimums",
+    otros: (n: number) => EN.plural(n, "Another that passed the minimums", "Others that passed the minimums"),
     ficha: "See it",
     elegir: "Sleep here",
     donde: (zona: string | null, min: number | null) =>
@@ -233,7 +278,7 @@ const en = {
       ]
         .filter((x) => x !== "")
         .join(" "),
-    puntos: (n: number) => `Our score: ${n} out of 10`,
+    puntos: (n: number) => `Our score: ${EN.cifra(n)} out of 10`,
     noVale: "Not for you",
     leFalta: (cosa: string, nivel: string) => `You marked "${cosa}" as a must, and here it is "${nivel}".`,
     quejas: (queja: string, cuantas: string) =>
@@ -253,10 +298,16 @@ const en = {
     } as Record<string, string>,
   },
   cuentas: {
-    incluye: "Sleeping only. Transport joins the total when there is a price for your dates.",
-    incluyeTodo:
-      "Sleeping and the flight. The flight is a saved price, seen days ago: it is asked for again when you close the trip.",
-    lado: "The three ways, side by side",
+    // Lo que lleva el total de la manera marcada, por su nombre. Cómo se llega se dice por su clase, y que su precio
+    // es guardado, solo si lo es.
+    incluye: (manera: string, transporte: { clase: string; guardado: boolean } | null) => {
+      if (transporte === null) return `${manera}: sleeping only. Its total carries no transport price.`;
+      const como = transporteEn(transporte.clase);
+      const guardado = ` The price of ${como} is a saved one, seen days ago: it is asked for again when you close the trip.`;
+      return `${manera}: sleeping and ${como}.${transporte.guardado ? guardado : ""}`;
+    },
+    lado: (n: number) =>
+      n === 0 ? "Nothing to add up yet" : n === 1 ? "What the one way costs" : `The ${cuantasEn(n)} ways, side by side`,
     fecha: "Every price carries the date it was seen. They are checked again when you close the trip.",
   },
   preguntas: {
@@ -358,16 +409,20 @@ const es: Textos = {
   },
   vistazo: {
     rotulo: "Primer vistazo",
-    noches: (n) => `${n} noches`,
+    noches: (n) => ES.cuenta(n, "noche", "noches"),
     adultos: (n) => ES.cuenta(n, "adulto", "adultos"),
-    encontrados: "alojamientos en la zona",
-    pasan: "pasan los mínimos",
-    desde: "desde, por tus noches",
+    ninos: (edades) =>
+      edades.length === 0
+        ? "sin niños"
+        : `${ES.cuenta(edades.length, "niño", "niños")}, de ${ES.lista(edades)} ${edades.length === 1 ? ES.plural(edades[0], "año", "años") : "años"}`,
+    encontrados: (n) => ES.plural(n, "alojamiento en la zona", "alojamientos en la zona"),
+    pasan: (n) => ES.plural(n, "pasa los mínimos", "pasan los mínimos"),
+    desde: (noches) => `desde, por ${tusNochesEs(noches)}`,
     minimos: (nota, opiniones, estrellas) =>
       estrellas > 0
-        ? `Mínimos: nota ${nota}, ${opiniones} opiniones y ${estrellas} estrellas. Los puedes cambiar.`
-        : `Mínimos: nota ${nota} y ${opiniones} opiniones. Los puedes cambiar.`,
-    sinVuelos: "Todavía no hay ningún precio de vuelo guardado para estas fechas exactas.",
+        ? `Mínimos: nota ${ES.cifra(nota)}, ${ES.cuenta(opiniones, "opinión", "opiniones")} y ${ES.cuenta(estrellas, "estrella", "estrellas")}. Los puedes cambiar.`
+        : `Mínimos: nota ${ES.cifra(nota)} y ${ES.cuenta(opiniones, "opinión", "opiniones")}. Los puedes cambiar.`,
+    sinTransporte: "Todavía no hay ningún precio de transporte: este primer vistazo es solo dormir.",
     empezar: "Empezar la investigación",
     gasta: "Desde aquí usa tu clave de IA. Nada que gaste arranca sin este botón.",
   },
@@ -393,20 +448,22 @@ const es: Textos = {
   },
   viaje: {
     rotulo: "Tu viaje",
-    muestra:
-      "Muestra: los alojamientos los encontró y los miró el agente; los sitios y las tres maneras están puestos a mano.",
+    muestra: "Muestra: parte de este viaje está puesta a mano, no por el agente.",
     todos: "Todos",
     dia: (n) => `Día ${n}`,
     ritmo: "Ritmo",
     ritmos: { calm: "Tranquilo", normal: "Normal", full: "Intenso" },
-    paradas: (n) => (n === 1 ? "1 parada" : `${n} paradas`),
+    paradas: (n) => ES.cuenta(n, "parada", "paradas"),
     sinParadas: "Un día libre.",
     andando: (lejos, min) => `${lejos} andando, unos ${min} min`,
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
     imprescindible: "Imprescindible",
-    fuera: "Se quedan fuera con este ritmo",
-    maneras: "Tres maneras de hacerlo",
+    fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
+    maneras: (n) =>
+      n === 0
+        ? "Todavía no hay ninguna manera de hacerlo"
+        : `${conMayuscula(cuantasEs(n))} ${ES.plural(n, "manera", "maneras")} de hacerlo`,
     manera: { cheapest: "La más barata", best_value: "La mejor por lo que cuesta", different: "Una distinta" },
     soloDormir: "solo dormir",
     gana: "Ganas",
@@ -420,7 +477,7 @@ const es: Textos = {
   ficha: {
     volver: "Volver al viaje",
     habitacion: "La habitación de ese precio",
-    metros: (m) => `${m} m²`,
+    metros: (m) => `${ES.cifra(m)} m²`,
     sinMetros: "sin metros en la ficha",
     comoEs: "Cómo es de verdad",
     comoEsNota: "Mirado a ciegas: sin el nombre, el precio, la nota ni las estrellas.",
@@ -433,11 +490,11 @@ const es: Textos = {
       no_room_photos: "La fuente no tiene fotos de la habitación de ese precio, así que nadie ha podido mirarla.",
       no_reviews: "No hay opiniones de este alojamiento que leer.",
     },
-    precio: "Precio por tus noches",
+    precio: (noches) => `Precio por ${tusNochesEs(noches)}`,
     visto: (cuando) => `visto el ${cuando}`,
-    otras: "Otros vendedores",
-    nota: (n, op) => `nota ${n}, de ${op} opiniones`,
-    estrellas: (n) => `${n} estrellas`,
+    otras: (n) => ES.plural(n, "Otro vendedor", "Otros vendedores"),
+    nota: (n, op) => `nota ${ES.cifra(n)}, de ${ES.cuenta(op, "opinión", "opiniones")}`,
+    estrellas: (n) => ES.cuenta(n, "estrella", "estrellas"),
     sinMirar: "Todavía no se ha mirado.",
   },
   campos: {
@@ -515,17 +572,22 @@ const es: Textos = {
   carril: { planear: "Planear", viajes: "Viajes", clave: "Clave", portada: "El Dorado, portada" },
   cargando: "Desplegando el mapa",
   pestanas: { days: "Días", stay: "Dormir", money: "Cuentas", notes: "Avisos" },
-  cifras: { total: "por tus noches", paradas: "paradas", andando: "andando" },
+  cifras: {
+    total: (noches, transporte) =>
+      transporte === null ? `por ${tusNochesEs(noches)}` : `${tusNochesEs(noches)} y ${transporteEs(transporte)}`,
+    paradas: (n) => ES.plural(n, "parada", "paradas"),
+    andando: "andando",
+  },
   acciones: {
     quitar: "Quitar",
     mover: "Mover al día",
     anadir: "Añadir",
-    quitadas: "Las quitaste tú",
+    quitadas: (n) => ES.plural(n, "La quitaste tú", "Las quitaste tú"),
     reponer: "Volver a poner",
     tuya: "La añadiste tú",
   },
   dormir: {
-    otros: "Otros que pasaron los mínimos",
+    otros: (n) => ES.plural(n, "Otro que pasó los mínimos", "Otros que pasaron los mínimos"),
     ficha: "Ver su ficha",
     elegir: "Dormir aquí",
     donde: (zona, min) =>
@@ -535,7 +597,7 @@ const es: Textos = {
       ]
         .filter((x) => x !== "")
         .join(" "),
-    puntos: (n) => `Nuestra nota: ${n} de 10`,
+    puntos: (n) => `Nuestra nota: ${ES.cifra(n)} de 10`,
     noVale: "No vale para ti",
     leFalta: (cosa, nivel) => `Marcaste «${cosa}» como imprescindible, y aquí es «${nivel}».`,
     quejas: (queja, cuantas) => `Quejas graves que se repiten en las opiniones recientes: ${queja} (${cuantas}).`,
@@ -547,10 +609,18 @@ const es: Textos = {
     hora: { morning: "Mejor por la mañana", afternoon: "Mejor por la tarde", evening: "Mejor al final del día" },
   },
   cuentas: {
-    incluye: "Solo dormir. El transporte se suma al total cuando haya precio para tus fechas.",
-    incluyeTodo:
-      "Dormir y el vuelo. El vuelo es un precio guardado, visto hace días: se vuelve a pedir al cerrar el viaje.",
-    lado: "Las tres maneras, lado a lado",
+    incluye: (manera, transporte) => {
+      if (transporte === null) return `${manera}: solo dormir. Su total no lleva ningún precio de transporte.`;
+      const como = transporteEs(transporte.clase);
+      const guardado = ` Lo que cuesta ${como} es un precio guardado, visto hace días: se vuelve a pedir al cerrar el viaje.`;
+      return `${manera}: dormir y ${como}.${transporte.guardado ? guardado : ""}`;
+    },
+    lado: (n) =>
+      n === 0
+        ? "Todavía no hay nada que sumar"
+        : n === 1
+          ? "Lo que cuesta la única manera"
+          : `Las ${cuantasEs(n)} maneras, lado a lado`,
     fecha: "Cada precio lleva la fecha en que se vio. Se vuelven a pedir al cerrar el viaje.",
   },
   preguntas: {

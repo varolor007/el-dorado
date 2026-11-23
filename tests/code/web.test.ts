@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { CAMPOS, MENCIONES, OTRO_TEMA, SIN_SABER, TEMAS_DE_OPINIONES, TONOS } from "../../agent/data/niveles.ts";
-import { AVISOS_DE_FICHA, PRUEBAS } from "../../agent/output/viaje.ts";
+import { AVISOS_DE_FICHA, PRUEBAS, type Transporte } from "../../agent/output/viaje.ts";
 import { CLASES_DE_DESTINO } from "../../agent/scripts/formas.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
@@ -130,6 +130,147 @@ test("lo que buscas vale también para la naturaleza, la playa, los niños y la 
   const es = juntas(TEXTOS.es.preguntas.buscasOpciones);
   for (const palabra of ["nature", "beach", "children", "road"]) assert.ok(en.includes(palabra), palabra);
   for (const palabra of ["naturaleza", "playa", "niños", "carretera"]) assert.ok(es.includes(palabra), palabra);
+});
+
+test("los recuentos de las pantallas del viaje se leen bien con uno y con varios", () => {
+  const { en, es } = TEXTOS;
+  assert.deepEqual([1, 2, 21].map(en.vistazo.noches), ["1 night", "2 nights", "21 nights"]);
+  assert.deepEqual([1, 2, 21].map(es.vistazo.noches), ["1 noche", "2 noches", "21 noches"]);
+  assert.deepEqual([0, 1, 2].map(en.viaje.paradas), ["0 stops", "1 stop", "2 stops"]);
+  assert.deepEqual([0, 1, 2].map(es.viaje.paradas), ["0 paradas", "1 parada", "2 paradas"]);
+  assert.deepEqual([1, 4].map(en.ficha.estrellas), ["1 star", "4 stars"]);
+  assert.deepEqual([1, 4].map(es.ficha.estrellas), ["1 estrella", "4 estrellas"]);
+  // La nota y sus opiniones, con la cifra como la escribe cada idioma.
+  assert.equal(en.ficha.nota(9, 1), "rated 9 by 1 guest");
+  assert.equal(en.ficha.nota(8.6, 420), "rated 8.6 by 420 guests");
+  assert.equal(es.ficha.nota(9, 1), "nota 9, de 1 opinión");
+  assert.equal(es.ficha.nota(8.6, 420), "nota 8,6, de 420 opiniones");
+  assert.equal(en.vistazo.minimos(8, 1, 1), "Minimums: rating 8, 1 review, 1 star. You can change them.");
+  assert.equal(en.vistazo.minimos(8.5, 200, 4), "Minimums: rating 8.5, 200 reviews, 4 stars. You can change them.");
+  assert.equal(en.vistazo.minimos(7, 50, 0), "Minimums: rating 7, 50 reviews. You can change them.");
+  assert.equal(es.vistazo.minimos(8, 1, 1), "Mínimos: nota 8, 1 opinión y 1 estrella. Los puedes cambiar.");
+  assert.equal(es.vistazo.minimos(8.5, 200, 4), "Mínimos: nota 8,5, 200 opiniones y 4 estrellas. Los puedes cambiar.");
+  assert.equal(es.vistazo.minimos(7, 50, 0), "Mínimos: nota 7 y 50 opiniones. Los puedes cambiar.");
+  // Lo que va debajo de un número en grande, o encima de una lista, concuerda con cuántos son.
+  const parejas: [(n: number) => string, string, string][] = [
+    [en.vistazo.encontrados, "place to stay in the area", "places to stay in the area"],
+    [es.vistazo.encontrados, "alojamiento en la zona", "alojamientos en la zona"],
+    [en.vistazo.pasan, "passes the minimums", "pass the minimums"],
+    [es.vistazo.pasan, "pasa los mínimos", "pasan los mínimos"],
+    [en.cifras.paradas, "stop", "stops"],
+    [es.cifras.paradas, "parada", "paradas"],
+    [en.ficha.otras, "Another seller", "Other sellers"],
+    [es.ficha.otras, "Otro vendedor", "Otros vendedores"],
+    [en.dormir.otros, "Another that passed the minimums", "Others that passed the minimums"],
+    [es.dormir.otros, "Otro que pasó los mínimos", "Otros que pasaron los mínimos"],
+    [es.viaje.fuera, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"],
+    [es.acciones.quitadas, "La quitaste tú", "Las quitaste tú"],
+    // Las noches, cuando se nombran sin contarlas.
+    [en.vistazo.desde, "from, for your night", "from, for your nights"],
+    [es.vistazo.desde, "desde, por tu noche", "desde, por tus noches"],
+    [en.ficha.precio, "Price for your night", "Price for your nights"],
+    [es.ficha.precio, "Precio por tu noche", "Precio por tus noches"],
+  ];
+  for (const [dice, uno, varios] of parejas) {
+    assert.equal(dice(1), uno);
+    assert.equal(dice(2), varios);
+    assert.equal(dice(0), varios);
+  }
+});
+
+test("si el viaje lleva niños, la cabecera lo dice, con la edad de cada uno", () => {
+  const { en, es } = TEXTOS;
+  assert.equal(en.vistazo.ninos([7]), "1 child, age 7");
+  assert.equal(en.vistazo.ninos([4, 7]), "2 children, ages 4 and 7");
+  assert.equal(en.vistazo.ninos([1, 4, 7]), "3 children, ages 1, 4, and 7");
+  assert.equal(es.vistazo.ninos([7]), "1 niño, de 7 años");
+  assert.equal(es.vistazo.ninos([1]), "1 niño, de 1 año");
+  assert.equal(es.vistazo.ninos([4, 7]), "2 niños, de 4 y 7 años");
+  assert.equal(es.vistazo.ninos([1, 4, 7]), "3 niños, de 1, 4 y 7 años");
+});
+
+test("el título de las maneras dice las que tiene el viaje: una, dos o tres", () => {
+  const { en, es } = TEXTOS;
+  assert.deepEqual([1, 2, 3].map(en.viaje.maneras), ["One way to do it", "Two ways to do it", "Three ways to do it"]);
+  assert.deepEqual([1, 2, 3].map(es.viaje.maneras), [
+    "Una manera de hacerlo",
+    "Dos maneras de hacerlo",
+    "Tres maneras de hacerlo",
+  ]);
+  assert.equal(en.viaje.maneras(0), "No way to do it yet");
+  assert.equal(es.viaje.maneras(0), "Todavía no hay ninguna manera de hacerlo");
+  // Las cuentas: con una sola manera no hay nada que poner lado a lado.
+  assert.deepEqual([1, 2, 3].map(en.cuentas.lado), [
+    "What the one way costs",
+    "The two ways, side by side",
+    "The three ways, side by side",
+  ]);
+  assert.deepEqual([1, 2, 3].map(es.cuentas.lado), [
+    "Lo que cuesta la única manera",
+    "Las dos maneras, lado a lado",
+    "Las tres maneras, lado a lado",
+  ]);
+  assert.equal(en.cuentas.lado(0), "Nothing to add up yet");
+  assert.equal(es.cuentas.lado(0), "Todavía no hay nada que sumar");
+});
+
+test("cómo se llega se dice por la clase de su transporte, y sin nombrarla si la clase no se conoce", () => {
+  // Las clases de transporte de la casa. Si la casa añade una, esta lista no compila hasta que entre aquí.
+  const clases: Record<Transporte["clase"], true> = { flight: true, train: true, bus: true, car: true };
+  for (const idioma of IDIOMAS) {
+    const t = TEXTOS[idioma];
+    const sinClase = t.cifras.total(3, "zepelin");
+    const dichas = Object.keys(clases).map((clase) => t.cifras.total(3, clase));
+    assert.equal(new Set([...dichas, sinClase]).size, dichas.length + 1, `cada clase, con su palabra (${idioma})`);
+    for (const rara of ["", "constructor", "toString", "__proto__"]) assert.equal(t.cifras.total(3, rara), sinClase);
+    // Solo se habla de un vuelo si es un vuelo.
+    for (const clase of ["train", "bus", "car", "zepelin"]) {
+      assert.doesNotMatch(t.cifras.total(3, clase), /flight|vuelo/);
+      assert.doesNotMatch(t.cuentas.incluye("M", { clase, guardado: true }), /flight|vuelo/);
+    }
+    assert.match(t.cuentas.incluye("M", { clase: "flight", guardado: true }), /flight|vuelo/);
+    // Y de un precio guardado, solo si lo es.
+    assert.match(t.cuentas.incluye("M", { clase: "train", guardado: true }), /saved|guardado/);
+    assert.doesNotMatch(t.cuentas.incluye("M", { clase: "train", guardado: false }), /saved|guardado/);
+    assert.doesNotMatch(t.cuentas.incluye("M", null), /saved|guardado|flight|vuelo/);
+  }
+  const { en, es } = TEXTOS;
+  // El total de arriba: de las noches o, si la manera lleva transporte, también de cómo se llega.
+  assert.equal(en.cifras.total(1, null), "for your night");
+  assert.equal(en.cifras.total(3, null), "for your nights");
+  assert.equal(en.cifras.total(3, "train"), "your nights and the train");
+  assert.equal(en.cifras.total(1, "zepelin"), "your night and transport");
+  assert.equal(es.cifras.total(1, null), "por tu noche");
+  assert.equal(es.cifras.total(3, null), "por tus noches");
+  assert.equal(es.cifras.total(3, "bus"), "tus noches y el autobús");
+  assert.equal(es.cifras.total(1, "zepelin"), "tu noche y el transporte");
+  assert.equal(
+    en.cuentas.incluye("The cheapest", { clase: "car", guardado: false }),
+    "The cheapest: sleeping and the car.",
+  );
+  assert.equal(
+    es.cuentas.incluye("Una distinta", { clase: "train", guardado: false }),
+    "Una distinta: dormir y el tren.",
+  );
+  assert.equal(
+    es.cuentas.incluye("La más barata", null),
+    "La más barata: solo dormir. Su total no lleva ningún precio de transporte.",
+  );
+});
+
+test("ninguna frase fija de las pantallas habla de un vuelo ni cuenta las maneras: eso lo dice el viaje", () => {
+  const fijas = (o: unknown, por: string): [string, string][] =>
+    typeof o === "string"
+      ? [[por, o]]
+      : o !== null && typeof o === "object"
+        ? Object.entries(o).flatMap(([k, v]) => fijas(v, `${por}.${k}`))
+        : [];
+  for (const idioma of IDIOMAS) {
+    // La portada cuenta qué es El Dorado, no un viaje: sus tres maneras son las de la hoja.
+    const pantallas = Object.entries(TEXTOS[idioma]).filter(([parte]) => parte !== "portada");
+    for (const [clave, frase] of pantallas.flatMap(([parte, textos]) => fijas(textos, parte)))
+      assert.doesNotMatch(frase, /flight|vuelo|three ways|tres maneras/i, `${idioma}: ${clave}`);
+  }
 });
 
 // Lo que devuelve el buscador de lugares, con la forma de Photon y con sitios inventados.

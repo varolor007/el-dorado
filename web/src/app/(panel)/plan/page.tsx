@@ -6,13 +6,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Manera, Punto, Ritmo, Suceso } from "../../../../../agent/output/viaje.ts";
+import { RITMOS } from "../../../../../agent/output/viaje.ts";
 import { fechasDe, repartir } from "../../../../../agent/scripts/ritmo.ts";
 import { Buscador, type Busqueda } from "../../../piezas/Buscador.tsx";
 import { Cargando } from "../../../piezas/Cargando.tsx";
 import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
-import { dinero } from "../../../lib/formato.ts";
+import { dinero, noches } from "../../../lib/formato.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { foto, useAlto, useGrabado, useIdioma, useMovil, useReproductor, useTema } from "../../../lib/usar.ts";
 
@@ -50,7 +51,7 @@ export default function Planear() {
   const [lejos, setLejos] = useState<Camara | null>(null);
   const [pestana, setPestana] = useState<Pestana>("days");
   const [dia, setDia] = useState<number | null>(null);
-  const [ritmo, setRitmo] = useState<Ritmo>("normal");
+  const [ritmoPedido, setRitmo] = useState<Ritmo | null>(null);
   const [manera, setManera] = useState<Manera["id"]>("best_value");
   const [parada, setParada] = useState<string | null>(null);
   const [ficha, setFicha] = useState<string | null>(null);
@@ -71,6 +72,8 @@ export default function Planear() {
   }, [grabado]);
 
   const viaje = grabado?.viaje ?? null;
+  // El ritmo de partida es el del viaje, no uno puesto aquí: si quien mira lo mueve, manda el suyo.
+  const ritmo: Ritmo = ritmoPedido ?? RITMOS.find((x) => x === viaje?.ritmo) ?? "normal";
   const r = useReproductor(grabado?.sucesos ?? [], etapa === "vivo");
   const elegida = viaje?.maneras.find((m) => m.id === manera) ?? viaje?.maneras[0] ?? null;
   const cama = viaje?.alojamientos.find((a) => a.id === elegida?.alojamiento) ?? null;
@@ -334,9 +337,14 @@ export default function Planear() {
           />
         </Hoja>
       )}
-      {etapa === "viaje" && abierta !== null && (
+      {etapa === "viaje" && viaje !== null && abierta !== null && (
         <Hoja etiqueta={abierta.nombre}>
-          <Ficha {...comun} a={abierta} alVolver={() => setFicha(null)} />
+          <Ficha
+            {...comun}
+            a={abierta}
+            nochesDelViaje={noches(viaje.entrada, viaje.salida)}
+            alVolver={() => setFicha(null)}
+          />
         </Hoja>
       )}
       <Cargando texto={t.cargando} fuera={pintado} />
