@@ -257,7 +257,7 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     assert.equal(otro.descartado, null);
     assert.equal(typeof otro.puntos, "number");
     assert.equal(typeof otro.andando, "number");
-    assert.ok(["Barrio Viejo", "El puerto"].includes(otro.zona ?? ""));
+    assert.ok(["Catedral Inventada, Barrio Viejo", "Faro Inventado"].includes(otro.zona ?? ""));
 
     // Las palancas que se cuentan ahorran, y llevan su texto; los días, con las paradas elegidas.
     assert.ok(viaje.palancas.length >= 1);
@@ -273,7 +273,7 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     // La investigación cuenta las dos zonas donde buscó.
     assert.deepEqual(
       sucesos.filter((s) => s.clase === "zone").map((s) => s.nombre),
-      ["Barrio Viejo", "El puerto"],
+      ["Catedral Inventada, Barrio Viejo", "Faro Inventado"],
     );
 
     // Volver a llamar con todo hecho no rehace nada.

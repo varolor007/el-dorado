@@ -180,7 +180,7 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
   const e = estanciaDe(viaje);
   const dondeBuscar = zonas.map((z) => ({
     id: z.id,
-    nombre: z.name,
+    nombre: z.label,
     lat: z.centre.lat,
     lon: z.centre.lon,
     radio: z.radius_m,
@@ -196,12 +196,13 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
   const avisos: string[] = [];
   if (f.ofertas !== undefined) {
     for (const z of zonas) {
-      const lugar = `${z.name}, ${viaje.destination.name}`;
+      // A la otra fuente se le dice la zona con nombres de los datos, no con palabras de un asiento.
+      const lugar = `${z.label.split(", ")[0]}, ${viaje.destination.name}`;
       try {
         const casados = anadirOfertas(busqueda, await f.ofertas(lugar, e), lugar);
-        avisos.push(`otras ofertas en ${z.name}: casan ${casados}`);
+        avisos.push(`otras ofertas en ${z.label}: casan ${casados}`);
       } catch (error) {
-        avisos.push(`sin otras ofertas en ${z.name}: ${error instanceof Error ? error.message : String(error)}`);
+        avisos.push(`sin otras ofertas en ${z.label}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }

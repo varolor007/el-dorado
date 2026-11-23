@@ -57,7 +57,7 @@ test("al que explica se le dan las maneras con las diferencias frente a la más 
     (barata.walk_minutes as number) - (distinta.walk_minutes as number),
   );
   assert.equal(distinta.lever, "other_zone");
-  assert.equal(distinta.zone_name, "El puerto");
+  assert.equal(distinta.zone_name, "Faro Inventado");
   assert.equal(barata.is_like.gym.level, "maintenance");
   assert.equal(DADO.ways.nights, 3);
 });

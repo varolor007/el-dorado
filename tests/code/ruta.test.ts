@@ -92,6 +92,10 @@ test("el centro de una zona es el punto medio de sus anclas, y lo que se anda lo
   assert.deepEqual(vieja.centre, { lat: 10.0025, lon: 20.0105 });
   assert.deepEqual(puerto.centre, SITIOS[0].punto);
   assert.equal(vieja.base, "b1");
+  // Al viajero y a otras fuentes, la zona se les dice con los nombres de sus anclas, que salen de los datos.
+  assert.equal(vieja.label, "Catedral Inventada, Barrio Viejo");
+  assert.equal(puerto.label, "Faro Inventado");
+  assert.equal(vieja.name, "Barrio Viejo");
   assert.equal(vieja.near[0].walk_minutes, minutosEntre(vieja.centre, SITIOS[1].punto));
   assert.equal(puerto.near[0].walk_minutes, 1);
   assert.deepEqual(

@@ -85,7 +85,7 @@ export function paraExplicar(
       row: r.id,
       lodging: r.lodging,
       lodging_label: r.lodging_label,
-      zone_name: zonas.find((z) => z.id === r.zone)?.name ?? SIN_SABER,
+      zone_name: zonas.find((z) => z.id === r.zone)?.label ?? SIN_SABER,
       total: r.total,
       lodging_total: r.lodging_total,
       transport_total: r.transport_total ?? "none",

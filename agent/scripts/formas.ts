@@ -109,7 +109,13 @@ export type EntregaDeRuta = {
 export type ZonaResuelta = {
   id: string;
   base: string;
+  /** Cómo la llama el asiento, en inglés: es de dentro. */
   name: string;
+  /**
+   * Cómo se le dice al viajero y a otras fuentes: los nombres de sus anclas, que salen de los datos y vienen en su
+   * idioma. Lo que escribe un asiento no viaja fuera ni se enseña sin pasar por aquí.
+   */
+  label: string;
   centre: Punto;
   radius_m: number;
   why: string;

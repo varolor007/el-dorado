@@ -60,6 +60,7 @@ export function resolverZonas(entrega: EntregaDeRuta, lugares: Lugar[]): ZonaRes
         id: z.id,
         base: base.id,
         name: z.name,
+        label: z.anchors.map((id) => lugar(id).name).join(", "),
         centre: { lat: Number(centre.lat.toFixed(6)), lon: Number(centre.lon.toFixed(6)) },
         radius_m: z.radius_m,
         why: z.why,

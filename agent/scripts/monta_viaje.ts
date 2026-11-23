@@ -318,7 +318,7 @@ export function montarViajeHecho(h: Hecho): Viaje {
   for (const c of cribados) {
     const r = h.tabla.rows.find((x) => x.lodging === c.id);
     deCadaAlojamiento[c.id] = {
-      zona: h.zonas.find((z) => z.id === r?.zone)?.name ?? null,
+      zona: h.zonas.find((z) => z.id === r?.zone)?.label ?? null,
       andando: c.minutosAndando,
       puntos: c.nota.nota,
       descartado: c.descarte,
