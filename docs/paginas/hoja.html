@@ -1,0 +1,804 @@
+<title>Hoja de El Dorado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* El formato de las hojas de los agentes de Cortex: la misma gramática para todos. Las columnas son etapas de un run o
+   momentos que la plataforma abre en ratos distintos; las filas, lo que cada uno pide del programa; en el flujo, una
+   caja por paso. En violeta, lo que está por decidir. Lo ancho (la hoja, las tablas) se desliza dentro de su caja.
+   Los añadidos de El Dorado van al final. */
+:root {
+  color-scheme: light;
+  --bg: #E9EBED;
+  --raised: #FAFBFC;
+  --ink: #0E1217;
+  --ink-soft: #4B535B;
+  --ink-faint: #5F6770;
+  --rule: rgba(14, 18, 23, 0.12);
+  --muted: rgba(14, 18, 23, 0.06);
+  --accent: #10D9A3;
+  --accent-ink: #0A6B52;
+  --seat: #2563EB;
+  --seat-tint: rgba(37, 99, 235, 0.07);
+  --script-bg: #1F262E;
+  --script-fg: #E9EBED;
+  --script-soft: #B9BEC4;
+  --script-tag-bg: rgba(233, 235, 237, 0.14);
+  --script-tag: #D5D9DE;
+  --gate: #B45309;
+  --gate-tint: rgba(180, 83, 9, 0.08);
+  --you: #BE2E68;
+  --you-tint: rgba(190, 46, 104, 0.07);
+  --flux: #7355E8;
+  --flux-ink: #5538C8;
+  --flux-tint: rgba(115, 85, 232, 0.10);
+  --prog-bg: #DFEBE8;
+  --shadow: rgba(14, 18, 23, 0.45);
+  --display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1217;
+    --raised: #171C22;
+    --ink: #E9EBED;
+    --ink-soft: #B9BEC4;
+    --ink-faint: #969EA7;
+    --rule: rgba(233, 235, 237, 0.14);
+    --muted: rgba(233, 235, 237, 0.06);
+    --accent: #10D9A3;
+    --accent-ink: #45E8BA;
+    --seat: #7AA7FF;
+    --seat-tint: rgba(122, 167, 255, 0.10);
+    --script-bg: #2A323C;
+    --script-fg: #E9EBED;
+    --script-soft: #B9BEC4;
+    --script-tag-bg: rgba(233, 235, 237, 0.14);
+    --script-tag: #D5D9DE;
+    --gate: #F5A524;
+    --gate-tint: rgba(245, 165, 36, 0.10);
+    --you: #FF77AB;
+    --you-tint: rgba(255, 119, 171, 0.10);
+    --flux: #9B85F5;
+    --flux-ink: #BCAEFA;
+    --flux-tint: rgba(155, 133, 245, 0.15);
+    --prog-bg: #10201F;
+    --shadow: rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1217;
+  --raised: #171C22;
+  --ink: #E9EBED;
+  --ink-soft: #B9BEC4;
+  --ink-faint: #969EA7;
+  --rule: rgba(233, 235, 237, 0.14);
+  --muted: rgba(233, 235, 237, 0.06);
+  --accent: #10D9A3;
+  --accent-ink: #45E8BA;
+  --seat: #7AA7FF;
+  --seat-tint: rgba(122, 167, 255, 0.10);
+  --script-bg: #2A323C;
+  --script-fg: #E9EBED;
+  --script-soft: #B9BEC4;
+  --script-tag-bg: rgba(233, 235, 237, 0.14);
+  --script-tag: #D5D9DE;
+  --gate: #F5A524;
+  --gate-tint: rgba(245, 165, 36, 0.10);
+  --you: #FF77AB;
+  --you-tint: rgba(255, 119, 171, 0.10);
+  --flux: #9B85F5;
+  --flux-ink: #BCAEFA;
+  --flux-tint: rgba(155, 133, 245, 0.15);
+  --prog-bg: #10201F;
+  --shadow: rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 1900px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+code { font-family: var(--mono); font-size: 0.92em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kicker { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); margin: 0; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.08; letter-spacing: -0.015em; margin: 8px 0 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 21px; line-height: 1.2; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 16px; line-height: 1.25; margin: 0; text-wrap: balance; }
+.sub { max-width: 82ch; color: var(--ink-soft); font-size: 15px; margin: 10px 0 0; }
+.sub b { color: var(--ink); font-weight: 600; }
+.sub .v { color: var(--flux-ink); font-weight: 600; }
+
+/* section links */
+.nav { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.nav a { display: inline-block; font-size: 12.5px; font-weight: 500; color: var(--ink); text-decoration: none; padding: 5px 10px; background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+.nav a:hover { box-shadow: inset 0 0 0 1px var(--ink-faint); }
+
+/* what changes and what is still open */
+.brief { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 960px) { .brief { grid-template-columns: minmax(0, 1fr); } }
+.box { background: var(--raised); padding: 15px 17px 16px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.box h2 { font-size: 16px; }
+.box ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--ink-soft); }
+.box b { color: var(--ink); font-weight: 600; }
+.box li.new, .box li.new b { color: var(--flux-ink); }
+.box li.new::marker { color: var(--flux); }
+.box .foot { margin: 0; font-size: 12.5px; color: var(--ink-faint); }
+
+/* sections */
+.block { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; scroll-margin-top: 16px; }
+.block > p { margin: 0; max-width: 86ch; color: var(--ink-soft); }
+.block > p b { color: var(--ink); font-weight: 600; }
+
+/* one deck in time */
+.days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 0 14px; }
+.day { position: relative; padding: 20px 0 16px; border-top: 2px solid var(--rule); display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.day::before { content: ""; position: absolute; top: -7px; left: 0; width: 12px; height: 12px; background: var(--bg); box-shadow: inset 0 0 0 2px var(--accent-ink); border-radius: 50%; }
+.day.later::before { box-shadow: inset 0 0 0 2px var(--ink-faint); }
+.day .when { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
+.day b { font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.25; }
+.day p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.day p .v { color: var(--flux-ink); }
+.day .m { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.pill { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 2px 6px; background: var(--muted); color: var(--ink-soft); }
+.pill.v { background: var(--flux-tint); color: var(--flux-ink); }
+.day .st8 { font-size: 12px; color: var(--accent-ink); }
+
+/* legend and the highlight toggle */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--ink-soft); }
+.legend li { display: inline-flex; align-items: center; gap: 8px; }
+.sw { display: inline-block; width: 26px; height: 14px; position: relative; flex: none; }
+.sw.seat { box-shadow: inset 0 0 0 1.5px var(--seat); background: var(--seat-tint); }
+.sw.script { background: var(--script-bg); }
+.sw.opt { border: 1.5px dashed var(--ink-faint); box-shadow: none; }
+.sw.you { box-shadow: inset 0 0 0 1.5px var(--you); background: var(--you-tint); }
+.sw.new { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+.sw.new::after { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 9px 9px 0; border-color: transparent var(--flux) transparent transparent; }
+.sw-dia { display: inline-block; width: 11px; height: 11px; margin: 0 6px; border: 1.5px solid var(--gate); background: var(--gate-tint); transform: rotate(45deg); flex: none; }
+.sw-dia.sign { border-color: var(--you); background: var(--you-tint); }
+.toggle { min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 500; color: var(--flux-ink); background: var(--flux-tint); border: 0; border-radius: 0; cursor: pointer; }
+.toggle[aria-pressed="true"] { background: var(--flux); color: var(--raised); }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* the sheet */
+.scroll { overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 10px; }
+.scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.hint { display: none; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin: 0; }
+@media (max-width: 1660px) { .hint { display: block; } }
+.grid { --cols: 9.5rem repeat(7, minmax(0, 1fr)); min-width: 1560px; display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: var(--cols); column-gap: 10px; border-top: 1px solid var(--rule); }
+.row.nolines { border-top: 0; }
+.rl { position: sticky; left: 0; z-index: 3; background: var(--bg); padding: 12px 10px 12px 0; }
+.rl b { display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink); }
+.rl small { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.35; color: var(--ink-faint); }
+.c { padding: 12px 2px; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.c ul { margin: 0; padding-left: 1.05em; display: flex; flex-direction: column; gap: 3px; }
+.c ul li::marker { color: var(--ink-faint); }
+.c li.new { color: var(--flux-ink); }
+.c li.new::marker { color: var(--flux); }
+.c .none { color: var(--ink-faint); }
+.c .who { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 2px; }
+.row.prog { background: var(--prog-bg); }
+.row.prog .rl { background: var(--prog-bg); padding-left: 8px; }
+.row.prog .rl b { color: var(--accent-ink); }
+.row.wait .c { color: var(--you); }
+.row.wait .c ul li::marker { color: var(--you); }
+.row.wait .c li.new { color: var(--flux-ink); }
+
+/* moment headers */
+.stage { position: relative; background: var(--raised); box-shadow: inset 0 3px 0 var(--accent); padding: 12px 12px 11px; margin-block: 10px; }
+.stage b { display: block; font-family: var(--display); font-weight: 600; font-size: 15.5px; line-height: 1.2; }
+.stage small { display: block; margin-top: 3px; font-size: 12px; color: var(--ink-soft); }
+.stage .when { display: block; margin-top: 6px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+.stage.any { box-shadow: inset 0 3px 0 var(--ink-faint); }
+.stage.any .when { color: var(--ink-faint); }
+.stage.new { box-shadow: inset 0 3px 0 var(--flux); }
+.stage.new .when, .stage.new b { color: var(--flux-ink); }
+.stage.seq::after { content: ""; position: absolute; top: 50%; right: -9px; width: 7px; height: 7px; border-top: 1.5px solid var(--ink-faint); border-right: 1.5px solid var(--ink-faint); transform: translateY(-50%) rotate(45deg); }
+
+/* the flow */
+.flow { padding: 12px 0; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.group { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint); margin: 3px 0 -2px; }
+.group.new { color: var(--flux-ink); }
+.st { position: relative; display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; font: inherit; font-size: 12px; line-height: 1.38; color: var(--ink); background: var(--raised); border: 0; border-radius: 0; padding: 8px 12px 8px 10px; cursor: pointer; transition: box-shadow 0.15s ease, background-color 0.15s ease, opacity 0.2s ease; }
+.st .k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-weight: 600; font-size: 12.5px; }
+.st .x { color: var(--ink-soft); }
+.st.seat { background: var(--seat-tint); box-shadow: inset 0 0 0 1.5px var(--seat); }
+.st.you { background: var(--you-tint); box-shadow: inset 0 0 0 1.5px var(--you); }
+.st.you .k { color: var(--you); }
+.st.script { background: var(--script-bg); color: var(--script-fg); font-family: var(--mono); }
+.st.script .k { font-weight: 500; font-size: 12px; }
+.st.script .x { color: var(--script-soft); font-family: var(--body); }
+.st.opt { box-shadow: none; outline: 1.5px dashed var(--ink-faint); outline-offset: -1.5px; }
+.st.opt.seat, .st.opt.you { background: transparent; }
+.st.opt.script { background: transparent; color: var(--ink); }
+.st.opt.script .x { color: var(--ink-soft); }
+.st.gate { background: transparent; flex-direction: row; align-items: flex-start; gap: 9px; padding: 6px 12px 6px 4px; }
+.st.gate .dia { flex: none; width: 13px; height: 13px; margin-top: 3px; border: 1.5px solid var(--gate); background: var(--gate-tint); transform: rotate(45deg); }
+.st.gate .k { color: var(--gate); }
+.st.gate.sign .dia { border-color: var(--you); background: var(--you-tint); }
+.st.gate.sign .k { color: var(--you); }
+.st.out { background: var(--raised); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.st.new::after { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 11px 11px 0; border-color: transparent var(--flux) transparent transparent; }
+.st:hover { filter: brightness(0.98); }
+.st:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 2px var(--accent); }
+.tag { display: inline-block; font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.08em; padding: 1px 5px; background: var(--muted); color: var(--ink-soft); }
+.st.script .tag { background: var(--script-tag-bg); color: var(--script-tag); }
+.tag.web { color: var(--seat); }
+.tag.bg { color: var(--accent-ink); }
+.st.opt.script .tag { background: var(--muted); color: var(--ink-soft); }
+
+/* highlight only what is still a proposal */
+.grid.only-new .st:not(.new),
+.grid.only-new .c li:not(.new),
+.grid.only-new .stage:not(.new) { opacity: 0.28; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; background: var(--raised); padding: 4px 16px 6px; }
+.tbl-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tbl { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 14px 8px 0; }
+.tbl td { padding: 10px 14px 10px 0; border-top: 1px solid var(--rule); vertical-align: top; color: var(--ink-soft); }
+.tbl td:first-child { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--ink); width: 21%; }
+.tbl td.m { font-family: var(--mono); font-size: 11px; color: var(--accent-ink); white-space: nowrap; }
+.tbl td.you { color: var(--you); font-weight: 500; }
+.tbl tr.new td, .tbl tr.new td:first-child { color: var(--flux-ink); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.two > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.note { margin: 0; background: var(--muted); padding: 10px 12px; font-size: 13px; color: var(--ink-soft); max-width: 120ch; }
+.note b { color: var(--ink); font-weight: 600; }
+.note.new { background: var(--flux-tint); color: var(--flux-ink); }
+.note.new b { color: var(--flux-ink); }
+
+/* how every slide is worked */
+.method { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.ph { background: var(--raised); padding: 12px 12px 13px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ph .n { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; color: var(--accent-ink); }
+.ph b { font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.2; }
+.ph span { font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }
+.ph code { margin-top: auto; padding-top: 4px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); overflow-wrap: anywhere; }
+.ph.you { box-shadow: inset 0 3px 0 var(--you); }
+
+/* how it is built */
+.arch { display: grid; grid-template-columns: minmax(0, 0.7fr) 26px minmax(0, 1.1fr) 26px minmax(0, 2.6fr) 26px minmax(0, 1fr); align-items: center; background: var(--raised); padding: 16px; gap: 0; }
+.arch .to { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 18px; }
+.lay { display: flex; flex-direction: column; gap: 6px; padding: 12px; min-width: 0; }
+.lay > b { font-family: var(--display); font-weight: 600; font-size: 15px; }
+.lay > span { font-size: 12.5px; color: var(--ink-soft); }
+.lay.you { background: var(--you-tint); box-shadow: inset 0 0 0 1.5px var(--you); }
+.lay.you > b { color: var(--you); }
+.lay.web { background: var(--bg); box-shadow: inset 0 0 0 1.2px var(--ink-faint); }
+.lay.srv { background: var(--bg); box-shadow: inset 0 0 0 1.2px var(--ink-faint); }
+.lay.out { background: transparent; outline: 1.5px dashed var(--ink-faint); outline-offset: -1.5px; }
+.cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+.cell { padding: 8px 10px; font-size: 12px; line-height: 1.38; color: var(--ink-soft); min-width: 0; }
+.cell b { display: block; font-size: 12.5px; color: var(--ink); }
+.cell.code { background: var(--script-bg); color: var(--script-soft); }
+.cell.code b { color: var(--script-fg); font-family: var(--mono); font-weight: 500; }
+.cell.seat { background: var(--seat-tint); box-shadow: inset 0 0 0 1.5px var(--seat); }
+.cell.store { background: var(--prog-bg); box-shadow: inset 0 0 0 1.5px var(--accent-ink); }
+.cell.plain { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+@media (max-width: 1100px) {
+  .arch { grid-template-columns: minmax(0, 1fr); }
+  .arch .to { height: 26px; transform: rotate(90deg); }
+}
+
+/* rules that cross everything */
+.always { display: flex; flex-wrap: wrap; gap: 8px; }
+.always span { background: var(--raised); padding: 7px 11px; font-size: 12.5px; }
+
+/* what was decided and why */
+.changes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 26px; }
+.changes li { padding: 11px 0 13px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.changes b { font-family: var(--display); font-weight: 600; font-size: 14.5px; line-height: 1.3; color: var(--ink); }
+.changes span { font-size: 13px; color: var(--ink-soft); }
+.changes em { font-style: normal; color: var(--accent-ink); }
+.changes .d { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--ink-faint); }
+.sec-label { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 8px 0 0; }
+
+/* detail panel */
+.detail { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--raised); box-shadow: 0 -18px 44px -24px var(--shadow); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-top: 16px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 60vh; overflow-y: auto; }
+.detail[hidden] { display: none; }
+.detail-in { max-width: 1900px; margin: 0 auto; display: flex; gap: 18px; align-items: flex-start; }
+.detail-text { flex: 1; min-width: 0; max-width: 92ch; }
+.detail-kind { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 0; }
+.detail-title { font-family: var(--display); font-weight: 600; font-size: 18px; margin: 4px 0 0; }
+.detail-body { margin: 6px 0 0; color: var(--ink-soft); font-size: 14px; }
+.detail-new { margin: 8px 0 0; font-size: 13px; color: var(--flux-ink); }
+.close { flex: none; min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 0; cursor: pointer; }
+.close:hover { border-color: var(--ink); }
+.close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .st { transition: none; }
+}
+
+
+/* Añadidos de El Dorado */
+.grid { --cols: 9.5rem repeat(var(--n, 7), minmax(0, 1fr)); }
+.tag.done { color: var(--accent-ink); }
+.st.script .tag.done { color: var(--accent); }
+.estado { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; background: var(--muted); color: var(--ink-soft); white-space: nowrap; }
+.estado.hecho { color: var(--accent-ink); }
+.estado.parte, .estado.siguiente { color: var(--gate); }
+.estado.decidir { color: var(--flux-ink); background: var(--flux-tint); }
+.aqui { background: var(--raised); box-shadow: inset 3px 0 0 var(--accent); padding: 13px 16px; max-width: 110ch; }
+.aqui b { font-family: var(--display); }
+.puntos { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
+</style>
+<main class="page">
+<header>
+<p class="kicker">Hoja de El Dorado, versión 1, borrador a tu firma, 23 de noviembre de 2026</p>
+<h1>El Dorado, el agente de viajes, de una tirada y por momentos</h1>
+<p class="sub"><b>Le cuentas a dónde quieres ir y te propone el viaje entero al mejor precio.</b> La primera vez corre de una tirada, desde cinco toques hasta tres viajes completos en un mapa. Después lo usas a ratos: vuelves al alojamiento, al transporte o a un día y lo cambias, a veces con días de por medio. Cada momento despierta solo a los asientos que necesita; la IA no recuerda nada de una vez a otra, y la casa le da cada vez lo suyo de lo guardado. <b>Para el viajero es uno solo: El Dorado.</b> Por dentro trabajan los asientos, y esta hoja, que es nuestra, los llama por su nombre. <span class="v">En violeta, lo que está por decidir o por diseñar.</span> Lo marcado como hecho ya está construido; lo demás está diseñado y sale de lo que decidiste. Pulsa un paso para ver su detalle.</p>
+<ul class="nav" aria-label="En esta página"><li><a href="#version">Esta versión</a></li><li><a href="#tiempo">Un viaje en el tiempo</a></li><li><a href="#momentos">Los momentos</a></li><li><a href="#casa">La casa</a></li><li><a href="#elige">Cómo se elige</a></li><li><a href="#mide">Qué se comprueba</a></li><li><a href="#asientos">Los asientos</a></li><li><a href="#datos">Los datos</a></li><li><a href="#montado">Cómo está montado</a></li><li><a href="#siempre">Siempre</a></li><li><a href="#decidido">Lo decidido</a></li></ul>
+</header>
+<div class="brief" id="version">
+<section class="box" aria-labelledby="h-que">
+<h2 id="h-que">Qué recoge esta versión</h2>
+<ul><li><b>Es la primera hoja.</b> Junta en una página lo que estaba repartido en borradores: el encargo, los asientos, las puertas, cómo se valora y el mapa de los datos.</li><li><b>Ocho momentos.</b> Dos con orden (empezar y el primer viaje, que corre de una tirada) y seis que se abren cuando quieres.</li><li><b>Nueve asientos de IA y el código que no razona</b>: la búsqueda, las cribas, el cruce, el impacto y las puertas.</li><li><b>La búsqueda de alojamiento ya es código y está construida</b>, con su puerta y sus trampas: es lo único marcado como hecho.</li><li><b>Los datos se sacan en el momento</b>, de tres fuentes que se enchufan y se apagan: LiteAPI, Aviasales y Parallel.</li><li><b>Ocho puertas y la de todos</b>, cada una con lo que mide y con lo que no puede ver.</li><li><b>Es un MVP sin uso comercial</b>: lo legal de cada fuente se cierra antes de vender.</li></ul>
+</section>
+<section class="box" aria-labelledby="h-decidir">
+<h2 id="h-decidir">Por decidir</h2>
+<ul><li class="new"><b>La salida:</b> dónde vive el mapa (Cortex o una web propia) y con qué se pinta.</li><li class="new"><b>Los vuelos en vivo:</b> hoy solo hay precios guardados de hace días, y a veces ninguno para las fechas exactas.</li><li class="new"><b>Las fotos de viajeros:</b> no tienen fuente segura. Hoy se miran las del hotel, por habitación.</li><li class="new"><b>El día a día:</b> está sin diseñar. También el seguro, el dinero y la conexión.</li><li class="new"><b>Los pesos y los mínimos:</b> son de partida, y se ajustan con casos reales.</li><li class="new"><b>Un revisor del viaje entero</b>, que no lo haya hecho, y <b>el banco</b> con el que se mide si un asiento acierta.</li><li class="new"><b>La IA:</b> con cuál piensa cada asiento, quién la paga y dónde corre el agente.</li><li class="new"><b>Vigilar el precio</b> y avisarte sin que entres.</li><li><b>Antes de vender:</b> las condiciones de las fuentes, con el abogado, y la clave de producción, con precios de verdad.</li></ul>
+</section>
+</div>
+<section class="block" id="tiempo" aria-labelledby="h-tiempo">
+<h2 id="h-tiempo">Un viaje en el tiempo</h2>
+<p>Un ejemplo: cuatro días en Lisboa para dos, en febrero, hecho a ratos durante dos semanas. Cada tarjeta es un rato tuyo; debajo, el momento que abres.</p>
+<ol class="days"><li class="day"><span class="when">Lunes, 21:00</span><b>Empiezas</b><p>Tocas Lisboa en el mapa y das tus fechas. Cinco toques: sales de Madrid, sois dos, puedes mover las fechas unos días, gasto medio, y buscas comer bien y ver lo imprescindible. En la caja libre: «con un gimnasio de verdad».</p><span class="m"><span class="pill">Empezar</span></span></li>
+<li class="day"><span class="when">Lunes, 21:03</span><b>Lo que he entendido</b><p>Confirmas con un toque. Mientras, dos avisos: en esas fechas llueve a menudo, y saliendo un día antes hay menos gente. Los papeles, en regla. Te quedas con tus fechas.</p><span class="m"><span class="pill">Empezar</span></span></li>
+<li class="day"><span class="when">Lunes, 21:10</span><b>Tus tres viajes</b><p>Pulsas «Buscar mi viaje» y te vas a cenar. Al volver, tres viajes en el mapa: el más barato, el mejor por lo que cuesta y uno distinto, que sale de otro aeropuerto y ahorra.</p><span class="m"><span class="pill">El primer viaje</span></span></li>
+<li class="day"><span class="when">Martes</span><b>Cambias el hotel</b><p>El del viaje del medio tiene gimnasio «de compromiso»: dos máquinas en un cuarto. Lo marcas como imprescindible y ves otros dos, con su ficha y sus fotos. Eliges uno.</p><span class="m"><span class="pill">El alojamiento</span></span></li>
+<li class="day"><span class="when">Miércoles</span><b>Miras otro vuelo</b><p>Pides no madrugar. El vuelo de las once cuesta algo más y no cambia las noches. Te lo quedas.</p><span class="m"><span class="pill">El transporte</span></span></li>
+<li class="day"><span class="when">Viernes</span><b>Te quedas con uno</b><p>«Me quedo con este.» Vuelve a pedir cada precio: el hotel ha subido un poco, y te lo dice. Te deja el orden: primero el vuelo, después el hotel, que se puede cancelar.</p><span class="m"><span class="pill">Elegir y reservar</span></span></li>
+<li class="day later"><span class="when">Dos semanas después</span><b>Vuelves</b><p>Sois tres: se apunta tu hermana. La casa te dice qué deja de valer (la habitación y los precios) y qué no (la ruta y los avisos), y lo rehace con tu adelante.</p><span class="m"><span class="pill">Al volver</span><span class="pill">Cambios</span></span></li></ol>
+</section>
+<section class="block" id="momentos" aria-labelledby="h-momentos">
+<h2 id="h-momentos">Los momentos</h2>
+<p>Cada columna es un momento. Las flechas marcan lo que tiene un orden: no hay primer viaje sin empezar, y nada de lo demás sin el primer viaje. Lo demás se abre cuando quieres. En verde, lo que el momento necesita de la plataforma. Para el viajero, quien responde es siempre El Dorado; aquí, el asiento que lo hace por dentro.</p>
+<div class="bar"><ul class="legend" aria-label="Leyenda">
+<li><span class="sw seat"></span>asiento de IA</li>
+<li><span class="sw script"></span>código de la casa</li>
+<li><span class="sw opt"></span>solo si hace falta</li>
+<li><span class="sw-dia"></span>puerta: la comprueba la casa</li>
+<li><span class="sw-dia sign"></span>tu aprobación: un toque tuyo</li>
+<li><span class="sw you"></span>tú</li>
+<li><span class="tag web">WEB</span>busca en internet</li>
+<li><span class="tag bg">DETRÁS</span>corre por detrás</li>
+<li><span class="tag done">HECHO</span>ya construido</li>
+<li><span class="sw new"></span>por decidir o por diseñar</li>
+</ul>
+<button type="button" class="toggle" id="only-new" aria-pressed="false">
+Resaltar lo que está por decidir</button></div>
+<p class="hint">Desliza en horizontal para ver todos los momentos.</p>
+<div class="scroll" role="region" tabindex="0" aria-label="Los momentos, desplazable en horizontal">
+<div class="grid" id="grid" style="--n: 8; min-width: 1920px;">
+<div class="row nolines">
+<div class="rl"><b>Momento</b><small>y cuándo se abre</small></div>
+<div class="stage seq"><b>Empezar</b><small>«¿A dónde vamos?»</small><span class="when">cada vez que empiezas un viaje</span></div>
+<div class="stage seq"><b>El primer viaje</b><small>de una tirada, hasta tus tres viajes</small><span class="when">una vez, unos minutos</span></div>
+<div class="stage"><b>El alojamiento</b><small>otra zona, otros mínimos o mirar otro</small><span class="when">cuando quieras</span></div>
+<div class="stage"><b>El transporte</b><small>otro día, otro aeropuerto u otro horario</small><span class="when">cuando quieras</span></div>
+<div class="stage new"><b>El día a día</b><small>qué ver, en qué orden y cómo moverte</small><span class="when">cuando quieras</span></div>
+<div class="stage"><b>Elegir y reservar</b><small>te quedas con uno y te digo qué hacer</small><span class="when">cuando lo tengas claro</span></div>
+<div class="stage any"><b>Cambios</b><small>las fechas, quién viaja, el gasto o los gustos</small><span class="when">en cualquier momento</span></div>
+<div class="stage"><b>Al volver</b><small>dónde lo dejaste y qué ha cambiado</small><span class="when">horas o días después</span></div>
+</div>
+<div class="row">
+<div class="rl"><b>Lo pone en marcha</b><small>qué lo abre</small></div>
+<div class="c"><ul><li>eliges el destino en el mapa, o lo escribes, y das tus fechas</li><li>contestas cinco toques y, si quieres, la caja libre</li></ul></div>
+<div class="c"><ul><li>pulsas «Buscar mi viaje», con lo que he entendido delante</li></ul></div>
+<div class="c"><ul><li>abres el alojamiento de uno de tus viajes</li><li>un mensaje tuyo: «más cerca del centro», «con un gimnasio de verdad»</li><li>marcas un gusto como imprescindible</li></ul></div>
+<div class="c"><ul><li>abres el transporte de uno de tus viajes</li><li>un mensaje tuyo: «sin madrugar», «prefiero directo»</li></ul></div>
+<div class="c"><ul><li class="new">abres un día del viaje, o escribes «menos museos»</li></ul></div>
+<div class="c"><ul><li>pulsas «Me quedo con este»</li></ul></div>
+<div class="c"><ul><li>cambias las fechas, quién viaja, lo que quieres gastar, tus gustos o el destino</li></ul></div>
+<div class="c"><ul><li>entras en la web, desde cualquier equipo</li></ul></div>
+</div>
+<div class="row">
+<div class="rl"><b>Necesita antes</b><small>sin esto, el momento no arranca</small></div>
+<div class="c"><ul><li>el destino y las fechas</li><li class="none">nada más</li></ul></div>
+<div class="c"><ul><li>lo que he entendido, confirmado por ti (puerta 1)</li><li>ningún papel que bloquee (puerta 2), o tu decisión de seguir</li><li>las fuentes de datos, encendidas</li></ul></div>
+<div class="c"><ul><li>el primer viaje, hecho</li></ul></div>
+<div class="c"><ul><li>el primer viaje, hecho</li></ul></div>
+<div class="c"><ul><li class="new">la ruta y, mejor, el alojamiento ya elegido</li></ul></div>
+<div class="c"><ul><li>un viaje con todas sus piezas y cada precio con su fecha</li></ul></div>
+<div class="c"><ul><li class="none">nada: la casa dice qué se rehace antes de rehacerlo</li></ul></div>
+<div class="c"><ul><li class="none">nada</li></ul></div>
+</div>
+<div class="row prog">
+<div class="rl"><b>Dónde estás</b><small>y quién te responde por dentro</small></div>
+<div class="c"><span class="who">las preguntas</span><ul><li>mientras tocas, nadie: es código</li><li>la caja libre la lee el que escucha</li><li>los avisos, el del calendario y el de los papeles</li></ul></div>
+<div class="c"><span class="who">la espera y el mapa</span><ul><li>nadie: corre solo</li><li>lo que lees al final lo escribe el que explica</li></ul></div>
+<div class="c"><span class="who">la ficha de un alojamiento</span><ul><li>si preguntas cómo es, el que mira el alojamiento</li><li>otra zona u otros mínimos: código</li><li>si cambia el total, el que cruza</li></ul></div>
+<div class="c"><span class="who">el transporte de un viaje</span><ul><li>el que cruza</li><li>la búsqueda, código</li></ul></div>
+<div class="c"><span class="who">un día del viaje</span><ul><li class="new">el del día a día</li></ul></div>
+<div class="c"><span class="who">tu viaje elegido</span><ul><li>el que explica</li><li>los plazos, del de los papeles</li></ul></div>
+<div class="c"><span class="who">donde estés</span><ul><li>la casa dice el impacto, sin IA</li><li>lo que se rehace lo hace su dueño</li></ul></div>
+<div class="c"><span class="who">el inicio</span><ul><li>nadie, hasta que abres un viaje</li></ul></div>
+</div>
+<div class="row">
+<div class="rl"><b>Flujo</b><small>quién hace cada paso, de arriba abajo</small></div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú, el destino y las fechas" data-d="Eliges el país o la ciudad en el mapa, o lo escribes, y das tus fechas. Es lo único que hace falta para empezar."><span class="k">Tú, el destino y las fechas</span><span class="x">en el mapa o escrito</span></button>
+<button type="button" class="st you" data-kind="Tú" data-t="Tú, cinco toques" data-d="Las preguntas base, todas con toques y sin escribir: de dónde sales (propuesto por tu ubicación), quiénes vais (con la edad de los niños y el pasaporte de cada uno, ya puesto por tu país), si tus fechas son fijas, cuánto quieres gastar (una cifra, tres niveles o «no lo sé») y qué buscas en este viaje. Y una casilla, «Ya tengo algo reservado». Son una base, no una lista cerrada: aprobadas el 21-nov."><span class="k">Tú, cinco toques</span><span class="x">de dónde sales, quiénes, si las fechas son fijas, cuánto y qué buscas</span></button>
+<button type="button" class="st you opt" data-kind="Tú" data-t="Tú, la caja libre" data-d="Lo que quieras añadir con tus palabras: «quiero vistas al mar», «no vuelo de noche», «voy con mi madre, que anda poco». De aquí salen tus gustos y tus límites."><span class="k">Tú, la caja libre</span><span class="x">«¿Algo más que deba saber?»</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que escucha" data-d="Separa lo que dijiste en límites (lo que no puede pasar), gustos (lo que prefieres) y datos (lo que ya tienes reservado). Pone cada gusto en su sitio: imprescindible, me gusta o me da igual; imprescindible, solo si no dejaste duda. Busca lo que choca (un gasto ajustado con un hotel de lujo, tres días con cuatro ciudades) y te lo pregunta. No añade nada que no dijeras: cada gusto cita tus palabras. Hasta tres preguntas más, y solo si la respuesta cambia el viaje."><span class="k">El que escucha</span><span class="x">tus gustos y tus límites, con tus palabras</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 1: ¿el viaje, claro?" data-d="Los campos base, completos; cada gusto y cada límite, con una cita que está de verdad, letra a letra, en lo que escribiste; tres preguntas de más como mucho; y lo que choca, dicho, aunque sea «nada»."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 1</span><span class="x">¿el viaje, claro?</span></span></button>
+<button type="button" class="st gate sign" data-kind="Tu aprobación" data-t="Tu confirmación" data-d="Ves en corto lo que he entendido de tu viaje y de tus gustos, y lo confirmas o lo corriges. Es lo que cubre lo que el código no puede medir: si un gusto se entendió bien."><span class="dia" aria-hidden="true"></span><span><span class="k">Tu confirmación</span><span class="x">«Esto he entendido»: un toque</span></span></button>
+<span class="group">a la vez, mientras confirmas</span>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El del calendario" data-d="Con tus fechas, busca lo de esas semanas y de ese año: el tiempo habitual, la temporada, las fiestas y los eventos de allí, los festivos de donde sales, lo que cierra y lo que se agota con meses. Pone cada hallazgo en su clase: bloquea, encarece, molesta o favorece. Compara tus días con los que pide el destino. Si puedes mover las fechas, propone otras y dice qué mejora y qué se pierde. Cinco avisos como mucho. No dice «más barato» sin un precio."><span class="k">El del calendario <span class="tag web">WEB</span> <span class="tag bg">DETRÁS</span></span><span class="x">el tiempo, la temporada, las fiestas y lo que se agota</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El de los papeles" data-d="Monta una tabla, cada viajero por cada país, y recorre en cada casilla la lista fija de preguntas: visado, vigencia del pasaporte, billete de salida, prueba de dinero, tarjeta de llegada, vacunas, seguro, menores, tránsito, aviso del ministerio y carné de conducir. Busca cada respuesta en el gobierno del destino y en el ministerio de tu país. Si coinciden, vale; si chocan, es dudoso y enseña las dos. Las cuentas de plazos las hace el código. Nunca dice «puedes entrar»: dice lo que piden las fuentes, y con qué fecha."><span class="k">El de los papeles <span class="tag web">WEB</span> <span class="tag bg">DETRÁS</span></span><span class="x">doce preguntas, en dos fuentes oficiales</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 2: ¿algún papel bloquea?" data-d="La tabla, completa; cada respuesta, de un dominio oficial de nuestra lista y con su fecha; «en regla» pide dos fuentes, o una del gobierno del destino; lo dudoso sale como aviso. Si algo bloquea, el viaje se para aquí y te lo digo, antes de gastar en buscar."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 2</span><span class="x">¿algún papel bloquea?</span></span></button>
+<button type="button" class="st you opt" data-kind="Tú" data-t="Tú, las fechas" data-d="Si dijiste que puedes mover las fechas y hay una ventana mejor (menos lluvia, sin la feria que lo encarece todo), eliges: las tuyas o las nuevas."><span class="k">Tú, las fechas</span><span class="x">si te propongo otras mejores</span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú, «Buscar mi viaje»" data-d="Con lo que he entendido confirmado y los avisos delante, pulsas. Nada que gaste arranca sin un botón tuyo."><span class="k">Tú, «Buscar mi viaje»</span><span class="x">das el adelante: desde aquí gasta</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El de la ruta" data-d="Decide la forma del viaje: una base, una base con excursiones o una ruta. Lista los sitios por lo que buscas, con las noches que merece cada uno, y los encaja en tus días; si no caben, quita sitios, no aprieta. Los ordena para no volver atrás y propone por dónde entrar y por dónde salir. En cada base marca de una a tres zonas donde buscar alojamiento, con su centro, su radio y su porqué, en minutos y no en adjetivos. Sin precios ni hoteles."><span class="k">El de la ruta <span class="tag web">WEB</span> <span class="tag bg">DETRÁS</span></span><span class="x">dónde duermes cada noche y en qué zonas buscar</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 3: ¿las noches suman?" data-d="Las noches de las bases suman las del viaje; cada traslado tiene su duración y su fuente; dos noches por base como mínimo; lo imprescindible para ti está dentro, o dice por qué no; y cada zona tiene su centro y su radio."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 3</span><span class="x">¿las noches suman?</span></span></button>
+<span class="group">en código, a la vez</span>
+<button type="button" class="st script" data-kind="Código de la casa. Ya construido" data-t="La búsqueda de alojamiento" data-d="Sin IA. Trae de la fuente todos los alojamientos de cada zona para esas noches y ese grupo; quita los que no llegan a los mínimos, comprobándolos uno a uno aunque la fuente ya filtre; pone a cada uno el precio de esas noches; elige los finalistas por regla y deja la ficha de datos de cada uno: la habitación de ese precio, con sus metros y sus fotos, las opiniones por temas y lo que piden otros vendedores. La misma entrada da siempre la misma lista. Construida el 23-nov: Lisboa, en unos veinte segundos."><span class="k">busqueda_alojamiento <span class="tag bg">DETRÁS</span> <span class="tag done">HECHO</span></span><span class="x">todos los de cada zona, los mínimos y el precio</span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="La búsqueda de transporte" data-d="Sin IA. Los aeropuertos de salida y de llegada, los días de alrededor si puedes moverlos, y el tipo: directo, con una escala o tren. Cada opción, con su precio, su enlace y el día en que se vio. Hoy solo hay precios guardados de hace días (Aviasales), y para unas fechas exactas a veces no hay ninguno." data-new="Por decidir: de dónde sale el precio en vivo de un vuelo. La fuente que hay da precios guardados."><span class="k">busqueda_transporte <span class="tag bg">DETRÁS</span></span><span class="x">la parrilla de aeropuertos y de días</span></button>
+<button type="button" class="st gate" data-kind="Puerta. Ya construido" data-t="Puerta 4: ¿la búsqueda es de fiar?" data-d="Todo lo que sigue cumple los mínimos; cada precio es de esas fechas, de ese grupo y en la moneda pedida; cada dato dice de qué fuente sale y cuándo se vio; cada descarte lleva su motivo; ningún finalista sale dos veces; y la habitación que se enseña es la de ese precio, no la suite. Construida para el alojamiento, con dieciocho trampas que tiene que cazar."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 4 <span class="tag done">HECHO</span></span><span class="x">¿la búsqueda es de fiar?</span></span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="Las tres cribas" data-d="Primera: lo que no vale se descarta, con su motivo (una escala demasiado corta, billetes separados sin margen, un alojamiento donde no cabe el grupo o al que le falta algo imprescindible para ti). Segunda: todo lo que tiene precio se suma al precio (la maleta, el asiento, llegar al aeropuerto, la tasa turística, la limpieza). Tercera: lo que no tiene precio recibe una nota de 0 a 10, con pesos que se mueven con el viajero. Hoy los finalistas salen por una regla provisional." data-new="Los pesos son de partida y se ajustan en el ensayo, con casos reales."><span class="k">cribas</span><span class="x">descarta, suma y pone nota</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que mira el alojamiento" data-d="De cada finalista: primero mira y después juzga. Hace el inventario de las fotos, mira por lista y sin opinar (el suelo, los muebles, el baño, la ventana, el sitio junto a la cama; en el gimnasio, cuántas máquinas y de qué tipo), lee las opiniones por temas y pone a cada campo su nivel, de los escritos, con la foto o la opinión que lo prueba. El estado se juzga; el estilo solo se nombra. No ve el precio ni la nota, para no sesgarse. Y contrasta con otras webs lo que el dato tapa: una nota distinta en otra agencia, una piscina que en tus fechas está cerrada."><span class="k">El que mira el alojamiento <span class="tag web">WEB</span> <span class="tag bg">DETRÁS</span></span><span class="x">las fotos de la habitación de ese precio y las opiniones</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 5: ¿cada nivel, con su prueba?" data-d="Cada nivel es de su lista; su prueba existe entre lo que recibió el asiento y es de la habitación de ese precio; sin prueba, «no se sabe», nunca un nivel medio; y lo que choca entre las fotos y las opiniones va marcado."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 5</span><span class="x">¿cada nivel, con su prueba?</span></span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="El cruce" data-d="Sabe que dos fuentes hablan del mismo alojamiento por lo cerca que están y por lo que se parecen sus nombres, monta viajes completos y los suma en una tabla, con cuánto varía el precio por día, por aeropuerto y por zona. Saca el más barato y el mejor por lo que cuesta. Casar dos fuentes por posición está construido; la tabla de viajes completos, no."><span class="k">cruce</span><span class="x">casa las fuentes y suma cada viaje entero</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que cruza" data-d="Lee la tabla y mira dónde está el dinero y dónde se mueve. Recorre una lista fija de palancas: mover el día, otro aeropuerto, entrar por una ciudad y salir por otra, cambiar el orden de la ruta, una noche más o menos, otra zona, el tren por el vuelo. Pide solo las búsquedas que valen la pena, dos rondas como mucho, y para por regla. Mira lo que la tabla no ve: si la llegada cuadra con el hotel, si un vuelo en otro día cambia las noches. Cierra los tres viajes y dice qué cambiaría el resultado. No hace cuentas: cada número sale de la tabla."><span class="k">El que cruza <span class="tag bg">DETRÁS</span></span><span class="x">palancas: otro día, otro aeropuerto, otra zona</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 6: ¿cada número sale de la tabla?" data-d="Cada número es igual al de la tabla del código; las piezas de cada viaje son de las mismas fechas y del mismo grupo; cada palanca está probada o descartada con su motivo; dos rondas como mucho; cada país nuevo tiene sus papeles; el más barato pasa de la nota mínima, y el distinto lleva su palanca."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 6</span><span class="x">¿cada número sale de la tabla?</span></span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que explica" data-d="Escribe, en tu idioma, por qué es cada viaje y qué se gana y qué se pierde frente al más barato: «60 euros más, cinco horas menos y llegas de día». Dice lo que hay que hacer y para cuándo, y lo que no se sabe, en el mismo sitio. Cada número, copiado de la tabla; ningún adjetivo sin su hecho; ninguna promesa."><span class="k">El que explica</span><span class="x">qué ganas y qué pierdes con cada uno</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 7: ¿sin promesas y con su aviso?" data-d="Cada número del texto está en la tabla; ninguna palabra de la lista prohibida (las promesas y las de dentro); cada viaje tiene su línea de lo que gana y lo que pierde; lo que no se sabe está dicho; y lleva el aviso de IA y el de los precios orientativos."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 7</span><span class="x">¿sin promesas y con su aviso?</span></span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="La salida, en el mapa" data-d="Pinta la ruta, dónde dormir y las tres opciones en un mapa interactivo, en la propia web." data-new="Por decidir: dónde vive (la web de Cortex o una propia) y con qué se pinta el mapa. Tu «ya veremos cómo lo construimos», del 21-nov."><span class="k">pinta_mapa</span><span class="x">tus tres viajes, en el mapa</span></button>
+<button type="button" class="st out" data-kind="Lo que sale" data-t="Salen tus tres viajes" data-d="Dos o tres viajes completos, nunca diez, cada uno con su transporte, su alojamiento y su precio total, y cada precio con su enlace y su fecha."><span class="k">Salen tus tres viajes</span><span class="x">el más barato, el mejor por lo que cuesta y uno distinto</span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú abres el alojamiento" data-d="Entras en el alojamiento de un viaje: su ficha, sus fotos y lo que se dice de él."><span class="k">Tú abres el alojamiento</span><span class="x">de uno de tus viajes</span></button>
+<button type="button" class="st you opt new" data-kind="Tú" data-t="Tú, tus gustos" data-d="De cada cosa (las vistas, el diseño, el gimnasio, la piscina, el tamaño, la tranquilidad) dices si es imprescindible, si te gusta o si te da igual. Lo imprescindible descarta; lo que te gusta sube la nota. El estilo se elige tocando fotos de ejemplo, no con palabras." data-new="Por diseñar: las fotos de ejemplo de cada estilo."><span class="k">Tú, tus gustos</span><span class="x">imprescindible, me gusta o me da igual</span></button>
+<button type="button" class="st script" data-kind="Código de la casa. Ya construido" data-t="La búsqueda de alojamiento, otra vez" data-d="La misma búsqueda, con otra zona, otros mínimos u otro tope de gasto. Segundos, y sin gastar IA."><span class="k">busqueda_alojamiento <span class="tag done">HECHO</span></span><span class="x">otra zona u otros mínimos, sin IA</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="Los gustos" data-d="Cruza la ficha de cómo es cada alojamiento con lo que marcaste: lo imprescindible descarta, y lo que te gusta sube la nota. El asiento describe; quien decide si te gusta eres tú."><span class="k">gustos</span><span class="x">cruza los niveles con lo que marcaste</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que mira el alojamiento" data-d="Mira un candidato nuevo con la misma lista y los mismos niveles, o contesta lo que preguntes de uno («¿el gimnasio tiene pesas?») con su prueba."><span class="k">El que mira el alojamiento <span class="tag web">WEB</span></span><span class="x">otro candidato, o tu pregunta sobre este</span></button>
+<button type="button" class="st seat opt" data-kind="Asiento de IA" data-t="El que cruza" data-d="Si el alojamiento nuevo cambia el total, o la zona cambia cómo se llega, rehace las cuentas del viaje con la tabla del código."><span class="k">El que cruza</span><span class="x">si cambia el total del viaje</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Las puertas 4 y 5, otra vez" data-d="Lo que entra nuevo pasa por las mismas puertas: la de la búsqueda y la de cómo es."><span class="dia" aria-hidden="true"></span><span><span class="k">Puertas 4 y 5</span><span class="x">las mismas que en el primer viaje</span></span></button>
+<button type="button" class="st gate sign" data-kind="Tu aprobación" data-t="Tu elección" data-d="Eliges el alojamiento de ese viaje. Lo de antes no se pisa: queda en su versión."><span class="dia" aria-hidden="true"></span><span><span class="k">Tu elección</span><span class="x">te quedas con uno</span></span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú abres el transporte" data-d="Entras en los vuelos o los trenes de un viaje: horas, escalas, lo que incluye y su precio con su fecha."><span class="k">Tú abres el transporte</span><span class="x">de uno de tus viajes</span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="La búsqueda de transporte, otra vez" data-d="La misma parrilla, movida a donde pides." data-new="Por decidir: la fuente del precio en vivo."><span class="k">busqueda_transporte</span><span class="x">otro día, otro aeropuerto u otro horario</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que cruza" data-d="Un vuelo en otro día cambia las noches, y con ellas el precio del alojamiento: nunca se mezclan precios de fechas distintas, se busca otra vez. Dice lo que ahorras y lo que pierdes."><span class="k">El que cruza</span><span class="x">lo que cambia en noches y en total</span></button>
+<button type="button" class="st seat opt" data-kind="Asiento de IA" data-t="El de los papeles" data-d="Una escala en otro país puede pedir permiso de tránsito: su tabla se rehace para esa escala."><span class="k">El de los papeles <span class="tag web">WEB</span></span><span class="x">si aparece una escala nueva</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Las puertas 2 y 6, otra vez" data-d="La de los papeles, si hay un país nuevo, y la de los números del cruce."><span class="dia" aria-hidden="true"></span><span><span class="k">Puertas 2 y 6</span><span class="x">papeles y números, otra vez</span></span></button>
+<button type="button" class="st gate sign" data-kind="Tu aprobación" data-t="Tu elección" data-d="Eliges el transporte de ese viaje."><span class="dia" aria-hidden="true"></span><span><span class="k">Tu elección</span><span class="x">te quedas con uno</span></span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you new" data-kind="Tú" data-t="Tú abres un día" data-d="Abres un día del viaje para ver qué hacer." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="k">Tú abres un día</span><span class="x">o pides el viaje entero, día a día</span></button>
+<button type="button" class="st seat new" data-kind="Asiento de IA" data-t="El del día a día" data-d="Propone qué ver cada día según lo que buscas, en un orden que no te haga cruzar la ciudad dos veces, y cómo moverte." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="k">El del día a día <span class="tag web">WEB</span></span><span class="x">qué ver, en qué orden y cómo moverte</span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="Las distancias" data-d="Calcula con mapas abiertos cuánto se tarda de un sitio a otro, andando o en transporte." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="k">distancias</span><span class="x">los tiempos de verdad entre sitios</span></button>
+<button type="button" class="st seat opt new" data-kind="Asiento de IA" data-t="El del calendario" data-d="Mira qué cierra el día que vas y qué entradas hay que sacar con tiempo." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="k">El del calendario <span class="tag web">WEB</span></span><span class="x">lo que cierra ese día y lo que se agota</span></button>
+<button type="button" class="st gate new" data-kind="Puerta" data-t="La puerta del día a día" data-d="Que lo de cada día quepa en sus horas, con sus traslados." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta</span><span class="x">¿cabe en el día?</span></span></button>
+<button type="button" class="st gate sign new" data-kind="Tu aprobación" data-t="Tu aprobación" data-d="Apruebas cada día, o lo cambias." data-new="Por diseñar: este momento aún no se ha hablado con el detalle de los demás."><span class="dia" aria-hidden="true"></span><span><span class="k">Tu aprobación</span><span class="x">de cada día</span></span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú, «Me quedo con este»" data-d="Te quedas con un viaje, con las piezas que hayas cambiado."><span class="k">Tú, «Me quedo con este»</span><span class="x">eliges uno de tus viajes</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="Los precios de hoy" data-d="Vuelve a pedir el precio de cada pieza a su fuente. Si alguno ha cambiado desde que lo viste, lo dice antes de que reserves."><span class="k">precios_de_hoy</span><span class="x">vuelve a pedir cada precio antes de mandarte a reservar</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que explica" data-d="Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar."><span class="k">El que explica</span><span class="x">qué reservar primero y para cuándo cada papel</span></button>
+<button type="button" class="st gate" data-kind="Puerta" data-t="Puerta 8: ¿todo cuadra?" data-d="Las horas de llegada cuadran con la entrada al alojamiento; las noches, con las fechas; cada enlace responde; y ningún precio pasa de su edad máxima."><span class="dia" aria-hidden="true"></span><span><span class="k">Puerta 8</span><span class="x">¿todo cuadra y los enlaces responden?</span></span></button>
+<button type="button" class="st script opt new" data-kind="Código de la casa" data-t="Los enlaces" data-d="Monta el enlace de cada pieza a la web de quien la vende, con las fechas ya puestas." data-new="Por decidir: si los enlaces llevan nuestra marca de afiliado, que es lo que daría ingresos. Va con lo legal, antes de vender."><span class="k">enlaces</span><span class="x">el enlace de cada pieza a quien la vende</span></button>
+<button type="button" class="st out" data-kind="Lo que sale" data-t="Sale tu viaje" data-d="El Dorado propone y enlaza: no reserva ni cobra. Cada reserva la haces tú, en la web de quien vende."><span class="k">Sale tu viaje</span><span class="x">cada pieza, con su enlace para reservar</span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú cambias algo" data-d="Las fechas, quién viaja, lo que quieres gastar, un gusto o el destino."><span class="k">Tú cambias algo</span><span class="x">desde donde estés</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="El impacto" data-d="Dice, sin IA, qué deja de valer con tu cambio: unas fechas nuevas tiran todos los precios y pueden tirar los avisos; un viajero más cambia la habitación y el precio; un gusto nuevo, solo el alojamiento. Y cuánto costaría rehacerlo."><span class="k">impacto</span><span class="x">qué piezas dejan de valer, antes de rehacer nada</span></button>
+<button type="button" class="st gate sign" data-kind="Tu aprobación" data-t="Tu adelante" data-d="Si rehacer pide trabajo de la IA, lo ves antes y das el adelante."><span class="dia" aria-hidden="true"></span><span><span class="k">Tu adelante</span><span class="x">si rehacer gasta</span></span></button>
+<span class="group">según lo que cambia, lo lleva</span>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El del calendario" data-d="Los avisos de las fechas nuevas."><span class="k">El del calendario <span class="tag web">WEB</span></span><span class="x">unas fechas nuevas</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El de los papeles" data-d="La tabla, para lo que ha cambiado."><span class="k">El de los papeles <span class="tag web">WEB</span></span><span class="x">otro pasaporte, otro destino u otra escala</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="Las búsquedas, otra vez" data-d="Un precio es de unas noches y de un grupo: si cambian, se busca de nuevo."><span class="k">busquedas</span><span class="x">otras fechas u otro grupo: todos los precios, otra vez</span></button>
+<button type="button" class="st seat" data-kind="Asiento de IA" data-t="El que cruza" data-d="Rehace los tres viajes con la tabla nueva."><span class="k">El que cruza</span><span class="x">los tres viajes, de nuevo</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="La versión" data-d="Guarda el viaje nuevo como una versión más. La de antes se queda, por si quieres volver."><span class="k">version</span><span class="x">lo de antes no se pisa</span></button>
+</div>
+<div class="flow">
+<button type="button" class="st you" data-kind="Tú" data-t="Tú entras" data-d="Vuelves a la web, desde cualquier equipo."><span class="k">Tú entras</span><span class="x">horas o días después</span></button>
+<button type="button" class="st script" data-kind="Código de la casa" data-t="Donde lo dejaste" data-d="Ves tus viajes, en qué quedó cada uno y lo que te espera: una elección, un papel con plazo, un día sin aprobar."><span class="k">sigue_donde_lo_dejaste</span><span class="x">tus viajes y lo que te espera en cada uno</span></button>
+<button type="button" class="st script new" data-kind="Código de la casa" data-t="Los precios de hoy" data-d="Al abrir un viaje, vuelve a pedir sus precios y te dice qué ha cambiado." data-new="Por decidir: si El Dorado vigila el precio y te avisa sin que entres."><span class="k">precios_de_hoy</span><span class="x">qué ha subido o bajado desde que lo viste</span></button>
+<button type="button" class="st you" data-kind="Tú" data-t="Retomas" data-d="Sigues por donde quieras: el alojamiento, el transporte, un día, o elegir."><span class="k">Retomas</span><span class="x">el viaje y la pieza que quieras</span></button>
+</div>
+</div>
+<div class="row wait">
+<div class="rl"><b>Te espera</b><small>dónde se para hasta que haces algo</small></div>
+<div class="c"><ul><li>tu confirmación de lo que he entendido</li><li>hasta tres preguntas más, si hacen falta</li><li>si un papel bloquea, tu decisión</li><li>si hay fechas mejores, tu elección</li></ul></div>
+<div class="c"><ul><li>tu «Buscar mi viaje»</li><li>después, nada hasta el final</li></ul></div>
+<div class="c"><ul><li>tus gustos, si no los diste</li><li>tu elección</li></ul></div>
+<div class="c"><ul><li>tu elección</li></ul></div>
+<div class="c"><ul><li class="new">tu aprobación de cada día</li></ul></div>
+<div class="c"><ul><li class="none">nada: cada reserva la haces tú, en la web de quien vende</li></ul></div>
+<div class="c"><ul><li>tu adelante, si rehacer gasta</li></ul></div>
+<div class="c"><ul><li>lo que quedó pendiente en cada viaje</li></ul></div>
+</div>
+<div class="row prog">
+<div class="rl"><b>Corre por detrás</b><small>lo que tarda y no necesita que estés</small></div>
+<div class="c"><ul><li>el calendario y los papeles, mientras confirmas</li></ul></div>
+<div class="c"><ul><li>todo: puedes cerrar la página y volver</li><li>la búsqueda de alojamiento, unos veinte segundos, sin IA (medido el 23-nov)</li><li class="new">los asientos de IA, por medir en el ensayo</li></ul></div>
+<div class="c"><ul><li>la búsqueda, segundos</li><li class="new">mirar un alojamiento nuevo, por medir</li></ul></div>
+<div class="c"><ul><li>la búsqueda, segundos</li></ul></div>
+<div class="c"><ul><li class="new">por medir</li></ul></div>
+<div class="c"><ul><li>volver a pedir cada precio, segundos</li></ul></div>
+<div class="c"><ul><li>lo que se rehace, según el impacto</li></ul></div>
+<div class="c"><ul><li class="none">nada que esperar</li></ul></div>
+</div>
+<div class="row">
+<div class="rl"><b>Qué ve la IA</b><small>la casa le da a cada asiento solo lo suyo</small></div>
+<div class="c"><ul><li>el que escucha: lo que escribiste y tus toques</li><li>el del calendario: el destino, las fechas y qué buscas</li><li>el de los papeles: los pasaportes, las edades, el destino y los días</li><li>ninguno: tu nombre ni cómo localizarte</li></ul></div>
+<div class="c"><ul><li>el de la ruta: lo que he entendido y los avisos</li><li>el que mira: las fotos y las opiniones de cada finalista, y cuál es la habitación de ese precio; nunca el precio ni la nota</li><li>el que cruza: la tabla que hace el código</li><li>el que explica: los tres viajes con sus números; nunca la web</li></ul></div>
+<div class="c"><ul><li>el que mira: lo mismo, del candidato nuevo</li></ul></div>
+<div class="c"><ul><li>el que cruza: la tabla nueva</li></ul></div>
+<div class="c"><ul><li class="new">por diseñar</li></ul></div>
+<div class="c"><ul><li>el que explica: el viaje elegido y sus plazos</li></ul></div>
+<div class="c"><ul><li>cada uno, lo suyo de la versión nueva</li></ul></div>
+<div class="c"><ul><li class="none">ninguna, hasta que abres algo</li></ul></div>
+</div>
+<div class="row prog">
+<div class="rl"><b>Deja guardado</b><small>en la carpeta del viaje, y el estado que cambia</small></div>
+<div class="c"><ul><li>lo que he entendido, con cada gusto y su cita</li><li>los avisos de las fechas</li><li>la tabla de los papeles, con sus fuentes y su fecha</li></ul></div>
+<div class="c"><ul><li>la ruta</li><li>los candidatos, con su precio y su fecha</li><li>los descartes, con su motivo</li><li>la ficha de cómo es cada finalista</li><li>los tres viajes y lo que se dijo de cada uno</li></ul></div>
+<div class="c"><ul><li>tus gustos</li><li>la ficha del nuevo</li><li>tu elección</li><li>la versión de antes, sin pisar</li></ul></div>
+<div class="c"><ul><li>la opción nueva y lo que cambia</li><li>tu elección</li></ul></div>
+<div class="c"><ul><li class="new">cada día, con sus sitios y sus tiempos</li></ul></div>
+<div class="c"><ul><li>el viaje elegido, con el precio de ese día y sus enlaces</li></ul></div>
+<div class="c"><ul><li>una versión nueva del viaje; la de antes se queda</li></ul></div>
+<div class="c"><ul><li class="none">nada nuevo</li></ul></div>
+</div>
+<div class="row">
+<div class="rl"><b>Puede afectar a</b><small>otros momentos</small></div>
+<div class="c"><ul><li>todo lo demás: de aquí sale</li></ul></div>
+<div class="c"><ul><li>los momentos de después</li></ul></div>
+<div class="c"><ul><li>el total del viaje</li><li>el día a día: otra zona, otros tiempos</li></ul></div>
+<div class="c"><ul><li>las noches, si cambia el día</li><li>el alojamiento</li><li>los papeles, si hay otra escala</li></ul></div>
+<div class="c"><ul><li class="new">cómo te mueves allí</li></ul></div>
+<div class="c"><ul><li class="none">nada: es el final</li></ul></div>
+<div class="c"><ul><li>lo que diga el impacto: unas fechas nuevas rehacen casi todo; un gusto, solo su pieza</li></ul></div>
+<div class="c"><ul><li class="none">nada</li></ul></div>
+</div>
+<div class="row prog">
+<div class="rl"><b>Red</b><small>quién sale a internet, y a dónde</small></div>
+<div class="c"><ul><li>el del calendario y el de los papeles: a las webs oficiales y al buscador</li><li>el que escucha, no</li></ul></div>
+<div class="c"><ul><li>el código: a las fuentes de datos (LiteAPI, Aviasales y Parallel)</li><li>el de la ruta y el que mira: al buscador, a las fotos y a la web de cada hotel</li><li>el que cruza y el que explica, no</li></ul></div>
+<div class="c"><ul><li>el código, a las fuentes</li><li>el que mira, a las fotos y al buscador</li></ul></div>
+<div class="c"><ul><li>el código, a las fuentes</li><li>el de los papeles, a las webs oficiales</li></ul></div>
+<div class="c"><ul><li class="new">el del día a día: al buscador y a los mapas</li></ul></div>
+<div class="c"><ul><li>el código, a las fuentes</li></ul></div>
+<div class="c"><ul><li>según lo que se rehace</li></ul></div>
+<div class="c"><ul><li>el código, a las fuentes, por los precios de hoy</li></ul></div>
+</div>
+<div class="row">
+<div class="rl"><b>Turnos de IA</b><small>lo que gasta, más o menos</small></div>
+<div class="c"><ul><li>el que escucha, una pasada</li><li>el del calendario y el de los papeles, una cada uno, con sus búsquedas</li></ul></div>
+<div class="c"><ul><li>la ruta, una pasada</li><li>mirar, una por finalista, con sus fotos: lo que más gasta</li><li>cruzar, hasta dos rondas</li><li>explicar, una</li><li class="new">todo, por medir en el ensayo</li></ul></div>
+<div class="c"><ul><li>una pasada del que mira por cada candidato nuevo</li></ul></div>
+<div class="c"><ul><li>una del que cruza</li></ul></div>
+<div class="c"><ul><li class="new">por medir</li></ul></div>
+<div class="c"><ul><li>una del que explica</li></ul></div>
+<div class="c"><ul><li>según el impacto</li></ul></div>
+<div class="c"><ul><li class="none">ninguno</li></ul></div>
+</div>
+</div>
+</div>
+</section>
+<section class="block" id="casa" aria-labelledby="h-casa">
+<h2 id="h-casa">La casa: lo que cruza todos los momentos</h2>
+<p><b>La casa es código.</b> Recibe cada toque y cada entrega, decide qué pasa después, hace las cuentas y comprueba en las puertas. No razona: hace siempre lo mismo y se puede probar. Si una IA desobedece, el viaje no avanza, pero nunca avanza mal. Es lo que deja que El Dorado corra a ratos: el estado vive en ella, no en la memoria de una IA.</p>
+<div class="two"><div><h3>El estado de cada cosa</h3>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="El estado de cada cosa"><table class="tbl"><thead><tr><th>Qué</th><th>Estados</th></tr></thead><tbody>
+<tr><td>El viaje</td><td>empezado, confirmado, buscando, con sus tres opciones, elegido; y cada versión que ha tenido</td></tr>
+<tr><td>Cada pieza</td><td>el transporte, el alojamiento y cada día: propuesta, elegida por ti, por rehacer (un cambio la dejó sin valer) o descartada</td></tr>
+<tr><td>Cada precio</td><td>visto ahora, guardado de hace días (con su fecha), sin confirmar o caducado, si pasó de su edad máxima</td></tr>
+<tr><td>Cada requisito</td><td>en regla, hay que hacer algo (con su plazo y su coste), aviso, bloquea o dudoso</td></tr>
+<tr><td>Cada dato de fuera</td><td>visto, deducido o supuesto; siempre con su fuente y su fecha</td></tr>
+<tr><td>Cada trabajo de la IA</td><td>en cola, trabajando, hecho, parado o fallido</td></tr>
+</tbody></table></div>
+<p class="note">Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de un viajero entra en él. Lo que devuelve una fuente vive solo en el viaje que lo pidió.</p></div>
+<div><h3>Quién te responde</h3>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Quién te responde"><table class="tbl"><thead><tr><th>Dónde estás</th><th>Quién responde, por dentro</th></tr></thead><tbody>
+<tr><td>Las preguntas</td><td>Nadie: es código</td></tr>
+<tr><td>La caja libre</td><td>El que escucha</td></tr>
+<tr><td>Los avisos de las fechas</td><td>El del calendario</td></tr>
+<tr><td>Los avisos de los papeles</td><td>El de los papeles</td></tr>
+<tr><td>La espera del primer viaje</td><td>Nadie; al final, el que explica</td></tr>
+<tr><td>La ficha de un alojamiento</td><td>El que mira el alojamiento</td></tr>
+<tr><td>El transporte o el total de un viaje</td><td>El que cruza</td></tr>
+<tr class="new"><td>Un día del viaje</td><td>El del día a día, por diseñar</td></tr>
+<tr><td>Un cambio</td><td>La casa, con el impacto; después, el dueño de cada pieza</td></tr>
+</tbody></table></div>
+<p class="note"><b>Lo que lees lo dice siempre El Dorado</b>, en tu idioma. El nombre de cada asiento no se enseña, ni cómo está montado por dentro.</p></div></div>
+<h3>Las puertas</h3>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Las puertas"><table class="tbl"><thead><tr><th>Puerta</th><th>Momento</th><th>Qué se comprueba</th><th>Estado</th></tr></thead><tbody>
+<tr><td>1. ¿El viaje, claro?</td><td>Empezar</td><td>Los campos base, completos; cada gusto y cada límite, con su cita literal; tres preguntas de más como mucho</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>2. ¿Algún papel bloquea?</td><td>Empezar, El transporte y Cambios</td><td>La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes; si bloquea, se para antes de buscar</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>3. ¿Las noches suman?</td><td>El primer viaje</td><td>Las noches, los traslados con su duración y su fuente, dos noches por base y lo imprescindible, dentro</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>4. ¿La búsqueda es de fiar?</td><td>El primer viaje y El alojamiento</td><td>Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>5. ¿Cada nivel, con su prueba?</td><td>El primer viaje y El alojamiento</td><td>Cada nivel, de su lista y con su foto o su opinión; sin prueba, «no se sabe»</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>6. ¿Cada número sale de la tabla?</td><td>El primer viaje, El transporte y Cambios</td><td>Los números, iguales a los del código; las piezas, de las mismas fechas; cada palanca, con su estado; dos rondas</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>7. ¿Sin promesas y con su aviso?</td><td>El primer viaje y Elegir</td><td>Los números del texto, en la tabla; ninguna palabra prohibida; el aviso de IA y el de los precios</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>8. ¿Todo cuadra?</td><td>Elegir y reservar</td><td>Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>La de todos</td><td>Cada asiento, al entregar</td><td>Cada paso dejó su archivo y en su orden; cada dato, con su fuente, su fecha y su etiqueta; cada página citada se consultó de verdad</td><td><span class="estado borrador">en borrador</span></td></tr>
+</tbody></table></div>
+<p class="note">Una puerta mide las cuentas, la forma, de dónde sale cada cosa y que las piezas casen. No mide si un juicio es acertado: eso lo cubren el banco, las dos fuentes, otra pasada a ciegas y tu confirmación. Un rojo vuelve a su dueño, dos veces como mucho; después lo coge el conductor.</p>
+</section>
+<section class="block" id="elige" aria-labelledby="h-elige">
+<h2 id="h-elige">Así se busca y se elige</h2>
+<p>Lo mismo para un vuelo y para un alojamiento, en este orden: qué se descarta, qué se suma al precio y qué se puntúa. Al final, cómo se mira un alojamiento, que es lo que la nota y las estrellas no dicen.</p>
+<ol class="method"><li class="ph"><span class="n">CRIBA 1</span><b>¿Vale o no vale?</b><span>Sí o no, sin ponderar. Lo que no vale se descarta, y se dice por qué: un papel que bloquea, una escala imposible, un alojamiento donde no cabéis o al que le falta algo imprescindible para ti.</span></li>
+<li class="ph"><span class="n">CRIBA 2</span><b>¿Cuánto cuesta de verdad?</b><span>Todo lo que tiene precio se suma al precio: la maleta, el asiento, llegar al aeropuerto, la tasa turística, la limpieza, el transporte de cada día si está lejos. Suma el código.</span></li>
+<li class="ph"><span class="n">CRIBA 3</span><b>¿Cómo de bueno es?</b><span>Lo que no tiene precio, con nota de 0 a 10. El vuelo: el tiempo de puerta a puerta, las escalas, los horarios y la aerolínea. El alojamiento: la zona, cómo es de verdad, las opiniones, el encaje con quién va y las condiciones.</span></li>
+<li class="ph"><span class="n">LOS TRES</span><b>Mejor o peor</b><span>El más barato entre los que pasan de una nota mínima; el mejor por lo que cuesta; y uno distinto, con su palanca. Cada uno dice qué ganas y qué pierdes frente al barato.</span></li>
+<li class="ph"><span class="n">MIRAR</span><b>Cómo es de verdad</b><span>Primero mira y después juzga, por lista; niveles ya escritos, cada uno con su foto; el estado se juzga y el estilo solo se nombra; se valora la habitación de ese precio, no la suite.</span></li></ol>
+</section>
+<section class="block" id="mide" aria-labelledby="h-mide">
+<h2 id="h-mide">Qué se comprueba, y quién</h2>
+<p>Nadie se pone nota a sí mismo: lo medible lo mide el código, y lo demás lo mira alguien que no lo hizo.</p>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Qué"><table class="tbl"><thead><tr><th>Qué</th><th>Quién</th><th>Cómo</th><th>Estado</th></tr></thead><tbody>
+<tr><td>Las cuentas y la forma</td><td>El código</td><td>Que el total sea la suma, que las noches cuadren, que un nivel sea de su lista, que no falte un campo</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>De dónde sale cada cosa</td><td>El código, contra el material guardado</td><td>La cita está en lo que escribiste; el dominio, en la lista de los oficiales; la foto, entre las de esa habitación</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>Que las piezas casen</td><td>El código</td><td>La llegada con la entrada al alojamiento; todo, de las mismas fechas; cada número del texto, el de la tabla</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Cada puerta</td><td>Sus trampas</td><td>Casos inventados con un fallo puesto a propósito: si la puerta no lo caza, la que está mal es la puerta</td><td><span class="estado parte">en parte</span></td></tr>
+<tr class="new"><td>Si un juicio es acertado</td><td>El banco</td><td>Hoteles juzgados por nosotros a mano, papeles sabidos y búsquedas con la respuesta sabida: el asiento tiene que coincidir</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>El viaje entero</td><td>Un revisor que no lo hizo</td><td>Lo lee en frío, como el viajero y como un profesional</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="asientos" aria-labelledby="h-asientos">
+<h2 id="h-asientos">Los asientos</h2>
+<p>Todos piensan igual, en seis pasos, y cada paso deja su archivo: acuse, plan, notas (cada dato con su fuente, su fecha y su etiqueta: visto, deducido o supuesto), cuentas (se las pide al código), autocrítica y entrega. Ninguno hace cuentas ni se pone nota.</p>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Asiento"><table class="tbl"><thead><tr><th>Asiento</th><th>Qué hace</th><th>Sale a internet</th><th>Estado</th></tr></thead><tbody>
+<tr><td>El que escucha</td><td>Saca tus gustos y tus límites de lo que escribes, con tus palabras, y decide si hay que preguntar algo más</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El del calendario</td><td>El tiempo, la temporada, las fiestas y lo que se agota; avisa y propone fechas mejores</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El de los papeles</td><td>Contesta la lista fija de requisitos para cada pasaporte, cada destino y cada escala, con fuente oficial</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El de la ruta</td><td>Dónde duermes cada noche, por dónde entras y sales, y en qué zonas buscar</td><td>Sí</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El que mira el alojamiento</td><td>Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas</td><td>Sí</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr><td>El que cruza</td><td>Lee la tabla del código, prueba palancas y cierra los tres viajes</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El que explica</td><td>Escribe qué ganas y qué pierdes con cada viaje; los números se los da el código</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr><td>El conductor</td><td>Vigila el run y devuelve cada rojo a su dueño</td><td>No</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr class="new"><td>El del día a día</td><td>Qué ver cada día, en qué orden y cómo moverte</td><td>Sí</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>El revisor</td><td>Lee el viaje entero en frío, sin haberlo hecho</td><td>No</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+<p class="note">El detalle de cada uno (lo que lee, cómo piensa, sus normas y su entrega) está en <code>docs/asientos.md</code>. Sus contratos, en inglés, se escriben en la obra.</p>
+</section>
+<section class="block" id="datos" aria-labelledby="h-datos">
+<h2 id="h-datos">Los datos: de dónde sale cada cosa</h2>
+<p>Los datos se sacan en el momento, cuando se piden; el viajero no trae nada, no hay base que mantener y no se lee ninguna web a escondidas. Cada fuente es un enchufe que se apaga sin tocar el resto.</p>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Pieza"><table class="tbl"><thead><tr><th>Pieza</th><th>De dónde sale hoy</th><th>Estado</th></tr></thead><tbody>
+<tr><td>La lista de una zona, con su nota, sus estrellas y su precio</td><td>LiteAPI, por código</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>La habitación de ese precio: metros, camas y fotos propias</td><td>LiteAPI</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>Lo que dicen los viajeros, por temas</td><td>LiteAPI, el texto de las opiniones; el buscador de la IA, lo de otras webs</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>El precio en otras agencias y los pisos</td><td>Parallel, casado por posición</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Los vuelos guardados y los días baratos</td><td>Aviasales</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr class="new"><td>El precio de un vuelo en vivo, con sus escalas y su maleta</td><td>Sin fuente todavía</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>Las fotos de viajeros</td><td>Sin fuente segura todavía</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr><td>Los papeles, las fiestas y lo que se agota</td><td>Las webs oficiales y el buscador de la IA</td><td><span class="estado borrador">en borrador</span></td></tr>
+<tr class="new"><td>Las distancias y los tiempos allí</td><td>Mapas abiertos</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+<p class="note new">Es un MVP sin uso comercial. Lo que dicen las condiciones de cada fuente (la IA sobre sus fotos, cruzar sus datos, guardar resultados) está en <code>docs/condiciones.md</code> y se cierra con el abogado antes de vender. Con la clave de pruebas, los precios pueden no ser los de verdad.</p>
+</section>
+<section class="block" id="montado" aria-labelledby="h-montado">
+<h2 id="h-montado">Cómo está montado</h2>
+<p>Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cada paso en su orden, para en las puertas y guarda; los asientos piensan con la IA y solo ven lo suyo; el recolector es el único que habla con las fuentes de datos.</p>
+<div class="arch" role="img" aria-label="Tú, la web, nuestro servidor y lo de fuera"><div class="lay you"><b>Tú</b><span>en el navegador o en el móvil, en tu idioma</span></div><div class="to" aria-hidden="true">&rarr;</div><div class="lay web"><b>La web</b><span>las preguntas, la espera, el mapa con tus tres viajes y cada pieza con su ficha. Por decidir: en Cortex o en una propia</span></div><div class="to" aria-hidden="true">&rarr;</div><div class="lay srv"><b>Nuestro servidor</b><div class="cells"><div class="cell code"><b>la casa</b>el estado, lo que lanza cada paso, las puertas, el impacto y las versiones</div><div class="cell seat"><b>los asientos</b>cada uno con su contrato y solo con lo suyo</div><div class="cell code"><b>el recolector</b>un enchufe por fuente, con tipos comunes; construido</div><div class="cell code"><b>las cribas y el cruce</b>descarta, suma, pone nota y monta los viajes</div><div class="cell store"><b>la mesa</b>una carpeta por viaje, con sus versiones, fuera del repositorio</div><div class="cell plain"><b>lo nuestro</b>las listas, los niveles, los pesos, las palancas y el banco</div></div></div><div class="to" aria-hidden="true">&rarr;</div><div class="lay out"><b>Fuera</b><div class="cells"><div class="cell plain"><b>la IA</b>piensa, mira las fotos y busca</div><div class="cell plain"><b>las fuentes de datos</b>LiteAPI, Aviasales y Parallel</div><div class="cell plain"><b>internet</b>las webs oficiales y la de cada hotel</div></div></div></div>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Parte"><table class="tbl"><thead><tr><th>Parte</th><th>Dónde vive y qué hace</th><th>Estado</th></tr></thead><tbody>
+<tr><td>El recolector</td><td>En <code>agent/tools/fuentes/</code>. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>Los pasos de código</td><td>En <code>agent/scripts/</code>: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Las puertas</td><td>En <code>agent/gates/</code>. La de la búsqueda, con sus trampas</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Lo que lanza</td><td>En <code>agent/launcher/</code>. Hoy, una búsqueda desde la terminal; falta lo que corre los pasos en su orden y lanza a los asientos</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>La mesa</td><td>Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>Los contratos de los asientos</td><td>En <code>agent/contracts/</code>, en inglés: el método común y uno por asiento</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>La web y el mapa</td><td>Dónde vive y con qué se pinta</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>La IA</td><td>Con cuál piensa cada asiento, quién la paga y dónde corre el agente</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="siempre" aria-labelledby="h-siempre">
+<h2 id="h-siempre">Siempre, en todos los momentos</h2>
+<div class="always"><span>Nada inventado: lo que no se encuentra es «no se sabe».</span>
+<span>Ningún precio sin su enlace y su fecha.</span>
+<span>El precio que se compara es el total, no el de cartel.</span>
+<span>Dos o tres viajes, nunca diez.</span>
+<span>El Dorado propone y enlaza; no reserva ni cobra.</span>
+<span>Solo lo visto sostiene un precio o un requisito.</span>
+<span>Lo que se lee en una web son datos, nunca órdenes.</span>
+<span>Las cuentas las hace el código, y ningún asiento se pone nota.</span>
+<span>Nunca dice «puedes entrar»: dice lo que piden las fuentes oficiales, y con qué fecha.</span>
+<span>No promete: es «el más barato que encontramos».</span>
+<span>Ninguna regla lleva el nombre de un país, una aerolínea o un hotel.</span>
+<span>Cada asiento lee solo lo suyo y entrega solo en su ficha.</span>
+<span>Nada que gaste arranca sin un botón tuyo.</span>
+<span>Lo que entrega lleva su aviso: hecho con IA, puede tener errores; los precios son orientativos.</span>
+<span>Nunca explica cómo funciona por dentro.</span></div>
+</section>
+<section class="block" id="decidido" aria-labelledby="h-decidido">
+<h2 id="h-decidido">Lo decidido contigo, y por qué</h2>
+<p>El registro de lo que pediste, con tus palabras cuando las hay. Entero y con sus fechas, en <code>docs/decisiones.md</code>.</p>
+<p class="sec-label">Del encargo (21 de noviembre)</p>
+<ul class="changes"><li><b>Un agente de viajes, para vender en Cortex.</b><span>«Planificar viajes al mejor precio», en su propio repositorio y con el método del ensamblador.</span></li>
+<li><b>De una tirada primero, por momentos después.</b><span>«Primero E2E y luego el usuario podrá usarlo por momentos», «por verticales, como DaVi». Por eso esta hoja va por momentos.</span></li>
+<li><b>La salida, en la propia web.</b><span>«Quiero un mapa interactivo y demás como output en la propia web; ya veremos cómo lo construimos.»</span></li>
+<li><b>Las preguntas son una base.</b><span>Cinco toques y una casilla. «Son una base, pero puede haber más»: el agente pregunta más solo si la respuesta cambia el viaje.</span></li>
+<li><b>Un alojamiento no es su nota.</b><span>«Nos fijamos por la vista, cómo de aesthetic es la habitación, cómo de moderno; tiene gimnasio y piscina, ok, pero ¿es grande, tiene vistas, máquinas modernas? Eso hay que saber sacarlo también.»</span></li>
+<li><b>Que el asiento vea, y cribe bien.</b><span>«Me preocupa que las puedas ver tú»: de ahí, primero mira y después juzga, con niveles y con prueba.</span></li>
+<li><b>Uno que una a los dos buscadores.</b><span>«Que cruce, que optimice, que cambie, que vea variabilidad»: el que cruza.</span></li></ul>
+<p class="sec-label">De los datos (22 de noviembre)</p>
+<ul class="changes"><li><b>La primera búsqueda es código.</b><span>«Casi determinista: descárgame todos los alojamientos en cierto radio, que sean más de 8. Son los datos puros que te trae la plataforma. Ahí lo que tiene que entrar es el que mire los alojamientos.»</span></li>
+<li><b>Las puertas, explicadas.</b><span>«Me tendrás que decir qué están midiendo esas puertas y por qué lo van a medir bien.»</span></li>
+<li><b>Los datos, en el momento.</b><span>Sin base propia que mantener, sin que el viajero traiga nada y sin depender de que una fuente grande nos apruebe. Los acuerdos con las grandes, después, con el abogado.</span></li>
+<li><b>El índice, solución parcial.</b><span>Preguntar a un buscador hecho para IA por la nota y por lo que se dice de cada finalista.</span></li></ul>
+<p class="sec-label">Del MVP (23 de noviembre)</p>
+<ul class="changes"><li><b>Es un MVP, sin uso comercial.</b><span>«De momento no es comercial y yo apruebo todo; ya lo pasaré con el abogado cuando llegue el momento de comercializar.»</span></li>
+<li><b>Las bases, ya.</b><span>«Dale a montar las bases y todo el repositorio»: el recolector y la búsqueda de alojamiento, antes de esta hoja.</span></li>
+<li><b>La hoja manda.</b><span>«Usamos estas hojas como plan y biblia para nunca desviarnos del diseño del agente, y de esta nace siempre el plan posterior.»</span></li></ul>
+</section>
+<div class="detail" id="detail" hidden role="region" aria-live="polite" aria-label="Detalle del paso">
+<div class="detail-in"><div class="detail-text"><p class="detail-kind" id="d-kind"></p>
+<p class="detail-title" id="d-title"></p><p class="detail-body" id="d-body"></p>
+<p class="detail-new" id="d-new" hidden></p></div>
+<button type="button" class="close" id="d-close">Cerrar</button></div></div>
+</main>
+<script>
+(function () {
+  var panel = document.getElementById("detail");
+  var kind = document.getElementById("d-kind");
+  var title = document.getElementById("d-title");
+  var body = document.getElementById("d-body");
+  var fresh = document.getElementById("d-new");
+  var grid = document.getElementById("grid");
+  var toggle = document.getElementById("only-new");
+  var current = null;
+  function close() {
+    if (current) current.setAttribute("aria-pressed", "false");
+    current = null;
+    panel.hidden = true;
+  }
+  document.querySelectorAll(".grid .st").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".grid .st");
+    if (!b) return;
+    if (current === b) { close(); return; }
+    if (current) current.setAttribute("aria-pressed", "false");
+    current = b;
+    b.setAttribute("aria-pressed", "true");
+    var isNew = b.classList.contains("new");
+    kind.textContent = (b.getAttribute("data-kind") || "") + (isNew ? ". En prueba o por decidir" : "");
+    title.textContent = b.getAttribute("data-t") || "";
+    body.textContent = b.getAttribute("data-d") || "";
+    var why = b.getAttribute("data-new");
+    fresh.textContent = why || "";
+    fresh.hidden = !why;
+    panel.hidden = false;
+  });
+  document.getElementById("d-close").addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  toggle.addEventListener("click", function () {
+    var on = toggle.getAttribute("aria-pressed") !== "true";
+    toggle.setAttribute("aria-pressed", on ? "true" : "false");
+    grid.classList.toggle("only-new", on);
+  });
+})();
+</script>

@@ -1,0 +1,598 @@
+<title>Plan de El Dorado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* El formato de las hojas de los agentes de Cortex: la misma gramática para todos. Las columnas son etapas de un run o
+   momentos que la plataforma abre en ratos distintos; las filas, lo que cada uno pide del programa; en el flujo, una
+   caja por paso. En violeta, lo que está por decidir. Lo ancho (la hoja, las tablas) se desliza dentro de su caja.
+   Los añadidos de El Dorado van al final. */
+:root {
+  color-scheme: light;
+  --bg: #E9EBED;
+  --raised: #FAFBFC;
+  --ink: #0E1217;
+  --ink-soft: #4B535B;
+  --ink-faint: #5F6770;
+  --rule: rgba(14, 18, 23, 0.12);
+  --muted: rgba(14, 18, 23, 0.06);
+  --accent: #10D9A3;
+  --accent-ink: #0A6B52;
+  --seat: #2563EB;
+  --seat-tint: rgba(37, 99, 235, 0.07);
+  --script-bg: #1F262E;
+  --script-fg: #E9EBED;
+  --script-soft: #B9BEC4;
+  --script-tag-bg: rgba(233, 235, 237, 0.14);
+  --script-tag: #D5D9DE;
+  --gate: #B45309;
+  --gate-tint: rgba(180, 83, 9, 0.08);
+  --you: #BE2E68;
+  --you-tint: rgba(190, 46, 104, 0.07);
+  --flux: #7355E8;
+  --flux-ink: #5538C8;
+  --flux-tint: rgba(115, 85, 232, 0.10);
+  --prog-bg: #DFEBE8;
+  --shadow: rgba(14, 18, 23, 0.45);
+  --display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1217;
+    --raised: #171C22;
+    --ink: #E9EBED;
+    --ink-soft: #B9BEC4;
+    --ink-faint: #969EA7;
+    --rule: rgba(233, 235, 237, 0.14);
+    --muted: rgba(233, 235, 237, 0.06);
+    --accent: #10D9A3;
+    --accent-ink: #45E8BA;
+    --seat: #7AA7FF;
+    --seat-tint: rgba(122, 167, 255, 0.10);
+    --script-bg: #2A323C;
+    --script-fg: #E9EBED;
+    --script-soft: #B9BEC4;
+    --script-tag-bg: rgba(233, 235, 237, 0.14);
+    --script-tag: #D5D9DE;
+    --gate: #F5A524;
+    --gate-tint: rgba(245, 165, 36, 0.10);
+    --you: #FF77AB;
+    --you-tint: rgba(255, 119, 171, 0.10);
+    --flux: #9B85F5;
+    --flux-ink: #BCAEFA;
+    --flux-tint: rgba(155, 133, 245, 0.15);
+    --prog-bg: #10201F;
+    --shadow: rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1217;
+  --raised: #171C22;
+  --ink: #E9EBED;
+  --ink-soft: #B9BEC4;
+  --ink-faint: #969EA7;
+  --rule: rgba(233, 235, 237, 0.14);
+  --muted: rgba(233, 235, 237, 0.06);
+  --accent: #10D9A3;
+  --accent-ink: #45E8BA;
+  --seat: #7AA7FF;
+  --seat-tint: rgba(122, 167, 255, 0.10);
+  --script-bg: #2A323C;
+  --script-fg: #E9EBED;
+  --script-soft: #B9BEC4;
+  --script-tag-bg: rgba(233, 235, 237, 0.14);
+  --script-tag: #D5D9DE;
+  --gate: #F5A524;
+  --gate-tint: rgba(245, 165, 36, 0.10);
+  --you: #FF77AB;
+  --you-tint: rgba(255, 119, 171, 0.10);
+  --flux: #9B85F5;
+  --flux-ink: #BCAEFA;
+  --flux-tint: rgba(155, 133, 245, 0.15);
+  --prog-bg: #10201F;
+  --shadow: rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 1900px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+code { font-family: var(--mono); font-size: 0.92em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kicker { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); margin: 0; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.08; letter-spacing: -0.015em; margin: 8px 0 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 21px; line-height: 1.2; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 16px; line-height: 1.25; margin: 0; text-wrap: balance; }
+.sub { max-width: 82ch; color: var(--ink-soft); font-size: 15px; margin: 10px 0 0; }
+.sub b { color: var(--ink); font-weight: 600; }
+.sub .v { color: var(--flux-ink); font-weight: 600; }
+
+/* section links */
+.nav { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.nav a { display: inline-block; font-size: 12.5px; font-weight: 500; color: var(--ink); text-decoration: none; padding: 5px 10px; background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+.nav a:hover { box-shadow: inset 0 0 0 1px var(--ink-faint); }
+
+/* what changes and what is still open */
+.brief { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 960px) { .brief { grid-template-columns: minmax(0, 1fr); } }
+.box { background: var(--raised); padding: 15px 17px 16px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.box h2 { font-size: 16px; }
+.box ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--ink-soft); }
+.box b { color: var(--ink); font-weight: 600; }
+.box li.new, .box li.new b { color: var(--flux-ink); }
+.box li.new::marker { color: var(--flux); }
+.box .foot { margin: 0; font-size: 12.5px; color: var(--ink-faint); }
+
+/* sections */
+.block { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; scroll-margin-top: 16px; }
+.block > p { margin: 0; max-width: 86ch; color: var(--ink-soft); }
+.block > p b { color: var(--ink); font-weight: 600; }
+
+/* one deck in time */
+.days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 0 14px; }
+.day { position: relative; padding: 20px 0 16px; border-top: 2px solid var(--rule); display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.day::before { content: ""; position: absolute; top: -7px; left: 0; width: 12px; height: 12px; background: var(--bg); box-shadow: inset 0 0 0 2px var(--accent-ink); border-radius: 50%; }
+.day.later::before { box-shadow: inset 0 0 0 2px var(--ink-faint); }
+.day .when { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
+.day b { font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.25; }
+.day p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.day p .v { color: var(--flux-ink); }
+.day .m { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.pill { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.06em; padding: 2px 6px; background: var(--muted); color: var(--ink-soft); }
+.pill.v { background: var(--flux-tint); color: var(--flux-ink); }
+.day .st8 { font-size: 12px; color: var(--accent-ink); }
+
+/* legend and the highlight toggle */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--ink-soft); }
+.legend li { display: inline-flex; align-items: center; gap: 8px; }
+.sw { display: inline-block; width: 26px; height: 14px; position: relative; flex: none; }
+.sw.seat { box-shadow: inset 0 0 0 1.5px var(--seat); background: var(--seat-tint); }
+.sw.script { background: var(--script-bg); }
+.sw.opt { border: 1.5px dashed var(--ink-faint); box-shadow: none; }
+.sw.you { box-shadow: inset 0 0 0 1.5px var(--you); background: var(--you-tint); }
+.sw.new { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+.sw.new::after { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 9px 9px 0; border-color: transparent var(--flux) transparent transparent; }
+.sw-dia { display: inline-block; width: 11px; height: 11px; margin: 0 6px; border: 1.5px solid var(--gate); background: var(--gate-tint); transform: rotate(45deg); flex: none; }
+.sw-dia.sign { border-color: var(--you); background: var(--you-tint); }
+.toggle { min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 500; color: var(--flux-ink); background: var(--flux-tint); border: 0; border-radius: 0; cursor: pointer; }
+.toggle[aria-pressed="true"] { background: var(--flux); color: var(--raised); }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* the sheet */
+.scroll { overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 10px; }
+.scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.hint { display: none; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin: 0; }
+@media (max-width: 1660px) { .hint { display: block; } }
+.grid { --cols: 9.5rem repeat(7, minmax(0, 1fr)); min-width: 1560px; display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: var(--cols); column-gap: 10px; border-top: 1px solid var(--rule); }
+.row.nolines { border-top: 0; }
+.rl { position: sticky; left: 0; z-index: 3; background: var(--bg); padding: 12px 10px 12px 0; }
+.rl b { display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink); }
+.rl small { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.35; color: var(--ink-faint); }
+.c { padding: 12px 2px; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.c ul { margin: 0; padding-left: 1.05em; display: flex; flex-direction: column; gap: 3px; }
+.c ul li::marker { color: var(--ink-faint); }
+.c li.new { color: var(--flux-ink); }
+.c li.new::marker { color: var(--flux); }
+.c .none { color: var(--ink-faint); }
+.c .who { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 2px; }
+.row.prog { background: var(--prog-bg); }
+.row.prog .rl { background: var(--prog-bg); padding-left: 8px; }
+.row.prog .rl b { color: var(--accent-ink); }
+.row.wait .c { color: var(--you); }
+.row.wait .c ul li::marker { color: var(--you); }
+.row.wait .c li.new { color: var(--flux-ink); }
+
+/* moment headers */
+.stage { position: relative; background: var(--raised); box-shadow: inset 0 3px 0 var(--accent); padding: 12px 12px 11px; margin-block: 10px; }
+.stage b { display: block; font-family: var(--display); font-weight: 600; font-size: 15.5px; line-height: 1.2; }
+.stage small { display: block; margin-top: 3px; font-size: 12px; color: var(--ink-soft); }
+.stage .when { display: block; margin-top: 6px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+.stage.any { box-shadow: inset 0 3px 0 var(--ink-faint); }
+.stage.any .when { color: var(--ink-faint); }
+.stage.new { box-shadow: inset 0 3px 0 var(--flux); }
+.stage.new .when, .stage.new b { color: var(--flux-ink); }
+.stage.seq::after { content: ""; position: absolute; top: 50%; right: -9px; width: 7px; height: 7px; border-top: 1.5px solid var(--ink-faint); border-right: 1.5px solid var(--ink-faint); transform: translateY(-50%) rotate(45deg); }
+
+/* the flow */
+.flow { padding: 12px 0; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.group { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint); margin: 3px 0 -2px; }
+.group.new { color: var(--flux-ink); }
+.st { position: relative; display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; font: inherit; font-size: 12px; line-height: 1.38; color: var(--ink); background: var(--raised); border: 0; border-radius: 0; padding: 8px 12px 8px 10px; cursor: pointer; transition: box-shadow 0.15s ease, background-color 0.15s ease, opacity 0.2s ease; }
+.st .k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-weight: 600; font-size: 12.5px; }
+.st .x { color: var(--ink-soft); }
+.st.seat { background: var(--seat-tint); box-shadow: inset 0 0 0 1.5px var(--seat); }
+.st.you { background: var(--you-tint); box-shadow: inset 0 0 0 1.5px var(--you); }
+.st.you .k { color: var(--you); }
+.st.script { background: var(--script-bg); color: var(--script-fg); font-family: var(--mono); }
+.st.script .k { font-weight: 500; font-size: 12px; }
+.st.script .x { color: var(--script-soft); font-family: var(--body); }
+.st.opt { box-shadow: none; outline: 1.5px dashed var(--ink-faint); outline-offset: -1.5px; }
+.st.opt.seat, .st.opt.you { background: transparent; }
+.st.opt.script { background: transparent; color: var(--ink); }
+.st.opt.script .x { color: var(--ink-soft); }
+.st.gate { background: transparent; flex-direction: row; align-items: flex-start; gap: 9px; padding: 6px 12px 6px 4px; }
+.st.gate .dia { flex: none; width: 13px; height: 13px; margin-top: 3px; border: 1.5px solid var(--gate); background: var(--gate-tint); transform: rotate(45deg); }
+.st.gate .k { color: var(--gate); }
+.st.gate.sign .dia { border-color: var(--you); background: var(--you-tint); }
+.st.gate.sign .k { color: var(--you); }
+.st.out { background: var(--raised); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.st.new::after { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 11px 11px 0; border-color: transparent var(--flux) transparent transparent; }
+.st:hover { filter: brightness(0.98); }
+.st:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 2px var(--accent); }
+.tag { display: inline-block; font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.08em; padding: 1px 5px; background: var(--muted); color: var(--ink-soft); }
+.st.script .tag { background: var(--script-tag-bg); color: var(--script-tag); }
+.tag.web { color: var(--seat); }
+.tag.bg { color: var(--accent-ink); }
+.st.opt.script .tag { background: var(--muted); color: var(--ink-soft); }
+
+/* highlight only what is still a proposal */
+.grid.only-new .st:not(.new),
+.grid.only-new .c li:not(.new),
+.grid.only-new .stage:not(.new) { opacity: 0.28; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; background: var(--raised); padding: 4px 16px 6px; }
+.tbl-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tbl { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 14px 8px 0; }
+.tbl td { padding: 10px 14px 10px 0; border-top: 1px solid var(--rule); vertical-align: top; color: var(--ink-soft); }
+.tbl td:first-child { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--ink); width: 21%; }
+.tbl td.m { font-family: var(--mono); font-size: 11px; color: var(--accent-ink); white-space: nowrap; }
+.tbl td.you { color: var(--you); font-weight: 500; }
+.tbl tr.new td, .tbl tr.new td:first-child { color: var(--flux-ink); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.two > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.note { margin: 0; background: var(--muted); padding: 10px 12px; font-size: 13px; color: var(--ink-soft); max-width: 120ch; }
+.note b { color: var(--ink); font-weight: 600; }
+.note.new { background: var(--flux-tint); color: var(--flux-ink); }
+.note.new b { color: var(--flux-ink); }
+
+/* how every slide is worked */
+.method { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.ph { background: var(--raised); padding: 12px 12px 13px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ph .n { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; color: var(--accent-ink); }
+.ph b { font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.2; }
+.ph span { font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }
+.ph code { margin-top: auto; padding-top: 4px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); overflow-wrap: anywhere; }
+.ph.you { box-shadow: inset 0 3px 0 var(--you); }
+
+/* how it is built */
+.arch { display: grid; grid-template-columns: minmax(0, 0.7fr) 26px minmax(0, 1.1fr) 26px minmax(0, 2.6fr) 26px minmax(0, 1fr); align-items: center; background: var(--raised); padding: 16px; gap: 0; }
+.arch .to { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 18px; }
+.lay { display: flex; flex-direction: column; gap: 6px; padding: 12px; min-width: 0; }
+.lay > b { font-family: var(--display); font-weight: 600; font-size: 15px; }
+.lay > span { font-size: 12.5px; color: var(--ink-soft); }
+.lay.you { background: var(--you-tint); box-shadow: inset 0 0 0 1.5px var(--you); }
+.lay.you > b { color: var(--you); }
+.lay.web { background: var(--bg); box-shadow: inset 0 0 0 1.2px var(--ink-faint); }
+.lay.srv { background: var(--bg); box-shadow: inset 0 0 0 1.2px var(--ink-faint); }
+.lay.out { background: transparent; outline: 1.5px dashed var(--ink-faint); outline-offset: -1.5px; }
+.cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+.cell { padding: 8px 10px; font-size: 12px; line-height: 1.38; color: var(--ink-soft); min-width: 0; }
+.cell b { display: block; font-size: 12.5px; color: var(--ink); }
+.cell.code { background: var(--script-bg); color: var(--script-soft); }
+.cell.code b { color: var(--script-fg); font-family: var(--mono); font-weight: 500; }
+.cell.seat { background: var(--seat-tint); box-shadow: inset 0 0 0 1.5px var(--seat); }
+.cell.store { background: var(--prog-bg); box-shadow: inset 0 0 0 1.5px var(--accent-ink); }
+.cell.plain { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+@media (max-width: 1100px) {
+  .arch { grid-template-columns: minmax(0, 1fr); }
+  .arch .to { height: 26px; transform: rotate(90deg); }
+}
+
+/* rules that cross everything */
+.always { display: flex; flex-wrap: wrap; gap: 8px; }
+.always span { background: var(--raised); padding: 7px 11px; font-size: 12.5px; }
+
+/* what was decided and why */
+.changes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 26px; }
+.changes li { padding: 11px 0 13px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.changes b { font-family: var(--display); font-weight: 600; font-size: 14.5px; line-height: 1.3; color: var(--ink); }
+.changes span { font-size: 13px; color: var(--ink-soft); }
+.changes em { font-style: normal; color: var(--accent-ink); }
+.changes .d { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--ink-faint); }
+.sec-label { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 8px 0 0; }
+
+/* detail panel */
+.detail { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--raised); box-shadow: 0 -18px 44px -24px var(--shadow); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-top: 16px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 60vh; overflow-y: auto; }
+.detail[hidden] { display: none; }
+.detail-in { max-width: 1900px; margin: 0 auto; display: flex; gap: 18px; align-items: flex-start; }
+.detail-text { flex: 1; min-width: 0; max-width: 92ch; }
+.detail-kind { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 0; }
+.detail-title { font-family: var(--display); font-weight: 600; font-size: 18px; margin: 4px 0 0; }
+.detail-body { margin: 6px 0 0; color: var(--ink-soft); font-size: 14px; }
+.detail-new { margin: 8px 0 0; font-size: 13px; color: var(--flux-ink); }
+.close { flex: none; min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 0; cursor: pointer; }
+.close:hover { border-color: var(--ink); }
+.close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .st { transition: none; }
+}
+
+
+/* Añadidos de El Dorado */
+.grid { --cols: 9.5rem repeat(var(--n, 7), minmax(0, 1fr)); }
+.tag.done { color: var(--accent-ink); }
+.st.script .tag.done { color: var(--accent); }
+.estado { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; background: var(--muted); color: var(--ink-soft); white-space: nowrap; }
+.estado.hecho { color: var(--accent-ink); }
+.estado.parte, .estado.siguiente { color: var(--gate); }
+.estado.decidir { color: var(--flux-ink); background: var(--flux-tint); }
+.aqui { background: var(--raised); box-shadow: inset 3px 0 0 var(--accent); padding: 13px 16px; max-width: 110ch; }
+.aqui b { font-family: var(--display); }
+.puntos { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
+</style>
+<main class="page">
+<header>
+<p class="kicker">Plan de El Dorado, versión 1, borrador a tu firma, 23 de noviembre de 2026</p>
+<h1>El plan de El Dorado</h1>
+<p class="sub"><b>La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.</b> Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.</p>
+<ul class="nav" aria-label="En esta página"><li><a href="#b0">0. El orden</a></li><li><a href="#b1">1. Los planos</a></li><li><a href="#b2">2. Los cimientos</a></li><li><a href="#b3">3. Las herramientas</a></li><li><a href="#b4">4. El primer viaje, entero</a></li><li><a href="#b5">5. Empezar, entero</a></li><li><a href="#b6">6. Todo junto, en seco</a></li><li><a href="#b7">7. El ensayo</a></li><li><a href="#b8">8. Por momentos</a></li><li><a href="#b9">9. Antes de vender</a></li></ul>
+</header>
+<p class="aqui"><b>Estamos aquí: 0.5, tu firma de la hoja y del plan.</b> Hechas las bases (el recolector y la búsqueda de alojamiento, con su puerta y sus pruebas) y las dos biblias. Con tu firma empieza la primera tanda: el primer asiento de IA, <b>el que mira el alojamiento</b> (2.3, 2.4, 3.6 y 4.2), probado con los finalistas de Lisboa.</p>
+<section class="block" id="estado" aria-labelledby="h-estado">
+<h2 id="h-estado">El estado</h2>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Bloque"><table class="tbl"><thead><tr><th>Bloque</th><th>Qué deja</th><th>Estado</th></tr></thead><tbody>
+<tr><td>0. El orden</td><td>el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>1. Los planos</td><td>la forma de cada entrega, la carpeta de cada viaje, lo nuestro en datos y un viaje inventado entero</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>2. Los cimientos</td><td>la mesa, lo que lanza los pasos, cómo se lanza un asiento, el método común y el conductor</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>3. Las herramientas</td><td>cada fuente, enchufada y con su prueba</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>4. El primer viaje, entero</td><td>tres viajes completos de un destino de verdad, con sus números y sus pruebas</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>5. Empezar, entero</td><td>un viaje que arranca de tus toques y no de una ficha escrita a mano</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>6. Todo junto, en seco</td><td>el run entero, de los toques a los tres viajes, pasando por todas las puertas</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>7. El ensayo</td><td>lo que tarda y lo que cuesta un viaje, y los pesos ajustados</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>8. Por momentos</td><td>el viaje que se usa a ratos, con lo de antes sin pisar</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>9. Antes de vender</td><td>El Dorado en Cortex, con sus fuentes en regla</td><td><span class="estado pendiente">pendiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="orden" aria-labelledby="h-orden">
+<h2 id="h-orden">Por dónde vamos, y por qué en este orden</h2>
+<p>Por tandas: lo que no te necesita va seguido, cada punto con su commit y la batería en verde, y cada tanda acaba enseñándote algo. La siguiente no empieza sin tu visto bueno.</p>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Tanda"><table class="tbl"><thead><tr><th>Tanda</th><th>Puntos</th><th>Por qué ahora</th><th>Lo que ves al acabar</th></tr></thead><tbody>
+<tr><td>1. El primer asiento</td><td>2.3, 2.4, 3.6 y 4.2</td><td>Es lo que más riesgo tiene y lo que más te importa: si la IA mira bien una habitación y un gimnasio</td><td>La ficha de cómo es de cinco alojamientos de verdad, para compararla con tus ojos</td></tr>
+<tr><td>2. De alojamientos a viajes</td><td>1.1, 1.4, 4.3, 4.6 y 4.7</td><td>Sin sumar y cruzar no hay «mejor precio»</td><td>Tres viajes de Lisboa con sus números, y qué ganas y qué pierdes con cada uno</td></tr>
+<tr><td>3. Del destino al viaje</td><td>1.2, 2.1, 2.2, 4.4, 4.5 y el bloque 5</td><td>Para que el viaje arranque de tus toques y no de una ficha escrita a mano</td><td>El run entero, de las preguntas a los tres viajes</td></tr>
+<tr><td>4. La salida</td><td>2.6 y 4.8</td><td>Espera tu decisión: dónde vive el mapa</td><td>Tus tres viajes, en el mapa</td></tr>
+<tr><td>5. En seco y el ensayo</td><td>Los bloques 6 y 7</td><td>Primero se construye y después se prueba; lo que gasta, al final</td><td>Tres viajes tuyos de verdad, con lo que tardan y lo que cuestan</td></tr>
+<tr><td>6. Por momentos</td><td>El bloque 8</td><td>Es la segunda parte: usarlo a ratos</td><td>Cambiar el hotel o el vuelo de un viaje ya hecho</td></tr>
+</tbody></table></div>
+<ol class="method"><li class="ph"><span class="n">CRITERIO 1</span><b>Lo que se usa, antes</b><span>Un contrato tiene que saber qué hace ya el código: por eso la búsqueda fue antes que el asiento que mira.</span></li>
+<li class="ph"><span class="n">CRITERIO 2</span><b>El riesgo, antes</b><span>Lo que puede no salir se prueba pronto, para que falle barato: el primer asiento de IA va el primero.</span></li>
+<li class="ph"><span class="n">CRITERIO 3</span><b>Lo que ves, cuanto antes</b><span>Cada tanda acaba en algo que puedes mirar y juzgar, no en una pieza de dentro.</span></li></ol>
+</section>
+<section class="block" id="b0" aria-labelledby="h-b0">
+<h2 id="h-b0">0. El orden <span class="estado parte">en parte</span></h2>
+<p>Antes de construir, cada cosa en su sitio y las reglas por escrito.</p>
+<ul><li><b>Deja</b>: el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias</li><li><b>Se prueba</b>: la prueba del repositorio, dentro de la batería</li><li><b>Tu visto bueno</b>: la hoja y el plan (0.5)</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>0.1</td><td><b>Los documentos y las reglas.</b> La memoria, el registro de decisiones, el encargo y las reglas de la obra.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>0.2</td><td><b>El mapa de carpetas.</b> Dónde va cada cosa, con la forma de la carpeta del ensamblador.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>0.3</td><td><b>La batería.</b> Las pruebas del código con el caso inventado, los tipos y la prueba del repositorio, en segundos y sin gastar; GitHub la pasa en cada subida.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>0.4</td><td><b>Las dos biblias, pintadas de sus datos.</b> La hoja y el plan se escriben una vez y de ahí salen su página y su texto; una prueba dice si se quedan atrás y si alguna caja de la hoja no tiene su punto.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>0.5</td><td><b>Tu firma de la hoja y del plan.</b> Con ella mandan: lo que se construya tiene que caber en ellas.</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b1" aria-labelledby="h-b1">
+<h2 id="h-b1">1. Los planos <span class="estado parte">en parte</span></h2>
+<p>Lo que deja cada paso y dónde se guarda, antes de escribir los contratos: un asiento tiene que saber qué entrega y quién lo lee.</p>
+<ul><li><b>Deja</b>: la forma de cada entrega, la carpeta de cada viaje, lo nuestro en datos y un viaje inventado entero</li><li><b>Se prueba</b>: con el viaje inventado, sin IA ni fuentes</li><li><b>Tu visto bueno</b>: no; punto de situación</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>1.1</td><td><b>La forma de lo que deja cada paso.</b> Hecha la de la búsqueda (el alojamiento, el precio, el detalle, la opinión y el vuelo). Faltan lo que he entendido del viaje, los avisos, la tabla de los papeles, la ruta, la ficha de cómo es, la tabla del cruce y los tres viajes.</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>1.2</td><td><b>La carpeta de cada viaje.</b> Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>1.3</td><td><b>El viaje inventado, entero.</b> De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado.</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>1.4</td><td><b>Lo nuestro, en datos.</b> La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b2" aria-labelledby="h-b2">
+<h2 id="h-b2">2. Los cimientos <span class="estado parte">en parte</span></h2>
+<p>Lo que usan todos los momentos. Va pronto porque todo lo usa y porque ahí está el riesgo: sesiones de IA que tienen que ver solo lo suyo y entregar en su sitio.</p>
+<ul><li><b>Deja</b>: la mesa, lo que lanza los pasos, cómo se lanza un asiento, el método común y el conductor</li><li><b>Se prueba</b>: con el viaje inventado y una IA de mentira, sin gastar</li><li><b>Tu visto bueno</b>: al ver la salida con el viaje inventado (2.6)</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>2.1</td><td><b>La mesa.</b> Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones.</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>2.2</td><td><b>Lo que lanza los pasos.</b> Corre cada paso en su orden, para en las puertas y en tus botones, y sigue desde el disco. Hoy, una búsqueda desde la terminal.</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>2.3</td><td><b>Cómo se lanza un asiento.</b> Su puesto, con solo lo que puede leer; su contrato; su tope; su entrega, en un archivo, y cómo se le pasan las fotos.</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr><td>2.4</td><td><b>El método común.</b> En inglés: los seis pasos, las normas de todos y la puerta de todos, que comprueba desde fuera que cada paso dejó su archivo.</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr><td>2.5</td><td><b>El conductor.</b> Cada rojo, a su dueño, dos vueltas como mucho; deja el acta del run.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>2.6</td><td><b>La salida, con el viaje inventado.</b> El mapa con tres viajes inventados, para verla pronto. Espera a saber dónde vive.</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b3" aria-labelledby="h-b3">
+<h2 id="h-b3">3. Las herramientas <span class="estado parte">en parte</span></h2>
+<p>Lo que usan los pasos: el recolector, con un enchufe por fuente, el buscador, las fotos y los mapas.</p>
+<ul><li><b>Deja</b>: cada fuente, enchufada y con su prueba</li><li><b>Se prueba</b>: cada enchufe, con una respuesta inventada con la forma de la de verdad; y una búsqueda de verdad, a mano</li><li><b>Tu visto bueno</b>: no; las fuentes nuevas, sí</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>3.1</td><td><b>El recolector.</b> La salida a internet, los tipos comunes y los enchufes, que se apagan sin tocar lo demás. Las claves, en el entorno.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>3.2</td><td><b>LiteAPI.</b> La lista de una zona, el precio de unas noches, el detalle y las opiniones.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>3.3</td><td><b>Aviasales.</b> Los vuelos guardados para unas fechas y los días baratos del mes, cada precio con el día en que se vio.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>3.4</td><td><b>Parallel.</b> Las ofertas de otros vendedores por zona, casadas por posición y por nombre. En Lisboa casan dos de cinco: falta pedir más zonas.</td><td><span class="estado parte">en parte</span></td></tr>
+<tr><td>3.5</td><td><b>El buscador y el lector de webs.</b> Con la memoria de lo consultado, para que ninguna nota cite lo que no se leyó.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>3.6</td><td><b>Las fotos.</b> Bajar las de la habitación de ese precio y las del hotel, y pasárselas al asiento, con un tope por alojamiento.</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr class="new"><td>3.7</td><td><b>Los vuelos en vivo.</b> Elegir de dónde sale el precio de ahora, con sus escalas y su maleta.</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr><td>3.8</td><td><b>Los mapas abiertos.</b> Distancias y tiempos entre sitios.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>3.9</td><td><b>Los enlaces de afiliado.</b> Si cada enlace lleva nuestra marca. Va con lo legal.</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b4" aria-labelledby="h-b4">
+<h2 id="h-b4">4. El primer viaje, entero <span class="estado parte">en parte</span></h2>
+<p>El momento que corre de una tirada, de la ruta a los tres viajes. Va antes que «Empezar» porque tiene más riesgo: si la IA mira bien un alojamiento y si los viajes se cruzan y se suman bien. Mientras, lo que he entendido del viaje se escribe a mano.</p>
+<ul><li><b>Deja</b>: tres viajes completos de un destino de verdad, con sus números y sus pruebas</li><li><b>Se prueba</b>: cada paso, con el viaje inventado; y con Lisboa, a mano</li><li><b>Tu visto bueno</b>: al ver los tres viajes de Lisboa</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>4.1</td><td><b>La búsqueda de alojamiento y su puerta.</b> Sin IA: la lista, los mínimos, el precio, los finalistas y su ficha de datos; la puerta 4, con dieciocho trampas.</td><td><span class="estado hecho">hecho</span></td></tr>
+<tr><td>4.2</td><td><b>El que mira el alojamiento.</b> Su contrato, sus niveles y la puerta 5; probado con los finalistas de Lisboa, para ver si saca lo que ves tú.</td><td><span class="estado siguiente">lo siguiente</span></td></tr>
+<tr><td>4.3</td><td><b>Las cribas y los gustos.</b> Lo que descarta, lo que se suma al precio y la nota, con los pesos de partida; y el cruce de los niveles con tus gustos.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>4.4</td><td><b>La búsqueda de transporte.</b> La parrilla de aeropuertos y de días, con la fuente que haya.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>4.5</td><td><b>El de la ruta.</b> Las bases, las noches, la entrada y la salida y las zonas donde buscar; la puerta 3.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>4.6</td><td><b>El cruce y el que cruza.</b> La tabla de viajes completos, las palancas, dos rondas y los tres viajes; la puerta 6.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>4.7</td><td><b>El que explica.</b> Qué ganas y qué pierdes con cada uno; la puerta 7.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>4.8</td><td><b>La salida.</b> Los tres viajes, en el mapa.</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b5" aria-labelledby="h-b5">
+<h2 id="h-b5">5. Empezar, entero <span class="estado pendiente">pendiente</span></h2>
+<p>Del destino y las fechas a lo que he entendido, confirmado por ti, con los avisos delante.</p>
+<ul><li><b>Deja</b>: un viaje que arranca de tus toques y no de una ficha escrita a mano</li><li><b>Se prueba</b>: con respuestas inventadas; los papeles, con pares de pasaporte y destino de respuesta sabida</li><li><b>Tu visto bueno</b>: al ver las preguntas y lo que he entendido</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>5.1</td><td><b>Las preguntas.</b> Los cinco toques, la casilla y la caja libre, y lo que dejan.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>5.2</td><td><b>El que escucha.</b> Su contrato, la puerta 1 y tu confirmación.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>5.3</td><td><b>El del calendario.</b> Los avisos de las fechas y las ventanas mejores.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>5.4</td><td><b>El de los papeles.</b> La tabla, la lista de dominios oficiales y la puerta 2.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b6" aria-labelledby="h-b6">
+<h2 id="h-b6">6. Todo junto, en seco <span class="estado pendiente">pendiente</span></h2>
+<p>La cadena entera con el viaje inventado, sin IA ni fuentes: es donde salen los fallos del código, antes de gastar.</p>
+<ul><li><b>Deja</b>: el run entero, de los toques a los tres viajes, pasando por todas las puertas</li><li><b>Se prueba</b>: en seco; y la revisión de los tres adversarios</li><li><b>Tu visto bueno</b>: no; punto de situación</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>6.1</td><td><b>El run entero, en seco.</b> Del destino a los tres viajes, con lo que dejaría cada asiento.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>6.2</td><td><b>El conductor, en el run.</b> Con rojos puestos a propósito.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>6.3</td><td><b>Los tres adversarios.</b> La mecánica, la seguridad y las biblias, cada uno en su copia.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b7" aria-labelledby="h-b7">
+<h2 id="h-b7">7. El ensayo <span class="estado pendiente">pendiente</span></h2>
+<p>Con IA y con viajes de verdad. Es lo que gasta, y por eso va al final de la primera versión.</p>
+<ul><li><b>Deja</b>: lo que tarda y lo que cuesta un viaje, y los pesos ajustados</li><li><b>Se prueba</b>: con tres viajes tuyos y con el banco</li><li><b>Tu visto bueno</b>: tu adelante antes de cada ensayo, y tu visto bueno a lo que salga</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>7.1</td><td><b>El banco.</b> Hoteles juzgados a mano, papeles sabidos y búsquedas con la respuesta sabida, para medir si cada asiento acierta.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>7.2</td><td><b>Tres viajes de verdad.</b> De punta a punta, midiendo cada asiento.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>7.3</td><td><b>Ajustar.</b> Los pesos, los mínimos y los topes, con lo que salga.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>7.4</td><td><b>El revisor del viaje entero.</b> Si hace falta, tras ver los ensayos.</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b8" aria-labelledby="h-b8">
+<h2 id="h-b8">8. Por momentos <span class="estado pendiente">pendiente</span></h2>
+<p>Lo que pasa después del primer viaje: volver a una pieza y cambiarla, elegir, cambiar algo y volver otro día.</p>
+<ul><li><b>Deja</b>: el viaje que se usa a ratos, con lo de antes sin pisar</li><li><b>Se prueba</b>: con una semana de ejemplo, en seco</li><li><b>Tu visto bueno</b>: al ver cada momento</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>8.1</td><td><b>La casa por momentos.</b> El estado de cada pieza, quién te responde, tus elecciones, el impacto y las versiones.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>8.2</td><td><b>El alojamiento.</b> Tus gustos, otro candidato y tu elección.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>8.3</td><td><b>El transporte.</b> Otro día, otro aeropuerto u otro horario, y lo que cambia.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>8.4</td><td><b>Elegir y reservar.</b> Los precios de hoy, el orden de las reservas y la puerta 8.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>8.5</td><td><b>Cambios y Al volver.</b> Lo que se rehace con cada cambio y dónde lo dejaste.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>8.6</td><td><b>El día a día.</b> Diseñarlo y construirlo: es el momento que falta por hablar.</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>8.7</td><td><b>Vigilar el precio.</b> Avisarte sin que entres.</td><td><span class="estado decidir">por decidir</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="b9" aria-labelledby="h-b9">
+<h2 id="h-b9">9. Antes de vender <span class="estado pendiente">pendiente</span></h2>
+<p>Lo que hoy no hace falta, porque es un MVP sin uso comercial, y hará falta el día que se venda.</p>
+<ul><li><b>Deja</b>: El Dorado en Cortex, con sus fuentes en regla</li><li><b>Se prueba</b>: con el abogado y con las claves de verdad</li><li><b>Tu visto bueno</b>: todo: son decisiones tuyas</li></ul>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Punto"><table class="tbl"><thead><tr><th>Punto</th><th>Qué</th><th>Estado</th></tr></thead><tbody>
+<tr><td>9.1</td><td><b>Lo legal de las fuentes.</b> La IA sobre sus fotos, cruzar sus datos y guardar resultados; y los acuerdos con las grandes.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr><td>9.2</td><td><b>Las claves de producción.</b> Precios de verdad, con los datos de la empresa.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+<tr class="new"><td>9.3</td><td><b>La IA.</b> Con cuál piensa cada asiento, quién la paga y dónde corre.</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr class="new"><td>9.4</td><td><b>Dónde vive.</b> En Cortex, y cómo se conecta.</td><td><span class="estado decidir">por decidir</span></td></tr>
+<tr><td>9.5</td><td><b>La carpeta de entrega.</b> El README, el mapa y cómo conectarlo.</td><td><span class="estado pendiente">pendiente</span></td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="cajas" aria-labelledby="h-cajas">
+<h2 id="h-cajas">Cada caja de la hoja, en su punto</h2>
+<p>Cada caja del flujo de la hoja, con el punto que la construye. La prueba del repositorio comprueba que no falta ninguna y que cada punto existe.</p>
+<div class="tbl-wrap" role="region" tabindex="0" aria-label="Momento"><table class="tbl"><thead><tr><th>Momento</th><th>Caja de la hoja</th><th>Puntos</th></tr></thead><tbody>
+<tr><td>Empezar</td><td>Tú, el destino y las fechas</td><td>5.1</td></tr>
+<tr><td>Empezar</td><td>Tú, cinco toques</td><td>5.1</td></tr>
+<tr><td>Empezar</td><td>Tú, la caja libre</td><td>5.1</td></tr>
+<tr><td>Empezar</td><td>El que escucha</td><td>5.2</td></tr>
+<tr><td>Empezar</td><td>Puerta 1: ¿el viaje, claro?</td><td>5.2</td></tr>
+<tr><td>Empezar</td><td>Tu confirmación</td><td>5.2</td></tr>
+<tr><td>Empezar</td><td>El del calendario</td><td>5.3</td></tr>
+<tr><td>Empezar</td><td>El de los papeles</td><td>5.4</td></tr>
+<tr><td>Empezar</td><td>Puerta 2: ¿algún papel bloquea?</td><td>5.4</td></tr>
+<tr><td>Empezar</td><td>Tú, las fechas</td><td>5.3</td></tr>
+<tr><td>El primer viaje</td><td>Tú, «Buscar mi viaje»</td><td>2.2</td></tr>
+<tr><td>El primer viaje</td><td>El de la ruta</td><td>4.5</td></tr>
+<tr><td>El primer viaje</td><td>Puerta 3: ¿las noches suman?</td><td>4.5</td></tr>
+<tr><td>El primer viaje</td><td>La búsqueda de alojamiento</td><td>3.2, 4.1</td></tr>
+<tr><td>El primer viaje</td><td>La búsqueda de transporte</td><td>3.3, 3.7, 4.4</td></tr>
+<tr><td>El primer viaje</td><td>Puerta 4: ¿la búsqueda es de fiar?</td><td>4.1</td></tr>
+<tr><td>El primer viaje</td><td>Las tres cribas</td><td>1.4, 4.3</td></tr>
+<tr><td>El primer viaje</td><td>El que mira el alojamiento</td><td>2.3, 2.4, 3.6, 4.2</td></tr>
+<tr><td>El primer viaje</td><td>Puerta 5: ¿cada nivel, con su prueba?</td><td>4.2</td></tr>
+<tr><td>El primer viaje</td><td>El cruce</td><td>3.4, 4.6</td></tr>
+<tr><td>El primer viaje</td><td>El que cruza</td><td>4.6</td></tr>
+<tr><td>El primer viaje</td><td>Puerta 6: ¿cada número sale de la tabla?</td><td>4.6</td></tr>
+<tr><td>El primer viaje</td><td>El que explica</td><td>4.7</td></tr>
+<tr><td>El primer viaje</td><td>Puerta 7: ¿sin promesas y con su aviso?</td><td>4.7</td></tr>
+<tr><td>El primer viaje</td><td>La salida, en el mapa</td><td>2.6, 4.8</td></tr>
+<tr><td>El primer viaje</td><td>Salen tus tres viajes</td><td>4.8</td></tr>
+<tr><td>El alojamiento</td><td>Tú abres el alojamiento</td><td>8.2</td></tr>
+<tr><td>El alojamiento</td><td>Tú, tus gustos</td><td>8.2</td></tr>
+<tr><td>El alojamiento</td><td>La búsqueda de alojamiento, otra vez</td><td>4.1, 8.2</td></tr>
+<tr><td>El alojamiento</td><td>Los gustos</td><td>4.3</td></tr>
+<tr><td>El alojamiento</td><td>El que mira el alojamiento</td><td>4.2, 8.2</td></tr>
+<tr><td>El alojamiento</td><td>El que cruza</td><td>8.2</td></tr>
+<tr><td>El alojamiento</td><td>Las puertas 4 y 5, otra vez</td><td>8.2</td></tr>
+<tr><td>El alojamiento</td><td>Tu elección</td><td>8.1</td></tr>
+<tr><td>El transporte</td><td>Tú abres el transporte</td><td>8.3</td></tr>
+<tr><td>El transporte</td><td>La búsqueda de transporte, otra vez</td><td>4.4, 8.3</td></tr>
+<tr><td>El transporte</td><td>El que cruza</td><td>8.3</td></tr>
+<tr><td>El transporte</td><td>El de los papeles</td><td>8.3</td></tr>
+<tr><td>El transporte</td><td>Las puertas 2 y 6, otra vez</td><td>8.3</td></tr>
+<tr><td>El transporte</td><td>Tu elección</td><td>8.1</td></tr>
+<tr><td>El día a día</td><td>Tú abres un día</td><td>8.6</td></tr>
+<tr><td>El día a día</td><td>El del día a día</td><td>8.6</td></tr>
+<tr><td>El día a día</td><td>Las distancias</td><td>3.8, 8.6</td></tr>
+<tr><td>El día a día</td><td>El del calendario</td><td>8.6</td></tr>
+<tr><td>El día a día</td><td>La puerta del día a día</td><td>8.6</td></tr>
+<tr><td>El día a día</td><td>Tu aprobación</td><td>8.6</td></tr>
+<tr><td>Elegir y reservar</td><td>Tú, «Me quedo con este»</td><td>8.4</td></tr>
+<tr><td>Elegir y reservar</td><td>Los precios de hoy</td><td>8.4</td></tr>
+<tr><td>Elegir y reservar</td><td>El que explica</td><td>8.4</td></tr>
+<tr><td>Elegir y reservar</td><td>Puerta 8: ¿todo cuadra?</td><td>8.4</td></tr>
+<tr><td>Elegir y reservar</td><td>Los enlaces</td><td>3.9</td></tr>
+<tr><td>Elegir y reservar</td><td>Sale tu viaje</td><td>8.4</td></tr>
+<tr><td>Cambios</td><td>Tú cambias algo</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>El impacto</td><td>8.1</td></tr>
+<tr><td>Cambios</td><td>Tu adelante</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>El del calendario</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>El de los papeles</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>Las búsquedas, otra vez</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>El que cruza</td><td>8.5</td></tr>
+<tr><td>Cambios</td><td>La versión</td><td>8.1</td></tr>
+<tr><td>Al volver</td><td>Tú entras</td><td>8.5</td></tr>
+<tr><td>Al volver</td><td>Donde lo dejaste</td><td>8.5</td></tr>
+<tr><td>Al volver</td><td>Los precios de hoy</td><td>8.5, 8.7</td></tr>
+<tr><td>Al volver</td><td>Retomas</td><td>8.5</td></tr>
+</tbody></table></div>
+</section>
+<section class="block" id="reglas" aria-labelledby="h-reglas">
+<h2 id="h-reglas">Las reglas de la obra</h2>
+<p>Las mismas del <code>CLAUDE.md</code>, en corto.</p>
+<div class="always"><span>La hoja y el plan mandan: si algo no cabe, se para y se pregunta.</span>
+<span>Un commit por punto, con su número delante.</span>
+<span>La memoria, el registro y las biblias, al día en el mismo commit.</span>
+<span>Por tandas, y cada tanda acaba con su punto de situación.</span>
+<span>Nada nuevo que gaste sin tu visto bueno.</span>
+<span>Lo medible lo mide el código; nadie se pone nota.</span>
+<span>Primero se construye y después se prueba, con datos inventados.</span>
+<span>Ningún dato de un viajero, ni lo que devuelve una fuente, ni una clave, en el repositorio.</span>
+<span>La batería, en verde antes de cada commit.</span></div>
+</section>
+</main>

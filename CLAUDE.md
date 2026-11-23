@@ -4,8 +4,10 @@ Este repositorio (`varolor007/el-dorado`) es el taller de El Dorado, el agente d
 entero al mejor precio. Se vende en Cortex, la plataforma de agentes de la web de Cognitive, que vive en
 `varolor007/aurora-web`. Nada de aquí está publicado.
 
-Antes de nada, lee [docs/memoria.md](docs/memoria.md): qué es, dónde vive cada cosa, por dónde vamos, en su «Estamos
-aquí», y cómo se retoma. Cada decisión, con su fecha, en [docs/decisiones.md](docs/decisiones.md).
+Antes de nada, lee [docs/memoria.md](docs/memoria.md): qué es, dónde vive cada cosa y cómo se retoma. Mandan las dos
+biblias: la hoja ([docs/hoja.md](docs/hoja.md)) dice qué es El Dorado, momento a momento, y el plan
+([docs/plan.md](docs/plan.md)), cómo se construye y por dónde vamos, en su «Estamos aquí». Cada decisión, con su fecha,
+en [docs/decisiones.md](docs/decisiones.md).
 
 ## Cómo se construye
 
@@ -21,12 +23,15 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 
 ## Las reglas de la obra
 
-1. **La hoja y el plan mandan**, en cuanto existan (etapas 3 a 5). Lo que se construye tiene que caber en ellos; si
-   algo no cabe, se para y se pregunta al PM. Si cambian, cambian en el mismo commit, y la decisión va al registro con
-   su fecha.
-2. **Un commit por paso**, con su etapa delante mientras se diseña («Etapa 1: ...»), «Bases: ...» en lo que se
-   construye antes del plan y, desde el plan, con el número de su punto («2.3: ...»).
-3. **La memoria y el registro, al día en el mismo commit** que cambia el estado.
+1. **La hoja y el plan mandan.** Son el plan y la biblia para no desviarse nunca del diseño del agente, y de la hoja
+   nace siempre el plan (el PM, 23-nov). Lo que se construye tiene que caber en ellos; si algo no cabe, se para y se
+   pregunta al PM. Si cambian, cambian en el mismo commit, y la decisión va al registro con su fecha.
+2. **Un commit por punto del plan**, con su número delante («4.2: ...»). Lo de antes del plan lleva «Etapa N: ...» o
+   «Bases: ...».
+3. **El plan, la memoria y el registro, al día en el mismo commit** que cambia el estado. La hoja y el plan no se
+   editan a mano: se cambian sus datos (`docs/paginas/hoja.datos.mjs` y `plan.datos.mjs`), se pintan con
+   `node docs/paginas/pinta.mjs` y se publican sus páginas en su misma dirección. La batería avisa si se quedan atrás
+   o si una caja de la hoja no tiene su punto en el plan.
 4. **Se trabaja por tandas.** Lo que no necesita al PM va seguido; solo se para para su firma, una decisión suya o un
    gasto. Cada tanda acaba con su punto de situación, en la memoria y al PM.
 5. **Nada que gaste sin el visto bueno explícito del PM**: ni una sesión del agente, ni un run, ni una prueba con un
@@ -44,7 +49,7 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 ## Cómo se trabaja
 
 - Al abrir: `npm install` (una vez), la batería (`node tests/bateria.mjs`, segundos, sin internet y sin gastar) y el
-  «Estamos aquí» de la memoria.
+  «Estamos aquí» del plan.
 - Antes de cada commit: la batería, en verde. GitHub la vuelve a pasar en cada subida.
 - Dónde va cada cosa: [MAP.md](MAP.md). Cada carpeta nueva del agente o de las pruebas entra ahí; la prueba del
   repositorio lo comprueba.
@@ -58,4 +63,4 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 - Los contratos de los asientos, en inglés; lo que ve el cliente en la web, en inglés, como la web de Cortex; el agente
   responde al viajero en su idioma. Todo lo demás, en español.
 - En ningún texto, tampoco en el chat, rayas largas, puntos medios ni el carácter de puntos suspensivos.
-- Al PM, en corto, con palabras sencillas y, cuando haya hoja, por su etapa y su fila.
+- Al PM, en corto, con palabras sencillas y, si se habla de algo de la hoja, por su momento y su fila.

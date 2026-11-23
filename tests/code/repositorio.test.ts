@@ -8,7 +8,7 @@ import { carpetaDeLaMesa } from "../../agent/launcher/mesa.ts";
 
 const RAIZ = resolve(import.meta.dirname, "..", "..");
 const FUERA = new Set([".git", "node_modules"]);
-const DE_TEXTO = /\.(md|ts|mjs|json|html|yml|yaml|txt)$/;
+const DE_TEXTO = /\.(md|ts|mjs|js|css|json|html|yml|yaml|txt)$/;
 
 function archivos(carpeta: string): string[] {
   const salida: string[] = [];
@@ -50,7 +50,8 @@ test("ningún identificador de modelo en el repositorio", () => {
 
 test("el código, a 120 caracteres por línea", () => {
   const largas: string[] = [];
-  for (const a of TODOS.filter((x) => /\.(ts|mjs)$/.test(x))) {
+  // Los datos de las biblias son prosa, no código: sus frases no se parten a 120.
+  for (const a of TODOS.filter((x) => /\.(ts|mjs)$/.test(x) && !x.endsWith(".datos.mjs"))) {
     readFileSync(join(RAIZ, a), "utf8")
       .split("\n")
       .forEach((linea, i) => {

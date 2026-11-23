@@ -96,8 +96,19 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   verde. En `MAP.md`.
 - **Una dependencia de desarrollo** (la sesión): el comprobador de tipos y el formateador, solo para la batería y el
   formato. Para funcionar, el agente sigue sin ninguna.
+- **El formato de la hoja es el de las hojas de Cortex** (el PM): «sí, sí, este es nuestro formato; usamos estas hojas
+  como plan y biblia para nunca irnos o desviarnos del diseño del agente, y de esta nace siempre el plan posterior». Dio
+  de referencia la última de DaVi, que va por momentos. De ella se toma el formato, y nada de su contenido.
+- **La hoja y el plan de El Dorado, versión 1, a su firma**: ocho momentos (dos con orden y seis que se abren cuando el
+  viajero quiere), con sus filas, su flujo, la casa, las puertas, los asientos, los datos y lo decidido; y el plan, en
+  diez bloques, con cada caja de la hoja en su punto. Se escriben en datos y de ahí salen sus páginas (https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73 y
+  https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t) y sus textos (`hoja.md` y `plan.md`).
+- **El dibujo del run del 21-nov se retira del repositorio**: lo sustituye la hoja. Su página publicada
+  (https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) sigue ahí, vieja, hasta que el PM diga de borrarla.
 
 ## Pendientes
+
+- **La firma del PM de la hoja y del plan** (23-nov): es el punto 0.5. Con ella empieza la primera tanda.
 
 Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
 

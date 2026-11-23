@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pruebas = readdirSync(join(raiz, "tests", "code"))
-  .filter((f) => f.endsWith(".test.ts"))
+  .filter((f) => f.endsWith(".test.ts") || f.endsWith(".test.mjs"))
   .map((f) => join("tests", "code", f));
 
 function corre(nombre, orden, argumentos) {

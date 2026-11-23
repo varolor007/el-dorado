@@ -13,12 +13,12 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `tests/cases/inventado/` | El caso inventado: una ciudad y unos alojamientos que no existen, para probar sin internet y sin gastar | Las bases, del 23-nov |
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |
-| `docs/paginas/` | La fuente de las páginas publicadas | El run, del 21-nov |
+| `docs/paginas/` | Las dos biblias: los datos de la hoja y del plan (`hoja.datos.mjs` y `plan.datos.mjs`), el formato de las hojas de Cortex, el pintor (`pinta.mjs`) y las páginas que salen de ahí y se publican | La hoja y el plan, versión 1, a la firma del PM |
 
 ## Lo que aún no existe
 
 `agent/contracts/` (los contratos de los asientos), `agent/output/` (la salida: el mapa) y `tests/runs/` llegan con su
-etapa. La hoja y el plan, también.
+punto del plan.
 
 ## Lo que no va aquí
 

@@ -3,20 +3,16 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: las bases, montadas (23-nov), y el encargo, abierto.** El PM decidió ese día que es un MVP sin uso
-comercial, que lo aprueba todo y que lo legal de las fuentes lo verá con su abogado antes de vender; y que se montaran
-ya las bases, antes de la hoja. Hecho: el recolector, en `agent/` (un enchufe por fuente: LiteAPI, Aviasales y
-Parallel; los pasos de la búsqueda de alojamiento, su puerta, el arranque desde la terminal y la mesa fuera del
-repositorio), y sus pruebas con el caso inventado, en `tests/`, con la batería en verde (`node tests/bateria.mjs`). La
-búsqueda de Lisboa corre de punta a punta, sin IA, en unos veinte segundos. Lo que enseñó la primera prueba y lo que
-trae cada fuente, en [datos.md](datos.md); sus condiciones, en [condiciones.md](condiciones.md). Del diseño: la ficha
-y las preguntas al viajero, aprobadas ([encargo.md](encargo.md)); el proceso, los asientos, las puertas y cómo se
-valora, en borrador, a revisión del PM ([asientos.md](asientos.md), [puertas.md](puertas.md), [oficio.md](oficio.md),
-[piezas.md](piezas.md)); el dibujo del run (`paginas/run.html`) es del 21-nov y está por rehacer: aún lleva los dos
-buscadores como asientos, y ya son código. Lo siguiente, a decisión del PM: el primer asiento de IA sobre estas bases
-(el que mira el alojamiento, con las fotos de la habitación de ese precio y las opiniones), contrastar la nota con el
-índice, las cribas con sus pesos, y lo que falta por hablar del viaje (el día a día, los papeles y el calendario ya
-tienen su diseño en borrador; los vuelos en vivo no tienen fuente). Y la hoja, que sigue sin hacerse.
+**Estamos aquí: 0.5, la firma del PM de la hoja y del plan** (el estado, punto a punto, en [plan.md](plan.md)). El
+23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de alojamiento, con su
+puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos biblias, versión 1: la
+hoja ([hoja.md](hoja.md)), con el formato de las hojas de Cortex, por momentos, y el plan ([plan.md](plan.md)), que
+sale de ella. Con su firma empieza la primera tanda: el primer asiento de IA, el que mira el alojamiento (2.3, 2.4,
+3.6 y 4.2), probado con los finalistas de Lisboa. Lo que el PM decidió ese día: es un MVP sin uso comercial, lo
+aprueba todo y lo legal de las fuentes lo verá con su abogado antes de vender. Los borradores de antes
+([asientos.md](asientos.md), [puertas.md](puertas.md), [oficio.md](oficio.md) y [piezas.md](piezas.md)) quedan como
+detalle: donde digan otra cosa, manda la hoja. Lo que trae cada fuente y lo que enseñó la primera prueba, en
+[datos.md](datos.md); sus condiciones, en [condiciones.md](condiciones.md).
 
 ## 1. Qué es
 
@@ -28,21 +24,20 @@ reserva ni paga.
 Primero corre de una tirada, de punta a punta. Después, el viajero vuelve por momentos a cada vertical (el transporte,
 el alojamiento, el día a día) y la cambia, como en DaVi.
 
-## 2. Cómo se construye
+## 2. Las dos biblias
 
-Con el método del ensamblador de Cortex, a mano: las mismas ocho etapas que sigue el ensamblador con cada agente que
-crea. Lo que deja cada una aquí:
+| Biblia | Qué dice | Página publicada | En el repositorio |
+|---|---|---|---|
+| La hoja | Qué es El Dorado: sus ocho momentos en columnas, las mismas filas en todos, el flujo con una caja por paso, la casa, las puertas, los asientos, los datos y lo decidido. En violeta, lo que está por decidir; marcado, lo ya hecho | https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73 | [hoja.md](hoja.md), de `paginas/hoja.datos.mjs` |
+| El plan | Cómo se construye: diez bloques en orden, cada punto con su estado, las tandas y cada caja de la hoja en su punto | https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t | [plan.md](plan.md), de `paginas/plan.datos.mjs` |
 
-| Etapa | Qué deja | Dónde |
-|---|---|---|
-| 1 Encargo | La ficha del encargo y el proceso del PM, en cajas, firmado | [encargo.md](encargo.md) |
-| 2 Investigar el oficio | Cómo lo hace un profesional con oficio: dónde busca, qué compara y qué trucos ahorran, cada cosa con su fuente | [oficio.md](oficio.md), en borrador |
-| 3 Proponer la hoja | La hoja de El Dorado, el one-pager: sus etapas en columnas, su flujo (asientos, scripts y puertas) y sus filas | `docs/paginas/hoja.html`, publicada |
-| 4 Cerrar la hoja | La firma del PM | en el registro |
-| 5 Planificar la obra | El plan por bloques: lo común por capas y cada etapa, entera | `docs/plan.md` |
-| 6 Construir | La casa, los contratos, las herramientas y la salida, con la forma de la carpeta del ensamblador | `agent/` |
-| 7 Ensayar | En seco, sin IA y con un viaje inventado; después, con casos reales y el visto bueno del PM | `tests/` |
-| 8 Entregar | La carpeta comprobada y cómo conectarla | la raíz |
+Las dos se escriben en sus datos y se pintan con `node docs/paginas/pinta.mjs`: de ahí salen la página, que se publica
+en su misma dirección, y el texto. No se editan a mano, y la batería avisa si se quedan atrás. El formato
+(`paginas/formato.css` y `formato.js`) es el de las hojas de Cortex: el mismo de la hoja de DaVi y de la del
+ensamblador, que el PM dio de referencia; de ellas se toma la forma, nada de su contenido.
+
+El método es el del ensamblador de Cortex (encargo, oficio, hoja, firma, plan, obra, ensayo y entrega), a mano. Aquí
+se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
 
 ## 3. Dónde vive cada cosa
 
