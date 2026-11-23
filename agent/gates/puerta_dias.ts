@@ -1,8 +1,8 @@
 // La puerta 9: ¿cada día cabe? Tiene dos mitades. La primera mira lo que entrega el asiento que elige los sitios:
 // que cada uno existe en los datos, que ninguno sale dos veces ni se queda sin veredicto, y que lo que escribe para
-// el viajero no promete. La segunda mira los días que reparte el código: que cada parada está en los datos, que
-// lo imprescindible está dentro, que las horas de cada día caben y que ningún salto pasa del tope. No mide si la
-// elección es buena: eso lo ve el viajero, que quita, añade y mueve.
+// el viajero no promete. La segunda mira los días que reparte el código: que cada parada está en los datos, que lo
+// imprescindible está dentro o dice por qué no, que las horas de cada día caben y que ningún salto pasa del tope.
+// No mide si la elección es buena: eso lo ve el viajero, que quita, añade y mueve.
 
 import { DIA_ENTERO, IMPRESCINDIBLES_POR_NOCHE, MINUTOS_DE_VISITA, RESERVAR, SALTO_MAXIMO } from "../data/dias.ts";
 import type { Dia, Parada } from "../output/viaje.ts";
@@ -73,8 +73,20 @@ export function puertaSitios(entrega: unknown, m: MaterialDeSitios): Veredicto {
   return { verde: rojos.length === 0, rojos };
 }
 
-/** Los días que repartió el código, con las paradas que salieron del asiento y los sitios de los datos. */
-export type Repartido = { paradas: Parada[]; dias: Dia[]; fuera: string[]; sitios: string[] };
+/**
+ * Los días que repartió el código, con las paradas que salieron del asiento, los sitios de los datos y por qué se
+ * queda fuera lo que se queda fuera.
+ */
+export type Repartido = {
+  paradas: Parada[];
+  dias: Dia[];
+  fuera: string[];
+  porQue: Record<string, string>;
+  sitios: string[];
+};
+
+/** Los porqués que valen para dejar fuera algo imprescindible: no los pone el viajero, los mide el código. */
+const NO_CABE = ["far", "full"];
 
 export function puertaDias(r: Repartido): Veredicto {
   const rojos: Rojo[] = [];
@@ -113,8 +125,9 @@ export function puertaDias(r: Repartido): Veredicto {
 
   for (const p of r.paradas) {
     if (!puestas.includes(p.id) && !r.fuera.includes(p.id)) rojo(`paradas.${p.id}`, "ni está en un día ni está fuera");
-    if (p.imprescindible && !puestas.includes(p.id))
-      rojo(`paradas.${p.id}`, "es imprescindible y no está en ningún día");
+    // Lo imprescindible está dentro, o dice por qué no: queda lejos de todo lo demás o los días están llenos.
+    if (p.imprescindible && !puestas.includes(p.id) && !NO_CABE.includes(r.porQue[p.id] ?? ""))
+      rojo(`paradas.${p.id}`, "es imprescindible, no está en ningún día y no dice por qué");
   }
   return { verde: rojos.length === 0, rojos };
 }

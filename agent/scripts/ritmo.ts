@@ -3,22 +3,19 @@
 // que se anda de una parada a la siguiente. La misma entrada da siempre los mismos días. No sale a internet ni usa
 // nada de fuera: lo corren igual la casa y la web, al instante.
 
+import { CABE, CERCA_DE_UN_DIA, DIA_ENTERO, MOTIVOS_DE_FUERA, SALTO_MAXIMO } from "../data/dias.ts";
 import type { Dia, Parada, Punto, Ritmo } from "../output/viaje.ts";
-import { andando, centroDe, enLineaRecta } from "../tools/distancias.ts";
+import { andando, centroDe, enLineaRecta, minutosAndando } from "../tools/distancias.ts";
 
+export { CABE } from "../data/dias.ts";
 export { andando, enLineaRecta, RODEO } from "../tools/distancias.ts";
 
-/** Cuántas paradas caben en un día, y cuántos minutos de visita, con cada ritmo. Son de partida. */
-export const CABE: Record<Ritmo, { paradas: number; minutos: number }> = {
-  calm: { paradas: 3, minutos: 240 },
-  normal: { paradas: 5, minutos: 360 },
-  full: { paradas: 7, minutos: 480 },
-};
+/** Lo cerca que tiene que estar una parada del centro de un día, en línea recta, para juntarse con él. */
+export const SALTO = CERCA_DE_UN_DIA;
 
-/** El salto más largo, en línea recta, que se acepta para meter una parada en un día que no es el de su zona. */
-export const SALTO = 2000;
-
-export type Reparto = { dias: Dia[]; fuera: string[] };
+export type Motivo = (typeof MOTIVOS_DE_FUERA)[number];
+/** Los días, lo que se queda fuera y por qué se queda fuera cada parada. */
+export type Reparto = { dias: Dia[]; fuera: string[]; porQue: Record<string, Motivo> };
 
 /**
  * En qué orden se abren los días libres: primero los de en medio, que son días enteros, y al final el de llegada y
@@ -88,13 +85,31 @@ function enOrden(paradas: Parada[], base: Punto): Parada[] {
   return orden;
 }
 
+/** Lo que se anda entre las paradas de un día, en su orden, y lo que suma el día con sus visitas. */
+export function medirDia(orden: Parada[]): { metros: number[]; minutos: number } {
+  const metros = orden.slice(1).map((p, i) => andando(orden[i].punto, p.punto));
+  const visitas = orden.reduce((suma, p) => suma + p.minutos, 0);
+  return { metros, minutos: visitas + metros.reduce((suma, m) => suma + minutosAndando(m), 0) };
+}
+
+/**
+ * Si un día se puede andar: ningún salto pasa del tope y las visitas, con lo que se anda, caben en un día entero.
+ * Es la misma regla que mira la puerta 9: el código no reparte un día que su puerta rechazaría.
+ */
+export function seAnda(orden: Parada[]): boolean {
+  const { metros, minutos } = medirDia(orden);
+  return metros.every((m) => m <= SALTO_MAXIMO) && minutos <= DIA_ENTERO;
+}
+
 /** Lo que el viajero ha cambiado a mano: lo que quitó, lo que añadió de lo que se quedó fuera y lo que movió de día. */
 export type Cambios = { quitadas?: string[]; anadidas?: string[]; fijadas?: Record<string, number> };
 
 /**
  * Reparte las paradas en los días. Las paradas llegan por orden de importancia: las primeras entran antes, y las
  * imprescindibles, antes que ninguna. Lo que el viajero cambió a mano manda sobre el ritmo: lo que quitó no vuelve
- * solo, lo que movió a un día se queda en ese día y lo que añadió entra aunque el día ya esté lleno.
+ * solo, lo que movió a un día se queda en ese día y lo que añadió entra aunque el día ya esté lleno. Lo que reparte
+ * el código cabe siempre: una parada que no entra en ningún día sin pasarse de un tope se queda fuera, y se dice por
+ * qué, también si es imprescindible. Antes fuera y dicho que un día que no se puede hacer.
  */
 export function repartir(
   paradas: Parada[],
@@ -104,7 +119,7 @@ export function repartir(
   cambios: Cambios = {},
 ): Reparto {
   const cabe = CABE[ritmo];
-  const quitadas = (cambios.quitadas ?? []).filter((id) => paradas.some((p) => p.id === id));
+  const quitadas = [...new Set(cambios.quitadas ?? [])].filter((id) => paradas.some((p) => p.id === id));
   const anadidas = cambios.anadidas ?? [];
   const fijadas = cambios.fijadas ?? {};
   const porImportancia = [
@@ -113,7 +128,15 @@ export function repartir(
   ].filter((p) => !quitadas.includes(p.id));
   const dias = fechas.map((fecha) => ({ fecha, paradas: [] as Parada[], minutos: 0 }));
   const fuera: string[] = [...quitadas];
-  if (dias.length === 0) return { dias: [], fuera: [...fuera, ...porImportancia.map((p) => p.id)] };
+  const porQue: Record<string, Motivo> = Object.fromEntries(quitadas.map((id) => [id, "removed"]));
+  const seQueda = (p: Parada, motivo: Motivo): void => {
+    fuera.push(p.id);
+    porQue[p.id] = motivo;
+  };
+  if (dias.length === 0) {
+    for (const p of porImportancia) seQueda(p, "full");
+    return { dias: [], fuera, porQue };
+  }
 
   const puestas = new Set<string>();
   const pon = (i: number, p: Parada): void => {
@@ -134,8 +157,9 @@ export function repartir(
     if (i !== undefined && Number.isInteger(i) && i >= 0 && i < dias.length) pon(i, p);
   }
 
-  // 2. Las demás, por importancia. Cada una va al día que tiene cerca (a menos de un salto) y con sitio. Si no hay
-  // ninguno, abre un día nuevo mientras queden días libres; si no quedan, se queda fuera: antes fuera que cruzar la
+  // 2. Las demás, por importancia. Cada una va al día que tiene cerca y en el que cabe. Si no hay ninguno, abre un
+  // día nuevo mientras queden días libres. Si no quedan, lo imprescindible prueba en cualquier día en el que quepa,
+  // aunque no sea el de al lado; y lo que ni así entra se queda fuera, con su porqué: antes fuera que cruzar la
   // ciudad por rellenar un hueco. Así dos sitios que están al lado caen en el mismo día, y un día se abre cuando
   // hace falta, no por tener algo en cada fecha: un día puede quedar libre.
   const libres = porImportancia.filter((p) => !puestas.has(p.id));
@@ -145,14 +169,15 @@ export function repartir(
     const porCercania = conParadas()
       .map((z) => ({ i: z.i, d: dias[z.i], lejos: enLineaRecta(z.centro, p.punto) }))
       .sort((a, b) => a.lejos - b.lejos || a.i - b.i);
-    const cabeEn = (d: (typeof dias)[number]): boolean =>
+    const hayHueco = (d: (typeof dias)[number]): boolean =>
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
+    const cabeEn = (d: (typeof dias)[number]): boolean => hayHueco(d) && seAnda(enOrden([...d.paradas, p], base));
     let destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
     if (destino < 0) destino = porAbrir.shift() ?? -1;
-    // Lo imprescindible no se queda fuera: si no cabe en ningún día, va al que tiene más cerca.
-    if (destino < 0 && p.imprescindible && porCercania.length > 0) destino = porCercania[0].i;
+    if (destino < 0 && p.imprescindible) destino = porCercania.find((x) => cabeEn(x.d))?.i ?? -1;
     if (destino < 0) {
-      fuera.push(p.id);
+      // Si en algún día había hueco, lo que falla es la distancia; si no, es que los días están llenos.
+      seQueda(p, porCercania.some((x) => hayHueco(x.d)) ? "far" : "full");
       continue;
     }
     pon(destino, p);
@@ -168,13 +193,9 @@ export function repartir(
       const orden = enOrden(d.paradas, base);
       // El día se llama como su parada más importante.
       const titulo = porImportancia.find((p) => d.paradas.includes(p))?.nombre ?? "";
-      return {
-        fecha: d.fecha,
-        titulo,
-        paradas: orden.map((p) => p.id),
-        metros: orden.slice(1).map((p, i) => andando(orden[i].punto, p.punto)),
-      };
+      return { fecha: d.fecha, titulo, paradas: orden.map((p) => p.id), metros: medirDia(orden).metros };
     }),
     fuera,
+    porQue,
   };
 }

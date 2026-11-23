@@ -2,7 +2,8 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { comprobarViaje, type Parada } from "../../agent/output/viaje.ts";
+import { puertaDias } from "../../agent/gates/puerta_dias.ts";
+import { comprobarViaje, RITMOS, type Parada, type Ritmo } from "../../agent/output/viaje.ts";
 import { paradasDe } from "../../agent/scripts/dias.ts";
 import { andando, CABE, enLineaRecta, fechasDe, ordenDeApertura, repartir } from "../../agent/scripts/ritmo.ts";
 import { entregaDeSitios, SITIOS } from "../cases/inventado/investigacion.ts";
@@ -188,9 +189,66 @@ test("dos sitios que están al lado caen en el mismo día, y un día se abre sol
   assert.equal(diaDe("Q2"), 2);
 });
 
-test("lo imprescindible no se queda fuera aunque no quepa: va al día que tiene más cerca", () => {
+test("lo que reparte el código pasa siempre su puerta: nunca un día que no se puede andar", () => {
+  const sitios = (lista: Parada[]): string[] => lista.map((p) => p.id);
+  const pasa = (lista: Parada[], fechas: string[], ritmo: Ritmo, base = BASE): string[] => {
+    const r = repartir(lista, fechas, ritmo, base);
+    return puertaDias({
+      paradas: lista,
+      dias: r.dias,
+      fuera: r.fuera,
+      porQue: r.porQue,
+      sitios: sitios(lista),
+    }).rojos.map((x) => x.que);
+  };
+  // Los tres barrios están a más de cinco kilómetros: con un solo día no se cruzan, se anda uno.
   const todas = paradas().map((p) => ({ ...p, imprescindible: true, minutos: 200 }));
-  const r = repartir(todas, fechasDe("2027-02-12", "2027-02-12"), "calm", BASE);
+  for (const ritmo of RITMOS) {
+    for (const noches of [0, 1, 2, 6]) {
+      const fechas = fechasDe("2027-02-12", `2027-02-${12 + noches}`);
+      assert.deepEqual(pasa(todas, fechas, ritmo), [], `${ritmo}, ${noches} noches, todo imprescindible`);
+      assert.deepEqual(pasa(paradas(), fechas, ritmo), [], `${ritmo}, ${noches} noches`);
+      // Lo que se entrega sale de donde se duerme, no del centro: con otra base, también pasa.
+      assert.deepEqual(pasa(paradas(), fechas, ritmo, { lat: 10.09, lon: 20.11 }), []);
+    }
+  }
+});
+
+test("un imprescindible que no cabe en ningún día se queda fuera y dice por qué: lejos, o los días llenos", () => {
+  // Un solo día y tres barrios a kilómetros: se anda el del primero, y los otros dos quedan lejos.
+  const lejos = paradas().filter((p) => p.imprescindible);
+  const r = repartir(lejos, fechasDe("2027-02-12", "2027-02-12"), "normal", BASE);
+  assert.equal(r.dias[0].paradas.length, 1);
+  assert.deepEqual(Object.values(r.porQue), ["far", "far"]);
+  // Un solo día, tranquilo, y cuatro visitas largas en el mismo barrio: cabe una, y las demás no por llenas.
+  const largas = paradas()
+    .filter((p) => p.id.startsWith("centro"))
+    .map((p) => ({ ...p, imprescindible: true, minutos: 240 }));
+  const lleno = repartir(largas, fechasDe("2027-02-12", "2027-02-12"), "calm", BASE);
+  assert.equal(lleno.dias[0].paradas.length, 1);
+  assert.deepEqual([...new Set(Object.values(lleno.porQue))], ["full"]);
+  // Y el viaje que lo lleva pasa su comprobación: está fuera, pero dice por qué.
+  const v = viajeInventado();
+  v.paradas = largas;
+  v.dias = lleno.dias;
+  v.fuera = lleno.fuera;
+  v.porQueFuera = lleno.porQue;
+  assert.deepEqual(comprobarViaje(v), []);
+  v.porQueFuera = {};
+  assert.ok(comprobarViaje(v).some((p) => p.que.includes("no dice por qué")));
+});
+
+test("un imprescindible sin día libre entra en otro día si cabe, aunque no sea el de al lado", () => {
+  // Dos días y tres sitios imprescindibles: dos lejos entre sí y un tercero a 2,5 km del primero, que se anda.
+  const en = (id: string, lon: number): Parada => ({ ...paradas()[0], id, nombre: id, punto: { lat: 10.05, lon } });
+  const tres = [en("a", 20.0), en("b", 20.1), en("c", 20.023)];
+  const r = repartir(tres, fechasDe("2027-02-12", "2027-02-13"), "normal", BASE);
   assert.deepEqual(r.fuera, []);
-  assert.equal(r.dias[0].paradas.length, todas.length);
+  assert.ok(r.dias.some((d) => d.paradas.includes("a") && d.paradas.includes("c")));
+});
+
+test("lo que quitas sale una vez, aunque se diga dos, y con su porqué", () => {
+  const r = repartir(paradas(), FECHAS, "normal", BASE, { quitadas: ["centro-1", "centro-1"] });
+  assert.equal(r.fuera.filter((id) => id === "centro-1").length, 1);
+  assert.equal(r.porQue["centro-1"], "removed");
 });

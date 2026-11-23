@@ -2,6 +2,8 @@
 // las dos. La web se construye contra él y el agente tiene que producirlo. Aquí no hay cuentas ni búsquedas: solo la
 // forma, y lo que el código puede comprobar de ella antes de enseñarla.
 
+import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
+
 export type Punto = { lat: number; lon: number };
 
 /** El trozo de mapa que encuadra un destino. */
@@ -147,6 +149,8 @@ export type Viaje = {
   dias: Dia[];
   /** Las paradas que no caben con este ritmo: se quedan fuera, a mano para añadirlas. */
   fuera: string[];
+  /** Por qué se queda fuera cada una: la quitó el viajero, queda lejos de las demás o los días están llenos. */
+  porQueFuera: Record<string, (typeof MOTIVOS_DE_FUERA)[number]>;
   alojamientos: Alojamiento[];
   transportes: Transporte[];
   maneras: Manera[];
@@ -240,13 +244,14 @@ export function comprobarViaje(v: Viaje): Pega[] {
     puestas.push(...d.paradas);
   });
   for (const id of repetidos(puestas)) pega("dias", `la parada ${id} está en dos días`);
+  const motivos: readonly string[] = MOTIVOS_DE_FUERA;
   for (const id of v.fuera) {
     if (!deParada.has(id)) pega("fuera", `la parada ${id} no existe`);
     else if (puestas.includes(id)) pega("fuera", `la parada ${id} está fuera y en un día a la vez`);
+    if (!motivos.includes(v.porQueFuera?.[id])) pega("fuera", `la parada ${id} está fuera y no dice por qué`);
   }
   for (const p of v.paradas) {
     if (!puestas.includes(p.id) && !v.fuera.includes(p.id)) pega(`paradas.${p.id}`, "ni está en un día ni está fuera");
-    if (p.imprescindible && v.fuera.includes(p.id)) pega(`paradas.${p.id}`, "es imprescindible y se ha quedado fuera");
   }
 
   // Dónde se duerme y cómo se llega.

@@ -221,6 +221,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     paradas: d.paradas,
     dias: reparto.dias,
     fuera: reparto.fuera,
+    porQueFuera: reparto.porQue,
     alojamientos,
     transportes: d.transportes ?? [],
     maneras,

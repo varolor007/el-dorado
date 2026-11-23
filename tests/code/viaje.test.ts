@@ -42,7 +42,7 @@ test("trampa: una parada en dos días, una que no existe o una que se pierde", (
   );
   assert.deepEqual(
     pegasDe((v) => v.fuera.push("p1")),
-    ["fuera: la parada p1 está fuera y en un día a la vez", "paradas.p1: es imprescindible y se ha quedado fuera"],
+    ["fuera: la parada p1 está fuera y en un día a la vez", "fuera: la parada p1 está fuera y no dice por qué"],
   );
 });
 

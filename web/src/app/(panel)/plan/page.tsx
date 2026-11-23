@@ -77,7 +77,7 @@ export default function Planear() {
 
   // Los días se reparten aquí, al instante, con el ritmo que pidas, desde donde duermes y con lo que has cambiado.
   const reparto = useMemo(() => {
-    if (viaje === null) return { dias: [], fuera: [] };
+    if (viaje === null) return { dias: [], fuera: [], porQue: {} };
     const fechas = fechasDe(viaje.entrada, viaje.salida);
     return repartir(viaje.paradas, fechas, ritmo, cama?.punto ?? viaje.destino.punto, { quitadas, anadidas, fijadas });
   }, [viaje, ritmo, cama, quitadas, anadidas, fijadas]);

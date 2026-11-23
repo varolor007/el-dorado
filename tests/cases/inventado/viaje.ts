@@ -75,6 +75,7 @@ export function viajeInventado(): Viaje {
       { fecha: "2027-02-13", titulo: "Lo alto", paradas: ["p3"], metros: [] },
     ],
     fuera: ["p4"],
+    porQueFuera: { p4: "full" },
     alojamientos: [
       {
         id: "a1",

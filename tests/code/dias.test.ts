@@ -164,8 +164,8 @@ test("lo elegido se convierte en paradas, por su orden, con su fuente; una foto 
 function repartido(): Repartido {
   const paradas = paradasDe(entregaDeSitios(), SITIOS, FOTOS);
   const fechas = fechasDe(ENTENDIDO.dates.check_in, ENTENDIDO.dates.check_out);
-  const { dias, fuera } = repartir(paradas, fechas, "normal", ENTENDIDO.destination.centre);
-  return { paradas, dias, fuera, sitios: SITIOS.map((s) => s.id) };
+  const { dias, fuera, porQue } = repartir(paradas, fechas, "normal", ENTENDIDO.destination.centre);
+  return { paradas, dias, fuera, porQue, sitios: SITIOS.map((s) => s.id) };
 }
 const rojosDeLosDias = (cambia: (r: Repartido) => void): string[] => {
   const r = repartido();
@@ -208,7 +208,7 @@ test("trampa: un día en el que no caben sus horas", () => {
   assert.ok(rojos.some((x) => x.includes(`y caben ${DIA_ENTERO}`)));
 });
 
-test("trampa: una parada en dos días, o un imprescindible que se queda fuera", () => {
+test("trampa: una parada en dos días, o un imprescindible que se queda fuera sin decir por qué", () => {
   assert.deepEqual(
     rojosDeLosDias((r) => {
       const [uno, otro] = r.dias.filter((d) => d.paradas.length > 0);
@@ -226,5 +226,21 @@ test("trampa: una parada en dos días, o un imprescindible que se queda fuera", 
     }
     r.fuera.push("Q1");
   });
-  assert.deepEqual(rojos, ["paradas.Q1: es imprescindible y no está en ningún día"]);
+  assert.deepEqual(rojos, ["paradas.Q1: es imprescindible, no está en ningún día y no dice por qué"]);
+  // Que lo quitara el viajero no es un porqué del código: solo valen que quede lejos o que los días estén llenos.
+  const sinQ1 = (r: Repartido, motivo: string): void => {
+    for (const d of r.dias) {
+      const i = d.paradas.indexOf("Q1");
+      if (i < 0) continue;
+      d.paradas.splice(i, 1);
+      d.metros.splice(Math.max(0, i - 1), 1);
+    }
+    r.fuera.push("Q1");
+    r.porQue.Q1 = motivo;
+  };
+  assert.equal(rojosDeLosDias((r) => sinQ1(r, "removed")).length, 1);
+  assert.deepEqual(
+    rojosDeLosDias((r) => sinQ1(r, "far")),
+    [],
+  );
 });

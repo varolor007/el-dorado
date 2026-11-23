@@ -24,3 +24,19 @@ export const DIA_ENTERO = 600;
 
 /** El salto más largo, en metros andados, entre dos paradas seguidas de un mismo día. */
 export const SALTO_MAXIMO = 3500;
+
+/** Cuántas paradas caben en un día, y cuántos minutos de visita, con cada ritmo. Son de partida. */
+export const CABE = {
+  calm: { paradas: 3, minutos: 240 },
+  normal: { paradas: 5, minutos: 360 },
+  full: { paradas: 7, minutos: 480 },
+};
+
+/**
+ * Lo cerca que tiene que estar una parada, en línea recta, del centro de un día para juntarse con él. Es más corto
+ * que el salto máximo: junta lo que está al lado, y el salto máximo es lo que no se pasa nunca.
+ */
+export const CERCA_DE_UN_DIA = 2000;
+
+/** Por qué una parada no está en ningún día: el viajero la quitó, queda lejos de las demás o no cabe en los días. */
+export const MOTIVOS_DE_FUERA = ["removed", "far", "full"] as const;

@@ -331,7 +331,13 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
   const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
   const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre);
   const dados = sitiosParaElegir(sitios).map((s) => s.id);
-  const puerta = puertaDias({ paradas, dias: reparto.dias, fuera: reparto.fuera, sitios: dados });
+  const puerta = puertaDias({
+    paradas,
+    dias: reparto.dias,
+    fuera: reparto.fuera,
+    porQue: reparto.porQue,
+    sitios: dados,
+  });
   guardar(run, "dias.json", { entrega, paradas, reparto, puerta, avisos });
   return puerta.rojos;
 }
@@ -461,7 +467,17 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     transporte: transporteDe(run),
   });
   const sucesos = sucesosDe(busqueda, hecho);
-  const pegas = [...comprobarViaje(hecho), ...comprobarSucesos(sucesos)];
+  // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
+  // otra vez, porque los que la pasaron al repartir no son estos.
+  const dados = sitiosParaElegir(leer<DeLosSitios>(run, "sitios.json").sitios).map((s) => s.id);
+  const deLosDias = puertaDias({
+    paradas: hecho.paradas,
+    dias: hecho.dias,
+    fuera: hecho.fuera,
+    porQue: hecho.porQueFuera,
+    sitios: dados,
+  }).rojos;
+  const pegas = [...comprobarViaje(hecho), ...comprobarSucesos(sucesos), ...deLosDias];
   if (pegas.length > 0) return pegas;
   guardar(run, "viaje.json", hecho);
   guardar(run, "sucesos.json", sucesos);
