@@ -170,12 +170,23 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **El viaje grabado, en una web desplegada** (la sesión): sigue sin entrar en el repositorio. La web lo lee de una
   dirección privada que se le da en el entorno (`ELDORADO_GRABADO_URL`); sin ella, enseña solo el mapa del mundo y el
   buscador.
+- **La identidad, con el visto bueno del PM, y el mundo en plano** (el PM, 23-nov, con la web ya desplegada: «dale
+  con plano y sigue»). El globo se quita.
+- **El mapa, precargado, y con pantalla de carga** (el PM, 23-nov: «que el mapa quede precargado para que no tarde,
+  metamos una pestaña de carga»). El código del mapa y la conexión con sus teselas se piden al entrar en el panel, y
+  mientras se despliega se ve el sol de El Dorado, no un hueco.
+- **Por dentro es un panel** (el PM, 23-nov: «recuerda que esto será un dashboard, el mapa solo no vale»). El carril
+  lleva de planear a tus viajes y a tu clave, y el viaje se lee por pestañas: los días, dónde dormir, las cuentas y
+  los avisos. Tus viajes y la pantalla de la clave se adelantan a la tanda 2, en seco.
+- **El campo de la clave, apagado en seco** (la sesión): una clave de verdad no se pega en una web que todavía no la
+  guarda cifrada.
+- **Lo que el viajero cambia a mano manda sobre el ritmo** (la sesión): lo que quita no vuelve solo, lo que mueve a un
+  día se queda en ese día y lo que añade entra aunque el día esté lleno, sin quitarle el sitio a otra parada.
 
 ## Pendientes
 
 Lo que pide la versión 2, a decisión del PM:
 
-- **La identidad** y **el mundo, plano o globo** (23-nov): con la página de la tanda 2 delante.
 - **El viaje de ejemplo de la portada** (23-nov): con datos de verdad de las fuentes, que hay que poder publicar, o
   inventado. Antes de publicar la portada.
 

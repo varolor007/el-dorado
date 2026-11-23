@@ -1,8 +1,10 @@
 "use client";
 
 // Lo que va dentro de la hoja en cada etapa: el saludo del mapa del mundo, el primer vistazo, la investigación en
-// vivo, tu viaje y la ficha de un alojamiento. Son piezas que enseñan: lo que se decide vive en la página.
+// vivo, tu viaje (con sus pestañas: los días, dónde dormir, las cuentas y los avisos) y la ficha de un alojamiento.
+// Son piezas que enseñan: lo que se decide vive en la página.
 
+import { useState } from "react";
 import type { Alojamiento, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../agent/output/viaje.ts";
 import type { Reparto } from "../../../agent/scripts/ritmo.ts";
@@ -30,31 +32,38 @@ export function Mundo({ t, hayGrabado, alProbar }: Comun & { hayGrabado: boolean
   );
 }
 
-export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
-  const v = viaje.vistazo;
+function CabeceraDelViaje({ t, idioma, viaje, rotulo }: Comun & { viaje: Viaje; rotulo: string }) {
   const n = noches(viaje.entrada, viaje.salida);
   return (
-    <>
-      <div className="cabecera">
-        <span className="rotulo">{t.vistazo.rotulo}</span>
-        <h1 className="lugar">{viaje.destino.nombre}</h1>
-        <div className="cabecera__linea">
-          <span className="pastilla">
-            {diaCorto(viaje.entrada, idioma)} → {diaCorto(viaje.salida, idioma)}
-          </span>
-          <span className="pastilla">{t.vistazo.noches(n)}</span>
-          <span className="pastilla">{t.vistazo.adultos(viaje.adultos)}</span>
-        </div>
-        <span className="dato">{coordenadas(viaje.destino.punto)}</span>
+    <div className="cabecera">
+      <span className="rotulo">{rotulo}</span>
+      <h1 className="lugar">{viaje.destino.nombre}</h1>
+      <div className="cabecera__linea">
+        <span className="pastilla">
+          {diaCorto(viaje.entrada, idioma)} → {diaCorto(viaje.salida, idioma)}
+        </span>
+        <span className="pastilla">{t.vistazo.noches(n)}</span>
+        <span className="pastilla">{t.vistazo.adultos(viaje.adultos)}</span>
       </div>
+    </div>
+  );
+}
+
+export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
+  const v = viaje.vistazo;
+  const numero = (n: number): string => new Intl.NumberFormat(idioma).format(n);
+  return (
+    <>
+      <CabeceraDelViaje t={t} idioma={idioma} viaje={viaje} rotulo={t.vistazo.rotulo} />
+      <span className="dato">{coordenadas(viaje.destino.punto)}</span>
       {v !== null && (
         <div className="cifras">
           <div>
-            <b>{new Intl.NumberFormat(idioma).format(v.devueltos)}</b>
+            <b>{numero(v.devueltos)}</b>
             <span>{t.vistazo.encontrados}</span>
           </div>
           <div>
-            <b>{new Intl.NumberFormat(idioma).format(v.pasan)}</b>
+            <b>{numero(v.pasan)}</b>
             <span>{t.vistazo.pasan}</span>
           </div>
           <div className="oro">
@@ -103,6 +112,45 @@ function frase(s: Suceso, t: Textos, idioma: string): { n: string | null; texto:
   }
 }
 
+/** Un grupo de toques: una pregunta con sus respuestas, de las que se marca una o varias. */
+function Toques({ titulo, opciones, varias }: { titulo: string; opciones: string[]; varias?: boolean }) {
+  const [marcadas, setMarcadas] = useState<string[]>([opciones[0]]);
+  const toca = (o: string): void =>
+    setMarcadas((m) => (varias ? (m.includes(o) ? m.filter((x) => x !== o) : [...m, o]) : [o]));
+  return (
+    <div className="toques" role="group" aria-label={titulo}>
+      <span className="rotulo">{titulo}</span>
+      <div className="cabecera__linea">
+        {opciones.map((o) => (
+          <button key={o} type="button" className="toque" aria-pressed={marcadas.includes(o)} onClick={() => toca(o)}>
+            {o}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Las preguntas, mientras ya busca. En seco no cambian nada: enseñan cómo se contestan, con toques y sin escribir. */
+function Preguntas({ t, viaje }: { t: Textos; viaje: Viaje }) {
+  const p = t.preguntas;
+  return (
+    <div className="preguntas">
+      <h2 className="titulo">{p.titulo}</h2>
+      <Toques titulo={p.origen} opciones={["Madrid", "Barcelona", "Valencia"]} />
+      <Toques titulo={p.quienes} opciones={[t.vistazo.adultos(viaje.adultos), "1", "3", "4"]} />
+      <Toques titulo={p.fechas} opciones={p.fechasOpciones} />
+      <Toques titulo={p.gasto} opciones={p.gastoOpciones} />
+      <Toques titulo={p.buscas} opciones={p.buscasOpciones} varias />
+      <label className="toques">
+        <span className="rotulo">{p.libre}</span>
+        <input className="campo" id="algo-mas" type="text" autoComplete="off" />
+      </label>
+      <p className="dato">{p.seco}</p>
+    </div>
+  );
+}
+
 export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Reproductor }) {
   // Mientras se mira un alojamiento se dice que se está mirando; al acabar, esa línea pasa a ser la de lo mirado.
   const mirados = new Set(r.vistos.filter((s) => s.clase === "looked").map((s) => s.ref));
@@ -110,7 +158,7 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
     .map((s, i) => ({ s, i, f: frase(s, t, idioma) }))
     .filter((x) => x.f !== null && !(x.s.clase === "looking" && mirados.has(x.s.ref)))
     .reverse()
-    .slice(0, 8);
+    .slice(0, 6);
   const sitios = r.vistos.filter((s) => s.clase === "sight");
   return (
     <>
@@ -147,80 +195,55 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
           ))}
         </div>
       )}
-      <p className="dato">{viaje.muestra ? t.viaje.muestra : ""}</p>
+      {!r.acabado && <Preguntas t={t} viaje={viaje} />}
     </>
   );
 }
 
+export type Pestana = "days" | "stay" | "money" | "notes";
+
 type DeViaje = Comun & {
   viaje: Viaje;
   reparto: Reparto;
+  pestana: Pestana;
   dia: number | null;
   ritmo: Ritmo;
   manera: Manera["id"];
   parada: string | null;
+  quitadas: string[];
+  anadidas: string[];
+  aLaPestana: (p: Pestana) => void;
   alDia: (d: number | null) => void;
   alRitmo: (r: Ritmo) => void;
   aLaManera: (m: Manera["id"]) => void;
   aLaParada: (id: string | null) => void;
   alAlojamiento: (id: string) => void;
+  alQuitar: (id: string) => void;
+  alAnadir: (id: string) => void;
+  alMover: (id: string, dia: number) => void;
 };
 
-function FilaDeParada({
-  t,
-  p,
-  n,
-  activa,
-  alTocar,
-}: {
-  t: Textos;
-  p: Parada;
-  n: number;
-  activa: boolean;
-  alTocar: () => void;
-}) {
+function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
   return (
-    <button type="button" className="parada-fila" aria-current={activa} onClick={alTocar}>
-      <span
-        className="parada-fila__foto"
-        style={p.foto ? { backgroundImage: `url(${foto(p.foto.url, 128)})` } : undefined}
-      >
-        {p.foto ? null : p.nombre.slice(0, 1)}
-        <span className="parada-fila__n">{n}</span>
-      </span>
-      <span className="parada-fila__texto">
-        <b>{p.nombre}</b>
-        <p>{p.porQue}</p>
-        <span className="cabecera__linea">
-          <span className="dato">{duracion(p.minutos)}</span>
-          {p.imprescindible && <span className="pastilla pastilla--oro">{t.viaje.imprescindible}</span>}
-        </span>
-      </span>
-    </button>
+    <span
+      className="parada-fila__foto"
+      style={p.foto ? { backgroundImage: `url(${foto(p.foto.url, 128)})` } : undefined}
+    >
+      {p.foto ? null : p.nombre.slice(0, 1)}
+      {n !== null && <span className="parada-fila__n">{n}</span>}
+    </span>
   );
 }
 
-export function TuViaje(x: DeViaje) {
+function Dias(x: DeViaje) {
   const { t, idioma, viaje, reparto } = x;
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
-  const dias = reparto.dias.map((d, i) => ({ ...d, i })).filter((d) => x.dia === null || d.i === x.dia);
-  const n = noches(viaje.entrada, viaje.salida);
+  const abierto = x.dia === null ? null : (reparto.dias[x.dia] ?? null);
+  const fuera = reparto.fuera.filter((id) => !x.quitadas.includes(id));
   return (
     <>
-      <div className="cabecera">
-        <span className="rotulo">{t.viaje.rotulo}</span>
-        <h1 className="lugar">{viaje.destino.nombre}</h1>
-        <div className="cabecera__linea">
-          <span className="pastilla">
-            {diaCorto(viaje.entrada, idioma)} → {diaCorto(viaje.salida, idioma)}
-          </span>
-          <span className="pastilla">{t.vistazo.noches(n)}</span>
-          <span className="pastilla">{t.vistazo.adultos(viaje.adultos)}</span>
-        </div>
-      </div>
-
       <div className="grupo">
-        <div className="mando mando--dias" role="group" aria-label={t.viaje.rotulo}>
+        <div className="mando mando--dias" role="group" aria-label={t.pestanas.days}>
           <button type="button" aria-pressed={x.dia === null} onClick={() => x.alDia(null)}>
             <small>{t.viaje.todos}</small>
             <b>{reparto.dias.length}</b>
@@ -244,7 +267,7 @@ export function TuViaje(x: DeViaje) {
         </div>
       </div>
 
-      {x.dia === null && (
+      {abierto === null && (
         <div className="resumen-dias">
           {reparto.dias.map((d, i) => {
             const paradas = d.paradas.flatMap((id) => deParada.get(id) ?? []);
@@ -269,110 +292,204 @@ export function TuViaje(x: DeViaje) {
         </div>
       )}
 
-      {x.dia !== null &&
-        dias.map((d) => {
-          const paradas = d.paradas.flatMap((id) => deParada.get(id) ?? []);
-          const ruta = diaEnGoogleMaps(paradas.map((p) => p.punto));
-          const andado = d.metros.reduce((s, m) => s + m, 0);
-          return (
-            <div className="grupo" key={d.fecha}>
-              <div className="grupo__cab">
-                <h2 className="titulo">
-                  {t.viaje.dia(d.i + 1)}
-                  {d.titulo ? `, ${d.titulo}` : ""}
-                </h2>
-              </div>
-              <span className="dato">
-                {diaCorto(d.fecha, idioma)}, {t.viaje.paradas(paradas.length)}
-                {andado > 0 ? `, ${andar(andado, idioma).lejos}` : ""}
-              </span>
-              {paradas.length === 0 && <p className="suave">{t.viaje.sinParadas}</p>}
-              <div className="paradas">
-                {paradas.map((p, i) => (
-                  <div key={p.id}>
-                    <FilaDeParada t={t} p={p} n={i + 1} activa={x.parada === p.id} alTocar={() => x.aLaParada(p.id)} />
-                    {x.parada === p.id && (
-                      <div className="tramo" style={{ minHeight: 0 }}>
-                        <span />
-                        <span className="cabecera__linea">
-                          <a className="enlace" href={enGoogleMaps(p.punto, p.nombre)} target="_blank" rel="noreferrer">
-                            {t.viaje.enMapas}
-                          </a>
-                          {p.foto?.autor && p.foto.licencia && (
-                            <span className="credito">{t.foto(p.foto.autor, p.foto.licencia)}</span>
-                          )}
-                        </span>
-                      </div>
-                    )}
-                    {i < paradas.length - 1 && (
-                      <div className="tramo">
-                        <span className="dato">
-                          {t.viaje.andando(andar(d.metros[i], idioma).lejos, andar(d.metros[i], idioma).minutos)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {ruta !== null && x.dia !== null && (
-                <a className="enlace" href={ruta} target="_blank" rel="noreferrer">
-                  {t.viaje.diaEnMapas}
-                </a>
-              )}
-            </div>
-          );
-        })}
+      {abierto !== null && x.dia !== null && (
+        <div className="grupo">
+          <h2 className="titulo">
+            {t.viaje.dia(x.dia + 1)}
+            {abierto.titulo ? `, ${abierto.titulo}` : ""}
+          </h2>
+          <span className="dato">
+            {diaCorto(abierto.fecha, idioma)}, {t.viaje.paradas(abierto.paradas.length)}
+            {abierto.metros.length > 0
+              ? `, ${
+                  andar(
+                    abierto.metros.reduce((s, m) => s + m, 0),
+                    idioma,
+                  ).lejos
+                }`
+              : ""}
+          </span>
+          {abierto.paradas.length === 0 && <p className="suave">{t.viaje.sinParadas}</p>}
+          <div className="paradas">
+            {abierto.paradas
+              .flatMap((id) => deParada.get(id) ?? [])
+              .map((p, i, todas) => (
+                <div key={p.id}>
+                  <button
+                    type="button"
+                    className="parada-fila"
+                    aria-expanded={x.parada === p.id}
+                    onClick={() => x.aLaParada(p.id)}
+                  >
+                    <FotoDeParada p={p} n={i + 1} />
+                    <span className="parada-fila__texto">
+                      <b>{p.nombre}</b>
+                      <span className="parada-fila__porque">{p.porQue}</span>
+                      <span className="cabecera__linea">
+                        <span className="dato">{duracion(p.minutos)}</span>
+                        {p.imprescindible && <span className="pastilla pastilla--oro">{t.viaje.imprescindible}</span>}
+                        {x.anadidas.includes(p.id) && <span className="pastilla">{t.acciones.tuya}</span>}
+                      </span>
+                    </span>
+                  </button>
+                  {x.parada === p.id && (
+                    <div className="acciones">
+                      <a className="toque" href={enGoogleMaps(p.punto, p.nombre)} target="_blank" rel="noreferrer">
+                        {t.viaje.enMapas}
+                      </a>
+                      {reparto.dias.map((d, n) =>
+                        n === x.dia ? null : (
+                          <button key={d.fecha} type="button" className="toque" onClick={() => x.alMover(p.id, n)}>
+                            {t.acciones.mover} {n + 1}
+                          </button>
+                        ),
+                      )}
+                      <button type="button" className="toque toque--quita" onClick={() => x.alQuitar(p.id)}>
+                        {t.acciones.quitar}
+                      </button>
+                      {p.foto?.autor && p.foto.licencia && (
+                        <span className="credito">{t.foto(p.foto.autor, p.foto.licencia)}</span>
+                      )}
+                    </div>
+                  )}
+                  {i < todas.length - 1 && (
+                    <div className="tramo">
+                      <span className="dato">
+                        {t.viaje.andando(
+                          andar(abierto.metros[i], idioma).lejos,
+                          andar(abierto.metros[i], idioma).minutos,
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+          {abierto.paradas.length > 1 && (
+            <a
+              className="enlace"
+              href={diaEnGoogleMaps(abierto.paradas.flatMap((id) => deParada.get(id)?.punto ?? [])) ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t.viaje.diaEnMapas}
+            </a>
+          )}
+        </div>
+      )}
 
-      {reparto.fuera.length > 0 && (
+      {fuera.length > 0 && (
         <div className="grupo">
           <span className="rotulo">{t.viaje.fuera}</span>
           <div className="cabecera__linea">
-            {reparto.fuera.map((id) => (
-              <span key={id} className="pastilla">
-                {deParada.get(id)?.nombre}
-              </span>
+            {fuera.map((id) => (
+              <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
+                + {deParada.get(id)?.nombre}
+              </button>
             ))}
           </div>
         </div>
       )}
+      {x.quitadas.length > 0 && (
+        <div className="grupo">
+          <span className="rotulo">{t.acciones.quitadas}</span>
+          <div className="cabecera__linea">
+            {x.quitadas.map((id) => (
+              <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
+                {t.acciones.reponer}: {deParada.get(id)?.nombre}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
+function Dormir(x: DeViaje) {
+  const { t, idioma, viaje } = x;
+  const enManeras = new Set(viaje.maneras.map((m) => m.alojamiento));
+  const otros = viaje.alojamientos.filter((a) => !enManeras.has(a.id));
+  return (
+    <>
       <div className="grupo">
         <div className="grupo__cab">
           <h2 className="titulo">{t.viaje.maneras}</h2>
-          <span className="dato">{t.viaje.soloDormir}</span>
         </div>
         <div className="maneras">
           {viaje.maneras.map((m) => {
             const a = viaje.alojamientos.find((al) => al.id === m.alojamiento);
+            const elegida = x.manera === m.id;
             return (
-              <button
-                key={m.id}
-                type="button"
-                className="manera"
-                aria-pressed={x.manera === m.id}
-                onClick={() => x.aLaManera(m.id)}
-              >
-                <span className="manera__nombre">{t.viaje.manera[m.id]}</span>
-                <span className="manera__precio">{dinero(m.total, m.moneda, idioma)}</span>
-                <span className="manera__donde">{a?.nombre}</span>
-                {x.manera === m.id && (
-                  <>
-                    <span className="manera__gana">
+              <div key={m.id} className="manera" data-elegida={elegida}>
+                <button type="button" className="manera__cab" aria-pressed={elegida} onClick={() => x.aLaManera(m.id)}>
+                  <span className="manera__nombre">{t.viaje.manera[m.id]}</span>
+                  <span className="manera__precio">{dinero(m.total, m.moneda, idioma)}</span>
+                  <span className="manera__donde">{a?.nombre}</span>
+                </button>
+                {elegida && (
+                  <div className="manera__cuerpo">
+                    <p className="manera__gana">
                       <b>{t.viaje.gana}. </b>
                       {m.gana}
-                    </span>
-                    <span className="manera__gana">
+                    </p>
+                    <p className="manera__gana">
                       <b>{t.viaje.pierde}. </b>
                       {m.pierde}
-                    </span>
-                  </>
+                    </p>
+                    {a && (
+                      <button type="button" className="enlace" onClick={() => x.alAlojamiento(a.id)}>
+                        {t.dormir.ficha}
+                      </button>
+                    )}
+                  </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
       </div>
+      {otros.length > 0 && (
+        <div className="grupo">
+          <span className="rotulo">{t.dormir.otros}</span>
+          {otros.map((a) => (
+            <button key={a.id} type="button" className="otro" onClick={() => x.alAlojamiento(a.id)}>
+              <span>{a.nombre}</span>
+              <b>{dinero(a.precio.total, a.precio.moneda, idioma)}</b>
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
+function Cuentas(x: DeViaje) {
+  const { t, idioma, viaje } = x;
+  const tope = Math.max(...viaje.maneras.map((m) => m.total), 1);
+  return (
+    <>
+      <div className="grupo">
+        <h2 className="titulo">{t.cuentas.lado}</h2>
+        <div className="barras">
+          {viaje.maneras.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className="barra"
+              aria-pressed={x.manera === m.id}
+              onClick={() => x.aLaManera(m.id)}
+            >
+              <span className="barra__nombre">{t.viaje.manera[m.id]}</span>
+              <span className="barra__precio">{dinero(m.total, m.moneda, idioma)}</span>
+              <span className="barra__via">
+                <i style={{ width: `${(m.total / tope) * 100}%` }} />
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="dato">{t.cuentas.incluye}</p>
+      </div>
       {viaje.palancas.length > 0 && (
         <div className="grupo">
           <h2 className="titulo">{t.viaje.palancas}</h2>
@@ -385,21 +502,65 @@ export function TuViaje(x: DeViaje) {
           ))}
         </div>
       )}
+      <p className="dato">{t.cuentas.fecha}</p>
+    </>
+  );
+}
 
-      {viaje.avisos.length > 0 && (
-        <div className="grupo">
-          <span className="rotulo">{t.viaje.avisos}</span>
-          {viaje.avisos.map((a) => (
-            <p className="aviso" key={a}>
-              {a}
-            </p>
-          ))}
-        </div>
-      )}
+function Avisos({ t, viaje }: DeViaje) {
+  return (
+    <>
+      <div className="grupo">
+        <h2 className="titulo">{t.viaje.avisos}</h2>
+        {viaje.avisos.map((a) => (
+          <p className="aviso" key={a}>
+            {a}
+          </p>
+        ))}
+      </div>
       <p className="credito">
         {viaje.muestra ? `${t.viaje.muestra} ` : ""}
         {t.ia}
       </p>
+    </>
+  );
+}
+
+export function TuViaje(x: DeViaje) {
+  const { t, idioma, viaje, reparto } = x;
+  const elegida = viaje.maneras.find((m) => m.id === x.manera) ?? viaje.maneras[0];
+  const puestas = reparto.dias.reduce((s, d) => s + d.paradas.length, 0);
+  const andado = reparto.dias.reduce((s, d) => s + d.metros.reduce((a, m) => a + m, 0), 0);
+  const pestanas: Pestana[] = ["days", "stay", "money", "notes"];
+  return (
+    <>
+      <CabeceraDelViaje t={t} idioma={idioma} viaje={viaje} rotulo={t.viaje.rotulo} />
+      <div className="cifras">
+        <div className="oro">
+          <b>{elegida ? dinero(elegida.total, elegida.moneda, idioma) : "?"}</b>
+          <span>{t.cifras.total}</span>
+        </div>
+        <div>
+          <b>{puestas}</b>
+          <span>{t.cifras.paradas}</span>
+        </div>
+        <div>
+          <b>{andar(andado, idioma).lejos}</b>
+          <span>{t.cifras.andando}</span>
+        </div>
+      </div>
+      <div className="pestanas" role="tablist" aria-label={t.viaje.rotulo}>
+        {pestanas.map((p) => (
+          <button key={p} type="button" role="tab" aria-selected={x.pestana === p} onClick={() => x.aLaPestana(p)}>
+            {t.pestanas[p]}
+            {p === "notes" && viaje.avisos.length > 0 && <i>{viaje.avisos.length}</i>}
+          </button>
+        ))}
+      </div>
+      {x.pestana === "days" && <Dias {...x} />}
+      {x.pestana === "stay" && <Dormir {...x} />}
+      {x.pestana === "money" && <Cuentas {...x} />}
+      {x.pestana === "notes" && <Avisos {...x} />}
     </>
   );
 }
@@ -412,9 +573,7 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
         ← {t.ficha.volver}
       </button>
       <div className="cabecera">
-        <h1 className="titulo" style={{ fontSize: "1.8rem" }}>
-          {a.nombre}
-        </h1>
+        <h1 className="titulo titulo--grande">{a.nombre}</h1>
         <div className="cabecera__linea">
           {a.estrellas !== null && <span className="pastilla">{t.ficha.estrellas(a.estrellas)}</span>}
           {a.nota !== null && a.opiniones !== null && (

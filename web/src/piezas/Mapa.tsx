@@ -16,7 +16,8 @@ export type Zona = { punto: Punto; radio: number };
 
 type Props = {
   tema: Tema;
-  globo?: boolean;
+  /** Avisa cuando el mapa ya se ha pintado por primera vez, para quitar la pantalla de carga. */
+  alPintar?: () => void;
   camara: Camara;
   /** El hueco que tapa la hoja, para que el encuadre caiga en lo que se ve. */
   hueco: { izquierda: number; abajo: number; arriba: number };
@@ -165,12 +166,14 @@ function flecha(): { width: number; height: number; data: Uint8Array } {
   return { width: lado, height: lado, data: new Uint8Array(c.getImageData(0, 0, lado, lado).data.buffer) };
 }
 
-export function Mapa({ tema, globo, camara, hueco, tenues, vivos, zona, ruta, otrasRutas, marcas }: Props) {
+export function Mapa({ tema, alPintar, camara, hueco, tenues, vivos, zona, ruta, otrasRutas, marcas }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaDeMapLibre | null>(null);
   const [listo, setListo] = useState(0);
   const puestas = useRef(new Map<string, { marca: maplibregl.Marker; el: HTMLDivElement }>());
   const [, repinta] = useState(0);
+  const avisa = useRef(alPintar);
+  avisa.current = alPintar;
 
   // El mapa se crea una vez; al cambiar de tema, cambia de estilo y vuelve a avisar de que está listo.
   useEffect(() => {
@@ -194,9 +197,16 @@ export function Mapa({ tema, globo, camara, hueco, tenues, vivos, zona, ruta, ot
     m.on("style.load", () => {
       setListo((n) => n + 1);
     });
+    // La pantalla de carga se quita cuando el mapa ya se ve: al completarse su primer dibujo o, si está en
+    // movimiento y no para, un momento después de cargar su estilo. Y siempre, pase lo que pase, a los seis segundos.
+    const pintado = (): void => avisa.current?.();
+    m.once("load", pintado);
+    m.once("style.load", () => setTimeout(pintado, 1100));
+    const tope = setTimeout(pintado, 6000);
     m.once("idle", () => document.body.setAttribute("data-mapa", "listo"));
     mapa.current = m;
     return () => {
+      clearTimeout(tope);
       for (const { marca } of puestas.current.values()) marca.remove();
       puestas.current.clear();
       m.remove();
@@ -204,11 +214,6 @@ export function Mapa({ tema, globo, camara, hueco, tenues, vivos, zona, ruta, ot
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // El mundo, plano o como un globo que se aplana solo al acercarse.
-  useEffect(() => {
-    if (listo > 0) mapa.current?.setProjection({ type: globo ? "globe" : "mercator" });
-  }, [globo, listo]);
 
   const primerTema = useRef(tema);
   useEffect(() => {

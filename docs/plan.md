@@ -6,7 +6,7 @@ Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 2, a tu visto bueno a la identidad (10.2).** En curso, la tanda 2: **la web, en seco**. Hechos, la forma del viaje para la web (1.5), el ritmo (4.10, adelantado), el viaje grabado de Lisboa (10.3), el esqueleto de la web (10.1) y **la identidad de El Dorado** (10.2), puesta ya en sus primeras pantallas: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje por días y la ficha de un alojamiento. Antes de seguir con lo que falta de la tanda (las preguntas, mover paradas, la portada y el repaso para el móvil), tu visto bueno a la identidad.
+**Estamos aquí: la tanda 2, la web en seco, casi cerrada.** La identidad tiene tu visto bueno, con el mundo en plano. Hecho en seco, con el viaje grabado: el mapa con su pantalla de carga, la investigación con sus preguntas, el viaje por pestañas con sus paradas a mano, la ficha del alojamiento, la portada y, por tu aviso de que el mapa solo no basta, **el panel**: el carril, tus viajes y tu clave. Falta el repaso final con capturas (10.9 y 10.10) para cerrar la tanda y pedirte el visto bueno.
 
 ## El estado
 
@@ -23,7 +23,7 @@ Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026.
 | 8. Por momentos | pendiente |
 | 9. Antes de vender | pendiente |
 | 10. La web | en parte |
-| 11. La cuenta y tu panel | pendiente |
+| 11. La cuenta y tu panel | en parte |
 | 12. La guía | pendiente |
 | 13. Enseñarlo | pendiente |
 
@@ -235,19 +235,19 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | Punto | Qué | Estado |
 |---|---|---|
 | 10.1 | **Dónde vive y con qué se hace.** Una web propia, en `web/`, como la de DaVi, con la misma familia de piezas que Cortex (Next.js y React) y el mapa abierto (MapLibre con OpenFreeMap). Lleva sus dependencias; el agente sigue sin ninguna. Lee la forma del viaje y el ritmo de la carpeta del agente, y sus tipos entran en la batería. | hecho |
-| 10.2 | **La identidad y el sistema de diseño.** De la familia de Cortex toma la tinta, el gris y las letras de leer y de contar; lo suyo es el oro, que solo se usa para lo que el agente encuentra, la cursiva de mapa antiguo para los lugares y un mapa callado, propio. Con sus piezas (el buscador, la hoja, los mandos, las tarjetas y las marcas del mapa), en claro y en oscuro, en ancho y en móvil. Hecha y puesta en las primeras pantallas: a tu visto bueno. | hecho |
+| 10.2 | **La identidad y el sistema de diseño.** De la familia de Cortex toma la tinta, el gris y las letras de leer y de contar; lo suyo es el oro, que solo se usa para lo que el agente encuentra, la cursiva de mapa antiguo para los lugares y un mapa callado, propio. Con sus piezas, en claro y en oscuro, en ancho y en móvil. Con tu visto bueno del 23-nov, y el mundo en plano. | hecho |
 | 10.3 | **El viaje grabado.** Lisboa, con lo que ya salió de verdad (la búsqueda, las fichas de cómo es y dieciocho sitios de datos abiertos, con su foto, su autor y su licencia) y con lo que aún no decide el agente hecho a mano y marcado como muestra: qué sitios, por qué, y las tres maneras. Lo junta `agent/scripts/monta_viaje.ts` y lo graba `agent/launcher/grabar.ts`, en la mesa, fuera del repositorio. Siete pruebas, con el caso inventado. | hecho |
-| 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, que completa lo que escribes; el vuelo del mapa hasta el destino, y el primer vistazo. Primera versión, en seco. Falta decidir contigo si el mundo se abre plano o como un globo. | en parte |
-| 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas y lo que falta. Movida por los sucesos de la casa. Primera versión, con los sucesos grabados; faltan las preguntas. | en parte |
-| 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, el ritmo, dónde duermes y cómo llegas, las tres maneras y las palancas. Primera versión; faltan quitar, añadir y mover una parada. | en parte |
-| 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba; la del transporte y la de una parada. Hecha la del alojamiento, en su primera versión. | en parte |
-| 10.8 | **La portada.** Qué es, el viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta. En inglés y en español. | pendiente |
+| 10.4 | **El mapa del mundo y el buscador.** La barra de dónde y cuándo, que completa lo que escribes; el vuelo del mapa hasta el destino, en plano, y el primer vistazo. Con su pantalla de carga, y el mapa precargado desde que entras en el panel, como pediste el 23-nov. En seco: el primer vistazo de verdad llega con el 5.5. | hecho |
+| 10.5 | **La investigación, en vivo.** Los pulsos donde se busca, los contadores, los hallazgos que aparecen y la hoja de al lado, con las preguntas mientras ya busca. Movida por los sucesos de la casa. En seco: los sucesos son los grabados y las respuestas aún no cambian nada. | hecho |
+| 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, y la hoja por pestañas: los días, con el ritmo y con quitar, añadir y mover una parada; dónde dormir, con las tres maneras; las cuentas, con las palancas, y los avisos. Arriba, tres cifras: lo que cuesta, las paradas y lo que se anda. | hecho |
+| 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba, y la de una parada, con su enlace a Google Maps y el autor de su foto. Falta la del transporte, que espera a tener un precio. | en parte |
+| 10.8 | **La portada.** Qué es, un viaje que se dibuja solo, cómo funciona en tres pasos y lo que cuida, con la puerta al mapa. En inglés y en español. Primera versión: falta qué cuesta, que es decisión tuya, y decidir con qué datos se hace el viaje de ejemplo. | en parte |
 | 10.9 | **En el móvil, para todos y rápida.** La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla. | pendiente |
 | 10.10 | **La revisión con capturas.** Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas. | pendiente |
 
 ## 11. La cuenta y tu panel
 
-*pendiente.* Lo que hace que tu viaje sea tuyo y siga ahí: entrar, tu clave de IA y tus viajes.
+*en parte.* Lo que hace que tu viaje sea tuyo y siga ahí: entrar, tu clave de IA y tus viajes.
 
 - **Deja**: registro, sesión, tu clave guardada cifrada y un panel con tus viajes y su gasto
 - **Se prueba**: con cuentas inventadas; la seguridad, con su adversario
@@ -256,8 +256,8 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | Punto | Qué | Estado |
 |---|---|---|
 | 11.1 | **El registro y la sesión.** Con qué se guardan las cuentas y cómo se entra. | por decidir |
-| 11.2 | **Tu clave de IA.** La pestaña donde pegas tu clave de Claude: se comprueba, se guarda cifrada, no se enseña entera y se borra cuando quieras. | pendiente |
-| 11.3 | **Tu panel.** Tus viajes, dónde dejaste cada uno y lo que te espera. | pendiente |
+| 11.2 | **Tu clave de IA.** La pestaña donde pegas tu clave de Claude: se comprueba, se guarda cifrada, no se enseña entera y se borra cuando quieras. Hecha su pantalla, en seco y con el campo apagado a propósito: una clave de verdad no se pega donde aún no se guarda como debe. | en parte |
+| 11.3 | **Tu panel.** Tus viajes, cada uno dibujado y donde lo dejaste, y la puerta para empezar otro; con el carril que lleva de una parte del panel a otra. Hecho en seco, con el viaje grabado; adelantado a la tanda 2 por tu aviso del 23-nov: el mapa solo no basta. | en parte |
 | 11.4 | **El gasto de tu clave.** Lo que ha gastado cada viaje, y lo que va a gastar lo siguiente. | pendiente |
 | 11.5 | **Compartir un viaje.** Un enlace para que lo vea quien viaja contigo, sin poder cambiarlo. Lo propone la sesión. | por decidir |
 

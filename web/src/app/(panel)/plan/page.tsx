@@ -1,21 +1,22 @@
 "use client";
 
-// El mapa es la página. Aquí vive lo que se decide: en qué etapa estás (el mundo, el primer vistazo, la investigación
-// o tu viaje), qué día miras, a qué ritmo y de qué manera. En seco, todo sale del viaje grabado.
+// El mapa es la pieza central del panel. Aquí vive lo que se decide: en qué etapa estás (el mundo, el primer vistazo,
+// la investigación o tu viaje), qué día miras, a qué ritmo, de qué manera, y lo que has quitado, añadido o movido.
+// En seco, todo sale del viaje grabado.
 
 import { useEffect, useMemo, useState } from "react";
-import type { Manera, Punto, Ritmo, Suceso, Viaje } from "../../../../agent/output/viaje.ts";
-import { fechasDe, repartir } from "../../../../agent/scripts/ritmo.ts";
-import { Buscador, type Busqueda } from "../../piezas/Buscador.tsx";
-import { Hoja } from "../../piezas/Hoja.tsx";
-import { Mapa, type Camara, type Marca } from "../../piezas/Mapa.tsx";
-import { EnVivo, Ficha, Mundo, TuViaje, Vistazo } from "../../piezas/Pantallas.tsx";
-import { dinero } from "../../lib/formato.ts";
-import { TEXTOS } from "../../lib/textos.ts";
-import { foto, useAlto, useIdioma, useMovil, useReproductor, useTema } from "../../lib/usar.ts";
+import type { Manera, Punto, Ritmo, Suceso } from "../../../../../agent/output/viaje.ts";
+import { fechasDe, repartir } from "../../../../../agent/scripts/ritmo.ts";
+import { Buscador, type Busqueda } from "../../../piezas/Buscador.tsx";
+import { Cargando } from "../../../piezas/Cargando.tsx";
+import { Hoja } from "../../../piezas/Hoja.tsx";
+import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
+import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
+import { dinero } from "../../../lib/formato.ts";
+import { TEXTOS } from "../../../lib/textos.ts";
+import { foto, useAlto, useGrabado, useIdioma, useMovil, useReproductor, useTema } from "../../../lib/usar.ts";
 
 type Etapa = "mundo" | "vistazo" | "vivo" | "viaje";
-type Grabado = { viaje: Viaje; sucesos: Suceso[] };
 
 const encuadreDe = (puntos: Punto[], margen = 0.12) => {
   const lats = puntos.map((p) => p.lat);
@@ -43,49 +44,48 @@ export default function Planear() {
   const tema = useTema();
   const movil = useMovil();
   const alto = useAlto();
-  const [grabado, setGrabado] = useState<Grabado | null>(null);
+  const grabado = useGrabado();
+  const [pintado, setPintado] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("mundo");
   const [lejos, setLejos] = useState<Camara | null>(null);
+  const [pestana, setPestana] = useState<Pestana>("days");
   const [dia, setDia] = useState<number | null>(null);
   const [ritmo, setRitmo] = useState<Ritmo>("normal");
   const [manera, setManera] = useState<Manera["id"]>("best_value");
   const [parada, setParada] = useState<string | null>(null);
   const [ficha, setFicha] = useState<string | null>(null);
-  const [globo, setGlobo] = useState(false);
+  const [quitadas, setQuitadas] = useState<string[]>([]);
+  const [anadidas, setAnadidas] = useState<string[]>([]);
+  const [fijadas, setFijadas] = useState<Record<string, number>>({});
 
+  // Para abrir una pantalla suelta: ?at=look, ?at=live o ?at=trip, con &day=2, &tab=stay o &stay=3.
   useEffect(() => {
+    if (!grabado) return;
     const pedido = new URLSearchParams(window.location.search);
-    setGlobo(pedido.get("globe") === "1");
-    fetch("/api/recorded")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((datos: Grabado | null) => {
-        setGrabado(datos);
-        // Para revisar una pantalla suelta: ?at=look, ?at=live o ?at=trip.
-        const en = pedido.get("at");
-        if (datos !== null && en !== null) setEtapa(en === "look" ? "vistazo" : en === "live" ? "vivo" : "viaje");
-        if (pedido.get("day") !== null) setDia(Number(pedido.get("day")) - 1);
-        if (pedido.get("stay") !== null && datos !== null)
-          setFicha(datos.viaje.alojamientos[Number(pedido.get("stay")) - 1]?.id ?? null);
-      })
-      .catch(() => setGrabado(null));
-  }, []);
+    const en = pedido.get("at");
+    if (en !== null) setEtapa(en === "look" ? "vistazo" : en === "live" ? "vivo" : "viaje");
+    if (pedido.get("day") !== null) setDia(Number(pedido.get("day")) - 1);
+    const pedida = pedido.get("tab");
+    if (pedida === "days" || pedida === "stay" || pedida === "money" || pedida === "notes") setPestana(pedida);
+    if (pedido.get("stay") !== null) setFicha(grabado.viaje.alojamientos[Number(pedido.get("stay")) - 1]?.id ?? null);
+  }, [grabado]);
 
   const viaje = grabado?.viaje ?? null;
   const r = useReproductor(grabado?.sucesos ?? [], etapa === "vivo");
   const elegida = viaje?.maneras.find((m) => m.id === manera) ?? viaje?.maneras[0] ?? null;
   const cama = viaje?.alojamientos.find((a) => a.id === elegida?.alojamiento) ?? null;
 
-  // Los días se reparten aquí, al instante, con el ritmo que pidas y desde donde duermes.
+  // Los días se reparten aquí, al instante, con el ritmo que pidas, desde donde duermes y con lo que has cambiado.
   const reparto = useMemo(() => {
     if (viaje === null) return { dias: [], fuera: [] };
-    return repartir(viaje.paradas, fechasDe(viaje.entrada, viaje.salida), ritmo, cama?.punto ?? viaje.destino.punto);
-  }, [viaje, ritmo, cama]);
+    const fechas = fechasDe(viaje.entrada, viaje.salida);
+    return repartir(viaje.paradas, fechas, ritmo, cama?.punto ?? viaje.destino.punto, { quitadas, anadidas, fijadas });
+  }, [viaje, ritmo, cama, quitadas, anadidas, fijadas]);
   const deParada = useMemo(() => new Map((viaje?.paradas ?? []).map((p) => [p.id, p])), [viaje]);
 
   const alBuscar = (b: Busqueda): void => {
-    const esElGrabado =
-      viaje !== null && b.lugar.nombre.toLowerCase().startsWith(viaje.destino.nombre.toLowerCase().slice(0, 5));
-    if (esElGrabado) {
+    const nombre = viaje?.destino.nombre.toLowerCase().slice(0, 5) ?? null;
+    if (nombre !== null && b.lugar.nombre.toLowerCase().startsWith(nombre)) {
       setLejos(null);
       setEtapa("vistazo");
       return;
@@ -98,15 +98,28 @@ export default function Planear() {
     );
     setEtapa("mundo");
   };
+  const quita = (id: string): void => {
+    setQuitadas((q) => [...q.filter((x) => x !== id), id]);
+    setAnadidas((a) => a.filter((x) => x !== id));
+    setFijadas(({ [id]: _, ...resto }) => resto);
+    setParada(null);
+  };
+  const anade = (id: string): void => {
+    setQuitadas((q) => q.filter((x) => x !== id));
+    setAnadidas((a) => [...a.filter((x) => x !== id), id]);
+  };
+  const mueve = (id: string, aDia: number): void => {
+    setFijadas((f) => ({ ...f, [id]: aDia }));
+    setDia(aDia);
+  };
 
   // ---------- lo que se pinta en el mapa, según la etapa
   let camara: Camara = lejos ?? { centro: { lat: 28, lon: 8 }, cerca: movil ? 0.6 : 1.55 };
   let tenues: Punto[] = [];
   let vivos: Punto[] = [];
   let zona = null;
-  let enLaZona = null;
   let ruta: Punto[] = [];
-  let otrasRutas: Punto[][] = [];
+  const otrasRutas: Punto[][] = [];
   const marcas: Marca[] = [];
   const pinDeCama = (id: string, opciones: { elegida?: boolean; mirando?: boolean } = {}): void => {
     const a = viaje?.alojamientos.find((x) => x.id === id);
@@ -166,6 +179,7 @@ export default function Planear() {
     const ha = (clase: Suceso["clase"]): Suceso[] => r.vistos.filter((s) => s.clase === clase);
     const z = ha("zone").at(-1);
     const conPrecio = ha("lodgings_priced").length > 0;
+    let enLaZona = null;
     if (z?.punto && z.radio && !conPrecio) {
       zona = { punto: z.punto, radio: z.radio };
       enLaZona = encuadreDelCirculo(z.punto, z.radio);
@@ -174,14 +188,16 @@ export default function Planear() {
     tenues = ha("lodgings_found").flatMap((s) => s.puntos ?? []);
     vivos = ha("lodgings_pass").flatMap((s) => s.puntos ?? []);
     const mirando = [...r.vistos].reverse().find((s) => s.clase === "looking" || s.clase === "looked");
-    for (const f of ha("finalist"))
+    for (const f of ha("finalist")) {
       pinDeCama(f.ref ?? "", { mirando: mirando?.clase === "looking" && mirando.ref === f.ref });
+    }
     const sitios = ha("sight");
     for (const s of sitios) pinDeParada(s.ref ?? "", null, false, true);
-    const dibujados = ha("day").map((s) => (s.n ?? 1) - 1);
-    const lineas = dibujados.map((i) => (viaje.dias[i]?.paradas ?? []).flatMap((id) => deParada.get(id)?.punto ?? []));
+    const lineas = ha("day").map((s) =>
+      (viaje.dias[(s.n ?? 1) - 1]?.paradas ?? []).flatMap((id) => deParada.get(id)?.punto ?? []),
+    );
     ruta = lineas.at(-1) ?? [];
-    otrasRutas = lineas.slice(0, -1);
+    otrasRutas.push(...lineas.slice(0, -1));
     if (sitios.length > 0) vivos = [];
     // La cámara sigue a lo que pasa: primero la zona que se busca, después los que pasan y, al final, el viaje entero.
     if (sitios.length > 0) camara = { encuadre: viaje.destino.encuadre, cerca: 14 };
@@ -197,17 +213,17 @@ export default function Planear() {
     const delDia = dia === null ? null : (reparto.dias[dia] ?? null);
     reparto.dias.forEach((d, i) => {
       const puntos = d.paradas.flatMap((id) => deParada.get(id)?.punto ?? []);
-      if (dia === null || i === dia) {
-        if (dia !== null) ruta = puntos;
-        else otrasRutas.push(puntos);
-      } else otrasRutas.push(puntos);
+      if (dia !== null && i === dia) ruta = puntos;
+      else otrasRutas.push(puntos);
       // Con todos los días a la vista, las paradas van pequeñas y sin número; al abrir un día, las suyas crecen.
       d.paradas.forEach((id, n) => pinDeParada(id, i === dia ? n + 1 : null, dia !== null && i !== dia, dia === null));
     });
     for (const m of viaje.maneras) pinDeCama(m.alojamiento, { elegida: m.id === elegida?.id });
     const fichaAbierta = viaje.alojamientos.find((a) => a.id === ficha);
     if (fichaAbierta && !viaje.maneras.some((m) => m.alojamiento === fichaAbierta.id)) pinDeCama(fichaAbierta.id);
-    const aLaVista = (delDia?.paradas ?? viaje.paradas.map((p) => p.id)).flatMap((id) => deParada.get(id)?.punto ?? []);
+    const aLaVista = (delDia?.paradas ?? reparto.dias.flatMap((d) => d.paradas)).flatMap(
+      (id) => deParada.get(id)?.punto ?? [],
+    );
     camara = fichaAbierta
       ? { centro: fichaAbierta.punto, cerca: 15.4 }
       : { encuadre: encuadreDe([...aLaVista, ...(cama ? [cama.punto] : [])]), cerca: 15.5 };
@@ -223,7 +239,7 @@ export default function Planear() {
     <main className="app">
       <Mapa
         tema={tema}
-        globo={globo}
+        alPintar={() => setPintado(true)}
         camara={camara}
         hueco={hueco}
         tenues={tenues}
@@ -233,10 +249,6 @@ export default function Planear() {
         otrasRutas={otrasRutas}
         marcas={marcas}
       />
-      <a className="marca" href="/">
-        <span className="marca__sol" aria-hidden="true" />
-        El Dorado
-      </a>
       <Buscador
         t={t}
         idioma={idioma}
@@ -259,7 +271,7 @@ export default function Planear() {
           corta
           etiqueta={t.vistazo.rotulo}
           pie={
-            <div style={{ display: "grid", gap: 8, width: "100%" }}>
+            <div className="pie-columna">
               <button type="button" className="boton boton--ancho" onClick={() => setEtapa("vivo")}>
                 {t.vistazo.empezar}
               </button>
@@ -272,8 +284,8 @@ export default function Planear() {
       )}
       {etapa === "vivo" && viaje !== null && (
         <Hoja
-          corta
           etiqueta={t.vivo.rotulo}
+          corta={r.acabado}
           pie={
             r.acabado ? (
               <>
@@ -295,31 +307,19 @@ export default function Planear() {
         </Hoja>
       )}
       {etapa === "viaje" && viaje !== null && abierta === null && (
-        <Hoja
-          etiqueta={t.viaje.rotulo}
-          pie={
-            cama !== null && elegida !== null ? (
-              <>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span className="rotulo">{t.viaje.manera[elegida.id]}</span>
-                  <br />
-                  <b className="manera__precio">{dinero(elegida.total, elegida.moneda, idioma)}</b>
-                </span>
-                <button type="button" className="boton boton--tinta boton--chico" onClick={() => setFicha(cama.id)}>
-                  {t.viaje.verAlojamiento}
-                </button>
-              </>
-            ) : undefined
-          }
-        >
+        <Hoja etiqueta={t.viaje.rotulo}>
           <TuViaje
             {...comun}
             viaje={viaje}
             reparto={reparto}
+            pestana={pestana}
             dia={dia}
             ritmo={ritmo}
             manera={elegida?.id ?? manera}
             parada={parada}
+            quitadas={quitadas}
+            anadidas={anadidas}
+            aLaPestana={setPestana}
             alDia={(d) => {
               setDia(d);
               setParada(null);
@@ -328,6 +328,9 @@ export default function Planear() {
             aLaManera={setManera}
             aLaParada={(id) => setParada((actual) => (actual === id ? null : id))}
             alAlojamiento={setFicha}
+            alQuitar={quita}
+            alAnadir={anade}
+            alMover={mueve}
           />
         </Hoja>
       )}
@@ -336,6 +339,7 @@ export default function Planear() {
           <Ficha {...comun} a={abierta} alVolver={() => setFicha(null)} />
         </Hoja>
       )}
+      <Cargando texto={t.cargando} fuera={pintado} />
     </main>
   );
 }

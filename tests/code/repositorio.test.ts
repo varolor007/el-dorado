@@ -65,7 +65,12 @@ test("el código, a 120 caracteres por línea", () => {
 test("ningún dato de un viaje en el repositorio: solo el caso inventado", () => {
   // Los archivos de configuración de cada paquete: el del agente, en la raíz, y el de la web, en su carpeta.
   const permitidos = new Set(["package.json", "package-lock.json", "tsconfig.json", ".prettierrc.json"]);
-  const deLaWeb = new Set(["web/package.json", "web/package-lock.json", "web/tsconfig.json"]);
+  const deLaWeb = new Set([
+    "web/package.json",
+    "web/package-lock.json",
+    "web/tsconfig.json",
+    "web/tsconfig.bateria.json",
+  ]);
   const datos = TODOS.filter(
     (a) =>
       /\.(json|csv|jsonl)$/.test(a) && !permitidos.has(a) && !deLaWeb.has(a) && !a.startsWith("tests/cases/inventado/"),

@@ -691,30 +691,30 @@ Una puerta mide las cuentas, la forma, de dónde sale cada cosa y que las piezas
 
 ## La web: lo que ves y cómo se mueve
 
-**El mapa es la página.** No hay menús que recorrer: todo pasa sobre el mapa, y a su lado (debajo, en el móvil) una hoja lleva la conversación y las fichas. Es una web propia, como la de DaVi, con su portada y su panel. Tiene que quitar fricción, funcionar igual de bien en el móvil y estar a la altura de las webs que ganan premios: por eso se diseña y se revisa con capturas, pantalla a pantalla.
+**Por dentro es un panel, y el mapa es su pieza central.** Un carril lleva de planear a tus viajes y a tu clave; el mapa solo no basta. En el mapa todo pasa sobre él, y a su lado (debajo, en el móvil) una hoja lleva la conversación y las fichas, por pestañas: los días, dónde dormir, las cuentas y los avisos. Es una web propia, como la de DaVi, con su portada y su panel. Tiene que quitar fricción, funcionar igual de bien en el móvil y estar a la altura de las webs que ganan premios: por eso se diseña y se revisa con capturas, pantalla a pantalla.
 
 - **PRINCIPIO 1. Dos datos para empezar.** Dónde y cuándo. Lo demás se pregunta con toques mientras el código ya busca: ningún formulario antes de ver algo.
-- **PRINCIPIO 2. Primero lo rápido.** En segundos, lo que no necesita IA: el mapa, las zonas, cuántos alojamientos hay y desde cuánto. Lo que tarda llega después, y se dice cuánto falta.
+- **PRINCIPIO 2. Primero lo rápido.** El mapa se precarga en cuanto entras en el panel, y mientras se despliega hay una pantalla de carga, no un hueco. En segundos, lo que no necesita IA: las zonas, cuántos alojamientos hay y desde cuánto. Lo que tarda llega después, y se dice cuánto falta.
 - **PRINCIPIO 3. Lo que se mueve es verdad.** Cada pulso en el mapa es una búsqueda de verdad en ese sitio, y cada número, un recuento del código. El movimiento explica lo que pasa; no adorna.
 - **PRINCIPIO 4. El mapa y la lista, juntos.** Cada tarjeta tiene su punto y cada punto su tarjeta. Lo que dice la IA nunca queda en un chat aparte: vive en el mapa.
-- **PRINCIPIO 5. Una idea, bien hecha.** El viaje se dibuja solo ante ti. Una tipografía con carácter, dos colores, la cámara que vuela para explicar, y nada de 3D pesado: un mapa plano que puede abrirse como un globo al alejarse.
+- **PRINCIPIO 5. Una idea, bien hecha.** El viaje se dibuja solo ante ti. La tinta y el gris de Cortex y, suyo, el oro, que solo se usa para lo que el agente encuentra; una cursiva de mapa antiguo para los lugares; la cámara que vuela para explicar, y un mapa plano, sin 3D.
 - **PRINCIPIO 6. Para todos.** Rápida en un móvil normal, usable con teclado y con lector de pantalla, en claro y en oscuro, y quieta si pides menos movimiento.
 
 ### Las pantallas
 
 | Pantalla | Qué ves | Qué haces | Estado |
 |---|---|---|---|
-| La portada | Qué es El Dorado, un viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta | Tocas el ejemplo, te registras o entras | pendiente |
-| El mapa del mundo | El mundo, con una barra arriba: dónde y cuándo | Escribes o tocas un destino; el mapa vuela hasta allí | pendiente |
-| El primer vistazo | Tu destino con sus zonas, cuántos alojamientos pasan los mínimos y desde cuánto, y los días baratos para volar | Pulsas «Empezar la investigación» | pendiente |
-| La investigación | El mapa vivo: pulsos donde se busca, contadores y hallazgos que aparecen; al lado, las preguntas, lo que he entendido y lo que falta | Contestas, miras o te vas: sigue sola | pendiente |
-| Tu viaje | El mapa con una capa por día, las paradas numeradas con su foto y sus flechas, dónde duermes y cómo llegas; las tres maneras y las palancas | Cambias de día, mueves el ritmo, abres una ficha, quitas o mueves una parada | pendiente |
-| Una ficha | Un alojamiento: sus fotos, cómo es con su prueba, su precio con su fecha y lo que te deja cerca. Una parada: por qué ir, cuánto lleva y cómo llegar | Eliges, descartas o preguntas | pendiente |
+| La portada | Qué es El Dorado, un viaje de ejemplo que se dibuja solo, cómo funciona, qué cuida y qué cuesta | Tocas el ejemplo, te registras o entras | en parte |
+| El mapa del mundo | El mundo, en plano, con una barra arriba: dónde y cuándo | Escribes o tocas un destino; el mapa vuela hasta allí | hecho |
+| El primer vistazo | Tu destino con sus zonas, cuántos alojamientos pasan los mínimos y desde cuánto, y los días baratos para volar | Pulsas «Empezar la investigación» | en parte |
+| La investigación | El mapa vivo: pulsos donde se busca, contadores y hallazgos que aparecen; al lado, las preguntas, lo que he entendido y lo que falta | Contestas, miras o te vas: sigue sola | en parte |
+| Tu viaje | El mapa con una capa por día, las paradas numeradas con su foto y sus flechas, y la hoja por pestañas: los días, dónde dormir, las cuentas y los avisos; las tres maneras y las palancas | Cambias de día, mueves el ritmo, abres una ficha, quitas, añades o mueves una parada | en parte |
+| Una ficha | Un alojamiento: sus fotos, cómo es con su prueba, su precio con su fecha y lo que te deja cerca. Una parada: por qué ir, cuánto lleva y cómo llegar | Eliges, descartas o preguntas | en parte |
 | Cerrar el viaje | Los precios de hoy, lo que ha cambiado y dónde se reserva cada cosa | Vas a reservar, a la web de quien vende | pendiente |
 | Tu guía | El cuaderno de tu viaje | Lo descargas | pendiente |
-| Tu panel | Tus viajes y dónde dejaste cada uno, tu clave de IA y lo que has gastado | Retomas un viaje o empiezas otro | pendiente |
+| Tu panel | El carril, que lleva de una parte a otra; tus viajes, cada uno dibujado y donde lo dejaste; tu clave de IA y lo que has gastado | Retomas un viaje, empiezas otro o pones tu clave | en parte |
 
-La portada va en inglés y en español, como la de DaVi; lo que ves dentro, en tu idioma. La identidad de El Dorado (su color, su letra y su manera de moverse) se diseña en la primera tanda de la web y se te enseña antes de seguir.
+La portada va en inglés y en español, como la de DaVi; lo que ves dentro, en tu idioma. La identidad de El Dorado (su color, su letra y su manera de moverse) tiene tu visto bueno del 23-nov, con el mundo en plano. «En parte» quiere decir hecho en seco, con el viaje grabado: falta enchufarlo a la casa.
 
 ## Así se busca y se elige
 

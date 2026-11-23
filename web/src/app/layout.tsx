@@ -25,6 +25,11 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 export default function Raiz({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${titulos.variable} ${texto.variable} ${numeros.variable}`}>
+      <head>
+        {/* El mapa, precargado: la conexión con sus teselas y su índice se piden antes de que haga falta. */}
+        <link rel="preconnect" href="https://tiles.openfreemap.org" crossOrigin="anonymous" />
+        <link rel="preload" as="fetch" href="https://tiles.openfreemap.org/planet" crossOrigin="anonymous" />
+      </head>
       <body>{children}</body>
     </html>
   );

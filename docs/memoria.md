@@ -15,21 +15,20 @@ biblias, y las firmó ese mismo día («okay»):
   ocho tandas. En curso, **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado.
   Lo primero que se le enseña es la identidad de El Dorado, y no se sigue sin su visto bueno a ella.
 
-**Por dónde va la tanda 2** (23-nov). Hechos: la forma del viaje para la web (1.5, `agent/output/viaje.ts`), el
-ritmo (4.10, `agent/scripts/ritmo.ts`, adelantado porque la web lo usa), el viaje grabado de Lisboa (10.3,
-`agent/scripts/monta_viaje.ts` y `agent/launcher/grabar.ts`), el esqueleto de la web (10.1) y su identidad (10.2),
-puesta en las primeras pantallas de `/plan`: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje
-por días y la ficha de un alojamiento. **Está parada en el visto bueno del PM a la identidad**, con un vídeo y doce
-capturas en una página suya (https://claude.ai/artifact/9fmWumQxtsKB7pmyaLCUn3), y en su elección del mundo: plano,
-como pidió, o como un globo que se aplana al acercarse. Falta de la tanda: las preguntas dentro de la investigación, quitar, añadir y mover
-paradas, las fichas de una parada y del transporte, la portada (10.8), el repaso del móvil y de la accesibilidad
-(10.9) y la revisión final con capturas (10.10).
+**Por dónde va la tanda 2** (23-nov). El PM dio su visto bueno a la identidad con la web ya desplegada, eligió el
+mundo en plano y pidió tres cosas: el mapa precargado, una pantalla de carga, y que por dentro sea un panel («el mapa
+solo no vale»). Hecho, en seco y con el viaje grabado: la forma del viaje (1.5), el ritmo con lo que el viajero
+cambia a mano (4.10), el viaje grabado (10.3), el esqueleto (10.1), la identidad (10.2), el mapa con su pantalla de
+carga (10.4), la investigación con sus preguntas (10.5), el viaje por pestañas (10.6), las fichas (10.7), la portada
+(10.8) y el panel: el carril, tus viajes (11.3) y la pantalla de la clave (11.2), con su campo apagado. Las direcciones:
+`/` la portada, `/plan` el mapa, `/trips` tus viajes y `/key` la clave. Falta para cerrar la tanda: el repaso del
+móvil y de la accesibilidad (10.9) y la revisión final con capturas (10.10), y con ella su visto bueno.
 
 Cómo se ve la web: el viaje grabado vive en la mesa (`<mesa>/grabado/viaje.json` y `sucesos.json`), fuera del
 repositorio, porque lleva datos de una búsqueda de verdad; si la mesa se pierde, se vuelve a grabar con `grabar.ts`
 (hace falta el run con su `como_es.json` y la muestra a mano, `muestra.json`). La web se arranca en `web/` con
 `ELDORADO_MESA` puesta (y `NODE_USE_ENV_PROXY=1` en la nube) y se abre en `/plan`. Para mirar una pantalla suelta:
-`?at=look`, `?at=live` o `?at=trip`, con `&day=2`, `&stay=3`, `&lang=es` y `&globe=1`. Las fotos de fuera pasan por el
+`?at=look`, `?at=live` o `?at=trip`, con `&day=2`, `&tab=stay`, `&stay=3` y `&lang=es`. Las fotos de fuera pasan por el
 servidor de la web, que las encoge; Wikimedia corta si se le piden muchas seguidas, así que algunas tardan.
 
 La web, desplegada (23-nov): el PM la pone en Vercel, en su equipo Aurora, desde la rama de la sesión y con `web` de

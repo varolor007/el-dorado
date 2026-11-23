@@ -4,7 +4,7 @@
 // sucesos de una investigación.
 
 import { useEffect, useRef, useState } from "react";
-import type { Suceso } from "../../../agent/output/viaje.ts";
+import type { Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import type { Tema } from "./estiloDelMapa.ts";
 import { idiomaDe, type Idioma } from "./textos.ts";
 
@@ -46,6 +46,26 @@ export function useIdioma(): Idioma {
     setIdioma(idiomaDe(new URLSearchParams(window.location.search).get("lang"), navigator.language));
   }, []);
   return idioma;
+}
+
+export type Grabado = { viaje: Viaje; sucesos: Suceso[] };
+
+let pedido: Promise<Grabado | null> | null = null;
+
+/** El viaje grabado, pedido una sola vez para toda la web. `undefined` mientras llega; `null` si no hay ninguno. */
+export function useGrabado(): Grabado | null | undefined {
+  const [grabado, setGrabado] = useState<Grabado | null | undefined>(undefined);
+  useEffect(() => {
+    pedido ??= fetch("/api/recorded")
+      .then((r) => (r.ok ? (r.json() as Promise<Grabado>) : null))
+      .catch(() => null);
+    let vivo = true;
+    void pedido.then((g) => vivo && setGrabado(g));
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  return grabado;
 }
 
 /** La foto de fuera, encogida al ancho que se pida por el servidor de la web. */
