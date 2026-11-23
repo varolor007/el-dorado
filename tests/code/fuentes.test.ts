@@ -81,6 +81,8 @@ test("LiteAPI: qué instalaciones declara cada alojamiento sale del catálogo de
   assert.deepEqual(con.declara, ["gym", "pool"]);
   // Un gimnasio «cerca de aquí» y una mesa de billar no son un gimnasio ni una piscina.
   assert.deepEqual(cerca.declara, []);
+  // Una lista vacía no dice que no tenga nada: no se sabe, y por ella no se descarta a nadie.
+  assert.equal(leerLista({ data: [hotel("vacia", [])] }, VISTO, catalogo)[0].declara, undefined);
   // Si la fuente no manda sus servicios, o no se tiene su catálogo, no se sabe: no es lo mismo que no tener.
   assert.equal(sinLista.declara, undefined);
   assert.equal(leerLista(json, VISTO)[0].declara, undefined);
@@ -195,6 +197,9 @@ test("LiteAPI: lo que se pide lleva los mínimos, las fechas y los niños", () =
   assert.equal(url.searchParams.get("minRating"), "8.5");
   assert.equal(url.searchParams.get("minReviewsCount"), "200");
   assert.equal(url.searchParams.get("starRating"), "4,5");
+  // Si no se piden estrellas, no se filtra por ellas: así vuelve también lo que no las lleva.
+  const sinEstrellas = new URL(direccionDeLista(ESTANCIA, { ...MINIMOS, estrellas: 0 }));
+  assert.equal(sinEstrellas.searchParams.has("starRating"), false);
   assert.equal(url.searchParams.get("radius"), "1500");
   // La fuente no acepta menos de mil metros: se le piden mil, y lo que cae más lejos de lo pedido se quita aquí.
   const corta = { ...ESTANCIA, radio: 500 };

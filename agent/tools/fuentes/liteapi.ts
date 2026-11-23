@@ -58,7 +58,8 @@ export function leerLista(json: unknown, visto: string, catalogo?: Map<number, s
       estrellas: numero(h.stars),
       tipo: h.hotelTypeId === undefined || h.hotelTypeId === null ? null : String(h.hotelTypeId),
       // Lo que declara solo se sabe si la fuente manda sus servicios y se tiene su catálogo para leerlos.
-      ...(catalogo !== undefined && Array.isArray(h.facilityIds)
+      // Una lista vacía no dice que no tenga nada: dice que la fuente no lo sabe, y entonces no se descarta por ella.
+      ...(catalogo !== undefined && Array.isArray(h.facilityIds) && h.facilityIds.length > 0
         ? { declara: [...new Set(h.facilityIds.flatMap((n) => catalogo.get(Number(n)) ?? []))].sort() }
         : {}),
     });
@@ -246,9 +247,11 @@ export function direccionDeLista(e: Estancia, m: Minimos): string {
     radius: String(Math.max(e.radio, RADIO_MINIMO)),
     minRating: String(m.nota),
     minReviewsCount: String(m.opiniones),
-    starRating: estrellas.join(","),
     limit: "5000",
   });
+  // Si no se piden estrellas, no se filtra por ellas: hay alojamientos que no las llevan (una casa, un piso), y un
+  // filtro que las nombra todas los dejaría fuera.
+  if (m.estrellas > 0) q.set("starRating", estrellas.join(","));
   return `${BASE}/data/hotels?${q}`;
 }
 
