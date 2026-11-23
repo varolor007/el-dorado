@@ -1,11 +1,19 @@
 // Las pruebas del método común: el contrato y el código dicen lo mismo, y la puerta de todos cae en cada trampa.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { ENTREGA, ETIQUETAS, huella, PASOS, puertaMetodo, type Sello } from "../../agent/gates/puerta_metodo.ts";
+import {
+  ENTREGA,
+  ETIQUETAS,
+  huella,
+  PASOS,
+  PESO_MAXIMO,
+  puertaMetodo,
+  type Sello,
+} from "../../agent/gates/puerta_metodo.ts";
 
 const COMUN = resolve(import.meta.dirname, "..", "..", "agent", "contracts", "common");
 const leer = (nombre: string): string => readFileSync(join(COMUN, nombre), "utf8");
@@ -211,4 +219,58 @@ test("trampa: una nota dice que lo vio y no dice dónde, o cita un archivo que n
 test("trampa: las notas son un texto seguido, sin una sola nota con su forma", () => {
   const rojos = rojosDe(conNotas(["The room looks fine and the bathroom too."]));
   assert.deepEqual(rojos, ["out/3-notes.md: no hay ninguna nota con la forma del método"]);
+});
+
+test("trampa: un enlace a otro sitio dentro del puesto es un rojo, y la casa no lo sigue ni se rompe", () => {
+  // Un enlace que da vueltas: el puesto dentro de sí mismo. Antes la puerta se rompía, y con ella toda la casa.
+  assert.deepEqual(
+    rojosDe((p) => symlinkSync("..", join(p, "in", "bucle"))),
+    ["in/bucle: es un enlace a otro sitio: en un puesto no puede haber"],
+  );
+  // La entrega, hecha enlace a un archivo de fuera: la casa lo leería y lo devolvería al asiento en su vuelta.
+  const fuera = mkdtempSync(join(tmpdir(), "el-dorado-fuera-"));
+  try {
+    writeFileSync(join(fuera, "secreto.json"), JSON.stringify({ seat: "seat-of-test", clave: "de fuera" }));
+    const { puesto, sello } = puestoBueno();
+    try {
+      rmSync(join(puesto, "out", ENTREGA));
+      symlinkSync(join(fuera, "secreto.json"), join(puesto, "out", ENTREGA));
+      const v = puertaMetodo(puesto, sello);
+      assert.equal(v.verde, false);
+      assert.equal(v.entrega, null);
+      assert.deepEqual(
+        v.rojos.map((r) => r.donde),
+        [`out/${ENTREGA}`],
+      );
+    } finally {
+      rmSync(puesto, { recursive: true, force: true });
+    }
+  } finally {
+    rmSync(fuera, { recursive: true, force: true });
+  }
+  // Y la carpeta de salida entera, hecha enlace.
+  assert.deepEqual(
+    rojosDe((p) => {
+      rmSync(join(p, "out"), { recursive: true });
+      symlinkSync(tmpdir(), join(p, "out"));
+    }),
+    ["out: es un enlace a otro sitio: en un puesto no puede haber"],
+  );
+});
+
+test("trampa: un archivo de la salida que pesa más de lo que cabe no se abre", () => {
+  const rojos = rojosDe((p) => writeFileSync(join(p, "out", "3-notes.md"), "a".repeat(PESO_MAXIMO.salida + 1)));
+  assert.equal(rojos.length, 1);
+  assert.match(rojos[0], /^out\/3-notes\.md: pesa \d+ bytes, y caben \d+$/);
+});
+
+test("un puesto que no existe o un sello roto no rompen la puerta: es un rojo", () => {
+  const nada = puertaMetodo(join(tmpdir(), "el-dorado-no-existe"), { asiento: "x", archivos: {} });
+  assert.equal(nada.verde, false);
+  const { puesto } = puestoBueno();
+  try {
+    assert.equal(puertaMetodo(puesto, null as never).verde, false);
+  } finally {
+    rmSync(puesto, { recursive: true, force: true });
+  }
 });

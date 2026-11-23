@@ -4,7 +4,7 @@
 // la entrega es verdad: eso es de la puerta de cada asiento.
 
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
@@ -25,15 +25,57 @@ export type Sello = { asiento: string; archivos: Record<string, string> };
 
 export type VeredictoDelMetodo = Veredicto & { entrega: Record<string, unknown> | null };
 
+/** Lo más que puede pesar un archivo del material (una foto) y uno de los que escribe el asiento, en bytes. */
+export const PESO_MAXIMO = { material: 12_000_000, salida: 2_000_000 };
+
+/**
+ * Los archivos de una carpeta, sin seguir ningún enlace: un enlace no es un archivo del puesto, apunte a donde
+ * apunte, y se cuenta aparte.
+ */
 function archivosDe(carpeta: string, prefijo: string): string[] {
   if (!existsSync(carpeta)) return [];
   const salida: string[] = [];
   for (const nombre of readdirSync(carpeta).sort()) {
     const ruta = join(carpeta, nombre);
-    if (statSync(ruta).isDirectory()) salida.push(...archivosDe(ruta, `${prefijo}${nombre}/`));
-    else salida.push(prefijo + nombre);
+    const que = lstatSync(ruta);
+    if (que.isDirectory()) salida.push(...archivosDe(ruta, `${prefijo}${nombre}/`));
+    else if (que.isFile()) salida.push(prefijo + nombre);
   }
   return salida;
+}
+
+/**
+ * Lo que no puede haber en un puesto: un enlace a otro sitio, algo que no es ni un archivo ni una carpeta, o un
+ * archivo que pesa más de lo que cabe. Un enlace haría que la casa leyera, y devolviera, algo de fuera del puesto, o
+ * que se quedara dando vueltas. Se mira sin abrir nada.
+ */
+function loQueNoCabe(puesto: string): Rojo[] {
+  const rojos: Rojo[] = [];
+  const recorre = (carpeta: string, prefijo: string, tope: number): void => {
+    if (!existsSync(carpeta)) return;
+    for (const nombre of readdirSync(carpeta).sort()) {
+      const ruta = join(carpeta, nombre);
+      const que = lstatSync(ruta);
+      const donde = prefijo + nombre;
+      if (que.isSymbolicLink()) rojos.push({ donde, que: "es un enlace a otro sitio: en un puesto no puede haber" });
+      else if (que.isDirectory()) recorre(ruta, `${donde}/`, tope);
+      else if (!que.isFile()) rojos.push({ donde, que: "no es un archivo ni una carpeta" });
+      else if (que.size > tope) rojos.push({ donde, que: `pesa ${que.size} bytes, y caben ${tope}` });
+    }
+  };
+  if (existsSync(puesto) && lstatSync(puesto).isSymbolicLink())
+    return [{ donde: "puesto", que: "la carpeta del puesto es un enlace a otro sitio" }];
+  for (const [parte, tope] of [
+    ["contract", PESO_MAXIMO.material],
+    ["in", PESO_MAXIMO.material],
+    ["out", PESO_MAXIMO.salida],
+  ] as const) {
+    const carpeta = join(puesto, parte);
+    if (existsSync(carpeta) && lstatSync(carpeta).isSymbolicLink())
+      rojos.push({ donde: parte, que: "es un enlace a otro sitio: en un puesto no puede haber" });
+    else recorre(carpeta, `${parte}/`, tope);
+  }
+  return rojos;
 }
 
 /** La huella de lo que la casa le da al asiento: cada archivo de su contrato y de su material, con su resumen. */
@@ -58,7 +100,22 @@ function piezas(sello: Sello): string[] {
   return [...salida].sort();
 }
 
+/**
+ * La puerta de todos. Antes de abrir nada mira que en el puesto solo haya archivos y carpetas suyos, y de un peso
+ * que quepa; y si aun así algo no se puede leer, es un rojo, no una excepción: la casa no se rompe por lo que deja
+ * un asiento.
+ */
 export function puertaMetodo(puesto: string, sello: Sello): VeredictoDelMetodo {
+  try {
+    const raros = loQueNoCabe(puesto);
+    if (raros.length > 0) return { verde: false, rojos: raros, entrega: null };
+    return mirarElMetodo(puesto, sello);
+  } catch {
+    return { verde: false, rojos: [{ donde: "puesto", que: "el puesto no se pudo leer" }], entrega: null };
+  }
+}
+
+function mirarElMetodo(puesto: string, sello: Sello): VeredictoDelMetodo {
   const rojos: Rojo[] = [];
   const out = join(puesto, "out");
 
