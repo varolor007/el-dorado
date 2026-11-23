@@ -19,10 +19,29 @@ export type Trayecto = {
   mercado: string;
 };
 
-/** El día en que se vio el precio viene dentro del enlace, como DDMMAAAA. */
+/** El día en que se vio el precio viene dentro del enlace, como DDMMAAAA. Si no es un día que exista, no se sabe. */
 export function vistoEnEnlace(enlace: string | null): string | null {
   const m = /[?&]search_date=(\d{2})(\d{2})(\d{4})/.exec(enlace ?? "");
-  return m === null ? null : `${m[3]}-${m[2]}-${m[1]}`;
+  if (m === null) return null;
+  const dia = `${m[3]}-${m[2]}-${m[1]}`;
+  // Ocho cifras no son una fecha: el 99 del mes 99 no existe, y el 31 de febrero tampoco.
+  const fecha = new Date(`${dia}T00:00:00Z`);
+  return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === dia ? dia : null;
+}
+
+/**
+ * El enlace de un vuelo. La fuente lo da como un camino dentro de su web: se resuelve contra ella y solo vale si se
+ * queda en ella, por https y sin usuario ni clave. Pegar el camino detrás de la web no basta: con una arroba o un
+ * punto delante, la máquina del enlace sería otra.
+ */
+export function enlaceDeVuelo(camino: string | null): string | null {
+  if (camino === null) return null;
+  try {
+    const u = new URL(camino, WEB);
+    return u.origin === new URL(WEB).origin && u.username === "" && u.password === "" ? u.href : null;
+  } catch {
+    return null;
+  }
 }
 
 export function leerVuelos(json: unknown, t: Trayecto, pedido: string): Vuelo[] {
@@ -48,7 +67,7 @@ export function leerVuelos(json: unknown, t: Trayecto, pedido: string): Vuelo[] 
       escalasVuelta: t.vuelta === null ? null : numero(v.return_transfers),
       minutos: numero(v.duration),
       guardado: true,
-      enlace: enlace === null ? null : WEB + enlace,
+      enlace: enlaceDeVuelo(enlace),
     });
   }
   return salida;

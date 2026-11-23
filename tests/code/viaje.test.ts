@@ -86,6 +86,31 @@ test("trampa: un precio sin fecha, y una manera con piezas que no existen", () =
   );
 });
 
+test("trampa: un precio con un enlace que no es https, o con claves dentro, no llega a la web", () => {
+  const pega = "el enlace del precio no es una dirección https sin claves";
+  assert.deepEqual(
+    pegasDe((v) => (v.alojamientos[0].otrasOfertas[0].enlace = "javascript:alert(document.domain)")),
+    [`alojamientos.a1.otrasOfertas[0]: ${pega}`],
+  );
+  assert.deepEqual(
+    pegasDe((v) => (v.alojamientos[0].precio.enlace = "http://reservas.invalid/1")),
+    [`alojamientos.a1: ${pega}`],
+  );
+  assert.deepEqual(
+    pegasDe((v) => (v.transportes[0].precio.enlace = "https://usuario:clave@reservas.invalid/1")),
+    [`transportes.${viajeInventado().transportes[0].id}: ${pega}`],
+  );
+  assert.deepEqual(
+    pegasDe((v) => (v.alojamientos[0].precio.enlace = "reservas.invalid/1")),
+    [`alojamientos.a1: ${pega}`],
+  );
+  // Sin enlace, o con uno https, el precio pasa.
+  assert.deepEqual(
+    pegasDe((v) => (v.alojamientos[0].otrasOfertas[0].enlace = "https://reservas.invalid/1?a=1")),
+    [],
+  );
+});
+
 test("trampa: los sucesos desordenados, de una clase que no existe o sin final", () => {
   const pegas = (s: Suceso[]): string[] => comprobarSucesos(s).map((p) => `${p.donde}: ${p.que}`);
   assert.deepEqual(pegas([SUCESOS_INVENTADOS[1], SUCESOS_INVENTADOS[0], SUCESOS_INVENTADOS[5]]), [

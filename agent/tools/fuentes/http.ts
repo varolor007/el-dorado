@@ -36,6 +36,12 @@ export const REINTENTOS = { veces: 3, segundos: [2, 6, 15], tope: 30 };
 export const reloj = { dormir: (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms)) };
 
 export async function pedirJson(fuente: string, url: string, p: Pedido = {}): Promise<unknown> {
+  // Un pedido con cabeceras lleva la clave de su fuente: los tres enchufes la mandan así en cada pedido, y son los
+  // únicos que mandan alguna (los datos abiertos salen por su propia puerta, en `tools/sitios.ts`, y sin clave). Si
+  // la fuente redirigiera a otra máquina, la clave iría detrás: la red solo quita la cabecera Authorization, y estas
+  // llevan su propio nombre. Por eso, con cabeceras, una redirección no se sigue: es un fallo de la fuente. Sin
+  // cabeceras no viaja nada que guardar, y se pide como siempre, redirija o no.
+  const conClave = Object.keys(p.cabeceras ?? {}).length > 0;
   for (let intento = 0; ; intento++) {
     let respuesta: Response;
     try {
@@ -44,6 +50,7 @@ export async function pedirJson(fuente: string, url: string, p: Pedido = {}): Pr
         headers: { "Content-Type": "application/json", ...p.cabeceras },
         body: p.cuerpo === undefined ? undefined : JSON.stringify(p.cuerpo),
         signal: AbortSignal.timeout(p.esperaMs ?? 60_000),
+        ...(conClave ? { redirect: "error" as const } : {}),
       });
     } catch (e) {
       throw new ErrorDeFuente(fuente, 0, `no responde (${(e as Error).message})`);
@@ -82,4 +89,20 @@ export function texto(v: unknown): string | null {
 
 export function numero(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * Un enlace que manda una fuente, para ponerlo delante del viajero: solo una dirección https entera, sin usuario ni
+ * clave dentro. Cualquier otra cosa (otro protocolo, una dirección a medias, algo que no es un texto) no es un
+ * enlace: null. Vuelve como la entiende quien la abre, no como venía escrita.
+ */
+export function enlace(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  let u: URL;
+  try {
+    u = new URL(v);
+  } catch {
+    return null;
+  }
+  return u.protocol === "https:" && u.username === "" && u.password === "" ? u.href : null;
 }

@@ -255,6 +255,45 @@ test("Aviasales: cada precio lleva el día en que se vio, que viene dentro del e
   assert.deepEqual(leerVuelos({ data: [], success: true }, TRAYECTO, VISTO), []);
 });
 
+test("Aviasales: trampa: un enlace que sale de la web de la fuente no llega", () => {
+  const vuelo = (link: string) => ({ price: 40, departure_at: "2027-03-05T10:00:00+01:00", link });
+  const fuera = [
+    "//reservas.invalid/pagar",
+    "\\\\reservas.invalid\\pagar",
+    "https://reservas.invalid/pagar",
+    "https://www.aviasales.com.reservas.invalid/pagar",
+    "http://www.aviasales.com/search/x",
+    "//usuario:clave@www.aviasales.com/search/x",
+    "javascript:alert(1)",
+  ];
+  const vuelos = leerVuelos({ data: fuera.map(vuelo) }, TRAYECTO, VISTO);
+  // El vuelo se queda, con su precio: lo que no llega es el enlace que no es de la fuente.
+  assert.equal(vuelos.length, fuera.length);
+  fuera.forEach((link, i) => assert.equal(vuelos[i].enlace, null, link));
+  // Con una arroba o un punto delante, pegado detrás de la web sería de otra máquina; resuelto contra ella, es un
+  // camino dentro de la web de la fuente, y ahí se queda.
+  const dentro = ["@reservas.invalid/pagar", ".reservas.invalid/pagar", "search/y?a=1"];
+  assert.deepEqual(
+    leerVuelos({ data: dentro.map(vuelo) }, TRAYECTO, VISTO).map((v) => v.enlace),
+    [
+      "https://www.aviasales.com/@reservas.invalid/pagar",
+      "https://www.aviasales.com/.reservas.invalid/pagar",
+      "https://www.aviasales.com/search/y?a=1",
+    ],
+  );
+});
+
+test("Aviasales: trampa: un día que no existe no es cuándo se vio; vale el momento en que se pidió", () => {
+  assert.equal(vistoEnEnlace("/search/x?search_date=99999999"), null);
+  assert.equal(vistoEnEnlace("/search/x?search_date=31022027"), null);
+  assert.equal(vistoEnEnlace("/search/x?search_date=00002027"), null);
+  assert.equal(vistoEnEnlace("/search/x?search_date=29022028"), "2028-02-29");
+  const json = { data: [{ price: 40, departure_at: "2027-03-05T10:00:00+01:00", link: "/x?search_date=99999999" }] };
+  const [vuelo] = leerVuelos(json, TRAYECTO, VISTO);
+  assert.equal(vuelo.visto, VISTO);
+  assert.equal(vuelo.enlace, "https://www.aviasales.com/x?search_date=99999999");
+});
+
 test("Aviasales: los días baratos del mes, en orden", () => {
   const dias = leerCalendario(
     { data: { "2027-03-09": { price: 31 }, "2027-03-02": { price: 25 }, "2027-03-04": {} } },
@@ -311,6 +350,42 @@ test("Parallel: los alojamientos de una zona, con la oferta de cada vendedor", (
   assert.equal(cuerpo.check_out_date, ESTANCIA.salida);
 });
 
+/** Las ofertas que lee el enchufe de un alojamiento inventado al que la fuente le pone estas. */
+const ofertasDe = (...offers: Record<string, unknown>[]) =>
+  leerOfertas({ results: [{ name: "Hotel Uno Inventado", offers }] }, VISTO)[0].ofertas;
+
+test("Parallel: trampa: un enlace que no es https, o con claves dentro, no llega; la oferta sigue, sin enlace", () => {
+  const malos = [
+    "javascript:alert(document.domain)",
+    "http://reservas.invalid/1",
+    "intent://reservas.invalid/#Intent;scheme=https;end",
+    "data:text/html,<script>alert(1)</script>",
+    "https://usuario:clave@reservas.invalid/1",
+    "https://usuario@reservas.invalid/1",
+    "//reservas.invalid/1",
+    "reservas.invalid/1",
+    "no es una dirección",
+    7,
+  ];
+  const oferta = (url: unknown) => ({ seller: "Vendedor Inventado", total_price: 300, currency: "EUR", url });
+  const ofertas = ofertasDe(...malos.map(oferta));
+  assert.equal(ofertas.length, malos.length);
+  ofertas.forEach((o, i) => assert.deepEqual([o.total, o.enlace], [300, null], String(malos[i])));
+  // El que vale llega como lo entiende quien lo abre: sin espacios alrededor ni saltos de línea dentro.
+  assert.equal(ofertasDe(oferta(" https://reservas.invalid/1\n"))[0].enlace, "https://reservas.invalid/1");
+});
+
+test("Parallel: la moneda de una oferta va en mayúsculas, y si no son tres letras la oferta no entra", () => {
+  const oferta = (currency: unknown) => ({ seller: "Vendedor Inventado", total_price: 300, currency });
+  assert.deepEqual(
+    ofertasDe(oferta("eur"), oferta(" Usd "), oferta("EUR")).map((o) => o.moneda),
+    ["EUR", "USD", "EUR"],
+  );
+  // Tampoco entra la que no dice su moneda: en cuál está un precio no se supone.
+  const sinMoneda = [oferta("euros"), oferta("€"), oferta("E1R"), oferta(""), oferta(978), oferta(null), {}];
+  assert.deepEqual(ofertasDe(...sinMoneda), []);
+});
+
 test("los enchufes se apagan con una variable, y las claves salen del entorno o viajan de relleno", () => {
   assert.equal(encendida("parallel", {}), true);
   assert.equal(encendida("parallel", { ELDORADO_APAGAR: "parallel" }), false);
@@ -356,4 +431,28 @@ test("si la fuente no deja de pedir que se espere, o falla de otra manera, se di
   );
   assert.ok(rota.sale instanceof ErrorDeFuente && rota.sale.estado === 400);
   assert.deepEqual(rota.esperas, []);
+});
+
+test("trampa: con la clave de una fuente no se sigue una redirección; sin clave, se pide como siempre", async () => {
+  const deVerdad = globalThis.fetch;
+  const pedidos: RequestInit[] = [];
+  globalThis.fetch = async (_url, pedido) => {
+    pedidos.push(pedido ?? {});
+    // Con «error», la red de verdad no sigue la redirección: falla, y la clave no sale hacia otra máquina.
+    if (pedido?.redirect === "error") throw new TypeError("fetch failed");
+    return new Response('{"data":[1]}', { status: 200 });
+  };
+  try {
+    const conClave = { cabeceras: { "X-API-Key": "una-clave-inventada" } };
+    const fallo = await pedirJson("inventada", "https://fuente.invalid/x", conClave).catch((e: unknown) => e);
+    assert.ok(fallo instanceof ErrorDeFuente && fallo.estado === 0);
+    assert.deepEqual(await pedirJson("inventada", "https://fuente.invalid/x"), { data: [1] });
+    assert.deepEqual(await pedirJson("inventada", "https://fuente.invalid/x", { cabeceras: {} }), { data: [1] });
+  } finally {
+    globalThis.fetch = deVerdad;
+  }
+  assert.deepEqual(
+    pedidos.map((p) => p.redirect),
+    ["error", undefined, undefined],
+  );
 });

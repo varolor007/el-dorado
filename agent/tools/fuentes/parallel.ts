@@ -2,7 +2,7 @@
 // enlace). Su búsqueda es por zona, no por nombre: cuál es cuál se sabe casando por posición (scripts/cruce.ts).
 // Sus condiciones no dejan guardar resultados para otros viajeros: lo que devuelve vive solo en el run que lo pidió.
 
-import { ahora, clave, lista, numero, objeto, pedirJson, texto } from "./http.ts";
+import { ahora, clave, enlace, lista, numero, objeto, pedirJson, texto } from "./http.ts";
 import type { Estancia, OfertaDeZona } from "./tipos.ts";
 
 const BASE = "https://api.parallel.ai/v1";
@@ -11,6 +11,12 @@ const NOMBRE = "parallel";
 const cabeceras = (): Record<string, string> => ({ "x-api-key": clave("PARALLEL_API_KEY") });
 
 export type TipoDeAlojamiento = "hotel" | "vacation_rental";
+
+/** La moneda de una oferta, en sus tres letras mayúsculas; null si lo que dice la fuente no es una moneda. */
+function monedaDe(v: unknown): string | null {
+  const dicha = (texto(v) ?? "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(dicha) ? dicha : null;
+}
 
 export function leerOfertas(json: unknown, visto: string): OfertaDeZona[] {
   const salida: OfertaDeZona[] = [];
@@ -21,12 +27,17 @@ export function leerOfertas(json: unknown, visto: string): OfertaDeZona[] {
     const ofertas: OfertaDeZona["ofertas"] = [];
     for (const o of lista(r.offers)) {
       const oferta = objeto(o);
+      // Un precio sin su moneda no se puede enseñar: esa oferta se cae aquí, al leerla, y no al final, con el viaje
+      // ya montado. En qué moneda está no se supone.
+      const moneda = monedaDe(oferta.currency);
+      if (moneda === null) continue;
       ofertas.push({
         vendedor: texto(oferta.seller),
         total: numero(oferta.total_price),
-        moneda: texto(oferta.currency),
+        moneda,
         cancelable: typeof oferta.free_cancellation === "boolean" ? oferta.free_cancellation : null,
-        enlace: texto(oferta.url),
+        // El enlace lo pone la fuente y acaba delante del viajero: si no es https, la oferta se queda sin él.
+        enlace: enlace(oferta.url),
       });
     }
     salida.push({

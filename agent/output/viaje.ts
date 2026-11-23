@@ -206,6 +206,18 @@ function pegasDelPrecio(p: Precio, donde: string): Pega[] {
   if (!(p.total > 0)) pegas.push({ donde, que: "el precio no es un importe" });
   if (!/^[A-Z]{3}$/.test(p.moneda)) pegas.push({ donde, que: "el precio no dice su moneda" });
   if (Number.isNaN(Date.parse(p.visto))) pegas.push({ donde, que: "el precio no dice cuándo se vio" });
+  // El enlace lo pone una fuente y la web lo abre: solo una dirección https, sin usuario ni clave dentro. Lo mira
+  // ya el enchufe al leerlo; aquí se repite, porque esta es la última puerta antes de la web.
+  if (p.enlace !== null) {
+    let u: URL | null = null;
+    try {
+      u = new URL(p.enlace);
+    } catch {
+      // No es una dirección: se queda en null, y es una pega.
+    }
+    if (u === null || u.protocol !== "https:" || u.username !== "" || u.password !== "")
+      pegas.push({ donde, que: "el enlace del precio no es una dirección https sin claves" });
+  }
   return pegas;
 }
 
