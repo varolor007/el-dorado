@@ -195,6 +195,32 @@ de hoteles, de pisos y de vuelos, hecha para agentes y con registro:
 habitaciones con sus metros y sus fotos, las opiniones y la nota en número), y el índice de texto, lo que se dice de
 cada hotel. Cruzar un mismo hotel entre las dos primeras se hace por su nombre y su posición.
 
+## La primera búsqueda entera, de prueba (23-nov)
+
+Con las tres claves, una sonda de usar y tirar (no es el código del agente, ni está en el repositorio, ni sus
+respuestas): Lisboa, 1.500 m alrededor de la Baixa, tres noches de febrero, dos adultos, con mínimos de nota 8,5, 200
+opiniones y cuatro estrellas. Lo que enseñó:
+
+- **La cadena corre de punta a punta para el alojamiento**: la lista, los mínimos, el precio de esas noches, cinco
+  finalistas elegidos por regla y la ficha de cada uno, en un par de minutos y sin IA hasta ahí.
+- **La puerta de la búsqueda hace falta.** Pedidos los mínimos a la fuente, devolvió 1.058; comprobados uno a uno por
+  el código, los cumplían 216. De esos, 170 tenían precio para esas noches (de 171 a más de 13.000 EUR; la mediana,
+  380).
+- **La habitación de ese precio se identifica**: en los cinco finalistas, con sus fotos propias (de 5 a 24) y, en
+  cuatro, sus metros (de 14 a 45).
+- **Las opiniones dan para leer por temas**: sesenta por hotel, de los últimos meses, con lo bueno y lo malo; y la
+  fuente trae ya un resumen por temas con sus contras («ruido del tranvía de noche», «sin ascensor»).
+- **El índice caza lo que el dato tapa.** Un finalista tiene piscina según el dato, y el índice dice que es exterior y
+  de temporada, de abril a noviembre: cerrada en febrero. Es la trampa que estaba apuntada.
+- **La nota de la fuente no es la de Booking.com.** En un finalista, 9,5 en la fuente y 8,6 en Booking.com según el
+  índice; en otro, 9,8 y 9,4. La nota se contrasta siempre con una segunda fuente.
+- **Cruzar con Parallel por el nombre falla**: de cinco, encontró uno, y con la oferta mal casada. Su búsqueda es por
+  zona, no por nombre: hay que cruzar por posición, zona a zona.
+- **La fuente no trae la web del hotel** en ninguno de los cinco: se busca con el índice.
+- **Aviasales tiene huecos**: para la ida y la vuelta exactas de esas fechas no tenía precio; para los días de
+  alrededor, sí (trece días de febrero, de 19 a 43 EUR la ida y vuelta desde Madrid). Para las fechas exactas hace
+  falta una fuente en vivo.
+
 ## Lo que se ve en el mapa
 
 - **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13). Sus salidas
