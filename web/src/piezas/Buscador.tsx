@@ -107,7 +107,7 @@ export function Buscador({ t, idioma, inicial, recogido, alBuscar }: Props) {
             id="donde"
             value={texto}
             autoComplete="off"
-            placeholder="Lisboa, Kyoto, Patagonia"
+            placeholder={t.buscador.ejemplos}
             role="combobox"
             aria-expanded={abierta && lugares.length > 0}
             aria-controls="lugares"

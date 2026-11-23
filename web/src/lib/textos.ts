@@ -1,11 +1,43 @@
 // Lo que dice la web, en inglés y en español. Lo que ve el viajero va en su idioma; si no es ninguno de los dos, en
 // inglés. Los niveles de la ficha de cómo es se traducen aquí: el asiento los entrega por su código.
+//
+// Nada de aquí da por hecho cómo es el viaje. Lo que depende de un número (las noches, quiénes van, las maneras, lo
+// encontrado) es una función de ese número y se lee bien con uno y con varios; lo que depende de un dato del viaje
+// (cómo se llega, si hay niños) se dice a partir de ese dato y, si el dato no se conoce, con una palabra que no
+// suponga nada.
 
 export const IDIOMAS = ["en", "es"] as const;
 export type Idioma = (typeof IDIOMAS)[number];
 
+/** Cómo se dicen los números en un idioma: la cifra sola, el nombre que concuerda con ella y los dos juntos. */
+function numeros(idioma: Idioma) {
+  const formato = new Intl.NumberFormat(idioma);
+  /** La cifra, como la escribe el idioma. */
+  const cifra = (n: number): string => formato.format(n);
+  /** El nombre que concuerda con el número: en los dos idiomas, solo el uno va en singular. */
+  const plural = (n: number, uno: string, varios: string): string => (n === 1 ? uno : varios);
+  /** La cifra con su nombre: «1 night», «3 nights». */
+  const cuenta = (n: number, uno: string, varios: string): string => `${cifra(n)} ${plural(n, uno, varios)}`;
+  return { cifra, plural, cuenta };
+}
+
+const EN = numeros("en");
+const ES = numeros("es");
+
+/** Las noches del viaje, cuando se nombran sin contarlas: «for your nights», o «for your night» si es una sola. */
+const tusNochesEn = (n: number): string => EN.plural(n, "your night", "your nights");
+const tusNochesEs = (n: number): string => ES.plural(n, "tu noche", "tus noches");
+
 const en = {
-  buscador: { donde: "Where to?", fechas: "When", ir: "Search", llegada: "Check-in", salida: "Check-out" },
+  buscador: {
+    donde: "Where to?",
+    // Tres ejemplos de clases distintas de sitio: una ciudad, una región y un espacio natural.
+    ejemplos: "Kyoto, Patagonia, Serengeti",
+    fechas: "When",
+    ir: "Search",
+    llegada: "Check-in",
+    salida: "Check-out",
+  },
   mundo: {
     saludo: "Where shall we go?",
     cuerpo:
@@ -19,7 +51,7 @@ const en = {
   vistazo: {
     rotulo: "First look",
     noches: (n: number) => `${n} nights`,
-    adultos: (n: number) => `${n} adults`,
+    adultos: (n: number) => EN.cuenta(n, "adult", "adults"),
     encontrados: "places to stay in the area",
     pasan: "pass the minimums",
     desde: "from, for your nights",
@@ -38,13 +70,15 @@ const en = {
     ver: "See my trip",
     saltar: "Skip to the trip",
     zone: (lugar: string) => `Searching ${lugar}`,
-    lodgings_found: (n: number) => `places to stay found in the area`,
-    lodgings_pass: (n: number) => `pass your minimums`,
-    lodgings_priced: (n: number) => `have a price for your nights`,
+    // Los recuentos llevan su número delante, en grande: aquí va lo que le sigue, que concuerda con él.
+    lodgings_found: (n: number) => EN.plural(n, "place to stay found in the area", "places to stay found in the area"),
+    lodgings_pass: (n: number) => EN.plural(n, "passes your minimums", "pass your minimums"),
+    lodgings_priced: (n: number, noches: number) => `${EN.plural(n, "has", "have")} a price for ${tusNochesEn(noches)}`,
     finalist: (nombre: string) => `Finalist: ${nombre}`,
-    looking: (nombre: string) => `Looking at the photos and reviews of ${nombre}`,
-    looked: (nombre: string) => `Looked at ${nombre}: its room, its bathroom and what guests say`,
-    sights_found: (n: number) => `sights worth your time`,
+    // Qué se pudo mirar de cada alojamiento (sus fotos, su habitación, sus opiniones) depende de él: lo dice su ficha.
+    looking: (nombre: string) => `Looking at what ${nombre} is like`,
+    looked: (nombre: string) => `Looked at ${nombre}, as far as it could be seen`,
+    sights_found: (n: number) => EN.plural(n, "sight worth your time", "sights worth your time"),
     sight: (nombre: string) => nombre,
     day: (n: number, nombre: string) => `Day ${n} drawn: ${nombre}`,
     way: (id: string) => `A way to do it: ${id}`,
@@ -230,12 +264,29 @@ const en = {
     origen: "Leaving from",
     origenOpciones: ["Where I am now", "Somewhere else"],
     quienes: "Who is going",
+    ninos: (n: number) => (n === 0 ? "no children" : EN.cuenta(n, "child", "children")),
+    menos: "One fewer",
+    mas: "One more",
+    edad: (n: number) => `Age of child ${n}`,
+    edadSinDecir: "Age?",
+    anos: (n: number) => (n === 0 ? "Under 1" : EN.cuenta(n, "year", "years")),
     fechas: "Your dates",
     fechasOpciones: ["Fixed", "I can move them"],
     gasto: "Spend",
     gastoOpciones: ["Tight", "Medium", "Comfortable"],
     buscas: "What you are after",
-    buscasOpciones: ["Eat well", "The essentials", "Museums", "Walks", "Nightlife", "Rest"],
+    // Para cualquier viaje, no solo una escapada a una ciudad: también la naturaleza, la playa, los niños y la carretera.
+    buscasOpciones: [
+      "The essentials",
+      "Eat well",
+      "Culture",
+      "Nature",
+      "Beach",
+      "Rest",
+      "Nightlife",
+      "Plans with children",
+      "A road trip",
+    ],
     libre: "Anything else I should know?",
     seco: "Dry run: your answers do not change the recorded trip yet.",
   },
@@ -287,7 +338,14 @@ const en = {
 type Textos = typeof en;
 
 const es: Textos = {
-  buscador: { donde: "¿A dónde vamos?", fechas: "Cuándo", ir: "Buscar", llegada: "Entrada", salida: "Salida" },
+  buscador: {
+    donde: "¿A dónde vamos?",
+    ejemplos: "Kioto, Patagonia, Serengeti",
+    fechas: "Cuándo",
+    ir: "Buscar",
+    llegada: "Entrada",
+    salida: "Salida",
+  },
   mundo: {
     saludo: "¿A dónde vamos?",
     cuerpo:
@@ -301,7 +359,7 @@ const es: Textos = {
   vistazo: {
     rotulo: "Primer vistazo",
     noches: (n) => `${n} noches`,
-    adultos: (n) => `${n} adultos`,
+    adultos: (n) => ES.cuenta(n, "adulto", "adultos"),
     encontrados: "alojamientos en la zona",
     pasan: "pasan los mínimos",
     desde: "desde, por tus noches",
@@ -320,13 +378,13 @@ const es: Textos = {
     ver: "Ver mi viaje",
     saltar: "Ir al viaje",
     zone: (lugar) => `Buscando en ${lugar}`,
-    lodgings_found: () => `alojamientos encontrados en la zona`,
-    lodgings_pass: () => `pasan tus mínimos`,
-    lodgings_priced: () => `tienen precio para tus noches`,
+    lodgings_found: (n) => ES.plural(n, "alojamiento encontrado en la zona", "alojamientos encontrados en la zona"),
+    lodgings_pass: (n) => ES.plural(n, "pasa tus mínimos", "pasan tus mínimos"),
+    lodgings_priced: (n, noches) => `${ES.plural(n, "tiene", "tienen")} precio para ${tusNochesEs(noches)}`,
     finalist: (nombre) => `Finalista: ${nombre}`,
-    looking: (nombre) => `Mirando las fotos y las opiniones de ${nombre}`,
-    looked: (nombre) => `Mirado ${nombre}: su habitación, su baño y lo que dicen de él`,
-    sights_found: () => `sitios que merecen tu tiempo`,
+    looking: (nombre) => `Mirando cómo es ${nombre}`,
+    looked: (nombre) => `Mirado ${nombre}, hasta donde se ha podido ver`,
+    sights_found: (n) => ES.plural(n, "sitio que merece tu tiempo", "sitios que merecen tu tiempo"),
     sight: (nombre) => nombre,
     day: (n, nombre) => `Día ${n}, dibujado: ${nombre}`,
     way: (id) => `Una manera de hacerlo: ${id}`,
@@ -500,12 +558,28 @@ const es: Textos = {
     origen: "Sales de",
     origenOpciones: ["Donde estoy ahora", "Otro sitio"],
     quienes: "Quiénes vais",
+    ninos: (n) => (n === 0 ? "sin niños" : ES.cuenta(n, "niño", "niños")),
+    menos: "Uno menos",
+    mas: "Uno más",
+    edad: (n) => `Edad del niño ${n}`,
+    edadSinDecir: "¿Edad?",
+    anos: (n) => (n === 0 ? "Menos de 1 año" : ES.cuenta(n, "año", "años")),
     fechas: "Tus fechas",
     fechasOpciones: ["Fijas", "Puedo moverlas"],
     gasto: "Gasto",
     gastoOpciones: ["Ajustado", "Medio", "Holgado"],
     buscas: "Qué buscas",
-    buscasOpciones: ["Comer bien", "Lo imprescindible", "Museos", "Pasear", "Salir de noche", "Descansar"],
+    buscasOpciones: [
+      "Lo imprescindible",
+      "Comer bien",
+      "Cultura",
+      "Naturaleza",
+      "Playa",
+      "Descansar",
+      "Salir de noche",
+      "Planes con niños",
+      "Ruta por carretera",
+    ],
     libre: "¿Algo más que deba saber?",
     seco: "En seco: tus respuestas aún no cambian el viaje grabado.",
   },

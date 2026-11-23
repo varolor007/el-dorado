@@ -1401,6 +1401,12 @@ img {
   background: var(--tinta);
   color: var(--papel);
 }
+/* Un toque que ahora no hace nada: el «uno menos» de un contador que ya está en su mínimo. */
+.toque:disabled {
+  opacity: 0.45;
+  color: var(--tinta-suave);
+  cursor: not-allowed;
+}
 .toque--quita {
   color: var(--ojo);
   background: var(--ojo-tinte);

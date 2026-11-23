@@ -82,8 +82,13 @@ export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
   );
 }
 
-/** Las líneas de lo que va pasando: los recuentos, con su número delante; lo demás, en una frase. */
-function frase(s: Suceso, t: Textos, idioma: string): { n: string | null; texto: string } | null {
+type Linea = { n: string | null; texto: string };
+
+/**
+ * Las líneas de lo que va pasando: los recuentos, con su número delante; lo demás, en una frase. Lo que sigue a un
+ * número concuerda con él, y lo que nombra las noches, con las del viaje.
+ */
+function frase(s: Suceso, t: Textos, idioma: string, deNoches: number): Linea | null {
   const n = s.n === undefined ? null : new Intl.NumberFormat(idioma).format(s.n);
   const nombre = s.nombre ?? "";
   switch (s.clase) {
@@ -94,7 +99,7 @@ function frase(s: Suceso, t: Textos, idioma: string): { n: string | null; texto:
     case "lodgings_pass":
       return { n, texto: t.vivo.lodgings_pass(s.n ?? 0) };
     case "lodgings_priced":
-      return { n, texto: t.vivo.lodgings_priced(s.n ?? 0) };
+      return { n, texto: t.vivo.lodgings_priced(s.n ?? 0, deNoches) };
     case "finalist":
       return { n: null, texto: t.vivo.finalist(nombre) };
     case "looking":
@@ -116,9 +121,12 @@ function frase(s: Suceso, t: Textos, idioma: string): { n: string | null; texto:
   }
 }
 
-/** Un grupo de toques: una pregunta con sus respuestas, de las que se marca una o varias. */
+/**
+ * Un grupo de toques: una pregunta con sus respuestas, de las que se marca una o varias. Empieza sin ninguna marcada:
+ * la web no contesta por el viajero.
+ */
 function Toques({ titulo, opciones, varias }: { titulo: string; opciones: string[]; varias?: boolean }) {
-  const [marcadas, setMarcadas] = useState<string[]>([opciones[0]]);
+  const [marcadas, setMarcadas] = useState<string[]>([]);
   const toca = (o: string): void =>
     setMarcadas((m) => (varias ? (m.includes(o) ? m.filter((x) => x !== o) : [...m, o]) : [o]));
   return (
@@ -135,6 +143,99 @@ function Toques({ titulo, opciones, varias }: { titulo: string; opciones: string
   );
 }
 
+/** Un contador de un toque: uno menos, cuántos hay y uno más. Para lo que no cabe en una lista corta de respuestas. */
+function Contador(x: {
+  texto: string;
+  n: number;
+  minimo: number;
+  menos: string;
+  mas: string;
+  alCambiar: (n: number) => void;
+}) {
+  return (
+    <span className="cabecera__linea">
+      <button
+        type="button"
+        className="toque"
+        aria-label={`${x.menos}: ${x.texto}`}
+        disabled={x.n <= x.minimo}
+        onClick={() => x.alCambiar(x.n - 1)}
+      >
+        −
+      </button>
+      <span className="pastilla" aria-live="polite">
+        {x.texto}
+      </span>
+      <button type="button" className="toque" aria-label={`${x.mas}: ${x.texto}`} onClick={() => x.alCambiar(x.n + 1)}>
+        +
+      </button>
+    </span>
+  );
+}
+
+/**
+ * Hasta qué edad se ofrece decir la de un niño: la mayoría de edad más común. La casa aún no dice su tope; cuando lo
+ * diga, se lee de ella. Si el viaje lleva a alguien mayor, su edad se enseña igual.
+ */
+const EDAD_MAYOR_DE_NINO = 17;
+
+/**
+ * Quiénes vais: los adultos y los niños, cada uno con su contador, y la edad de cada niño. Parte de lo que lleva el
+ * viaje y vale para cualquier grupo: uno solo, una pareja o una familia. La edad de un niño que se añade no se supone.
+ */
+function Quienes({ t, viaje }: { t: Textos; viaje: Viaje }) {
+  const p = t.preguntas;
+  const [adultos, setAdultos] = useState(viaje.adultos);
+  const [edades, setEdades] = useState<(number | null)[]>(viaje.ninos);
+  const cuantosNinos = (n: number): void => setEdades((e) => (n < e.length ? e.slice(0, n) : [...e, null]));
+  const tope = Math.max(EDAD_MAYOR_DE_NINO, ...edades.map((e) => e ?? 0));
+  return (
+    <div className="toques" role="group" aria-label={p.quienes}>
+      <span className="rotulo">{p.quienes}</span>
+      <div className="cabecera__linea">
+        <Contador
+          texto={t.vistazo.adultos(adultos)}
+          n={adultos}
+          minimo={1}
+          menos={p.menos}
+          mas={p.mas}
+          alCambiar={setAdultos}
+        />
+        <Contador
+          texto={p.ninos(edades.length)}
+          n={edades.length}
+          minimo={0}
+          menos={p.menos}
+          mas={p.mas}
+          alCambiar={cuantosNinos}
+        />
+      </div>
+      {edades.length > 0 && (
+        <div className="cabecera__linea">
+          {edades.map((edad, i) => (
+            <select
+              key={i}
+              className="toque"
+              aria-label={p.edad(i + 1)}
+              value={edad ?? ""}
+              onChange={(e) => setEdades((todas) => todas.map((x, j) => (j === i ? Number(e.target.value) : x)))}
+            >
+              <option value="" disabled>
+                {p.edadSinDecir}
+              </option>
+              {Array.from({ length: tope + 1 }, (_, anos) => (
+                <option key={anos} value={anos}>
+                  {p.anos(anos)}
+                </option>
+              ))}
+            </select>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Las preguntas, mientras ya busca. En seco no cambian nada: enseñan cómo se contestan, con toques y sin escribir. */
 function Preguntas({ t, viaje }: { t: Textos; viaje: Viaje }) {
   const p = t.preguntas;
@@ -142,7 +243,7 @@ function Preguntas({ t, viaje }: { t: Textos; viaje: Viaje }) {
     <div className="preguntas">
       <h2 className="titulo">{p.titulo}</h2>
       <Toques titulo={p.origen} opciones={p.origenOpciones} />
-      <Toques titulo={p.quienes} opciones={[t.vistazo.adultos(viaje.adultos), "1", "3", "4"]} />
+      <Quienes t={t} viaje={viaje} />
       <Toques titulo={p.fechas} opciones={p.fechasOpciones} />
       <Toques titulo={p.gasto} opciones={p.gastoOpciones} />
       <Toques titulo={p.buscas} opciones={p.buscasOpciones} varias />
@@ -158,8 +259,9 @@ function Preguntas({ t, viaje }: { t: Textos; viaje: Viaje }) {
 export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Reproductor }) {
   // Mientras se mira un alojamiento se dice que se está mirando; al acabar, esa línea pasa a ser la de lo mirado.
   const mirados = new Set(r.vistos.filter((s) => s.clase === "looked").map((s) => s.ref));
+  const deNoches = noches(viaje.entrada, viaje.salida);
   const lineas = r.vistos
-    .map((s, i) => ({ s, i, f: frase(s, t, idioma) }))
+    .map((s, i) => ({ s, i, f: frase(s, t, idioma, deNoches) }))
     .filter((x) => x.f !== null && !(x.s.clase === "looking" && mirados.has(x.s.ref)))
     .reverse()
     .slice(0, 6);

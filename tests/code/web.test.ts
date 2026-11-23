@@ -61,6 +61,77 @@ test("un viaje grabado con la forma de antes, o roto, no se enseña: la web dice
     assert.equal(grabadoQueVale(roto), null);
 });
 
+// Nada de lo que dice la web da por hecho cómo es el viaje: lo que depende de un número se lee bien con uno y con
+// varios, en los dos idiomas.
+
+test("en vivo, lo que sigue a un recuento concuerda con él, y las noches, con las del viaje", () => {
+  const { en, es } = TEXTOS;
+  assert.equal(en.vivo.lodgings_found(1), "place to stay found in the area");
+  assert.equal(en.vivo.lodgings_found(2), "places to stay found in the area");
+  assert.equal(es.vivo.lodgings_found(1), "alojamiento encontrado en la zona");
+  assert.equal(es.vivo.lodgings_found(2), "alojamientos encontrados en la zona");
+  assert.equal(en.vivo.lodgings_pass(1), "passes your minimums");
+  assert.equal(en.vivo.lodgings_pass(2), "pass your minimums");
+  assert.equal(es.vivo.lodgings_pass(1), "pasa tus mínimos");
+  assert.equal(es.vivo.lodgings_pass(2), "pasan tus mínimos");
+  assert.equal(en.vivo.sights_found(1), "sight worth your time");
+  assert.equal(en.vivo.sights_found(2), "sights worth your time");
+  assert.equal(es.vivo.sights_found(1), "sitio que merece tu tiempo");
+  assert.equal(es.vivo.sights_found(2), "sitios que merecen tu tiempo");
+  // Uno o varios alojamientos, para una noche o para varias.
+  assert.equal(en.vivo.lodgings_priced(1, 1), "has a price for your night");
+  assert.equal(en.vivo.lodgings_priced(2, 1), "have a price for your night");
+  assert.equal(en.vivo.lodgings_priced(1, 21), "has a price for your nights");
+  assert.equal(es.vivo.lodgings_priced(1, 1), "tiene precio para tu noche");
+  assert.equal(es.vivo.lodgings_priced(2, 1), "tienen precio para tu noche");
+  assert.equal(es.vivo.lodgings_priced(2, 21), "tienen precio para tus noches");
+  // El cero se dice en plural en los dos idiomas.
+  assert.equal(en.vivo.lodgings_found(0), "places to stay found in the area");
+  assert.equal(es.vivo.lodgings_pass(0), "pasan tus mínimos");
+});
+
+test("quiénes vais se lee bien con uno y con varios: los adultos, los niños y la edad de cada niño", () => {
+  const { en, es } = TEXTOS;
+  assert.deepEqual([1, 2, 5].map(en.vistazo.adultos), ["1 adult", "2 adults", "5 adults"]);
+  assert.deepEqual([1, 2, 5].map(es.vistazo.adultos), ["1 adulto", "2 adultos", "5 adultos"]);
+  assert.deepEqual([0, 1, 3].map(en.preguntas.ninos), ["no children", "1 child", "3 children"]);
+  assert.deepEqual([0, 1, 3].map(es.preguntas.ninos), ["sin niños", "1 niño", "3 niños"]);
+  assert.deepEqual([0, 1, 12].map(en.preguntas.anos), ["Under 1", "1 year", "12 years"]);
+  assert.deepEqual([0, 1, 12].map(es.preguntas.anos), ["Menos de 1 año", "1 año", "12 años"]);
+});
+
+for (const idioma of IDIOMAS) {
+  const t = TEXTOS[idioma];
+
+  test(`las respuestas de las preguntas no se repiten ni llevan nada de un caso (${idioma})`, () => {
+    const p = t.preguntas;
+    const listas = [p.origenOpciones, p.fechasOpciones, p.gastoOpciones, p.buscasOpciones];
+    for (const lista of listas) {
+      // Cada respuesta es la clave de su toque: si se repite, dos toques serían el mismo.
+      assert.equal(new Set(lista).size, lista.length);
+      // Ninguna lleva una cifra ni el signo de una moneda: eso es de un viaje, no de todos.
+      for (const o of lista) assert.doesNotMatch(o, /[0-9$€£¥]/, o);
+    }
+    // Lo que buscas: pocas respuestas, y las mismas en los dos idiomas.
+    assert.ok(p.buscasOpciones.length >= 6 && p.buscasOpciones.length <= 9);
+    assert.equal(p.buscasOpciones.length, TEXTOS.en.preguntas.buscasOpciones.length);
+  });
+
+  test(`el buscador da tres ejemplos de sitio, los tres distintos (${idioma})`, () => {
+    const ejemplos = t.buscador.ejemplos.split(", ");
+    assert.equal(ejemplos.length, 3);
+    assert.equal(new Set(ejemplos).size, 3);
+  });
+}
+
+test("lo que buscas vale también para la naturaleza, la playa, los niños y la carretera", () => {
+  const juntas = (lista: string[]): string => lista.join(" | ").toLowerCase();
+  const en = juntas(TEXTOS.en.preguntas.buscasOpciones);
+  const es = juntas(TEXTOS.es.preguntas.buscasOpciones);
+  for (const palabra of ["nature", "beach", "children", "road"]) assert.ok(en.includes(palabra), palabra);
+  for (const palabra of ["naturaleza", "playa", "niños", "carretera"]) assert.ok(es.includes(palabra), palabra);
+});
+
 // Lo que devuelve el buscador de lugares, con la forma de Photon y con sitios inventados.
 const resultado = (propiedades: Record<string, unknown>, coordenadas: unknown = [20.05, 10.05]): unknown => ({
   type: "Feature",
