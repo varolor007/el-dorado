@@ -131,11 +131,14 @@ export async function buscarAlojamiento(
   };
 }
 
-/** Añade a cada finalista lo que piden otros vendedores, casando por posición y nombre. Devuelve cuántos casan. */
-export function anadirOfertas(b: Busqueda, deZona: OfertaDeZona[]): number {
+/**
+ * Añade a cada finalista lo que piden otros vendedores, casando por posición y nombre. El nombre del sitio donde se
+ * busca no cuenta para casar: lo llevan muchos. Devuelve cuántos casan.
+ */
+export function anadirOfertas(b: Busqueda, deZona: OfertaDeZona[], lugar = ""): number {
   let casados = 0;
   for (const ficha of b.finalistas) {
-    const igual = casar(ficha.alojamiento, deZona);
+    const igual = casar(ficha.alojamiento, deZona, undefined, lugar);
     if (igual === null) continue;
     ficha.otrasOfertas = igual.ofertas.filter((x) => x.total !== null);
     casados++;

@@ -28,6 +28,10 @@ test("el parecido de dos nombres no mira el orden, los acentos ni las palabras d
   assert.equal(parecido("Hotel Faro Inventado", "Faro Inventado Hotel"), 1);
   assert.equal(parecido("Posada del Río Inventado", "Posada del Rio Inventado"), 1);
   assert.equal(parecido("Hotel Faro Inventado", "Bar de la Esquina"), 0);
+  // El nombre del sitio donde se busca no distingue a un alojamiento de otro: lo llevan muchos.
+  assert.equal(parecido("Villa Inventada Palace", "Villa Inventada Suites"), 0.5);
+  assert.equal(parecido("Villa Inventada Palace", "Villa Inventada Suites", "Villa Inventada"), 0);
+  assert.equal(parecido("Palace Villa Inventada", "Palace", "Centro, Villa Inventada"), 1);
 });
 
 test("casa al que está cerca y se llama parecido, y a ningún otro", () => {

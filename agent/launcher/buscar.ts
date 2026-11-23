@@ -71,7 +71,7 @@ async function principal(): Promise<number> {
 
   if (a.lugar !== undefined && encendida("parallel")) {
     try {
-      const casados = anadirOfertas(busqueda, await ofertasDeZona(a.lugar, estancia));
+      const casados = anadirOfertas(busqueda, await ofertasDeZona(a.lugar, estancia), a.lugar);
       avisos.push(`otras ofertas: casaron ${casados} de ${busqueda.finalistas.length} finalistas`);
     } catch (e) {
       avisos.push(`sin otras ofertas: ${(e as Error).message}`);

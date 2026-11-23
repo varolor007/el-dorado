@@ -781,7 +781,7 @@ Los datos se sacan en el momento, cuando se piden; el viajero no trae nada, no h
 | La foto de cada sitio | Wikimedia Commons, con su autor y su licencia al pie. Una foto sin autor o sin licencia no se enseña | hecho |
 | El mapa y el buscador de lugares | Mapas abiertos, sin clave y sin coste: el mapa, con MapLibre y OpenFreeMap; el buscador, Photon. No garantizan el servicio | pendiente |
 | Lo que se anda entre dos paradas | El código, en línea recta y con un margen; la ruta exacta, un enlace a Google Maps | hecho |
-| Las palancas: el precio de otros días, otro hotel u otra zona | Las mismas fuentes, pedidas otra vez por código | pendiente |
+| Las palancas: el precio de otros días, otro hotel u otra zona | Las mismas fuentes, pedidas otra vez por código: las mismas noches movidas y una noche más o menos. Otro aeropuerto y el tren esperan a la búsqueda de transporte | en parte |
 | Dónde se reserva cada precio | El enlace de donde se encontró; el de LiteAPI no tiene página pública | por decidir |
 
 Es un MVP sin uso comercial. Lo que dicen las condiciones de cada fuente (la IA sobre sus fotos, cruzar sus datos, guardar resultados) está en `docs/condiciones.md` y se cierra con el abogado antes de vender. Con la clave de pruebas, los precios pueden no ser los de verdad.

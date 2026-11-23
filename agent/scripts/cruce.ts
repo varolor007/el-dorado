@@ -7,21 +7,28 @@ export function metros(lat1: number, lon1: number, lat2: number, lon2: number): 
   return enLineaRecta({ lat: lat1, lon: lon1 }, { lat: lat2, lon: lon2 });
 }
 
-const RELLENO = new Set(["hotel", "hotels", "the", "by", "and", "de", "la", "el", "lisbon", "lisboa"]);
+/** Las palabras que no distinguen un alojamiento de otro. El nombre del destino tampoco: se le pasa aparte. */
+const RELLENO = new Set(["hotel", "hotels", "the", "by", "and", "de", "la", "el"]);
 
-export function palabras(nombre: string): Set<string> {
-  const limpio = nombre
+const sueltas = (texto: string): string[] =>
+  texto
     .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, " ");
-  return new Set(limpio.split(/\s+/).filter((p) => p !== "" && !RELLENO.has(p)));
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter((p) => p !== "");
+
+/** Las palabras de un nombre que lo distinguen: sin las de relleno ni las del sitio donde está. */
+export function palabras(nombre: string, lugar = ""): Set<string> {
+  const delLugar = new Set(sueltas(lugar));
+  return new Set(sueltas(nombre).filter((p) => !RELLENO.has(p) && !delLugar.has(p)));
 }
 
 /** De 0 a 1: las palabras que comparten dos nombres sobre todas las que tienen. */
-export function parecido(a: string, b: string): number {
-  const pa = palabras(a);
-  const pb = palabras(b);
+export function parecido(a: string, b: string, lugar = ""): number {
+  const pa = palabras(a, lugar);
+  const pb = palabras(b, lugar);
   if (pa.size === 0 || pb.size === 0) return 0;
   let comunes = 0;
   for (const p of pa) if (pb.has(p)) comunes++;
@@ -34,13 +41,13 @@ export type Limites = { metros: number; parecido: number };
 export const LIMITES: Limites = { metros: 150, parecido: 0.5 };
 
 /** El candidato que es el mismo alojamiento, o null si ninguno lo es con seguridad. */
-export function casar<T extends Punto>(a: Punto, candidatos: T[], limites: Limites = LIMITES): T | null {
+export function casar<T extends Punto>(a: Punto, candidatos: T[], limites: Limites = LIMITES, lugar = ""): T | null {
   if (a.lat === null || a.lon === null) return null;
   let mejor: { c: T; parecido: number; metros: number } | null = null;
   for (const c of candidatos) {
     if (c.lat === null || c.lon === null) continue;
     const d = metros(a.lat, a.lon, c.lat, c.lon);
-    const p = parecido(a.nombre, c.nombre);
+    const p = parecido(a.nombre, c.nombre, lugar);
     if (d > limites.metros || p < limites.parecido) continue;
     if (mejor === null || p > mejor.parecido || (p === mejor.parecido && d < mejor.metros))
       mejor = { c, parecido: p, metros: d };

@@ -136,6 +136,27 @@ export const OPINIONES: Opinion[] = [
   { fecha: null, nota: 8, viajero: null, bueno: "Good breakfast", malo: "Small bed", de: "inventada" },
 ];
 
+/** Lo que cuesta mover la entrada, en la fuente inventada: un día antes es más barato; dos antes, más caro. */
+const POR_DIA_MOVIDO: Record<string, number> = { "-2": 1.1, "-1": 0.9, "0": 1, "1": 1.05, "2": 1 };
+
+const dias = (desde: string, hasta: string): number => Math.round((Date.parse(hasta) - Date.parse(desde)) / 86_400_000);
+
+/**
+ * El precio de la fuente inventada para unas fechas: el de la estancia de partida, a tanto la noche, y más barato o
+ * más caro según cuánto se mueva la entrada. Con las fechas de partida, el de la lista, tal cual.
+ */
+export function precioPara(p: Precio, e: Estancia): Precio {
+  const noches = dias(e.entrada, e.salida) / dias(ESTANCIA.entrada, ESTANCIA.salida);
+  const movido = POR_DIA_MOVIDO[String(dias(ESTANCIA.entrada, e.entrada))] ?? 1;
+  return {
+    ...p,
+    total: Math.round(p.total * noches * movido * 100) / 100,
+    entrada: e.entrada,
+    salida: e.salida,
+    adultos: e.adultos,
+  };
+}
+
 export type Fallos = { detalle?: boolean; opiniones?: boolean };
 
 /** Una fuente inventada: contesta siempre lo mismo, y puede fallar a propósito. */
@@ -145,8 +166,8 @@ export function fuenteInventada(fallos: Fallos = {}): FuenteAlojamiento {
     async lista() {
       return ALOJAMIENTOS.map((a) => ({ ...a }));
     },
-    async precios(ids) {
-      return PRECIOS.filter((p) => ids.includes(p.id)).map((p) => ({ ...p }));
+    async precios(ids, e) {
+      return PRECIOS.filter((p) => ids.includes(p.id)).map((p) => precioPara(p, e));
     },
     async detalle(id) {
       if (fallos.detalle) throw new Error("la fuente no responde");
