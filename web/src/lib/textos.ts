@@ -149,7 +149,7 @@ const en = {
     ficha: "See it",
     elegir: "Sleep here",
     donde: (zona: string | null, min: number | null) =>
-      [zona === null ? "" : `In ${zona}`, min === null ? "" : `about ${min} min on foot from what you will see`]
+      [zona === null ? "" : `In ${zona}`, min === null ? "" : `half of what you will see is within ${min} min on foot`]
         .filter((x) => x !== "")
         .join(", "),
     puntos: (n: number) => `Our score: ${n} out of 10`,
@@ -383,7 +383,7 @@ const es: Textos = {
     ficha: "Ver su ficha",
     elegir: "Dormir aquí",
     donde: (zona, min) =>
-      [zona === null ? "" : `En ${zona}`, min === null ? "" : `a unos ${min} min andando de lo que vas a ver`]
+      [zona === null ? "" : `En ${zona}`, min === null ? "" : `la mitad de lo que vas a ver te queda a ${min} min andando o menos`]
         .filter((x) => x !== "")
         .join(", "),
     puntos: (n) => `Nuestra nota: ${n} de 10`,

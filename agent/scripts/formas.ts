@@ -177,7 +177,7 @@ export type FilaDelCruce = {
   score: number | string;
   /** Las partes de la nota que no tienen dato: no bajan la nota, se dicen. */
   unconfirmed: string[];
-  /** Lo que se anda, de media, hasta las paradas del viaje. */
+  /** La mitad de las paradas del viaje queda a estos minutos andando, o menos. */
   walk_minutes: number | string;
   cancellable: boolean | string;
   /** Lo que saca el código: la más barata que pasa de la nota mínima y la mejor por lo que cuesta. */

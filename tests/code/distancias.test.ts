@@ -5,6 +5,7 @@ import {
   centroDe,
   enLineaRecta,
   mediaAndando,
+  medianaAndando,
   minutosAndando,
   minutosEntre,
   PASO,
@@ -42,4 +43,15 @@ test("la media de lo que se anda hasta varios sitios; sin sitios, no hay media",
 test("el centro de unos puntos es su punto medio, y sin puntos no hay centro", () => {
   assert.deepEqual(centroDe([A, { lat: 12, lon: 22 }]), { lat: 11, lon: 21 });
   assert.throws(() => centroDe([]), /no hay puntos/);
+});
+
+test("la mediana de lo que se anda no la hunde lo que está lejos para todos", () => {
+  const cerca = [1, 2, 3].map((n) => ({ lat: 10 + (n * 300) / 111_195, lon: 20 }));
+  const excursion = { lat: 10.1, lon: 20 };
+  const mediana = medianaAndando(A, [...cerca, excursion]);
+  const media = mediaAndando(A, [...cerca, excursion]);
+  assert.equal(mediana, Math.round((minutosEntre(A, cerca[1]) + minutosEntre(A, cerca[2])) / 2));
+  assert.ok(mediana! < media!);
+  assert.equal(medianaAndando(A, [cerca[0], cerca[1], cerca[2]]), minutosEntre(A, cerca[1]));
+  assert.equal(medianaAndando(A, []), null);
 });

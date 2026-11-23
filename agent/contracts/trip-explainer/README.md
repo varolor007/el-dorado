@@ -11,7 +11,8 @@ every difference included, was computed by the house: you copy it.
 
 - `trip.json`: what the traveller asked for, with their own words, and `language`: the language they read.
 - `ways.json`: the ways of doing the trip, each with its `id` (`cheapest`, `best_value`, `different`), its lodging,
-  its zone, its totals, its score, the minutes on foot to what they will see, whether it can be cancelled, what
+  its zone, its totals, its score, `walk_minutes` (half of what they will see is within that many minutes on
+  foot), whether it can be cancelled, what
   could not be confirmed, what the lodging is like (its levels, each with what was seen or said), its best and its
   worst, its warnings, and `versus_cheapest`: what it costs more, how many minutes on foot it saves and how much
   higher its score is. For the different way, the lever that tells it apart and why it was chosen.

@@ -41,7 +41,7 @@ export const PESOS_DEL_VUELO = { puertaAPuerta: 0.35, escalas: 0.25, horarios: 0
 /** Dentro de «cómo es», lo que el viajero marcó como «me gusta» pesa esto más que lo demás. */
 export const MAS_POR_GUSTO = 3;
 
-/** La zona: andando hasta lo que se va a ver, de media. Hasta aquí, un diez; desde aquí, un cero. */
+/** La zona: los minutos andando a los que queda la mitad de lo que se va a ver. Hasta aquí, diez; desde aquí, cero. */
 export const ZONA = { minutosDeDiez: 8, minutosDeCero: 40 } as const;
 
 /** Las opiniones se corrigen: una nota con pocas opiniones tira hacia esta media, con este peso. */

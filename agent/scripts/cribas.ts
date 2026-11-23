@@ -16,7 +16,7 @@ import {
 } from "../data/cribas.ts";
 import { COSAS, valorDelNivel } from "../data/gustos.ts";
 import { CAMPOS, INSTALACIONES, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
-import { mediaAndando, type Punto } from "../tools/distancias.ts";
+import { medianaAndando, type Punto } from "../tools/distancias.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
 import type { EntregaDeMirar, Gusto } from "./formas.ts";
 
@@ -37,6 +37,7 @@ export type Cribado = {
   /** Lo que se paga de verdad: el total más lo que se cobra aparte. */
   total: number;
   nota: Nota;
+  /** La mitad de lo que se va a ver queda a estos minutos andando, o menos. */
   minutosAndando: number | null;
 };
 
@@ -82,7 +83,7 @@ export function imprescindiblesSinSaber(c: Candidato, ctx: Contexto): string[] {
     .map((g) => g.thing);
 }
 
-/** La zona: de lo que se anda, de media, hasta lo que se va a ver. */
+/** La zona: de los minutos andando a los que queda la mitad de lo que se va a ver. */
 function notaDeLaZona(minutos: number | null): number | null {
   if (minutos === null) return null;
   return redondea(entre(((ZONA.minutosDeCero - minutos) / (ZONA.minutosDeCero - ZONA.minutosDeDiez)) * 10, 0, 10));
@@ -150,7 +151,7 @@ export function notaDe(c: Candidato, ctx: Contexto, minutos: number | null): Not
 export function cribar(candidatos: Candidato[], ctx: Contexto): Cribado[] {
   return candidatos.map((c) => {
     const a = c.ficha.alojamiento;
-    const minutos = mediaAndando({ lat: a.lat, lon: a.lon }, ctx.paradas);
+    const minutos = medianaAndando({ lat: a.lat, lon: a.lon }, ctx.paradas);
     const descarte = descarteDe(c, ctx);
     return {
       id: a.id,

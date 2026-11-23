@@ -14,9 +14,10 @@ them and you decide.
   want to spend, what they are looking for, and their tastes and limits with their own words.
 - `table.json`: the table of the trip, made by the house.
   - `rows`: one row per lodging that reached the end, with the transport of the trip if there is one. Each row has
-    its totals, its `score` from 0 to 10, what could not be confirmed (`unconfirmed`), the minutes on foot, on
-    average, to what the traveller is going to see (`walk_minutes`), whether it can be cancelled, the `marks` the
-    house gave it (`cheapest`, `best_value`) and, if a sieve discarded it, why (`discarded`).
+    its totals, its `score` from 0 to 10, what could not be confirmed (`unconfirmed`), how close it is to what the
+    traveller is going to see (`walk_minutes`: half of those places are within that many minutes on foot),
+    whether it can be cancelled, the `marks` the house gave it (`cheapest`, `best_value`) and, if a sieve
+    discarded it, why (`discarded`).
   - `levers`: changes the house already priced, each one against a base row (`base_row`): what changes, what the
     trip costs that way (`total`), what it saves (`saves`: positive if it is cheaper, negative if it costs more)
     and how the walk and the score change. `status` is `priced` or `no_price`.

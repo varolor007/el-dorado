@@ -61,7 +61,7 @@ export type Alojamiento = {
   avisos: string[];
   /** La zona de la ruta en la que está, por su nombre. */
   zona?: string | null;
-  /** Lo que se anda, de media, hasta las paradas del viaje, en minutos. */
+  /** La mitad de las paradas del viaje queda a estos minutos andando, o menos. */
   andando?: number | null;
   /** Nuestra nota, de 0 a 10: la zona, cómo es, las opiniones y las condiciones. */
   puntos?: number | null;

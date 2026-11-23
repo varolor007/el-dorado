@@ -42,6 +42,18 @@ export function mediaAndando(desde: Punto, hasta: Punto[]): number | null {
   return Math.round(hasta.reduce((suma, p) => suma + minutosEntre(desde, p), 0) / hasta.length);
 }
 
+/**
+ * Los minutos andando a los que queda la mitad de unos sitios, o menos: la mediana. Dice lo cerca que está un
+ * alojamiento de lo que se va a ver sin que lo hunda lo que está lejos para todos, como una excursión al otro lado
+ * de la ciudad. Sin sitios a los que ir, no hay medida.
+ */
+export function medianaAndando(desde: Punto, hasta: Punto[]): number | null {
+  if (hasta.length === 0) return null;
+  const minutos = hasta.map((p) => minutosEntre(desde, p)).sort((a, b) => a - b);
+  const medio = Math.floor(minutos.length / 2);
+  return minutos.length % 2 === 1 ? minutos[medio] : Math.round((minutos[medio - 1] + minutos[medio]) / 2);
+}
+
 /** El punto medio de unos cuantos. */
 export function centroDe(puntos: Punto[]): Punto {
   if (puntos.length === 0) throw new Error("no hay puntos de los que sacar el centro");
