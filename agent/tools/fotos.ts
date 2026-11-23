@@ -45,6 +45,9 @@ export function elegirFotos(deLaHabitacion: string[], delHotel: string[], tope: 
   };
 }
 
+/** Cómo acaba el nombre de una máquina de dentro: las de una casa, las de una nube y las de un clúster. */
+const DE_DENTRO = /(^|\.)(localhost|local|internal|lan|home|corp|invalid|svc|consul)$/;
+
 /** Solo se baja de direcciones https con nombre: ni máquinas de dentro, ni números, ni claves en la dirección. */
 export function direccionSegura(url: string): boolean {
   let u: URL;
@@ -54,9 +57,14 @@ export function direccionSegura(url: string): boolean {
     return false;
   }
   if (u.protocol !== "https:" || u.username !== "" || u.password !== "" || u.port !== "") return false;
-  const maquina = u.hostname.toLowerCase();
+  // Un nombre con un punto al final es el mismo nombre: se le quita antes de mirar nada, o «localhost.» pasaría
+  // por tener un punto y por no acabar en «localhost».
+  const maquina = u.hostname.toLowerCase().replace(/\.+$/, "");
+  // Un número no es un nombre. Al leer la dirección, los que van en hexadecimal o de una pieza ya quedan con sus
+  // cuatro partes, y los de la otra forma, entre corchetes.
   if (/^[\d.]+$/.test(maquina) || maquina.includes(":") || maquina.startsWith("[")) return false;
-  if (!maquina.includes(".") || /(^|\.)(localhost|local|internal|lan|home|corp|invalid)$/.test(maquina)) return false;
+  // Un nombre de una sola palabra solo existe dentro de una red.
+  if (!maquina.includes(".") || DE_DENTRO.test(maquina)) return false;
   return true;
 }
 
@@ -71,11 +79,40 @@ export function tipoDeImagen(b: Uint8Array): "jpg" | "png" | "webp" | null {
 
 export type Traer = (url: string, maximoBytes: number) => Promise<Uint8Array>;
 
+/**
+ * Lee lo que manda una máquina a trozos y contando: en cuanto pasa del tope, se deja de leer. Lo que dice que pesa
+ * no vale para esto: puede no decirlo, o mentir, y leerlo entero para medirlo después es tenerlo ya en la memoria.
+ */
+async function leerConTope(respuesta: Response, maximoBytes: number): Promise<Uint8Array> {
+  if (respuesta.body === null) return new Uint8Array();
+  const lector = respuesta.body.getReader();
+  const trozos: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await lector.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maximoBytes) {
+      await lector.cancel().catch(() => {});
+      throw new Error("pesa demasiado");
+    }
+    trozos.push(value);
+  }
+  const entera = new Uint8Array(total);
+  let desde = 0;
+  for (const trozo of trozos) {
+    entera.set(trozo, desde);
+    desde += trozo.byteLength;
+  }
+  return entera;
+}
+
 const deInternet: Traer = async (url, maximoBytes) => {
   const respuesta = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(30_000) });
   if (!respuesta.ok) throw new Error(`contesta ${respuesta.status}`);
+  // Si ya dice que pesa demasiado, no se empieza a leer; si no lo dice, o dice de menos, lo corta la cuenta.
   if (Number(respuesta.headers.get("content-length") ?? 0) > maximoBytes) throw new Error("pesa demasiado");
-  return new Uint8Array(await respuesta.arrayBuffer());
+  return leerConTope(respuesta, maximoBytes);
 };
 
 export type Bajada = { ruta: string; archivo: string; url: string; bytes: number };

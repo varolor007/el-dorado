@@ -155,6 +155,88 @@ test("trampa: no se baja de direcciones que no son de fiar", async () => {
   assert.equal(existsSync(join(TEMPORAL, "ssrf")), false);
 });
 
+test("trampa: un punto al final del nombre no esconde una máquina de dentro, ni vale la de un clúster", () => {
+  const malas = [
+    "https://localhost./a.jpg",
+    "https://servidor./a.jpg",
+    "https://base.internal./a.jpg",
+    "https://metadata.google.internal./computeMetadata/v1/",
+    "https://impresora.local./a.jpg",
+    "https://caja.localhost../a.jpg",
+    "https://kubernetes.default.svc/a.jpg",
+    "https://kubernetes.default.svc./a.jpg",
+    "https://kubernetes.default.svc.cluster.local/a.jpg",
+    "https://vault.service.consul/a.jpg",
+    "https://VAULT.Service.Consul./a.jpg",
+    // Un número sigue siendo un número con un punto detrás, en hexadecimal, de una pieza o dentro de corchetes.
+    "https://127.0.0.1./a.jpg",
+    "https://0x7f.1/a.jpg",
+    "https://2130706433/a.jpg",
+    "https://[::ffff:127.0.0.1]/a.jpg",
+  ];
+  for (const mala of malas) assert.equal(direccionSegura(mala), false, mala);
+  // Un nombre de fuera con su punto al final es el mismo nombre de fuera.
+  assert.equal(direccionSegura("https://static.cupid.travel./hotels/1.jpg"), true);
+  assert.equal(direccionSegura("https://fotos.consulado.example.com/a.jpg"), true);
+});
+
+/** Una red de mentira que manda una foto a trozos, sin decir cuánto pesa o diciendo lo que quiera. */
+function redATrozos(trozos: Uint8Array[], cabeceras: Record<string, string> = {}) {
+  const cuenta = { servidos: 0, cortada: false };
+  const deVerdad = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(
+      new ReadableStream<Uint8Array>({
+        pull(c) {
+          if (cuenta.servidos < trozos.length) c.enqueue(trozos[cuenta.servidos++]);
+          else c.close();
+        },
+        cancel() {
+          cuenta.cortada = true;
+        },
+      }),
+      { headers: cabeceras },
+    );
+  return { cuenta, quitar: () => void (globalThis.fetch = deVerdad) };
+}
+
+test("trampa: una foto que no dice lo que pesa, o que miente, se deja de leer al pasar del tope", async () => {
+  const gorda = Array.from({ length: 50 }, () => new Uint8Array(400).fill(0xff));
+  const loQueDicenQuePesa: Record<string, string>[] = [{}, { "content-length": "10" }];
+  for (const cabeceras of loQueDicenQuePesa) {
+    const red = redATrozos(gorda, cabeceras);
+    try {
+      const pedida = [{ ruta: "photos/room-01", url: url("sin-fin.jpg") }];
+      const r = await bajarFotos(pedida, join(TEMPORAL, "tope"), { maximoBytes: 1000 });
+      assert.deepEqual(r.bajadas, []);
+      assert.deepEqual(
+        r.fallos.map((f) => f.motivo),
+        ["pesa demasiado"],
+      );
+    } finally {
+      red.quitar();
+    }
+    // Con un tope de mil bytes y trozos de cuatrocientos, al tercero ya se sabe: los cincuenta no se leen.
+    assert.ok(red.cuenta.servidos <= 6, `se leyeron ${red.cuenta.servidos} trozos`);
+    assert.equal(red.cuenta.cortada, true);
+  }
+  assert.equal(existsSync(join(TEMPORAL, "tope")), false);
+});
+
+test("una foto que llega a trozos se guarda entera, y la que pesa justo el tope, también", async () => {
+  const carpeta = join(TEMPORAL, "trozos");
+  const red = redATrozos([JPG.slice(0, 3), JPG.slice(3, 5), JPG.slice(5)]);
+  try {
+    const pedida = [{ ruta: "photos/room-01", url: url("a.jpg") }];
+    const r = await bajarFotos(pedida, carpeta, { maximoBytes: JPG.length });
+    assert.deepEqual(r.fallos, []);
+    assert.equal(r.bajadas[0].bytes, JPG.length);
+  } finally {
+    red.quitar();
+  }
+  assert.deepEqual([...readFileSync(join(carpeta, "photos", "room-01.jpg"))], [...JPG]);
+});
+
 test("trampa: las fotos no se bajan dentro del repositorio", async () => {
   const dentro = resolve(import.meta.dirname, "..", "..", "fotos-de-prueba");
   await assert.rejects(() => bajarFotos([], dentro), /dentro del repositorio/);
