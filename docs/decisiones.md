@@ -78,6 +78,9 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 
 - **El PM se registró en Travelpayouts y en LiteAPI** y dio sus dos claves por el formulario seguro: quedan en su
   entorno, fuera del repositorio. Las dos responden: lo comprobado, en `datos.md`.
+- **El PM se registró también en Parallel**, por su índice de imágenes, y dio su clave por el formulario seguro. Al
+  probarlo, la sesión vio que busca además hoteles y pisos, con el precio de Booking.com y de Airbnb y su enlace: lo
+  comprobado, en `datos.md`. Falta saber de dónde saca esos datos y leer sus condiciones.
 
 ## Pendientes
 

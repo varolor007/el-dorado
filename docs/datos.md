@@ -26,6 +26,7 @@ sin comprobar (dicho de memoria). El detalle de cada fuente, en [fuentes.md](fue
 | Kiwi para agentes | Vuelos en vivo, por su servidor para agentes | Sus condiciones de uso comercial, por comprobar |
 | KAYAK para afiliados | Hoteles y vuelos en vivo | Con solicitud |
 | Las API de socios | Booking.com y demás | Con acuerdo: después, con el abogado |
+| Parallel | Búsqueda de hoteles, pisos e imágenes hecha para agentes, de pago por consulta | Comprobado con la clave del PM (23-nov); de dónde saca sus datos y sus condiciones, sin leer |
 | Un lector comprado | SerpApi y parecidos | Con riesgo legal y de corte: lo decide el PM |
 
 ## El alojamiento
@@ -170,6 +171,29 @@ Las respuestas de prueba tampoco entran en el repositorio.
   escalas, su precio y su enlace.
 - Trae aerolíneas de bajo coste (Ryanair y easyJet), que era una duda.
 - Cada precio lleva la fecha en que se vio: en la prueba, entre el mismo día y seis días antes.
+
+**Parallel**, con la clave del PM (23-nov). Se registró por su índice de imágenes, y resultó tener también búsqueda
+de hoteles, de pisos y de vuelos, hecha para agentes y con registro:
+
+- **Hoteles**: en la Baixa de Lisboa, para tres noches de febrero y dos adultos, con filtro de cuatro y cinco estrellas
+  y de nota, devolvió 40 en dos segundos. Cada uno, con su precio de esas noches en Booking.com y el enlace a su página
+  de reserva con las fechas puestas, dónde está, sus estrellas, su nota en cuatro niveles, si se puede cancelar y una
+  foto.
+- **Pisos**: en Alfama, 40: 18 de Airbnb y 22 de Booking.com, cada uno con su precio de esas noches, su enlace a la
+  página del piso con las fechas, dónde está y dos o tres fotos. Es la primera salida que aparece para la pieza 13.
+- **Lo que no trae**: la nota en número ni cuántas opiniones, el texto de las opiniones, las habitaciones ni más de
+  unas pocas fotos. Y da 40 resultados por consulta, no la lista entera de una zona.
+- **Vuelos**: su búsqueda no está activada para esta cuenta («not supported for your organization»).
+- **Imágenes**: para un hotel devolvió diez fotos de varias webs; solo una era claramente de un viajero. Flojo para la
+  pieza 9, al menos en su modo rápido.
+- **Precio**: 5 USD por 1.000 consultas de hoteles; de 1 a 5 USD por 1.000 de imágenes. Las cinco consultas de la
+  prueba, unos céntimos.
+- **Lo que no se sabe**: de dónde saca los precios de Booking.com y de Airbnb, y qué dicen sus condiciones. Puede ser
+  un lector comprado con otro nombre: antes de montar nada sobre él, se leen sus condiciones y lo mira el abogado.
+
+**Cómo casan las tres**: Parallel da el precio de Booking.com y de Airbnb con su enlace; LiteAPI, el detalle (las
+habitaciones con sus metros y sus fotos, las opiniones y la nota en número), y el índice de texto, lo que se dice de
+cada hotel. Cruzar un mismo hotel entre las dos primeras se hace por su nombre y su posición.
 
 ## Lo que se ve en el mapa
 

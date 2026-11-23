@@ -15,12 +15,14 @@ viajero no trae nada, sin base que mantener y sin leer a escondidas; los acuerdo
 abogado. El mapa, en [datos.md](datos.md): cada pieza de información y de dónde sale, que se amplía con él pieza a
 pieza; lo mirado de cada fuente y lo comprobado, en [fuentes.md](fuentes.md). El índice para IA queda como posible
 solución parcial. El 23-nov el PM se registró en LiteAPI y en Travelpayouts y dio sus claves por el formulario seguro
-(están en su entorno, no en el repositorio): las dos responden, y lo que trae cada una está en datos.md. Lo siguiente:
-la prueba entera con una ciudad (la lista, los mínimos y la ficha de unos finalistas con cada fuente) y leer las
-condiciones de LiteAPI sobre IA antes de montar sobre sus fotos el asiento que mira. El dibujo del run
-(`paginas/run.html`, publicado en https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos
-buscadores como asientos: se rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después,
-lo que falta por hablar (al final de piezas.md) y la etapa 2.
+(están en su entorno, no en el repositorio): las dos responden, y lo que trae cada una está en datos.md. Se registró
+también en Parallel, que además de imágenes busca hoteles y pisos con el precio de Booking.com y de Airbnb: funciona,
+y falta saber de dónde saca esos datos y leer sus condiciones. Lo siguiente: la prueba entera con una ciudad (la
+lista, los mínimos y la ficha de unos finalistas con cada fuente) y leer las condiciones de LiteAPI sobre IA antes de
+montar sobre sus fotos el asiento que mira. El dibujo del run (`paginas/run.html`, publicado en
+https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos buscadores como asientos: se
+rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después, lo que falta por hablar (al
+final de piezas.md) y la etapa 2.
 
 ## 1. Qué es
 
