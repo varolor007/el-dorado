@@ -55,7 +55,16 @@ export type Busqueda = {
   avisos: string[];
 };
 
-export type Opciones = { finalistas?: number; opiniones?: number };
+export type Opciones = {
+  finalistas?: number;
+  opiniones?: number;
+  /**
+   * Las instalaciones que el viajero marcó como imprescindibles (el gimnasio, la piscina). El alojamiento del que la
+   * fuente dice lo que tiene, y no la declara, se descarta antes de elegir a quién mirar: mirarlo sería gastar para
+   * nada. Del que la fuente no dice nada, no se sabe, y sigue.
+   */
+  imprescindibles?: string[];
+};
 
 function mensaje(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -111,8 +120,26 @@ async function completar(
   zonas: ZonaDeBusqueda[],
 ): Promise<Busqueda> {
   const avisos: string[] = [];
-  const { dentro, fuera } = separar(devueltos, m);
+  const porMinimos = separar(devueltos, m);
+  const fuera = [...porMinimos.fuera];
   if (fuera.length > 0) avisos.push(`la fuente devolvió ${fuera.length} que no cumplen los mínimos; descartados`);
+  const dentro: Alojamiento[] = [];
+  for (const a of porMinimos.dentro) {
+    const falta = (o.imprescindibles ?? []).find((cosa) => a.declara !== undefined && !a.declara.includes(cosa));
+    if (falta === undefined) dentro.push(a);
+    else
+      fuera.push({
+        id: a.id,
+        nombre: a.nombre,
+        lat: a.lat,
+        lon: a.lon,
+        motivo: `no declara ${falta}, que es imprescindible`,
+      });
+  }
+  if (dentro.length < porMinimos.dentro.length)
+    avisos.push(
+      `${porMinimos.dentro.length - dentro.length} cumplen los mínimos y no declaran lo imprescindible; descartados`,
+    );
 
   const precios =
     dentro.length === 0

@@ -190,6 +190,32 @@ test("la búsqueda por zonas junta lo de cada zona sin repetir, y el más barato
   await assert.rejects(buscarEnZonas(fuenteDeDosBarrios(), ESTANCIA, [], MINIMOS), /ninguna zona/);
 });
 
+test("lo que no declara un imprescindible se descarta antes de mirarlo; lo que no se sabe, no", async () => {
+  const zonas = [{ id: "z1", nombre: "Todo", lat: SITIOS[1].punto.lat, lon: SITIOS[1].punto.lon, radio: 3000 }];
+  const fuente = fuenteDeDosBarrios();
+  // El más barato no tiene gimnasio; el segundo sí; de los demás, la fuente no dice nada.
+  const conLoQueDeclaran: FuenteAlojamiento = {
+    ...fuente,
+    async lista(e, m) {
+      const todos = await fuente.lista(e, m);
+      return todos.map((a) =>
+        a.id === "a1" ? { ...a, declara: ["pool"] } : a.id === "a2" ? { ...a, declara: ["gym"] } : a,
+      );
+    },
+  };
+  const b = await buscarEnZonas(conLoQueDeclaran, ESTANCIA, zonas, MINIMOS, { imprescindibles: ["gym"] });
+  assert.ok(!b.dentro.some((a) => a.id === "a1"));
+  assert.ok(!b.finalistas.some((f) => f.alojamiento.id === "a1"));
+  assert.equal(b.fuera.find((d) => d.id === "a1")?.motivo, "no declara gym, que es imprescindible");
+  assert.ok(b.finalistas.some((f) => f.alojamiento.id === "a2"));
+  assert.ok(b.finalistas.length >= 4);
+  assert.equal(b.dentro.length + b.fuera.length, b.devueltos);
+  assert.ok(b.avisos.some((x) => x.includes("no declaran lo imprescindible")));
+  // Sin imprescindibles, nadie se descarta por lo que declara.
+  const sin = await buscarEnZonas(conLoQueDeclaran, ESTANCIA, zonas, MINIMOS);
+  assert.ok(sin.dentro.some((a) => a.id === "a1"));
+});
+
 test("la investigación inventada, entera: de lo entendido al viaje, por cada asiento y cada puerta", async () => {
   const run = runNuevo();
   try {

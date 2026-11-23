@@ -10,6 +10,7 @@ import {
   cuerpoDePrecios,
   dentroDelRadio,
   direccionDeLista,
+  leerCatalogo,
   leerDetalle,
   leerLista,
   leerOpiniones,
@@ -54,6 +55,35 @@ test("LiteAPI: la lista, y lo que viene sin identificador o sin posición no ent
   assert.equal(lista[1].nota, null);
   assert.deepEqual(leerLista({ error: "algo" }, VISTO), []);
   assert.deepEqual(leerLista("no es un objeto", VISTO), []);
+});
+
+test("LiteAPI: qué instalaciones declara cada alojamiento sale del catálogo de la propia fuente", () => {
+  const catalogo = leerCatalogo({
+    data: [
+      { facility_id: 11, facility: "Fitness center" },
+      { facility_id: 537, facility: "Free use of nearby fitness center" },
+      { facility_id: 579, facility: "Billiards or pool table" },
+      { facility_id: 832, facility: "Indoor/outdoor pool" },
+      { facility_id: 5, facility: "Free WiFi" },
+      { facility: "Sin número" },
+    ],
+  });
+  assert.deepEqual(
+    [...catalogo.entries()],
+    [
+      [11, "gym"],
+      [832, "pool"],
+    ],
+  );
+  const hotel = (id: string, facilityIds: unknown) => ({ id, name: id, latitude: 10, longitude: 20, facilityIds });
+  const json = { data: [hotel("con", [5, 832, 11, 11]), hotel("cerca", [537, 579]), hotel("sin-lista", undefined)] };
+  const [con, cerca, sinLista] = leerLista(json, VISTO, catalogo);
+  assert.deepEqual(con.declara, ["gym", "pool"]);
+  // Un gimnasio «cerca de aquí» y una mesa de billar no son un gimnasio ni una piscina.
+  assert.deepEqual(cerca.declara, []);
+  // Si la fuente no manda sus servicios, o no se tiene su catálogo, no se sabe: no es lo mismo que no tener.
+  assert.equal(sinLista.declara, undefined);
+  assert.equal(leerLista(json, VISTO)[0].declara, undefined);
 });
 
 test("LiteAPI: de cada alojamiento, la tarifa más barata contando lo que se paga aparte", () => {

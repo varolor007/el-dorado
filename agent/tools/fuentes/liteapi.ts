@@ -1,6 +1,7 @@
 // El enchufe de LiteAPI: la lista de una zona, el precio de unas noches, el detalle y las opiniones de un alojamiento.
 // Leer la respuesta (las funciones «leer») va aparte de pedirla, para probarlo con datos inventados y sin internet.
 
+import { INSTALACIONES } from "../../data/niveles.ts";
 import { enLineaRecta } from "../distancias.ts";
 import { ahora, clave, lista, numero, objeto, pedirJson, texto } from "./http.ts";
 import type {
@@ -20,7 +21,24 @@ const POR_TANDA = 50;
 
 const cabeceras = (): Record<string, string> => ({ "X-API-Key": clave("LITEAPI_KEY") });
 
-export function leerLista(json: unknown, visto: string): Alojamiento[] {
+/**
+ * Qué servicios de la fuente son una instalación de las nuestras, por su número: los que se llaman como ella y no
+ * son «cerca de aquí». Sale del catálogo de servicios de la propia fuente, no de una lista escrita a mano.
+ */
+export function leerCatalogo(json: unknown): Map<number, string> {
+  const nuestras = new Map<number, string>();
+  for (const crudo of lista(objeto(json).data)) {
+    const s = objeto(crudo);
+    const id = numero(s.facility_id);
+    const nombre = texto(s.facility);
+    if (id === null || nombre === null || /nearby/i.test(nombre)) continue;
+    for (const [instalacion, patron] of Object.entries(INSTALACIONES))
+      if (patron.test(nombre)) nuestras.set(id, instalacion);
+  }
+  return nuestras;
+}
+
+export function leerLista(json: unknown, visto: string, catalogo?: Map<number, string>): Alojamiento[] {
   const salida: Alojamiento[] = [];
   for (const crudo of lista(objeto(json).data)) {
     const h = objeto(crudo);
@@ -39,6 +57,10 @@ export function leerLista(json: unknown, visto: string): Alojamiento[] {
       opiniones: numero(h.reviewCount),
       estrellas: numero(h.stars),
       tipo: h.hotelTypeId === undefined || h.hotelTypeId === null ? null : String(h.hotelTypeId),
+      // Lo que declara solo se sabe si la fuente manda sus servicios y se tiene su catálogo para leerlos.
+      ...(catalogo !== undefined && Array.isArray(h.facilityIds)
+        ? { declara: [...new Set(h.facilityIds.flatMap((n) => catalogo.get(Number(n)) ?? []))].sort() }
+        : {}),
     });
   }
   return salida;
@@ -245,12 +267,24 @@ export function cuerpoDePrecios(ids: string[], e: Estancia): Record<string, unkn
   };
 }
 
+let catalogoPedido: Promise<Map<number, string>> | null = null;
+
+/** El catálogo de servicios se pide una vez por proceso. Si falla, se sigue sin él: no se sabrá qué declara nadie. */
+function elCatalogo(): Promise<Map<number, string> | undefined> {
+  catalogoPedido ??= pedirJson(NOMBRE, `${BASE}/data/facilities`, { cabeceras: cabeceras() }).then(leerCatalogo);
+  return catalogoPedido.catch(() => {
+    catalogoPedido = null;
+    return undefined;
+  });
+}
+
 export const liteapi: FuenteAlojamiento = {
   nombre: NOMBRE,
 
   async lista(e, m) {
-    const todos = leerLista(await pedirJson(NOMBRE, direccionDeLista(e, m), { cabeceras: cabeceras() }), ahora());
-    return dentroDelRadio(todos, e);
+    const catalogo = await elCatalogo();
+    const json = await pedirJson(NOMBRE, direccionDeLista(e, m), { cabeceras: cabeceras() });
+    return dentroDelRadio(leerLista(json, ahora(), catalogo), e);
   },
 
   async precios(ids, e) {

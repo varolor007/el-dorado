@@ -12,6 +12,8 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { FINALISTAS, MINIMOS_DE_PARTIDA, MONEDA_DE_PARTIDA } from "../data/cribas.ts";
+import { COSAS } from "../data/gustos.ts";
+import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
 import { puertaBusqueda, type Rojo } from "../gates/puerta_busqueda.ts";
 import { puertaCruce } from "../gates/puerta_cruce.ts";
@@ -183,7 +185,14 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
     lon: z.centre.lon,
     radio: z.radius_m,
   }));
-  const busqueda = await buscarEnZonas(f.alojamiento, e, dondeBuscar, MINIMOS_DE_PARTIDA, { finalistas: FINALISTAS });
+  // Lo que el viajero marcó como imprescindible y la fuente puede declarar: el gimnasio, la piscina.
+  const imprescindibles = viaje.tastes
+    .filter((g) => g.weight === "must" && COSAS[g.thing] !== undefined && COSAS[g.thing].campo in INSTALACIONES)
+    .map((g) => COSAS[g.thing].campo);
+  const busqueda = await buscarEnZonas(f.alojamiento, e, dondeBuscar, MINIMOS_DE_PARTIDA, {
+    finalistas: FINALISTAS,
+    imprescindibles,
+  });
   const avisos: string[] = [];
   if (f.ofertas !== undefined) {
     for (const z of zonas) {

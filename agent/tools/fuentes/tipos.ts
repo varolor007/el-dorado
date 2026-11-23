@@ -34,6 +34,11 @@ export type Alojamiento = Origen & {
   opiniones: number | null;
   estrellas: number | null;
   tipo: string | null;
+  /**
+   * Las instalaciones de las nuestras (el gimnasio, la piscina) que la fuente dice que tiene. Si la fuente no lo
+   * dice en su lista, no viene: no saberlo no es no tenerlo.
+   */
+  declara?: string[];
 };
 
 export type Precio = Origen & {
