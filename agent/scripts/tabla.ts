@@ -6,7 +6,7 @@
 
 import { NOTA_MINIMA } from "../data/cribas.ts";
 import { enLineaRecta, mediaAndando, type Punto } from "../tools/distancias.ts";
-import type { Vuelo } from "../tools/fuentes/tipos.ts";
+import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { PrecioMovido } from "../tools/palancas.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
 import { cribar, imprescindiblesSinSaber, laMasBarata, laMejorPorLoQueCuesta, type Contexto } from "./cribas.ts";
@@ -65,7 +65,15 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
   const ctx: Contexto = { gustos: p.viaje.tastes, paradas: p.paradas };
   const candidatos = p.busqueda.finalistas.map((ficha) => ({ ficha, mirado: p.mirados[ficha.alojamiento.id] ?? null }));
   const cribados = cribar(candidatos, ctx);
-  const deTransporte = p.transporte === null ? null : dinero(p.transporte.precio);
+  // El transporte, para todos los que viajan: el alojamiento ya es del grupo, y un billete, de uno.
+  const viajeros = e.adultos + e.ninos.length;
+  const deTransporte = p.transporte === null ? null : paraElGrupo(p.transporte, viajeros);
+  const notas = [...p.notas];
+  if (p.transporte !== null && p.transporte.pasajeros < viajeros)
+    notas.push(
+      `transport: the price is a fare for ${p.transporte.pasajeros}, multiplied for the ${viajeros} travellers` +
+        (e.ninos.length > 0 ? "; a child may pay a different fare, so it is not confirmed" : ""),
+    );
 
   const rows: FilaDelCruce[] = candidatos.map((c, i) => {
     const f: Ficha = c.ficha;
@@ -175,7 +183,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
     }
   }
 
-  return { currency: e.moneda, minimum_score: NOTA_MINIMA, round: p.ronda, rows, levers, notes: p.notas };
+  return { currency: e.moneda, minimum_score: NOTA_MINIMA, round: p.ronda, rows, levers, notes: notas };
 }
 
 /** Lo que se anda, de media, desde un alojamiento hasta unas paradas: para decir qué te deja más cerca de cada día. */

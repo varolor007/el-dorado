@@ -23,7 +23,7 @@ import { avisosDe } from "../data/palabras.ts";
 import { MENCIONES, OTRO_TEMA, TEMAS_DE_OPINIONES, TONOS } from "../data/niveles.ts";
 import { MANERAS, PRUEBAS } from "../output/viaje.ts";
 import { elegirFotos } from "../tools/fotos.ts";
-import type { Vuelo } from "../tools/fuentes/tipos.ts";
+import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
 import { cribar } from "./cribas.ts";
 import type { Entendido, EntregaDeCruce, EntregaDeExplicar, EntregaDeMirar, Tabla, ZonaResuelta } from "./formas.ts";
@@ -368,7 +368,14 @@ export function montarViajeHecho(h: Hecho): Viaje {
             sale: v.sale,
             vuelve: v.vuelve,
             escalas: v.escalasIda,
-            precio: { total: v.precio, moneda: v.moneda, vendedor: v.aerolinea, visto: v.visto, enlace: v.enlace },
+            // El precio que se enseña es el de todos los que viajan, como el del alojamiento.
+            precio: {
+              total: paraElGrupo(v, h.viaje.travellers.adults + h.viaje.travellers.children.length),
+              moneda: v.moneda,
+              vendedor: v.aerolinea,
+              visto: v.visto,
+              enlace: v.enlace,
+            },
             guardado: v.guardado,
           },
         ];

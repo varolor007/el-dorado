@@ -200,6 +200,7 @@ export function vueloInventado(ida: string, vuelta: string): Vuelo {
     aerolinea: "Aire Inventado",
     numero: "AI100",
     precio: caro ? 160 : 100,
+    pasajeros: 1,
     moneda: "EUR",
     escalasIda: 0,
     escalasVuelta: 0,

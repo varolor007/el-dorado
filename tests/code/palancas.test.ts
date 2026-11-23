@@ -19,6 +19,7 @@ function vueloInventado(ida: string, vuelta: string): Vuelo {
     aerolinea: null,
     numero: null,
     precio: 100,
+    pasajeros: 1,
     moneda: "EUR",
     escalasIda: 0,
     escalasVuelta: 0,
@@ -58,7 +59,8 @@ test("las palancas se piden enteras, para sus fechas: el alojamiento y, si lo ha
       dias: -1,
       noches: 0,
       total: 168,
-      transporte: 100,
+      // El billete es de uno y viajan dos: el transporte del grupo son dos billetes.
+      transporte: 2 * 100,
       nota: undefined,
     },
   );
@@ -126,4 +128,17 @@ test("un cambio que no deja ninguna noche, o que cae antes de poder viajar, no s
   const antes = await pedirPalancas(contada, ESTANCIA, ["a1"], cambiosDePartida([-2], []), { desde: "2027-03-04" });
   assert.equal(antes[0].nota, "cae antes del primer día en que se puede viajar");
   assert.equal(pedidas, 0);
+});
+
+test("trampa: un precio movido en otra moneda no vale, ni del alojamiento ni del transporte", async () => {
+  const cambios = cambiosDePartida([-1], []);
+  const enDolares = fuenteInventada();
+  const precios = enDolares.precios.bind(enDolares);
+  enDolares.precios = async (ids, e) => (await precios(ids, e)).map((p) => ({ ...p, moneda: "USD" }));
+  const [sinPrecio] = await pedirPalancas(enDolares, ESTANCIA, ["a1"], cambios, {});
+  assert.equal(sinPrecio.total, null);
+  const vuelos = async (ida: string, vuelta: string) => [{ ...vueloInventado(ida, vuelta), moneda: "USD" }];
+  const [sinVuelo] = await pedirPalancas(fuenteInventada(), ESTANCIA, ["a1"], cambios, { vuelos });
+  assert.equal(sinVuelo.transporte, null);
+  assert.equal(sinVuelo.nota, "sin precio de transporte para esas fechas");
 });

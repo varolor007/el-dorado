@@ -4,7 +4,7 @@
 // una fuente no contesta queda sin precio, con su motivo; no se supone.
 
 import { completo } from "../scripts/finalistas.ts";
-import type { Estancia, FuenteAlojamiento, Vuelo } from "./fuentes/tipos.ts";
+import { paraElGrupo, type Estancia, type FuenteAlojamiento, type Vuelo } from "./fuentes/tipos.ts";
 
 /** Un cambio de fechas que se prueba: cuántos días se mueven la entrada y la salida. */
 export type Cambio = { palanca: "shift_dates" | "nights"; entrada: number; salida: number };
@@ -74,8 +74,10 @@ export async function pedirPalancas(
     let notaDelTransporte = "";
     if (o.vuelos !== undefined) {
       try {
-        const vuelos = await o.vuelos(entrada, hasta);
-        transporte = vuelos.length === 0 ? null : Math.min(...vuelos.map((v) => v.precio));
+        // Solo vale un transporte en la moneda del viaje, y se cuenta para todos los que viajan.
+        const vuelos = (await o.vuelos(entrada, hasta)).filter((v) => v.moneda === e.moneda);
+        const viajeros = e.adultos + e.ninos.length;
+        transporte = vuelos.length === 0 ? null : Math.min(...vuelos.map((v) => paraElGrupo(v, viajeros)));
         if (transporte === null) notaDelTransporte = "sin precio de transporte para esas fechas";
       } catch {
         // La nota va en la tabla que lee el asiento que cruza. El mensaje de un fallo lleva un trozo de lo que
@@ -87,8 +89,13 @@ export async function pedirPalancas(
       const precios = await fuente.precios(ids, { ...e, entrada, salida: hasta });
       for (const alojamiento of ids) {
         const p = precios.find((x) => x.id === alojamiento);
-        // Un precio de otras fechas o de otro grupo no vale, lo mande quien lo mande.
-        const vale = p !== undefined && p.entrada === entrada && p.salida === hasta && p.adultos === e.adultos;
+        // Un precio de otras fechas, de otro grupo o en otra moneda no vale, lo mande quien lo mande.
+        const vale =
+          p !== undefined &&
+          p.entrada === entrada &&
+          p.salida === hasta &&
+          p.adultos === e.adultos &&
+          p.moneda === e.moneda;
         salida.push({
           ...base,
           alojamiento,

@@ -29,11 +29,30 @@ test("la tabla: una fila por finalista, con su total, que es el alojamiento comp
   );
   const a2 = fila("a2");
   assert.equal(a2.lodging_total, 216);
-  assert.equal(a2.transport_total, 160);
-  assert.equal(a2.total, 376);
+  // El alojamiento es para los dos; el billete, de uno: el transporte del viaje son dos billetes de 160.
+  assert.equal(a2.transport_total, 2 * 160);
+  assert.equal(a2.total, 216 + 2 * 160);
+  assert.match(TABLA.notes.join(" | "), /a fare for 1, multiplied for the 2 travellers/);
   assert.equal(a2.check_in, ESTANCIA.entrada);
   assert.equal(a2.currency, "EUR");
   assert.equal(TABLA.minimum_score, NOTA_MINIMA);
+});
+
+test("la tabla: el transporte se cuenta para todos los que viajan, y con niños se dice que no está confirmado", () => {
+  const familia = structuredClone(PIEZAS);
+  familia.busqueda.estancia.ninos = [3, 7, 10];
+  const t = montarTabla(familia);
+  const fila = t.rows.find((r) => r.lodging === "a2")!;
+  assert.equal(fila.children, 3);
+  assert.equal(fila.transport_total, 5 * 160);
+  assert.equal(fila.total, fila.lodging_total + 5 * 160);
+  assert.match(t.notes.join(" | "), /multiplied for the 5 travellers; a child may pay a different fare/);
+  // Un precio que ya es del grupo entero no se multiplica, y no hace falta nota.
+  const delGrupo = structuredClone(PIEZAS);
+  delGrupo.transporte = { ...delGrupo.transporte!, precio: 300, pasajeros: 2 };
+  const u = montarTabla(delGrupo);
+  assert.equal(u.rows.find((r) => r.lodging === "a2")!.transport_total, 300);
+  assert.ok(!u.notes.some((n) => n.startsWith("transport:")));
 });
 
 test("la tabla: lo que descarta una criba sigue en la tabla con su motivo, y no lleva ninguna marca", () => {
@@ -74,14 +93,14 @@ test("las palancas: otro alojamiento y otra zona, con lo que ahorran o cuestan s
 test("las palancas: las mismas noches movidas, con el alojamiento y el transporte de esas fechas", () => {
   const unDiaAntes = TABLA.levers.find((l) => l.lever === "shift_dates" && l.change.days_moved === -1)!;
   // El alojamiento un día antes cuesta el 90 %, más sus tasas, y el vuelo ya no cae en viernes.
-  assert.equal(unDiaAntes.total, 210 * 0.9 + 6 + 100);
-  assert.equal(unDiaAntes.saves, 376 - 295);
+  assert.equal(unDiaAntes.total, 210 * 0.9 + 6 + 2 * 100);
+  assert.equal(unDiaAntes.saves, 216 + 2 * 160 - (210 * 0.9 + 6 + 2 * 100));
   assert.equal(unDiaAntes.status, "priced");
   assert.equal(unDiaAntes.change.check_in, "2027-03-04");
   assert.equal(unDiaAntes.change.check_in_weekday, "thursday");
   assert.equal(unDiaAntes.change.check_out_weekday, "sunday");
   const unaMenos = TABLA.levers.find((l) => l.lever === "nights" && l.change.nights_changed === -1)!;
-  assert.equal(unaMenos.total, 140 + 6 + 160);
+  assert.equal(unaMenos.total, 140 + 6 + 2 * 160);
 });
 
 test("las palancas: sin el transporte de esas fechas no hay total: no se mezclan precios de otras fechas", () => {

@@ -125,6 +125,8 @@ export type Vuelo = Origen & {
   aerolinea: string | null;
   numero: string | null;
   precio: number;
+  /** Para cuántos viajeros es ese precio. Un precio guardado es el de un billete: uno. */
+  pasajeros: number;
   moneda: string;
   escalasIda: number | null;
   escalasVuelta: number | null;
@@ -135,3 +137,13 @@ export type Vuelo = Origen & {
 };
 
 export type DiaBarato = Origen & { dia: string; precio: number; moneda: string };
+
+/**
+ * Lo que cuesta un transporte para todos los que viajan. El alojamiento se pide ya para el grupo entero; un billete,
+ * casi nunca: sumar uno solo a la habitación de todos da un total que no es de nadie. No sabe de tarifas de niño: se
+ * cuenta a cada viajero como uno, y quien lo usa dice que un niño puede pagar otra cosa.
+ */
+export function paraElGrupo(v: Pick<Vuelo, "precio" | "pasajeros">, viajeros: number): number {
+  const deUno = v.precio / (v.pasajeros > 0 ? v.pasajeros : 1);
+  return Math.round(deUno * viajeros * 100) / 100;
+}

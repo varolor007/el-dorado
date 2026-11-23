@@ -62,6 +62,8 @@ export function leerVuelos(json: unknown, t: Trayecto, pedido: string): Vuelo[] 
       aerolinea: texto(v.airline),
       numero: v.flight_number === undefined || v.flight_number === null ? null : String(v.flight_number),
       precio,
+      // La fuente no pregunta cuántos viajan: lo que guarda es lo que pagó alguien por un billete.
+      pasajeros: 1,
       moneda: t.moneda,
       escalasIda: numero(v.transfers),
       escalasVuelta: t.vuelta === null ? null : numero(v.return_transfers),

@@ -69,7 +69,8 @@ test("al que explica se le dan las maneras con las diferencias frente a la más 
 
 test("a unas fechas nuevas se les pone su día de la semana, y las de ahora al lado", () => {
   const unDiaAntes = DADO.levers.find((l) => l.change.days_moved === -1)!;
-  assert.equal(unDiaAntes.saves, 81);
+  // El alojamiento baja 21 y el vuelo, 60 por cada uno de los dos que viajan.
+  assert.equal(unDiaAntes.saves, 21 + 2 * 60);
   assert.equal(unDiaAntes.change.check_in_weekday, "thursday");
   assert.equal(unDiaAntes.change.check_out_weekday, "sunday");
   assert.equal(unDiaAntes.change.now_check_in_weekday, "friday");

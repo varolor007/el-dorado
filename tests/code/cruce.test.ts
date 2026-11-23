@@ -55,27 +55,27 @@ test("lo que entrega un asiento aplicado pasa la puerta", () => {
 test("trampa: un total que no es el de la tabla", () => {
   assert.deepEqual(
     rojosDe((e) => (e.ways.cheapest.total = 370)),
-    ["ways.cheapest: su total es 370 y el de la tabla es 376"],
+    ["ways.cheapest: su total es 370 y el de la tabla es 536"],
   );
 });
 
 test("trampa: la más barata no es la que marcó el código, o es una fila descartada", () => {
   assert.deepEqual(
-    rojosDe((e) => (e.ways.cheapest = { row: "r1", total: 346 })),
+    rojosDe((e) => (e.ways.cheapest = { row: "r1", total: 506 })),
     [
       "ways.cheapest: la fila r1 está descartada: missing something the traveller marked as a must: gym (token)",
       "ways.cheapest: es la fila r1 y el código marcó la r2",
     ],
   );
   assert.deepEqual(
-    rojosDe((e) => (e.ways.best_value = { row: "r5", total: 416 })),
+    rojosDe((e) => (e.ways.best_value = { row: "r5", total: 576 })),
     ["ways.best_value: es la fila r5 y el código marcó la r2"],
   );
 });
 
 test("trampa: la distinta es la misma fila que otra, o no lleva su palanca, o dice otra zona y es la misma", () => {
   assert.deepEqual(
-    rojosDe((e) => (e.ways.different = { row: "r2", total: 376, lever: "other_lodging", why: "the same one again" })),
+    rojosDe((e) => (e.ways.different = { row: "r2", total: 536, lever: "other_lodging", why: "the same one again" })),
     ["ways.different: es la misma fila que otra manera: no es distinta"],
   );
   assert.deepEqual(
@@ -83,7 +83,7 @@ test("trampa: la distinta es la misma fila que otra, o no lleva su palanca, o di
     ["ways.different: no lleva una palanca que cambie una fila por otra"],
   );
   assert.deepEqual(
-    rojosDe((e) => (e.ways.different = { row: "r3", total: 486, lever: "other_zone", why: "another place to sleep" })),
+    rojosDe((e) => (e.ways.different = { row: "r3", total: 646, lever: "other_zone", why: "another place to sleep" })),
     ["ways.different: dice que es otra zona y está en la misma que la de partida"],
   );
 });
@@ -181,7 +181,7 @@ test("trampa: cuenta una palanca que no ahorra, o con otro ahorro, o que no tien
   );
   assert.deepEqual(
     rojosDe((e) => (e.tell[0].saves = 80)),
-    ["tell[0]: dice que ahorra 80 y la tabla dice 81"],
+    ["tell[0]: dice que ahorra 80 y la tabla dice 141"],
   );
   assert.deepEqual(
     rojosDe((e) => e.tell.push({ ...e.tell[0] })),

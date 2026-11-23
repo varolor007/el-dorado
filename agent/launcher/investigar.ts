@@ -45,6 +45,7 @@ import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
+import { paraElGrupo } from "../tools/fuentes/tipos.ts";
 import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
@@ -248,7 +249,9 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
         const casados = anadirOfertas(busqueda, await f.ofertas(lugar, e), lugar);
         avisos.push(`otras ofertas en ${z.label}: casan ${casados}`);
       } catch (error) {
-        avisos.push(`sin otras ofertas en ${z.label}: ${error instanceof Error ? error.message : String(error)}`);
+        // El mensaje de un fallo trae un trozo de lo que contestó la fuente: no se guarda con los avisos.
+        void error;
+        avisos.push(`sin otras ofertas en ${z.label}: la fuente no contesta`);
       }
     }
   }
@@ -258,7 +261,8 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
       vuelos = await f.vuelos(viaje, e.entrada, e.salida);
       if (vuelos.length === 0) avisos.push("transporte: no hay ningún precio guardado para esas fechas");
     } catch (error) {
-      avisos.push(`sin transporte: ${error instanceof Error ? error.message : String(error)}`);
+      void error;
+      avisos.push("sin transporte: la fuente no contesta");
     }
   } else avisos.push("transporte: no se busca, porque no se sabe de dónde se sale o a dónde se llega");
   const puerta = puertaBusqueda(busqueda, FINALISTAS);
@@ -277,10 +281,12 @@ function sinAlojamiento(b: Busqueda): string {
   );
 }
 
-/** El transporte del viaje: el más barato que se sabe para sus fechas, o ninguno. */
+/** El transporte del viaje: el más barato por viajero que se sabe para sus fechas y en su moneda, o ninguno. */
 function transporteDe(run: string): Vuelo | null {
-  const { vuelos } = leer<{ vuelos: Vuelo[] }>(run, "busqueda.json");
-  return [...vuelos].sort((a, b) => a.precio - b.precio)[0] ?? null;
+  const { vuelos, busqueda } = leer<{ vuelos: Vuelo[]; busqueda: Busqueda }>(run, "busqueda.json");
+  // Un precio en otra moneda no se puede sumar al del alojamiento: no cuenta.
+  const suyos = vuelos.filter((v) => v.moneda === busqueda.estancia.moneda);
+  return suyos.sort((a, b) => paraElGrupo(a, 1) - paraElGrupo(b, 1))[0] ?? null;
 }
 
 function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
