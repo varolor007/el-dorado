@@ -8,14 +8,16 @@ import { encendida } from "../../agent/tools/fuentes/enchufes.ts";
 import { clave } from "../../agent/tools/fuentes/http.ts";
 import {
   cuerpoDePrecios,
+  dentroDelRadio,
   direccionDeLista,
   leerDetalle,
   leerLista,
   leerOpiniones,
   leerPrecios,
+  RADIO_MINIMO,
 } from "../../agent/tools/fuentes/liteapi.ts";
 import { cuerpoDeZona, leerOfertas } from "../../agent/tools/fuentes/parallel.ts";
-import { ESTANCIA, MINIMOS, VISTO } from "../cases/inventado/inventado.ts";
+import { ALOJAMIENTOS, ESTANCIA, MINIMOS, VISTO } from "../cases/inventado/inventado.ts";
 
 test("LiteAPI: la lista, y lo que viene sin identificador o sin posición no entra", () => {
   const json = {
@@ -145,6 +147,16 @@ test("LiteAPI: lo que se pide lleva los mínimos, las fechas y los niños", () =
   assert.equal(url.searchParams.get("minReviewsCount"), "200");
   assert.equal(url.searchParams.get("starRating"), "4,5");
   assert.equal(url.searchParams.get("radius"), "1500");
+  // La fuente no acepta menos de mil metros: se le piden mil, y lo que cae más lejos de lo pedido se quita aquí.
+  const corta = { ...ESTANCIA, radio: 500 };
+  assert.equal(new URL(direccionDeLista(corta, MINIMOS)).searchParams.get("radius"), String(RADIO_MINIMO));
+  const cerca = { ...ALOJAMIENTOS[0], lat: ESTANCIA.lat + 0.003, lon: ESTANCIA.lon };
+  const lejos = { ...ALOJAMIENTOS[1], lat: ESTANCIA.lat + 0.008, lon: ESTANCIA.lon };
+  assert.deepEqual(
+    dentroDelRadio([cerca, lejos], corta).map((a) => a.id),
+    [cerca.id],
+  );
+  assert.equal(dentroDelRadio([cerca, lejos], ESTANCIA).length, 2);
   const cuerpo = cuerpoDePrecios(["x1"], { ...ESTANCIA, ninos: [4, 9] });
   assert.deepEqual(cuerpo.occupancies, [{ adults: 2, children: [4, 9] }]);
   assert.equal(cuerpo.checkin, ESTANCIA.entrada);

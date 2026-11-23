@@ -1,6 +1,7 @@
 // El enchufe de LiteAPI: la lista de una zona, el precio de unas noches, el detalle y las opiniones de un alojamiento.
 // Leer la respuesta (las funciones «leer») va aparte de pedirla, para probarlo con datos inventados y sin internet.
 
+import { enLineaRecta } from "../distancias.ts";
 import { ahora, clave, lista, numero, objeto, pedirJson, texto } from "./http.ts";
 import type {
   Alojamiento,
@@ -199,6 +200,9 @@ export function leerOpiniones(json: unknown): Opinion[] {
   return salida;
 }
 
+/** El radio más corto que acepta la fuente, en metros. Con menos, contesta que no. */
+export const RADIO_MINIMO = 1000;
+
 /** La dirección de la lista: los mínimos se piden a la fuente, y después los vuelve a comprobar el código. */
 export function direccionDeLista(e: Estancia, m: Minimos): string {
   const estrellas: number[] = [];
@@ -207,13 +211,22 @@ export function direccionDeLista(e: Estancia, m: Minimos): string {
     countryCode: e.pais,
     latitude: String(e.lat),
     longitude: String(e.lon),
-    radius: String(e.radio),
+    radius: String(Math.max(e.radio, RADIO_MINIMO)),
     minRating: String(m.nota),
     minReviewsCount: String(m.opiniones),
     starRating: estrellas.join(","),
     limit: "5000",
   });
   return `${BASE}/data/hotels?${q}`;
+}
+
+/**
+ * Si se pidió un radio más corto que el mínimo de la fuente, a la fuente se le pide su mínimo y aquí se quita lo
+ * que cae más lejos de lo que se pidió: una zona de quinientos metros es de quinientos metros.
+ */
+export function dentroDelRadio(todos: Alojamiento[], e: Estancia): Alojamiento[] {
+  if (e.radio >= RADIO_MINIMO) return todos;
+  return todos.filter((a) => enLineaRecta({ lat: a.lat, lon: a.lon }, { lat: e.lat, lon: e.lon }) <= e.radio);
 }
 
 export function cuerpoDePrecios(ids: string[], e: Estancia): Record<string, unknown> {
@@ -236,7 +249,8 @@ export const liteapi: FuenteAlojamiento = {
   nombre: NOMBRE,
 
   async lista(e, m) {
-    return leerLista(await pedirJson(NOMBRE, direccionDeLista(e, m), { cabeceras: cabeceras() }), ahora());
+    const todos = leerLista(await pedirJson(NOMBRE, direccionDeLista(e, m), { cabeceras: cabeceras() }), ahora());
+    return dentroDelRadio(todos, e);
   },
 
   async precios(ids, e) {
