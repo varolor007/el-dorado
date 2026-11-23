@@ -4,8 +4,9 @@ Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: la tanda 1, el primer asiento de IA** (el estado, punto a punto, en [plan.md](plan.md)). La hoja y el
-plan, firmados por el PM el 23-nov. De la tanda, hecho el método común de los asientos (2.4): su contrato, en inglés,
-en `agent/contracts/common/`, y la puerta de todos (`agent/gates/puerta_metodo.ts`). El
+plan, firmados por el PM el 23-nov. De la tanda, hechos el método común de los asientos (2.4: su contrato, en inglés,
+en `agent/contracts/common/`, y la puerta de todos, `agent/gates/puerta_metodo.ts`) y cómo se lanza un asiento (2.3:
+`agent/launcher/puesto.ts` y `asiento.ts`). El
 23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de alojamiento, con su
 puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos biblias, versión 1: la
 hoja ([hoja.md](hoja.md)), con el formato de las hojas de Cortex, por momentos, y el plan ([plan.md](plan.md)), que
@@ -52,6 +53,10 @@ se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
   en otra máquina, en las variables `LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y `PARALLEL_API_KEY`.
 - **La mesa**: lo que saca cada búsqueda, fuera del repositorio, en `ELDORADO_MESA` o en la carpeta temporal. En la
   nube se pierde al cerrar la sesión.
+- **El puesto de un asiento**: una carpeta dentro del run, en la mesa, con `contract/` (el método común y el contrato
+  de su asiento), `in/` (solo lo que puede leer) y `out/` (lo único que escribe). El sello de lo que se le dio queda
+  fuera del puesto, en `sellos/`. Quién piensa en el asiento es un lanzador que se le pasa a la casa: en las pruebas,
+  uno inventado; en la tanda 1, la sesión de trabajo, a mano; el del producto, cuando el PM decida con qué IA.
 - **El método**: en `varolor007/aurora-web`, que desde aquí solo se lee. La hoja del ensamblador
   (`docs/ensamblador/hoja.md`) dice las etapas, las filas, los dos tipos de agente, sus partes como un programa y cómo
   sale el plan de obra; la carpeta que entrega, en `docs/ensamblador/planos/carpeta.md`. Cortex, en

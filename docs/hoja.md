@@ -662,7 +662,7 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 | El recolector | En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio | hecho |
 | Los pasos de código | En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera | en parte |
 | Las puertas | En `agent/gates/`. La de la búsqueda y la de todos, con sus trampas | en parte |
-| Lo que lanza | En `agent/launcher/`. Hoy, una búsqueda desde la terminal; falta lo que corre los pasos en su orden y lanza a los asientos | en parte |
+| Lo que lanza | En `agent/launcher/`. Hoy, una búsqueda desde la terminal y cómo se lanza un asiento, con su puesto y su sello; falta lo que corre los pasos en su orden | en parte |
 | La mesa | Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones | en parte |
 | Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hecho, el método común | en parte |
 | La web y el mapa | Dónde vive y con qué se pinta | por decidir |

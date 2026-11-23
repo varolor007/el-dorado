@@ -7,9 +7,15 @@ import { join, resolve, sep } from "node:path";
 
 const RAIZ = resolve(import.meta.dirname, "..", "..");
 
+/** Verdadero si una carpeta cae dentro del repositorio, donde no se guarda nada de un viaje. */
+export function dentroDelRepositorio(carpeta: string): boolean {
+  const ruta = resolve(carpeta);
+  return ruta === RAIZ || ruta.startsWith(RAIZ + sep);
+}
+
 export function carpetaDeLaMesa(entorno: Record<string, string | undefined> = process.env): string {
   const mesa = resolve(entorno.ELDORADO_MESA ?? join(tmpdir(), "el-dorado-mesa"));
-  if (mesa === RAIZ || mesa.startsWith(RAIZ + sep)) throw new Error("la mesa no puede estar dentro del repositorio");
+  if (dentroDelRepositorio(mesa)) throw new Error("la mesa no puede estar dentro del repositorio");
   return mesa;
 }
 

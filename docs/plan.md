@@ -6,7 +6,7 @@ Plan de El Dorado, versión 1, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 1, el primer asiento de IA.** Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hecho, el método común (2.4). Faltan cómo se lanza un asiento (2.3), las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.
+**Estamos aquí: la tanda 1, el primer asiento de IA.** Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4) y cómo se lanza un asiento (2.3). Faltan las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.
 
 ## El estado
 
@@ -83,7 +83,7 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 |---|---|---|
 | 2.1 | **La mesa.** Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones. | en parte |
 | 2.2 | **Lo que lanza los pasos.** Corre cada paso en su orden, para en las puertas y en tus botones, y sigue desde el disco. Hoy, una búsqueda desde la terminal. | en parte |
-| 2.3 | **Cómo se lanza un asiento.** Su puesto, con solo lo que puede leer; su contrato; su tope; su entrega, en un archivo, y cómo se le pasan las fotos. | lo siguiente |
+| 2.3 | **Cómo se lanza un asiento.** Su puesto, fuera del repositorio, con su contrato, solo el material que puede leer (las fotos, como archivos) y su salida; el sello de lo que se le dio, guardado fuera del puesto; la orden que lo abre; su tope de tiempo, y la recogida, que pasa la puerta de todos. Doce pruebas, con un asiento inventado. Quién piensa en el asiento se enchufa aparte: en esta tanda lo lanza la sesión, a mano. | hecho |
 | 2.4 | **El método común.** En inglés, en `agent/contracts/common/`: los seis pasos, las diez normas de todos y la orden que abre un asiento. Y la puerta de todos, con diecinueve pruebas: cada paso dejó su archivo y en su orden, el acuse nombra cada pieza, cada nota lleva su etiqueta y lo visto cita un archivo que existe, y nada se escribió fuera de la salida. | hecho |
 | 2.5 | **El conductor.** Cada rojo, a su dueño, dos vueltas como mucho; deja el acta del run. | pendiente |
 | 2.6 | **La salida, con el viaje inventado.** El mapa con tres viajes inventados, para verla pronto. Espera a saber dónde vive. | por decidir |

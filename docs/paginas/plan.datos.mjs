@@ -45,7 +45,7 @@ const bloques = [
     puntos: [
       { n: "2.1", b: "La mesa.", t: "Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones.", estado: "parte" },
       { n: "2.2", b: "Lo que lanza los pasos.", t: "Corre cada paso en su orden, para en las puertas y en tus botones, y sigue desde el disco. Hoy, una búsqueda desde la terminal.", estado: "parte" },
-      { n: "2.3", b: "Cómo se lanza un asiento.", t: "Su puesto, con solo lo que puede leer; su contrato; su tope; su entrega, en un archivo, y cómo se le pasan las fotos.", estado: "siguiente" },
+      { n: "2.3", b: "Cómo se lanza un asiento.", t: "Su puesto, fuera del repositorio, con su contrato, solo el material que puede leer (las fotos, como archivos) y su salida; el sello de lo que se le dio, guardado fuera del puesto; la orden que lo abre; su tope de tiempo, y la recogida, que pasa la puerta de todos. Doce pruebas, con un asiento inventado. Quién piensa en el asiento se enchufa aparte: en esta tanda lo lanza la sesión, a mano.", estado: "hecho" },
       { n: "2.4", b: "El método común.", t: "En inglés, en `agent/contracts/common/`: los seis pasos, las diez normas de todos y la orden que abre un asiento. Y la puerta de todos, con diecinueve pruebas: cada paso dejó su archivo y en su orden, el acuse nombra cada pieza, cada nota lleva su etiqueta y lo visto cita un archivo que existe, y nada se escribió fuera de la salida.", estado: "hecho" },
       { n: "2.5", b: "El conductor.", t: "Cada rojo, a su dueño, dos vueltas como mucho; deja el acta del run.", estado: "pendiente" },
       { n: "2.6", b: "La salida, con el viaje inventado.", t: "El mapa con tres viajes inventados, para verla pronto. Espera a saber dónde vive.", estado: "decidir" },
@@ -262,7 +262,7 @@ export const plan = {
   sub: "**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.",
   aqui: {
     punto: "la tanda 1, el primer asiento de IA",
-    texto: "Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hecho, el método común (2.4). Faltan cómo se lanza un asiento (2.3), las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.",
+    texto: "Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda. Hechos, el método común (2.4) y cómo se lanza un asiento (2.3). Faltan las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.",
   },
   orden: {
     intro: "Por tandas: lo que no te necesita va seguido, cada punto con su commit y la batería en verde, y cada tanda acaba enseñándote algo. La siguiente no empieza sin tu visto bueno.",
