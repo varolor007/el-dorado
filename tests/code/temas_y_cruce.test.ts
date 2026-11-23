@@ -31,6 +31,11 @@ test("el parecido de dos nombres no mira el orden, los acentos ni las palabras d
   // El nombre del sitio donde se busca no distingue a un alojamiento de otro: lo llevan muchos.
   assert.equal(parecido("Villa Inventada Palace", "Villa Inventada Suites"), 0.5);
   assert.equal(parecido("Villa Inventada Palace", "Villa Inventada Suites", "Villa Inventada"), 0);
+  // Dos nombres que solo se distinguen por el barrio que nombran son dos alojamientos, no uno.
+  const lugar = "Barrio Viejo, Puerto, Villa Inventada";
+  assert.equal(parecido("Viejo Suites", "Puerto Suites", lugar), 0);
+  assert.equal(parecido("Faro Suites Viejo", "Viejo Faro Suites", lugar), 1);
+  assert.equal(parecido("Faro Suites Puerto", "Faro Suites", lugar), 1);
   assert.equal(parecido("Palace Villa Inventada", "Palace", "Centro, Villa Inventada"), 1);
 });
 

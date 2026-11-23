@@ -30,6 +30,12 @@ export function parecido(a: string, b: string, lugar = ""): number {
   const pa = palabras(a, lugar);
   const pb = palabras(b, lugar);
   if (pa.size === 0 || pb.size === 0) return 0;
+  // Las palabras del sitio no distinguen a un alojamiento, salvo cuando cada nombre lleva una distinta: dos que solo
+  // se diferencian en el barrio que nombran son dos alojamientos, no uno.
+  const delLugar = new Set(sueltas(lugar));
+  const sitioDe = (nombre: string): string[] => sueltas(nombre).filter((p) => delLugar.has(p));
+  const [sa, sb] = [sitioDe(a), sitioDe(b)];
+  if (sa.length > 0 && sb.length > 0 && !sa.some((p) => sb.includes(p))) return 0;
   let comunes = 0;
   for (const p of pa) if (pb.has(p)) comunes++;
   return comunes / (pa.size + pb.size - comunes);
