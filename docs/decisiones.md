@@ -105,10 +105,10 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t) y sus textos (`hoja.md` y `plan.md`).
 - **El dibujo del run del 21-nov se retira del repositorio**: lo sustituye la hoja. Su página publicada
   (https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) sigue ahí, vieja, hasta que el PM diga de borrarla.
+- **La hoja y el plan, firmados** (el PM, 23-nov: «dale, sí»). Desde aquí mandan, y empieza la primera tanda: el
+  primer asiento de IA, el que mira el alojamiento.
 
 ## Pendientes
-
-- **La firma del PM de la hoja y del plan** (23-nov): es el punto 0.5. Con ella empieza la primera tanda.
 
 Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
 

@@ -3,7 +3,8 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: 0.5, la firma del PM de la hoja y del plan** (el estado, punto a punto, en [plan.md](plan.md)). El
+**Estamos aquí: la tanda 1, el primer asiento de IA** (el estado, punto a punto, en [plan.md](plan.md)). La hoja y el
+plan, firmados por el PM el 23-nov. El
 23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de alojamiento, con su
 puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos biblias, versión 1: la
 hoja ([hoja.md](hoja.md)), con el formato de las hojas de Cortex, por momentos, y el plan ([plan.md](plan.md)), que

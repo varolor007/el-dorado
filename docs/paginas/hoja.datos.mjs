@@ -873,7 +873,7 @@ const secciones = [
 export const hoja = {
   url: "https://claude.ai/artifact/D67ow4BecJge9aiZYCSS73",
   titulo: "Hoja de El Dorado",
-  kicker: "Hoja de El Dorado, versión 1, borrador a tu firma, 23 de noviembre de 2026",
+  kicker: "Hoja de El Dorado, versión 1, firmada el 23 de noviembre de 2026",
   h1: "El Dorado, el agente de viajes, de una tirada y por momentos",
   sub: [
     "**Le cuentas a dónde quieres ir y te propone el viaje entero al mejor precio.** La primera vez corre de una tirada, desde cinco toques hasta tres viajes completos en un mapa. Después lo usas a ratos: vuelves al alojamiento, al transporte o a un día y lo cambias, a veces con días de por medio. Cada momento despierta solo a los asientos que necesita; la IA no recuerda nada de una vez a otra, y la casa le da cada vez lo suyo de lo guardado. **Para el viajero es uno solo: El Dorado.** Por dentro trabajan los asientos, y esta hoja, que es nuestra, los llama por su nombre.",

@@ -2,17 +2,17 @@
 
 > La segunda biblia: cómo se construye El Dorado. Se genera de sus datos, [paginas/plan.datos.mjs](paginas/plan.datos.mjs), con `node docs/paginas/pinta.mjs`, igual que su página, [paginas/plan.html](paginas/plan.html), publicada en https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t. No se edita a mano.
 
-Plan de El Dorado, versión 1, borrador a tu firma, 23 de noviembre de 2026.
+Plan de El Dorado, versión 1, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: 0.5, tu firma de la hoja y del plan.** Hechas las bases (el recolector y la búsqueda de alojamiento, con su puerta y sus pruebas) y las dos biblias. Con tu firma empieza la primera tanda: el primer asiento de IA, **el que mira el alojamiento** (2.3, 2.4, 3.6 y 4.2), probado con los finalistas de Lisboa.
+**Estamos aquí: la tanda 1, el primer asiento de IA.** Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda: cómo se lanza un asiento (2.3), el método común (2.4), las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.
 
 ## El estado
 
 | Bloque | Estado |
 |---|---|
-| 0. El orden | en parte |
+| 0. El orden | hecho |
 | 1. Los planos | en parte |
 | 2. Los cimientos | en parte |
 | 3. Las herramientas | en parte |
@@ -42,7 +42,7 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 
 ## 0. El orden
 
-*en parte.* Antes de construir, cada cosa en su sitio y las reglas por escrito.
+*hecho.* Antes de construir, cada cosa en su sitio y las reglas por escrito.
 
 - **Deja**: el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias
 - **Se prueba**: la prueba del repositorio, dentro de la batería
@@ -54,7 +54,7 @@ Por tandas: lo que no te necesita va seguido, cada punto con su commit y la bate
 | 0.2 | **El mapa de carpetas.** Dónde va cada cosa, con la forma de la carpeta del ensamblador. | hecho |
 | 0.3 | **La batería.** Las pruebas del código con el caso inventado, los tipos y la prueba del repositorio, en segundos y sin gastar; GitHub la pasa en cada subida. | hecho |
 | 0.4 | **Las dos biblias, pintadas de sus datos.** La hoja y el plan se escriben una vez y de ahí salen su página y su texto; una prueba dice si se quedan atrás y si alguna caja de la hoja no tiene su punto. | hecho |
-| 0.5 | **Tu firma de la hoja y del plan.** Con ella mandan: lo que se construya tiene que caber en ellas. | lo siguiente |
+| 0.5 | **Tu firma de la hoja y del plan.** Con ella mandan: lo que se construya tiene que caber en ellas. Firmadas el 23-nov, con tu «dale, sí». | hecho |
 
 ## 1. Los planos
 

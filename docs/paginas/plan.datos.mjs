@@ -6,7 +6,7 @@ const bloques = [
   {
     n: 0,
     nombre: "El orden",
-    estado: "parte",
+    estado: "hecho",
     intro: "Antes de construir, cada cosa en su sitio y las reglas por escrito.",
     deja: "el repositorio con sus reglas, su memoria, su registro, su mapa, la batería y las dos biblias",
     prueba: "la prueba del repositorio, dentro de la batería",
@@ -16,7 +16,7 @@ const bloques = [
       { n: "0.2", b: "El mapa de carpetas.", t: "Dónde va cada cosa, con la forma de la carpeta del ensamblador.", estado: "hecho" },
       { n: "0.3", b: "La batería.", t: "Las pruebas del código con el caso inventado, los tipos y la prueba del repositorio, en segundos y sin gastar; GitHub la pasa en cada subida.", estado: "hecho" },
       { n: "0.4", b: "Las dos biblias, pintadas de sus datos.", t: "La hoja y el plan se escriben una vez y de ahí salen su página y su texto; una prueba dice si se quedan atrás y si alguna caja de la hoja no tiene su punto.", estado: "hecho" },
-      { n: "0.5", b: "Tu firma de la hoja y del plan.", t: "Con ella mandan: lo que se construya tiene que caber en ellas.", estado: "siguiente" },
+      { n: "0.5", b: "Tu firma de la hoja y del plan.", t: "Con ella mandan: lo que se construya tiene que caber en ellas. Firmadas el 23-nov, con tu «dale, sí».", estado: "hecho" },
     ],
   },
   {
@@ -257,12 +257,12 @@ const cajas = [
 export const plan = {
   url: "https://claude.ai/artifact/UKjEhSMnxTU5bj9Eeddy6t",
   titulo: "Plan de El Dorado",
-  kicker: "Plan de El Dorado, versión 1, borrador a tu firma, 23 de noviembre de 2026",
+  kicker: "Plan de El Dorado, versión 1, firmado el 23 de noviembre de 2026",
   h1: "El plan de El Dorado",
   sub: "**La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques van en orden, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Lo común, por capas; cada momento, entero. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.",
   aqui: {
-    punto: "0.5, tu firma de la hoja y del plan",
-    texto: "Hechas las bases (el recolector y la búsqueda de alojamiento, con su puerta y sus pruebas) y las dos biblias. Con tu firma empieza la primera tanda: el primer asiento de IA, **el que mira el alojamiento** (2.3, 2.4, 3.6 y 4.2), probado con los finalistas de Lisboa.",
+    punto: "la tanda 1, el primer asiento de IA",
+    texto: "Firmadas la hoja y el plan el 23-nov. En curso, la primera tanda: cómo se lanza un asiento (2.3), el método común (2.4), las fotos (3.6) y **el que mira el alojamiento** (4.2), probado con los finalistas de Lisboa. Acaba con la ficha de cómo es de cinco alojamientos de verdad, a tu visto bueno.",
   },
   orden: {
     intro: "Por tandas: lo que no te necesita va seguido, cada punto con su commit y la batería en verde, y cada tanda acaba enseñándote algo. La siguiente no empieza sin tu visto bueno.",
