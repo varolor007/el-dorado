@@ -2,16 +2,23 @@
 // asiento si trabajara bien. Con ella se prueba toda la cadena sin internet y sin gastar. Nada sale de una fuente de
 // verdad.
 
+import { buscarAlojamiento } from "../../../agent/scripts/busqueda_alojamiento.ts";
+import { paradasDe } from "../../../agent/scripts/dias.ts";
 import type {
+  EntregaDeCruce,
   EntregaDeMirar,
   EntregaDeRuta,
   EntregaDeSitios,
   Entendido,
   Lugar,
+  Tabla,
 } from "../../../agent/scripts/formas.ts";
-import { lugarDe } from "../../../agent/scripts/ruta.ts";
+import { lugarDe, resolverZonas } from "../../../agent/scripts/ruta.ts";
+import { montarTabla, type PiezasDeLaTabla } from "../../../agent/scripts/tabla.ts";
+import type { Vuelo } from "../../../agent/tools/fuentes/tipos.ts";
+import { cambiosDePartida, pedirPalancas } from "../../../agent/tools/palancas.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
-import { ESTANCIA, VISTO } from "./inventado.ts";
+import { ESTANCIA, fuenteInventada, MINIMOS, VISTO } from "./inventado.ts";
 
 /** Lo que he entendido: tres noches para dos, con un gimnasio de verdad y el faro como imprescindibles. */
 export const ENTENDIDO: Entendido = {
@@ -173,5 +180,117 @@ export function miradoInventado(id: string, niveles: Record<string, string> = {}
     unknowns: [],
     summary_good: "A room in good condition.",
     summary_bad: "unknown",
+  };
+}
+
+/** Un vuelo inventado, guardado de hace días, para las fechas que se le pidan: el viernes es el día caro. */
+export function vueloInventado(ida: string, vuelta: string): Vuelo {
+  const caro = new Date(ida + "T00:00:00Z").getUTCDay() === 5;
+  return {
+    fuente: "inventada",
+    visto: VISTO,
+    origen: "OOO",
+    destino: "VVV",
+    sale: `${ida}T08:00:00Z`,
+    vuelve: `${vuelta}T19:00:00Z`,
+    aerolinea: "Aire Inventado",
+    numero: "AI100",
+    precio: caro ? 160 : 100,
+    moneda: "EUR",
+    escalasIda: 0,
+    escalasVuelta: 0,
+    minutos: 80,
+    guardado: true,
+    enlace: null,
+  };
+}
+
+/**
+ * Las piezas de la tabla del viaje inventado: los cinco finalistas de la búsqueda inventada, ya mirados (el más
+ * barato, con un gimnasio simbólico, que el viajero marcó como imprescindible), las dos zonas de la ruta, las
+ * paradas elegidas y lo que contesta la fuente a cada cambio de fechas.
+ */
+export async function piezasDeLaTabla(conVuelo = true): Promise<PiezasDeLaTabla> {
+  const fuente = fuenteInventada();
+  const busqueda = await buscarAlojamiento(fuente, ESTANCIA, MINIMOS);
+  // Los finalistas, repartidos por los dos barrios: los dos últimos caen en el puerto.
+  busqueda.finalistas.forEach((f, i) => {
+    const s = i >= 3 ? SITIOS[0] : SITIOS[1];
+    f.alojamiento = { ...f.alojamiento, lat: s.punto.lat + 0.0005 * i, lon: s.punto.lon };
+  });
+  const mirados: Record<string, EntregaDeMirar> = {};
+  busqueda.finalistas.forEach((f, i) => {
+    const id = f.alojamiento.id;
+    mirados[id] = miradoInventado(id, { gym: id === "a1" ? "token" : i % 2 === 0 ? "full" : "maintenance" });
+  });
+  const ids = busqueda.finalistas.map((f) => f.alojamiento.id);
+  const vuelos = async (ida: string, vuelta: string): Promise<Vuelo[]> => [vueloInventado(ida, vuelta)];
+  const movidos = await pedirPalancas(fuente, ESTANCIA, ids, cambiosDePartida([-2, -1, 1, 2], [-1, 1]), {
+    vuelos: conVuelo ? vuelos : undefined,
+  });
+  return {
+    viaje: ENTENDIDO,
+    busqueda,
+    zonas: resolverZonas(entregaDeRuta(), LUGARES),
+    mirados,
+    paradas: paradasDe(entregaDeSitios(), SITIOS).map((p) => p.punto),
+    transporte: conVuelo ? vueloInventado(ESTANCIA.entrada, ESTANCIA.salida) : null,
+    movidos,
+    ronda: 1,
+    notas: [],
+  };
+}
+
+export async function tablaInventada(conVuelo = true): Promise<Tabla> {
+  return montarTabla(await piezasDeLaTabla(conVuelo));
+}
+
+/** Lo que entregaría un asiento que cruza aplicado, sobre una tabla: copia cada número de ella. */
+export function entregaDeCruce(t: Tabla): EntregaDeCruce {
+  const marcada = (marca: string): Tabla["rows"][number] => t.rows.find((r) => r.marks.includes(marca))!;
+  const barata = marcada("cheapest");
+  const mejor = marcada("best_value");
+  const otra = t.rows.find(
+    (r) => r.discarded === "" && r.id !== barata.id && r.id !== mejor.id && r.zone !== mejor.zone,
+  )!;
+  const deLaLista = (lever: string): string[] => t.levers.filter((l) => l.lever === lever).map((l) => l.id);
+  const probada = (lever: string, reason: string): EntregaDeCruce["levers"][number] => ({
+    lever,
+    status: "tested",
+    rows: deLaLista(lever),
+    reason,
+  });
+  const espera = (lever: string): EntregaDeCruce["levers"][number] => ({
+    lever,
+    status: "not_available",
+    rows: [],
+    reason: "the house cannot price it until there is a transport search",
+  });
+  const ahorra = t.levers
+    .filter((l) => l.status === "priced" && typeof l.saves === "number" && l.saves > 0)
+    .filter((l) => typeof l.change.row !== "string" || t.rows.find((r) => r.id === l.change.row)?.discarded === "")
+    .sort((a, b) => (b.saves as number) - (a.saves as number))
+    .slice(0, 2);
+  return {
+    seat: "trip-crosser",
+    levers: [
+      probada("shift_dates", "leaving a day earlier is the change of dates that saves the most"),
+      probada("nights", "one night less saves, and the traveller loses a day"),
+      probada("other_lodging", "the other lodgings of the table are priced"),
+      probada("other_zone", "the port zone has its own lodgings"),
+      espera("other_airport"),
+      espera("open_jaw"),
+      espera("route_order"),
+      espera("train_for_flight"),
+    ],
+    ways: {
+      cheapest: { row: barata.id, total: barata.total },
+      best_value: { row: mejor.id, total: mejor.total },
+      different: { row: otra.id, total: otra.total, lever: "other_zone", why: "the only way that sleeps by the port" },
+    },
+    tell: ahorra.map((l) => ({ lever_row: l.id, saves: l.saves as number, why: "a real saving for the same trip" })),
+    checks: [{ what: "the arrival time is not in the table", status: "unknown", refs: [] }],
+    requests: [],
+    unknowns: [],
   };
 }
