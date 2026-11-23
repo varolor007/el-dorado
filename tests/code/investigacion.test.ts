@@ -92,7 +92,7 @@ function miradoPara(puesto: string): Objeto {
       gym: { level: gimnasio, evidence: [foto("hotel-01.jpg", "the machines of the gym")], note: "" },
       pool: { level: "bathe", evidence: [foto("hotel-02.jpg", "an outdoor pool")], note: "" },
     },
-    review_themes: [],
+    review_themes: [{ theme: "cleanliness", tone: "good", mentions: "several", says: "a clean room", refs: ["r1"] }],
     conflicts: [],
     warnings: [],
     unknowns: ["No photo shows the bathroom of this room."],
@@ -329,6 +329,10 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     assert.equal(typeof otro.puntos, "number");
     assert.equal(typeof otro.andando, "number");
     assert.ok(["Catedral Inventada, Barrio Viejo", "Faro Inventado"].includes(otro.zona ?? ""));
+    // De lo que dijo el que mira llegan sus niveles y lo que se dice, por sus claves: ninguna frase suya.
+    assert.equal(otro.comoEs.length, 9);
+    assert.deepEqual(otro.seDice, [{ tema: "cleanliness", tono: "good", menciones: "several" }]);
+    assert.ok(!JSON.stringify(viaje.alojamientos).includes("A room in good condition"));
 
     // Las palancas que se cuentan ahorran, y llevan su texto; los días, con las paradas elegidas.
     assert.ok(viaje.palancas.length >= 1);
@@ -350,6 +354,18 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     // Volver a llamar con todo hecho no rehace nada.
     const otraVez = await sigue(run, fuentesInventadas());
     assert.equal(otraVez.hecho, true);
+
+    // Un run que se retoma no vuelve a juzgar lo que ya juzgó: si alguien toca después la entrega de un asiento, o
+    // la puerta cambia, el viaje se vuelve a montar con lo que se recogió en su momento, y su veredicto no se pisa.
+    const veredicto = readFileSync(join(run, "como_es.json"), "utf8");
+    const tocado = puestosDe(run).find((p) => p.id === "a2-p1")!;
+    writeFileSync(join(tocado.carpeta, "out", "delivery.json"), JSON.stringify({ seat: "lodging-viewer" }));
+    rmSync(join(run, "viaje.json"));
+    const retomado = await sigue(run, fuentesInventadas());
+    assert.equal(retomado.hecho, true);
+    assert.equal(readFileSync(join(run, "como_es.json"), "utf8"), veredicto);
+    const deNuevo = leerJson(join(run, "viaje.json")) as Viaje;
+    assert.equal(deNuevo.alojamientos.find((a) => a.id === "a2")!.comoEs.length, 9);
   } finally {
     rmSync(run, { recursive: true, force: true });
   }

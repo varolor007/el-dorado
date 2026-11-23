@@ -248,6 +248,20 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
   inglés. Ahora elige de una lista (la limpieza, el ruido, la cama, el personal y veinte más, y «otro» para lo que
   no quepa), y la puerta 5 lo comprueba. Así lo que se dice de un alojamiento se puede enseñar en cualquier idioma
   sin que viaje una frase suya.
+- **A la ficha de un alojamiento solo llegan datos.** El que mira escribe en inglés y cita su material por dentro, y
+  sus frases (lo mejor, lo peor, sus avisos y sus pruebas) salían tal cual en la web, y también los avisos de la
+  casa, en español y con mensajes de dentro. La hoja dice que lo que lees lo dice siempre El Dorado, en tu idioma.
+  Ahora a la web solo pasan claves (el nivel de cada campo, de qué clase es su prueba y su foto, lo que se dice por
+  temas y lo que no se pudo saber), la web las dice en el idioma del viajero, y la comprobación del viaje no deja
+  pasar una frase suelta. «Lo mejor» y «lo peor» dejan de salir en la ficha: lo que hay que contar de un
+  alojamiento lo cuenta el que explica, en el idioma del viajero. Una prueba mira que la web sepa decir cada clave
+  en sus dos idiomas.
+- **Un run que se retoma no vuelve a juzgar lo que ya juzgó.** Al montar el viaje, la casa volvía a pasar la puerta 5
+  sobre las fichas, y con una puerta más estricta las de antes quedaban sin mirar. Lo ya recogido se lee del disco,
+  con el veredicto de su momento.
+- **La web no nombra ningún sitio a mano.** Dos avisos decían «solo Lisboa está grabada» y los mínimos iban escritos
+  con sus números. Ahora el destino grabado y los mínimos con los que se buscó salen de los datos, y el aviso de que
+  no hay precio de vuelo solo sale si no lo hay.
 
 ## Pendientes
 

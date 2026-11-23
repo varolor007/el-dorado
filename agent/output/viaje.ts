@@ -38,8 +38,21 @@ export type Parada = {
 /** Un día: sus paradas, en orden, y lo que se anda de cada una a la siguiente. */
 export type Dia = { fecha: string; titulo: string; paradas: string[]; metros: number[] };
 
-/** Un rasgo de cómo es un alojamiento: el nivel que puso el que mira, con su prueba. */
-export type Rasgo = { campo: string; nivel: string; prueba: string | null; foto: string | null };
+/** De dónde sale el nivel de un rasgo: de una foto, de las opiniones o de la ficha de la fuente. */
+export const PRUEBAS = ["photo", "review", "sheet"] as const;
+
+/**
+ * Un rasgo de cómo es un alojamiento: el nivel que puso el que mira y de qué clase es su prueba; si es una foto, cuál.
+ * Aquí no viaja ninguna frase del asiento: la web dice el campo, el nivel y la prueba en el idioma del viajero.
+ */
+export type Rasgo = { campo: string; nivel: string; prueba: (typeof PRUEBAS)[number] | null; foto: string | null };
+
+/** Lo que dicen las opiniones de un tema: para bien, para mal o de todo, y en cuántas. Todo, por su clave. */
+export type Dicho = { tema: string; tono: string; menciones: string };
+
+/** Lo que la casa no pudo saber de un alojamiento, por su clave: la frase la pone la web. */
+export const AVISOS_DE_FICHA = ["no_detail", "room_unknown", "no_room_photos", "no_reviews"] as const;
+export type AvisoDeFicha = (typeof AVISOS_DE_FICHA)[number];
 
 export type Alojamiento = {
   id: string;
@@ -54,11 +67,14 @@ export type Alojamiento = {
   precio: Precio;
   /** Lo que piden otros vendedores por las mismas noches. */
   otrasOfertas: Precio[];
+  /** Sus fotos: primero las de la habitación de ese precio y después las del alojamiento. */
   fotos: string[];
+  /** Cuántas de las primeras son de la habitación de ese precio. Si es cero, lo que se ve no es esa habitación. */
+  fotosDeHabitacion: number;
   comoEs: Rasgo[];
-  loMejor: string | null;
-  loPeor: string | null;
-  avisos: string[];
+  /** Lo que se dice de él en las opiniones, por temas. */
+  seDice: Dicho[];
+  avisos: AvisoDeFicha[];
   /** La zona de la ruta en la que está, por su nombre. */
   zona?: string | null;
   /** La mitad de las paradas del viaje queda a estos minutos andando, o menos. */
@@ -107,6 +123,8 @@ export type Vistazo = {
   conPrecio: number;
   desde: number | null;
   moneda: string;
+  /** Los mínimos con los que se buscó: los de partida o, donde hay poco, los del escalón al que hubo que bajar. */
+  minimos: { nota: number; opiniones: number; estrellas: number };
   puntos: { punto: Punto; precio: number | null }[];
 };
 
@@ -237,6 +255,20 @@ export function comprobarViaje(v: Viaje): Pega[] {
     if (!enElMapa(a.punto)) pega(`alojamientos.${a.id}`, "no está en el mapa");
     pegas.push(...pegasDelPrecio(a.precio, `alojamientos.${a.id}`));
     a.otrasOfertas.forEach((o, i) => pegas.push(...pegasDelPrecio(o, `alojamientos.${a.id}.otrasOfertas[${i}]`)));
+    if (!Number.isInteger(a.fotosDeHabitacion) || a.fotosDeHabitacion < 0 || a.fotosDeHabitacion > a.fotos.length)
+      pega(`alojamientos.${a.id}`, "no dice cuántas de sus fotos son de la habitación de ese precio");
+    // Lo que se lee de un alojamiento lo dice la web con sus claves: ninguna frase suelta llega hasta aquí.
+    const clave = (x: unknown): boolean => typeof x === "string" && /^[a-z_]+$/.test(x);
+    for (const r of a.comoEs) {
+      if (!clave(r.campo) || !clave(r.nivel)) pega(`alojamientos.${a.id}`, "un rasgo no va por su clave");
+      if (r.prueba !== null && !PRUEBAS.includes(r.prueba))
+        pega(`alojamientos.${a.id}`, "una prueba no es de su lista");
+    }
+    for (const d of a.seDice)
+      if (![d.tema, d.tono, d.menciones].every(clave))
+        pega(`alojamientos.${a.id}`, "lo que se dice no va por su clave");
+    for (const x of a.avisos)
+      if (!AVISOS_DE_FICHA.includes(x)) pega(`alojamientos.${a.id}`, "un aviso de la ficha no es de su lista");
   }
   for (const t of v.transportes) pegas.push(...pegasDelPrecio(t.precio, `transportes.${t.id}`));
 

@@ -8,6 +8,7 @@ import { buscarAlojamiento } from "../../agent/scripts/busqueda_alojamiento.ts";
 import {
   alojamientoParaLaWeb,
   encuadreDe,
+  loQueSeDice,
   montarViaje,
   palancaDeFechas,
   sucesosDe,
@@ -28,6 +29,15 @@ const MIRADO = {
     pool: { level: "unknown", evidence: [] },
     roto: "esto no es un campo",
   },
+  review_themes: [
+    { theme: "noise", tone: "bad", mentions: "several", says: "tram noise at night (r4, r19)", refs: ["r4"] },
+    { theme: "Room size", tone: "good", mentions: "a_few", says: "roomy for the price", refs: ["r2"] },
+    { theme: "noise", tone: "bad", mentions: "one", says: "the same again", refs: ["r5"] },
+    { theme: "evening light show", tone: "mixed", mentions: "several", says: "fun, and loud", refs: ["r6"] },
+    { theme: "other", tone: "good", mentions: "one", says: "a cat lives in the lobby", refs: ["r7"] },
+    { theme: "staff", tone: "lovely", mentions: "12", says: "kind people", refs: ["r8"] },
+    "esto no es un tema",
+  ],
   warnings: [{ what: "outdoor pool: check that it is open" }, { nada: true }],
   summary_good: "A room that is cared for.",
   summary_bad: "unknown",
@@ -65,26 +75,73 @@ function decidido(): Decidido {
   };
 }
 
-test("un alojamiento sale con el precio completo, su habitación y lo que dijo el que mira", () => {
+test("un alojamiento sale con el precio completo, su habitación y los niveles del que mira, con su prueba", () => {
   const a = alojamientoParaLaWeb(FICHA, MIRADO);
   assert.equal(a.precio.total, FICHA.precioCompleto);
   assert.equal(a.habitacion, "Doble");
   assert.deepEqual(a.comoEs, [
-    { campo: "look", nivel: "good_condition", prueba: "nothing worn", foto: "https://fotos.invalid/h1-1.jpg" },
-    { campo: "gym", nivel: "token", prueba: "a guest says the gym is tiny", foto: null },
+    { campo: "look", nivel: "good_condition", prueba: "photo", foto: "https://fotos.invalid/h1-1.jpg" },
+    { campo: "gym", nivel: "token", prueba: "review", foto: null },
     { campo: "pool", nivel: "unknown", prueba: null, foto: null },
   ]);
-  assert.equal(a.loMejor, "A room that is cared for.");
-  assert.equal(a.loPeor, null);
-  assert.ok(a.avisos.includes("outdoor pool: check that it is open"));
-  // Las fotos de la habitación de ese precio, por delante de las del hotel.
+  // Las fotos de la habitación de ese precio, por delante de las del hotel, y dicho cuántas son.
   assert.equal(a.fotos[0], "https://fotos.invalid/h1-1.jpg");
+  assert.equal(a.fotosDeHabitacion, FICHA.habitacion!.fotos.length);
+  assert.ok(a.fotos.length > a.fotosDeHabitacion);
+});
+
+test("lo que se dice sale por temas de la lista, una vez cada uno, y lo que no es de la lista no se enseña", () => {
+  assert.deepEqual(alojamientoParaLaWeb(FICHA, MIRADO).seDice, [
+    { tema: "noise", tono: "bad", menciones: "several" },
+    { tema: "room_size", tono: "good", menciones: "a_few" },
+  ]);
+  assert.deepEqual(loQueSeDice(null), []);
+  assert.deepEqual(loQueSeDice({ review_themes: "roto" }), []);
+});
+
+test("ninguna frase del que mira llega a la web: ni sus pruebas, ni sus avisos, ni lo mejor ni lo peor", () => {
+  const todo = JSON.stringify(alojamientoParaLaWeb(FICHA, MIRADO));
+  for (const frase of [
+    "nothing worn",
+    "a guest says",
+    "outdoor pool",
+    "A room that is cared for",
+    "tram noise",
+    "r19",
+    "roomy for the price",
+    "cat",
+  ])
+    assert.ok(!todo.includes(frase), `llega a la web: ${frase}`);
+});
+
+test("lo que la casa no pudo saber de un alojamiento sale por su clave, no con un mensaje de dentro", () => {
+  assert.deepEqual(alojamientoParaLaWeb(FICHA, MIRADO).avisos, []);
+  const sinFotos = { ...FICHA, habitacion: { ...FICHA.habitacion!, fotos: [] } };
+  assert.deepEqual(alojamientoParaLaWeb(sinFotos, null).avisos, ["no_room_photos"]);
+  // Y lo que se enseña entonces son fotos del alojamiento: la web no las presenta como la habitación.
+  assert.equal(alojamientoParaLaWeb(sinFotos, null).fotosDeHabitacion, 0);
+  assert.ok(alojamientoParaLaWeb(sinFotos, null).fotos.length > 0);
+  const sinHabitacion = { ...FICHA, habitacion: null, avisos: ["no se sabe cuál es la habitación de ese precio"] };
+  assert.deepEqual(alojamientoParaLaWeb(sinHabitacion, null).avisos, ["room_unknown"]);
+  const sinNada = { ...FICHA, detalle: null, habitacion: null, opinionesLeidas: 0, avisos: ["sin detalle: HTTP 500"] };
+  assert.deepEqual(alojamientoParaLaWeb(sinNada, null).avisos, ["no_detail", "no_reviews"]);
 });
 
 test("un alojamiento que nadie miró sale sin rasgos, no con rasgos inventados", () => {
   const a = alojamientoParaLaWeb(FICHA, null);
   assert.deepEqual(a.comoEs, []);
-  assert.equal(a.loMejor, null);
+  assert.deepEqual(a.seDice, []);
+});
+
+test("el viaje no pasa si en la ficha de un alojamiento se cuela una frase suelta o una clave que no existe", () => {
+  const v = viajeInventado();
+  assert.deepEqual(comprobarViaje(v), []);
+  v.alojamientos[0].seDice = [{ tema: "the tram is loud", tono: "bad", menciones: "several" }];
+  v.alojamientos[1].avisos = ["sin detalle: HTTP 500" as never];
+  assert.deepEqual(
+    comprobarViaje(v).map((p) => p.que),
+    ["lo que se dice no va por su clave", "un aviso de la ficha no es de su lista"],
+  );
 });
 
 test("el primer vistazo cuenta lo que hay y desde cuánto, con un punto por cada uno que pasa", () => {
@@ -93,6 +150,8 @@ test("el primer vistazo cuenta lo que hay y desde cuánto, con un punto por cada
   assert.equal(v.pasan, BUSQUEDA.dentro.length);
   assert.equal(v.puntos.length, BUSQUEDA.dentro.length);
   assert.equal(v.desde, Math.min(...BUSQUEDA.conPrecio.map((c) => c.precio.total + c.precio.tasasAparte)));
+  // Los mínimos que se enseñan son los de la búsqueda, no unos escritos en la web.
+  assert.deepEqual(v.minimos, MINIMOS);
   assert.equal(v.puntos.filter((p) => p.precio === null).length, BUSQUEDA.dentro.length - BUSQUEDA.conPrecio.length);
 });
 

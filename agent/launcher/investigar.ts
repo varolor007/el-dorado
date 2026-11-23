@@ -50,7 +50,7 @@ import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from 
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
 import { carpetaDeLaMesa } from "./mesa.ts";
-import { prepararMirar, recogerMirar } from "./mirar.ts";
+import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 
 /** Lo de fuera que usa una investigación. Se le pasa: con lo de verdad investiga, y con lo inventado se prueba. */
@@ -129,7 +129,7 @@ function montar(run: string, base: string, asiento: string, piezas: Pieza[], vue
 
 const entregado = (p: Puesto): boolean => existsSync(join(p.carpeta, "out", "delivery.json"));
 
-type Recogido<T> = { espera: string } | { parado: Rojo[] } | { entrega: T };
+type DelAsiento<T> = { espera: string } | { parado: Rojo[] } | { entrega: T };
 
 /**
  * Recoge a un asiento: si no ha entregado, se le espera; si su entrega pasa la puerta de todos y la suya, se da por
@@ -141,7 +141,7 @@ function recoger<T>(
   asiento: string,
   piezas: Pieza[],
   puerta: (e: unknown) => Rojo[],
-): Recogido<T> {
+): DelAsiento<T> {
   const puesto = puestoDe(run, base);
   if (puesto === null) return { espera: montar(run, base, asiento, piezas).id };
   if (!entregado(puesto)) return { espera: puesto.id };
@@ -263,11 +263,15 @@ function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
   ];
 }
 
-/** Lo que entregó el que mira de cada finalista: su primera pasada que pasó las dos puertas, o nada. */
+/**
+ * Lo que entregó el que mira de cada finalista: su primera pasada que pasó las dos puertas, o nada. Se lee lo que se
+ * recogió en su momento, con su veredicto: un run que se retoma no vuelve a juzgar lo que ya juzgó, ni con una puerta
+ * que haya cambiado después ni con un puesto que alguien haya tocado.
+ */
 function miradosDe(run: string): Record<string, EntregaDeMirar | null> {
   const mirados: Record<string, EntregaDeMirar | null> = {};
   if (!hay(run, "como_es.json")) return mirados;
-  for (const a of recogerMirar(run).alojamientos) {
+  for (const a of leer<Recogido>(run, "como_es.json").alojamientos) {
     const buena = a.pasadas.find((p) => p.entrega !== null && p.metodo.verde && p.comoEs.verde);
     mirados[a.alojamiento] = (buena?.entrega as EntregaDeMirar | undefined) ?? null;
   }

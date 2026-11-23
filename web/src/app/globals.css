@@ -1190,6 +1190,15 @@ img {
   color: var(--tinta-tenue);
   font-weight: 500;
 }
+.rasgo--good b {
+  color: var(--bien);
+}
+.rasgo--bad b {
+  color: var(--ojo);
+}
+.rasgo a.dato {
+  align-self: flex-start;
+}
 .dos {
   display: grid;
   gap: 10px;

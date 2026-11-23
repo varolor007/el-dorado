@@ -5,6 +5,8 @@
 
 import type {
   Alojamiento,
+  AvisoDeFicha,
+  Dicho,
   Encuadre,
   Manera,
   Palanca,
@@ -18,7 +20,8 @@ import type {
   Vistazo,
 } from "../output/viaje.ts";
 import { AVISOS } from "../data/palabras.ts";
-import { MANERAS } from "../output/viaje.ts";
+import { MENCIONES, OTRO_TEMA, TEMAS_DE_OPINIONES, TONOS } from "../data/niveles.ts";
+import { MANERAS, PRUEBAS } from "../output/viaje.ts";
 import { elegirFotos } from "../tools/fotos.ts";
 import type { Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
@@ -31,7 +34,6 @@ export type Mirado = Record<string, unknown> | null;
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
-const texto = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v : null);
 
 /** Cuántas fotos de un alojamiento van a la web: las de la habitación de ese precio, por delante. */
 const FOTOS_PARA_LA_WEB = { habitacion: 12, hotel: 8 };
@@ -43,22 +45,30 @@ export function alojamientoParaLaWeb(f: Ficha, mirado: Mirado): Alojamiento {
   const deLaFoto = (ref: unknown): string | null =>
     typeof ref === "string" ? (direccion.get(ref.replace(/\.\w+$/, "")) ?? null) : null;
 
+  // De lo que entregó el que mira pasan a la web el nivel de cada campo, la clase de su prueba y su foto: nunca sus
+  // frases, que están en inglés y citan su material por dentro. Lo que se lee lo dice la web, en el idioma del viajero.
   const comoEs: Rasgo[] = [];
   const campos = esObjeto(mirado?.fields) ? mirado.fields : {};
   for (const [campo, crudo] of Object.entries(campos)) {
     if (!esObjeto(crudo) || typeof crudo.level !== "string") continue;
     const pruebas = Array.isArray(crudo.evidence) ? crudo.evidence.filter(esObjeto) : [];
     const conFoto = pruebas.find((p) => p.kind === "photo" && deLaFoto(p.ref) !== null);
+    const clase = (conFoto ?? pruebas[0])?.kind;
     comoEs.push({
       campo,
       nivel: crudo.level,
-      prueba: texto((conFoto ?? pruebas[0])?.what),
+      prueba: PRUEBAS.find((p) => p === clase) ?? null,
       foto: conFoto === undefined ? null : deLaFoto(conFoto.ref),
     });
   }
-  const avisos = Array.isArray(mirado?.warnings)
-    ? mirado.warnings.filter(esObjeto).flatMap((a) => (texto(a.what) === null ? [] : [String(a.what)]))
-    : [];
+  const seDice = loQueSeDice(mirado);
+  // Lo que la casa no pudo saber sale de los datos, no de un mensaje: sin detalle, sin la habitación de ese precio,
+  // sin fotos de esa habitación o sin opiniones.
+  const avisos: AvisoDeFicha[] = [];
+  if (f.detalle === null) avisos.push("no_detail");
+  else if (f.habitacion === null) avisos.push("room_unknown");
+  else if (f.habitacion.fotos.length === 0) avisos.push("no_room_photos");
+  if (f.opinionesLeidas === 0) avisos.push("no_reviews");
   const deHabitacion = elegidas.pedidas.filter((p) => p.ruta.includes("/room-")).map((p) => p.url);
   const delHotel = elegidas.pedidas.filter((p) => p.ruta.includes("/hotel-")).map((p) => p.url);
   return {
@@ -91,11 +101,29 @@ export function alojamientoParaLaWeb(f: Ficha, mirado: Mirado): Alojamiento {
           ],
     ),
     fotos: [...deHabitacion.slice(0, FOTOS_PARA_LA_WEB.habitacion), ...delHotel.slice(0, FOTOS_PARA_LA_WEB.hotel)],
+    fotosDeHabitacion: Math.min(deHabitacion.length, FOTOS_PARA_LA_WEB.habitacion),
     comoEs,
-    loMejor: texto(mirado?.summary_good),
-    loPeor: texto(mirado?.summary_bad) === "unknown" ? null : texto(mirado?.summary_bad),
-    avisos: [...f.avisos, ...avisos],
+    seDice,
+    avisos,
   };
+}
+
+/**
+ * Lo que se dice de un alojamiento, por temas: de cada tema de la lista, el tono y en cuántas opiniones. Lo que el
+ * asiento puso fuera de la lista, o en `other`, no se enseña: sigue en su entrega, para el que explica.
+ */
+export function loQueSeDice(mirado: Mirado): Dicho[] {
+  const dichos: Dicho[] = [];
+  for (const crudo of Array.isArray(mirado?.review_themes) ? mirado.review_themes.filter(esObjeto) : []) {
+    const tema = typeof crudo.theme === "string" ? crudo.theme.trim().toLowerCase().replace(/\s+/g, "_") : "";
+    const { tone, mentions } = crudo;
+    if (!TEMAS_DE_OPINIONES.includes(tema) || tema === OTRO_TEMA) continue;
+    if (typeof tone !== "string" || !TONOS.includes(tone)) continue;
+    if (typeof mentions !== "string" || !MENCIONES.includes(mentions)) continue;
+    if (dichos.some((d) => d.tema === tema && d.tono === tone)) continue;
+    dichos.push({ tema, tono: tone, menciones: mentions });
+  }
+  return dichos;
 }
 
 /** El primer vistazo: lo que la búsqueda sabe sin IA. Un punto por alojamiento que pasa los mínimos. */
@@ -108,6 +136,7 @@ export function vistazoDe(b: Busqueda): Vistazo {
     conPrecio: b.conPrecio.length,
     desde: totales.length === 0 ? null : Math.min(...totales),
     moneda: b.estancia.moneda,
+    minimos: { nota: b.minimos.nota, opiniones: b.minimos.opiniones, estrellas: b.minimos.estrellas },
     puntos: b.dentro.map((a) => ({ punto: { lat: a.lat, lon: a.lon }, precio: precioDe.get(a.id) ?? null })),
   };
 }

@@ -17,11 +17,7 @@ import { carpetaDeLaMesa } from "./mesa.ts";
 import type { Recogido } from "./mirar.ts";
 
 /** Lo que se decide a mano en un viaje de muestra, hasta que lo decida el agente. */
-export type Muestra = Omit<Decidido, "mirados" | "palancas"> & {
-  /** Lo mejor y lo peor de cada alojamiento, ya en el idioma del viaje. */
-  textos: Record<string, { loMejor: string | null; loPeor: string | null; avisos: string[] }>;
-  paradas: Parada[];
-};
+export type Muestra = Omit<Decidido, "mirados" | "palancas"> & { paradas: Parada[] };
 
 function corrida(e: Estancia, dias: number): Estancia {
   const mueve = (f: string): string => {
@@ -72,19 +68,8 @@ async function principal(): Promise<number> {
   const muestra = leer<Muestra>(rutaDeMuestra);
 
   const mirados: Record<string, Mirado> = {};
-  for (const m of recogido.alojamientos) {
-    const entrega = m.pasadas.find((p) => p.entrega !== null)?.entrega ?? null;
-    const suyo = muestra.textos[m.alojamiento];
-    mirados[m.alojamiento] =
-      entrega === null || suyo === undefined
-        ? entrega
-        : {
-            ...entrega,
-            summary_good: suyo.loMejor,
-            summary_bad: suyo.loPeor,
-            warnings: suyo.avisos.map((what) => ({ what })),
-          };
-  }
+  for (const m of recogido.alojamientos)
+    mirados[m.alojamiento] = m.pasadas.find((p) => p.entrega !== null)?.entrega ?? null;
 
   let palancas: Palanca[] = [];
   const delMedio = muestra.maneras.find((m) => m.id === "best_value") ?? muestra.maneras[0];

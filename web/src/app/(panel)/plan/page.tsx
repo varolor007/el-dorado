@@ -263,7 +263,7 @@ export default function Planear() {
 
       {etapa === "mundo" && (
         <Hoja corta etiqueta={t.mundo.saludo}>
-          <Mundo {...comun} hayGrabado={viaje !== null} alProbar={() => setEtapa("vistazo")} />
+          <Mundo {...comun} grabado={viaje?.destino.nombre ?? null} alProbar={() => setEtapa("vistazo")} />
         </Hoja>
       )}
       {etapa === "vistazo" && viaje !== null && (

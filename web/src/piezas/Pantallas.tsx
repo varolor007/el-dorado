@@ -16,19 +16,20 @@ import { foto, type Reproductor } from "../lib/usar.ts";
 
 type Comun = { t: Textos; idioma: string };
 
-export function Mundo({ t, hayGrabado, alProbar }: Comun & { hayGrabado: boolean; alProbar: () => void }) {
+/** El mundo: `grabado` es el nombre del destino del viaje grabado, si hay alguno. */
+export function Mundo({ t, grabado, alProbar }: Comun & { grabado: string | null; alProbar: () => void }) {
   return (
     <>
       <div className="cabecera">
         <h1 className="lugar">{t.mundo.saludo}</h1>
         <p className="suave">{t.mundo.cuerpo}</p>
       </div>
-      {hayGrabado && (
+      {grabado !== null && (
         <button type="button" className="boton boton--hueco" onClick={alProbar}>
           {t.mundo.ejemplo}
         </button>
       )}
-      <p className="dato">{t.mundo.seco}</p>
+      <p className="dato">{t.mundo.seco(grabado)}</p>
     </>
   );
 }
@@ -73,8 +74,10 @@ export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
           </div>
         </div>
       )}
-      <p className="dato">{t.vistazo.minimos}</p>
-      <p className="aviso">{t.vistazo.sinVuelos}</p>
+      {v !== null && (
+        <p className="dato">{t.vistazo.minimos(v.minimos.nota, v.minimos.opiniones, v.minimos.estrellas)}</p>
+      )}
+      {viaje.transportes.length === 0 && <p className="aviso">{t.vistazo.sinVuelos}</p>}
     </>
   );
 }
@@ -623,35 +626,24 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
           {descarte(t, a.descartado)}
         </p>
       )}
-      {a.fotos.length > 0 && (
-        <div className="grupo">
-          <span className="rotulo">
-            {t.ficha.habitacion}: {a.habitacion ?? ""},{" "}
-            {a.metros === null ? t.ficha.sinMetros : t.ficha.metros(a.metros)}
-          </span>
+      <div className="grupo">
+        <span className="rotulo">
+          {t.ficha.habitacion}: {a.habitacion ?? ""}, {a.metros === null ? t.ficha.sinMetros : t.ficha.metros(a.metros)}
+        </span>
+        {a.avisos.map((x) => (
+          <p className="aviso" key={x}>
+            {t.ficha.avisos[x] ?? x}
+          </p>
+        ))}
+        {a.fotos.length > 0 && a.fotosDeHabitacion === 0 && <span className="rotulo">{t.ficha.fotosDelSitio}</span>}
+        {a.fotos.length > 0 && (
           <div className="tira">
             {a.fotos.slice(0, 10).map((f, i) => (
               <img key={f} src={foto(f, 640)} alt={`${a.nombre}, ${i + 1}`} loading="lazy" />
             ))}
           </div>
-        </div>
-      )}
-      {(a.loMejor !== null || a.loPeor !== null) && (
-        <div className="dos">
-          {a.loMejor !== null && (
-            <p>
-              <span className="rotulo">{t.ficha.loMejor}</span>
-              {a.loMejor}
-            </p>
-          )}
-          {a.loPeor !== null && (
-            <p>
-              <span className="rotulo">{t.ficha.loPeor}</span>
-              {a.loPeor}
-            </p>
-          )}
-        </div>
-      )}
+        )}
+      </div>
       <div className="grupo">
         <h2 className="titulo">{t.ficha.comoEs}</h2>
         {a.comoEs.length === 0 ? (
@@ -660,13 +652,16 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
           <>
             <div className="rasgos">
               {a.comoEs.map((r) => (
-                <div
-                  key={r.campo}
-                  className={r.nivel === "unknown" ? "rasgo rasgo--nose" : "rasgo"}
-                  title={r.prueba ?? undefined}
-                >
+                <div key={r.campo} className={r.nivel === "unknown" ? "rasgo rasgo--nose" : "rasgo"}>
                   <span className="rotulo">{t.campos[r.campo] ?? r.campo}</span>
                   <b>{t.niveles[r.nivel] ?? r.nivel}</b>
+                  {r.foto !== null ? (
+                    <a className="dato enlace" href={foto(r.foto, 1080)} target="_blank" rel="noreferrer">
+                      {t.ficha.prueba.photo}
+                    </a>
+                  ) : (
+                    r.prueba !== null && <span className="dato">{t.ficha.prueba[r.prueba]}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -674,14 +669,18 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
           </>
         )}
       </div>
-      {a.avisos.length > 0 && (
+      {a.seDice.length > 0 && (
         <div className="grupo">
-          <span className="rotulo">{t.viaje.avisos}</span>
-          {a.avisos.map((x) => (
-            <p className="aviso" key={x}>
-              {x}
-            </p>
-          ))}
+          <h2 className="titulo">{t.ficha.seDice}</h2>
+          <div className="rasgos">
+            {a.seDice.map((d) => (
+              <div key={`${d.tema}-${d.tono}`} className={`rasgo rasgo--${d.tono}`}>
+                <span className="rotulo">{t.temas[d.tema] ?? d.tema}</span>
+                <b>{t.tonos[d.tono] ?? d.tono}</b>
+                <span className="dato">{t.menciones[d.menciones] ?? d.menciones}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       <div className="palanca">
