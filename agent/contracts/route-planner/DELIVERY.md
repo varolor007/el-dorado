@@ -14,10 +14,16 @@
 | `left_out` | What the traveller might expect and does not fit, with its reason. Empty list if nothing |
 | `unknowns` | What you could not know, in plain sentences. Empty list if nothing |
 
+The examples in this file are invented. Where there are two, they come from two different kinds of trip, so that
+you copy neither: they show the form only, and everything you write comes from what is in your own `in/`.
+
 ## An entry of `bases`
 
-`{ "id": "b1", "name": "Old town", "nights": 4, "why": "the cathedral, the castle and the river front are all here",
-"zones": [ ... ] }`
+`{ "id": "b1", "name": "Museum quarter", "nights": 4, "why": "the three museums and the two gardens this traveller
+asked for are all here", "zones": [ ... ] }`
+
+`{ "id": "b1", "name": "Village at the head of the valley", "nights": 2, "why": "the paths to the two lakes and to
+the pass this traveller wants to walk start here", "zones": [ ... ] }`
 
 - `id`: `b1`, `b2`, and so on, in order.
 - `name`: the city, town or area where the traveller sleeps. A name: one line, 80 characters at most, no links.
@@ -28,8 +34,11 @@
 
 ## An entry of `zones`
 
-`{ "id": "z1", "name": "Around the cathedral", "anchors": ["Q111", "Q222"], "radius_m": 1200, "near": ["Q111",
-"Q333", "Q444"], "why": "between the cathedral and the river, with the market two streets away" }`
+`{ "id": "z1", "name": "Around the main square", "anchors": ["Q111", "Q222"], "radius_m": 800, "near": ["Q111",
+"Q333", "Q444"], "why": "between the two museums and the botanical garden" }`
+
+`{ "id": "z1", "name": "By the lake road", "anchors": ["Q555"], "radius_m": 3000, "near": ["Q555", "Q666"], "why":
+"where the paths to the two lakes start, next to the visitor centre" }`
 
 - `id`: `z1`, `z2`, and so on. No two zones share an id, in any base.
 - `name`: how a traveller would call the area. A name, not a description: one line, 80 characters at most, no
@@ -43,17 +52,23 @@
 
 `{ "from": "b1", "to": "b2", "minutes": 95, "by": "train", "source": "t3" }`
 
+`{ "from": "b2", "to": "b3", "minutes": 140, "by": "car", "source": "t5" }`
+
 `from` and `to` are base ids, one after the other in the order of the trip. `by` is `train`, `bus`, `car`, `ferry`
 or `flight`. `minutes` and `source` are copied from the entry of `in/transfers.json` you rely on: `source` is its
 reference. If `in/transfers.json` does not have it, both are `"unknown"`.
 
 ## `entry` and `exit`
 
-`{ "base": "b1", "why": "the airport the traveller flies into is here" }`
+`{ "base": "b1", "why": "the only base of the trip" }`
+
+`{ "base": "b1", "why": "the route runs in one line, and this is the end where the traveller arrives" }`
 
 ## An entry of `musts`
 
-`{ "what": "sunset by the sea", "covered": true, "where_or_why": "b1: the river front is in zone z1" }`
+`{ "what": "live music", "covered": true, "where_or_why": "b1: the two concert halls are in zone z1" }`
+
+`{ "what": "a day on the glacier", "covered": false, "where_or_why": "no place of in/places.json is on the glacier" }`
 
 `what` is the `thing` of the taste in `in/trip.json`, copied. `covered` is `true` or `false`. `where_or_why` says
 where the route covers it, or why it does not.
@@ -61,3 +76,5 @@ where the route covers it, or why it does not.
 ## An entry of `left_out`
 
 `{ "what": "the northern valley", "why": "two transfers of half a day each for one night there" }`
+
+`{ "what": "the two museums across the bay", "why": "they stand apart from everything else this traveller asked for" }`

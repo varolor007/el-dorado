@@ -16,9 +16,12 @@ every distance afterwards.
 
 ## 3. Decide the shape
 
-- `single_base`: everything is done from one place. The usual shape for a city and a few nights.
+- `single_base`: everything is done from one place.
 - `base_with_day_trips`: one place to sleep, and one or more days out and back.
 - `route`: several bases, slept in one after another.
+
+No shape is the usual one: it follows from where the places this traveller cares about sit and from the nights
+there are, whatever the kind of destination and however long the trip.
 
 Fewer bases is better: every change of base costs half a day. If what the traveller wants does not fit in the nights
 there are, leave places out and say which ones in `left_out`. Do not squeeze.
@@ -39,8 +42,9 @@ do. For each zone give:
 - `radius_m`: how far around that centre to search, from the allowed values.
 - `near`: the places this traveller will go to from there, by `id`, the most important first. The house computes the
   minutes on foot from the centre to each one.
-- `why`: what is there, in facts. Not `lively` or `well located`: `between the cathedral and the river, with the
-  market two streets away`.
+- `why`: what is there, in facts, by the places of `in/places.json`. Not `lively` or `well located`. Two examples
+  of the form, of two different kinds of place, so that you copy neither: `between the two museums and the
+  botanical garden`, or `where the paths to the two lakes start, next to the visitor centre`.
 
 More than one zone is worth it only when the zones are really different places to sleep: different surroundings,
 different things at hand. Two zones that overlap are one zone.
