@@ -82,6 +82,12 @@ export const MINIMOS_DE_PARTIDA = ESCALERA_DE_MINIMOS[0];
 export const ESCALERA_DE_RADIO = [1, 3, 9];
 export const RADIO_MAXIMO = 25_000;
 
+/**
+ * Si tantos alojamientos pasan los mínimos y ninguno tiene precio, no es cosa de los mínimos ni de la zona, sino de
+ * las fechas o de los que viajan: no se sigue bajando ni ensanchando.
+ */
+export const MUCHOS_SIN_PRECIO = 30;
+
 /** Con cuántos alojamientos con precio se da un escalón por bueno, y cuántos se miran de cerca. */
 export const CANDIDATOS_QUE_BASTAN = 8;
 export const FINALISTAS = 5;

@@ -137,6 +137,9 @@ export function vistazoDe(b: Busqueda): Vistazo {
     desde: totales.length === 0 ? null : Math.min(...totales),
     moneda: b.estancia.moneda,
     minimos: { nota: b.minimos.nota, opiniones: b.minimos.opiniones, estrellas: b.minimos.estrellas },
+    // Lo que hubo que bajar o ensanchar se le dice al viajero: sale de los pasos que dio la búsqueda.
+    bajados: (b.pasos ?? []).length > 0 && b.pasos![0].minimos.nota !== b.minimos.nota,
+    ensanchado: (b.pasos ?? []).some((x) => x.veces > 1),
     puntos: b.dentro.map((a) => ({ punto: { lat: a.lat, lon: a.lon }, precio: precioDe.get(a.id) ?? null })),
   };
 }

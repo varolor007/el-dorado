@@ -164,6 +164,8 @@ export function viajeInventado(): Viaje {
       desde: 180,
       moneda: "EUR",
       minimos: { nota: 8.5, opiniones: 200, estrellas: 4 },
+      bajados: false,
+      ensanchado: false,
       puntos: [{ punto: { lat: 10.04, lon: 20.04 }, precio: 240 }],
     },
   };

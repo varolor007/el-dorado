@@ -128,6 +128,10 @@ export type Vistazo = {
   moneda: string;
   /** Los mínimos con los que se buscó: los de partida o, donde hay poco, los del escalón al que hubo que bajar. */
   minimos: { nota: number; opiniones: number; estrellas: number };
+  /** Verdadero si con los mínimos de partida no había bastantes y hubo que bajarlos. */
+  bajados: boolean;
+  /** Verdadero si en las zonas de la ruta no había con qué elegir y se buscó más lejos. */
+  ensanchado: boolean;
   puntos: { punto: Punto; precio: number | null }[];
 };
 

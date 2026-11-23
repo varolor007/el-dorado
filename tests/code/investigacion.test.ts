@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { ESCALERA_DE_MINIMOS, ESCALERA_DE_RADIO, RADIO_MAXIMO } from "../../agent/data/cribas.ts";
 import { AVISOS } from "../../agent/data/palabras.ts";
+import { puertaBusqueda } from "../../agent/gates/puerta_busqueda.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
 import { estanciaDe, sigue, VUELTAS, type Estado, type Fuentes } from "../../agent/launcher/investigar.ts";
 import { puestosDe } from "../../agent/launcher/puesto.ts";
@@ -15,7 +16,7 @@ import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } 
 import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
 import type { Entendido, Tabla } from "../../agent/scripts/formas.ts";
-import { avisosDeSiempre } from "../../agent/scripts/monta_viaje.ts";
+import { avisosDeSiempre, vistazoDe } from "../../agent/scripts/monta_viaje.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
 import { ALOJAMIENTOS, ESTANCIA, fuenteInventada, MINIMOS } from "../cases/inventado/inventado.ts";
 import {
@@ -605,4 +606,109 @@ test("un viaje que pide varias bases se para tras la ruta, con un solo asiento g
   } finally {
     rmSync(run, { recursive: true, force: true });
   }
+});
+
+/** Una fuente de pueblo: cuatro casas en la zona, que solo pasan el último escalón, y diez hoteles a seis km. */
+function fuenteDePueblo(cuenta: { listas: number; precios: string[]; detalles: string[] }): FuenteAlojamiento {
+  const centro = SITIOS[1].punto;
+  const base = fuenteInventada();
+  const casa = (i: number): (typeof ALOJAMIENTOS)[number] => ({
+    ...ALOJAMIENTOS[0],
+    id: `casa-${i}`,
+    nombre: `Casa Inventada ${i}`,
+    nota: 8.4 + i * 0.2,
+    opiniones: 35 + i * 10,
+    estrellas: null,
+    lat: centro.lat + 0.0005 * i,
+    lon: centro.lon,
+  });
+  const hotel = (i: number): (typeof ALOJAMIENTOS)[number] => ({
+    ...ALOJAMIENTOS[0],
+    id: `hotel-${i}`,
+    nombre: `Hotel Lejano Inventado ${i}`,
+    nota: 8.6,
+    opiniones: 900,
+    estrellas: 4,
+    lat: centro.lat + 0.054,
+    lon: centro.lon + 0.0005 * i,
+  });
+  const todos = [...[1, 2, 3, 4].map(casa), ...Array.from({ length: 10 }, (_, i) => hotel(i + 1))];
+  const metros = (a: { lat: number; lon: number }): number => Math.abs(a.lat - centro.lat) * 111_000;
+  return {
+    ...base,
+    async lista(e) {
+      cuenta.listas++;
+      return todos.filter((a) => metros(a) <= e.radio).map((a) => ({ ...a }));
+    },
+    async precios(ids, e) {
+      cuenta.precios.push(...ids);
+      const uno = (await base.precios(["a1"], e))[0];
+      return ids.map((id, i) => ({ ...uno, id, total: 100 + i }));
+    },
+    async detalle(id) {
+      cuenta.detalles.push(id);
+      return base.detalle(id);
+    },
+  };
+}
+
+test("al ensanchar no se pierde lo de la zona: va por delante, y lo de fuera entra con sus mínimos", async () => {
+  const cuenta = { listas: 0, precios: [] as string[], detalles: [] as string[] };
+  const zonas = [{ id: "z1", nombre: "El pueblo", lat: SITIOS[1].punto.lat, lon: SITIOS[1].punto.lon, radio: 800 }];
+  const como = { minimos: ESCALERA_DE_MINIMOS, bastan: 8, radios: ESCALERA_DE_RADIO, radioMaximo: RADIO_MAXIMO };
+  const b = await buscarDondeHaya(fuenteDePueblo(cuenta), ESTANCIA, zonas, como);
+  // Las cuatro casas de la zona son finalistas, y el quinto sale de los hoteles de fuera.
+  const finalistas = b.finalistas.map((f) => f.alojamiento.id);
+  assert.deepEqual(finalistas.filter((id) => id.startsWith("casa")).sort(), ["casa-1", "casa-2", "casa-3", "casa-4"]);
+  assert.equal(finalistas.filter((id) => id.startsWith("hotel")).length, 1);
+  // Los mínimos que se dicen son los más bajos que hicieron falta, y los cumple todo lo que queda dentro.
+  assert.deepEqual(b.minimos, ESCALERA_DE_MINIMOS[ESCALERA_DE_MINIMOS.length - 1]);
+  assert.deepEqual(puertaBusqueda(b, 5).rojos, []);
+  assert.equal(b.dentro.length + b.fuera.length, b.devueltos);
+  // Los hoteles de fuera se miraron con el primer escalón, que ya daba bastantes.
+  const pasos = b.pasos!;
+  assert.deepEqual(
+    pasos.map((x) => [x.veces, x.minimos.nota, x.pasan]),
+    [
+      [1, 8.5, 0],
+      [1, 8, 0],
+      [1, 7.5, 0],
+      [1, 7, 4],
+      [3, 8.5, 0],
+      [3, 8, 0],
+      [3, 7.5, 0],
+      [3, 7, 0],
+      [9, 8.5, 10],
+    ],
+  );
+  // Y no repite trabajo: una lista por zona y radio, cada precio una vez, y el detalle solo de los finalistas.
+  assert.equal(cuenta.listas, 3);
+  assert.equal(new Set(cuenta.precios).size, cuenta.precios.length);
+  assert.deepEqual([...cuenta.detalles].sort(), [...finalistas].sort());
+  // Lo que hubo que bajar y ensanchar llega al primer vistazo del viaje.
+  const v = vistazoDe(b);
+  assert.equal(v.bajados, true);
+  assert.equal(v.ensanchado, true);
+  assert.deepEqual(v.minimos, ESCALERA_DE_MINIMOS[ESCALERA_DE_MINIMOS.length - 1]);
+});
+
+test("si muchos pasan los mínimos y ninguno tiene precio, no se baja ni se ensancha, y se dice", async () => {
+  let listas = 0;
+  const base = fuenteDeDosBarrios();
+  const sinPrecios: FuenteAlojamiento = {
+    ...base,
+    async lista(e, m) {
+      listas++;
+      return base.lista(e, m);
+    },
+    precios: async () => [],
+  };
+  const zonas = [{ id: "z1", nombre: "Todo", lat: SITIOS[1].punto.lat, lon: SITIOS[1].punto.lon, radio: 3000 }];
+  const como = { minimos: ESCALERA_DE_MINIMOS, bastan: 8, radios: ESCALERA_DE_RADIO, radioMaximo: RADIO_MAXIMO };
+  const b = await buscarDondeHaya(sinPrecios, ESTANCIA, zonas, { ...como, muchosSinPrecio: 5 });
+  assert.equal(listas, 1);
+  assert.equal(b.pasos!.length, 1);
+  assert.equal(b.finalistas.length, 0);
+  assert.ok(b.avisos.some((x) => x.includes("ninguno tiene precio para esas noches y ese grupo")));
+  assert.ok(!b.avisos.some((x) => x.includes("se bajan los mínimos") || x.includes("se busca más ancho")));
 });

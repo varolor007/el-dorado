@@ -15,6 +15,7 @@ import {
   CANDIDATOS_QUE_BASTAN,
   ESCALERA_DE_MINIMOS,
   ESCALERA_DE_RADIO,
+  MUCHOS_SIN_PRECIO,
   FINALISTAS,
   RADIO_MAXIMO,
 } from "../data/cribas.ts";
@@ -233,6 +234,7 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
     bastan: CANDIDATOS_QUE_BASTAN,
     radios: ESCALERA_DE_RADIO,
     radioMaximo: RADIO_MAXIMO,
+    muchosSinPrecio: MUCHOS_SIN_PRECIO,
   };
   const busqueda = await buscarDondeHaya(f.alojamiento, e, dondeBuscar, comoBuscar, {
     finalistas: FINALISTAS,
