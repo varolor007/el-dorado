@@ -196,12 +196,15 @@ test("trampa: una nota dice que lo vio y no dice dónde, o cita un archivo que n
       "- A large gym. [in/photos/hotel-09.jpg] [seen]",
       "- Great reviews everywhere. [https://example.com/hotel] [seen]",
       "- Two beds. [in/photos/room-01.jpg, in/sheet.json#room] [seen]",
+      "- No photo shows a gym. [in/photos] [seen]",
+      "- No video was given. [in/videos] [seen]",
     ]),
   );
   assert.deepEqual(rojos, [
     "out/3-notes.md:1: la nota dice que lo vio y no dice en qué archivo",
-    "out/3-notes.md:2: la nota cita in/photos/hotel-09.jpg, que no es un archivo de su material",
-    "out/3-notes.md:3: la nota cita https://example.com/hotel, que no es un archivo de su material",
+    "out/3-notes.md:2: la nota cita in/photos/hotel-09.jpg, que no es de su material",
+    "out/3-notes.md:3: la nota cita https://example.com/hotel, que no es de su material",
+    "out/3-notes.md:6: la nota cita in/videos, que no es de su material",
   ]);
 });
 

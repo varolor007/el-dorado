@@ -140,8 +140,12 @@ export function puertaMetodo(puesto: string, sello: Sello): VeredictoDelMetodo {
         .filter((f) => f !== "");
       if (fuentes.length === 0) rojos.push({ donde, que: "la nota dice que lo vio y no dice en qué archivo" });
       for (const f of fuentes) {
-        if (!f.startsWith("in/") || sello.archivos[f] === undefined)
-          rojos.push({ donde, que: `la nota cita ${f}, que no es un archivo de su material` });
+        // Vale un archivo del material, o una carpeta suya cuando la nota habla de todo lo que hay en ella.
+        const carpeta = f.replace(/\/+$/, "") + "/";
+        const esDelMaterial =
+          f.startsWith("in/") &&
+          (sello.archivos[f] !== undefined || Object.keys(sello.archivos).some((a) => a.startsWith(carpeta)));
+        if (!esDelMaterial) rojos.push({ donde, que: `la nota cita ${f}, que no es de su material` });
       }
     });
     if (cuantas === 0 && readFileSync(notas, "utf8").trim() !== "")
