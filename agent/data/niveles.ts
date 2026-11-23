@@ -97,5 +97,26 @@ export const DE_LA_FICHA = [
   "services",
   "stay.check_in",
   "stay.check_out",
+  "stay.season",
   "photos",
 ];
+
+/**
+ * La estación de la estancia, que pone el código en la ficha de datos. El que mira va a ciegas y no sabe dónde está
+ * el alojamiento: del mes solo no sale si es invierno o verano. Estos son los meses de cada estación al norte de los
+ * trópicos (1 es enero); al sur, en esos mismos meses es la contraria.
+ */
+export const MESES_DE_LA_ESTACION: Record<string, number[]> = {
+  winter: [12, 1, 2],
+  spring: [3, 4, 5],
+  summer: [6, 7, 8],
+  autumn: [9, 10, 11],
+};
+export const ESTACION_CONTRARIA: Record<string, string> = {
+  winter: "summer",
+  spring: "autumn",
+  summer: "winter",
+  autumn: "spring",
+};
+/** Los grados de latitud de los trópicos. Entre uno y otro el año no tiene esas cuatro estaciones: no se dice. */
+export const TROPICO = 23.5;

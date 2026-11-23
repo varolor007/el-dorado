@@ -31,8 +31,8 @@ one bike and a rack of dumbbells in a room with a window" } ], "note": "" }`
 - `evidence`: at least one entry unless the level is `unknown`. `kind` is `photo` (then `ref` is a file of
   `in/photos/`, with its extension), `review` (then `ref` is a reference of `in/reviews.json`, such as `r12`) or
   `sheet` (then `ref` is the field of `in/sheet.json` you rely on, one of: `room.name`, `room.size_m2`, `room.beds`,
-  `room.declared_views`, `services`, `stay.check_in`, `stay.check_out`, `photos`). A field of the sheet whose value is
-  `unknown` or empty supports nothing.
+  `room.declared_views`, `services`, `stay.check_in`, `stay.check_out`, `stay.season`, `photos`). A field of the
+  sheet whose value is `unknown` or empty supports nothing.
 - A photo supports a field only if your inventory says it shows that: `gym` needs a photo you inventoried as `gym`,
   `pool` one you inventoried as `pool`, and the fields of the room one you inventoried as `room`, `bathroom` or `view`.
 - `note`: anything the house should know about this level. May be empty.
@@ -89,8 +89,13 @@ Every one of the nine fields must be present. The level `none` needs its evidenc
 
 ## An entry of `review_themes`
 
-`{ "theme": "noise", "tone": "bad", "mentions": "several", "says": "tram noise at night in the rooms facing the
-street", "refs": ["r4", "r19"] }`
+`{ "theme": "noise", "tone": "bad", "mentions": "several", "says": "thin walls: the next room is heard at night",
+"refs": ["r4", "r19"] }`
+
+`{ "theme": "bed", "tone": "good", "mentions": "a_few", "says": "a firm mattress and good pillows", "refs": ["r2",
+"r7", "r11"] }`
+
+Both are invented and show the form only: what you write in `says` is what the reviews you were given say.
 
 `theme` is one of: `cleanliness`, `maintenance`, `noise`, `room_size`, `bed`, `bathroom`, `light`, `temperature`,
 `smell`, `view`, `breakfast`, `food`, `staff`, `location`, `access`, `parking`, `wifi`, `gym`, `pool`,
@@ -103,14 +108,19 @@ counts. `refs` are references that exist in `in/reviews.json`.
 
 ## An entry of `conflicts`
 
-`{ "what": "the photos show a quiet room; several recent reviews complain of street noise", "refs": ["room-02.jpg",
-"r4", "r19"] }`
+`{ "what": "the room looks new in its photos; several recent reviews found it dirty", "refs": ["room-02.jpg", "r6",
+"r21"] }`
 
 ## An entry of `warnings`
 
-`{ "what": "outdoor pool and a stay in winter: it may be closed", "label": "deduced", "refs": ["hotel-12.jpg",
-"stay.check_in"] }`
+`{ "what": "one recent review says the sauna was closed for works", "label": "seen", "refs": ["r8"] }`
+
+`{ "what": "the bar of the photos is on an open-air terrace and the sheet gives the season as winter: it may be
+closed", "label": "deduced", "refs": ["hotel-12.jpg", "stay.season"] }`
+
+Both are invented and show the form only.
 
 `label` is `seen` (a review or the sheet says it) or `deduced` (it follows from what you saw). `refs`, at least one,
 are files of `in/photos/`, references of `in/reviews.json` or fields of `in/sheet.json`. The same goes for the `refs`
-of `conflicts`.
+of `conflicts`. A warning about the season cites `stay.season`, and there is none when `stay.season` is `unknown`:
+the season is never deduced from the dates.

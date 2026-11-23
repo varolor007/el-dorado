@@ -1,18 +1,19 @@
 // Lo que se le da al asiento que mira un alojamiento, sacado de la ficha de datos de un finalista. Va a ciegas: sin
 // el nombre, sin el precio, sin la nota, sin las estrellas y sin el resumen de opiniones que hace la fuente, para que
-// juzgue lo que tiene delante. Las fechas sí van, porque hay cosas que existen pero no para ese viaje.
+// juzgue lo que tiene delante. Las fechas sí van, porque hay cosas que existen pero no para ese viaje, y con ellas la
+// estación, que pone el código: el asiento no sabe dónde está el alojamiento, y no se le dice.
 
 import type { Estancia, Opinion } from "../tools/fuentes/tipos.ts";
 import type { Eleccion } from "../tools/fotos.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
-import { SIN_SABER } from "../data/niveles.ts";
+import { ESTACION_CONTRARIA, MESES_DE_LA_ESTACION, SIN_SABER, TROPICO } from "../data/niveles.ts";
 
 export const TOPE_DE_OPINIONES = 30;
 const TOPE_DE_LETRAS = 700;
 
 export type HojaDeDatos = {
   lodging_id: string;
-  stay: { check_in: string; check_out: string; adults: number; children: number };
+  stay: { check_in: string; check_out: string; season: string; adults: number; children: number };
   room: { id: string; name: string; size_m2: number | string; beds: string[]; declared_views: string[] } | string;
   services: string[];
   check_in_from: string;
@@ -24,11 +25,31 @@ export type OpinionParaMirar = { ref: string; date: string; traveller: string; l
 
 const corta = (t: string): string => (t.length > TOPE_DE_LETRAS ? t.slice(0, TOPE_DE_LETRAS) + " [cut]" : t);
 
+/**
+ * La estación en la que cae una estancia, por la latitud del alojamiento y el mes de entrada. El mismo mes es
+ * invierno en medio mundo y verano en el otro medio; entre los trópicos, o sin una latitud que valga, no se sabe.
+ */
+export function estacion(latitud: number | null | undefined, entrada: string): string {
+  if (typeof latitud !== "number" || !Number.isFinite(latitud) || Math.abs(latitud) > 90) return SIN_SABER;
+  if (Math.abs(latitud) <= TROPICO) return SIN_SABER;
+  const mes = Number(/^\d{4}-(\d{2})-\d{2}$/.exec(entrada)?.[1]);
+  const alNorte = Object.keys(MESES_DE_LA_ESTACION).find((e) => MESES_DE_LA_ESTACION[e].includes(mes));
+  if (alNorte === undefined) return SIN_SABER;
+  return latitud > 0 ? alNorte : ESTACION_CONTRARIA[alNorte];
+}
+
 export function hojaDeDatos(f: Ficha, e: Estancia, fotos: Eleccion): HojaDeDatos {
   const h = f.habitacion;
   return {
     lodging_id: f.alojamiento.id,
-    stay: { check_in: e.entrada, check_out: e.salida, adults: e.adultos, children: e.ninos.length },
+    stay: {
+      check_in: e.entrada,
+      check_out: e.salida,
+      // De dónde está el alojamiento solo sale esto: la latitud no va en la ficha.
+      season: estacion(f.alojamiento.lat, e.entrada),
+      adults: e.adultos,
+      children: e.ninos.length,
+    },
     room:
       h === null
         ? SIN_SABER

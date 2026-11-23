@@ -6,9 +6,11 @@ them. The score and the stars say whether a place is acceptable. You say what it
 
 ## What you receive, in `in/`
 
-- `sheet.json`: the lodging's own data. The dates of the stay, the room being offered (its name, its size if the
-  source gives it, its beds and the views it declares), the services the lodging lists, and how many photos you were
-  given out of how many the source has.
+- `sheet.json`: the lodging's own data. The dates of the stay and its season (`stay.season`: `winter`, `spring`,
+  `summer` or `autumn`, worked out by the house from where the lodging is, or `unknown` where the year has no such
+  seasons or the house cannot tell), the room being offered (its name, its size if the source gives it, its beds
+  and the views it declares), the services the lodging lists, and how many photos you were given out of how many
+  the source has.
 - `photos/room-NN`: the official photos of **the room being offered**, and of no other room.
 - `photos/hotel-NN`: official photos of the lodging in general. They carry no caption, so you have to tell what each
   one shows. They may show other rooms, better than the one being offered. When the lodging has more photos than fit,
@@ -22,6 +24,7 @@ Some of these pieces may be missing. Work with what there is, and what you canno
 
 You do not see the price, the review score or the stars. You judge what is in front of you, without knowing whether
 the place is cheap or well rated. You do not see the lodging's name either: you describe it, you do not look it up.
+Nor do you know where it is: of the place, the sheet tells you only the season of the stay.
 
 You do not use the internet.
 

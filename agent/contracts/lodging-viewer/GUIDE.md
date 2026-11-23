@@ -33,9 +33,13 @@ and any other theme of the list in `contract/DELIVERY.md` that they bring up. Fo
 or several reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest
 ones. Read the complaints with care: what is repeated matters; one isolated complaint does not.
 
-Note apart anything that exists but may not be there for this stay: a pool closed for the season, a gym or a lift
-under works, a service paid apart. Look at the dates of the stay in the sheet: an outdoor pool in winter is a warning
-to raise, labelled `deduced`, not a fact.
+Note apart anything that exists but may not be there for this stay: something that only runs part of the year, a
+gym or a lift under works, a service paid apart. The season of the stay is `stay.season` in the sheet: the house
+worked it out from where the lodging is, which you do not know. Never deduce a season from the dates: the same
+month is winter in one half of the world and summer in the other, and some places have neither. If something you
+saw or read depends on the season and `stay.season` is the wrong one for it, raise a warning labelled `deduced`,
+not a fact, and cite `stay.season`. If `stay.season` is `unknown`, raise no warning about the season: only what a
+review or the sheet says outright, labelled `seen`.
 
 ## 4. Give each field its level
 

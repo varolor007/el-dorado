@@ -15,13 +15,15 @@ import {
   CAMPOS,
   DE_LA_FICHA,
   DE_LA_HABITACION,
+  ESTACION_CONTRARIA,
   ETIQUETAS_DE_AVISO,
   MENCIONES,
+  MESES_DE_LA_ESTACION,
   MUESTRA,
   TEMAS_DE_OPINIONES,
   TONOS,
 } from "../../agent/data/niveles.ts";
-import { hojaDeDatos, opinionesParaMirar } from "../../agent/scripts/para_mirar.ts";
+import { estacion, hojaDeDatos, opinionesParaMirar } from "../../agent/scripts/para_mirar.ts";
 import { elegirFotos } from "../../agent/tools/fotos.ts";
 import type { Opinion } from "../../agent/tools/fuentes/tipos.ts";
 import { ESTANCIA, fuenteInventada, MINIMOS } from "../cases/inventado/inventado.ts";
@@ -89,11 +91,7 @@ function entregaBuena(): Entrega {
     review_themes: [{ theme: "noise", tone: "bad", mentions: "one", says: "the street is noisy", refs: ["r1"] }],
     conflicts: [],
     warnings: [
-      {
-        what: "outdoor pool: check that it is open on these dates",
-        label: "deduced",
-        refs: ["hotel-02.jpg", "stay.check_in"],
-      },
+      { what: "one review says the pool was closed during their stay", label: "seen", refs: ["hotel-02.jpg", "r1"] },
     ],
     unknowns: ["No photo shows the bathroom of this room."],
     summary_good: "A pool to bathe in, shown in the photos.",
@@ -129,6 +127,16 @@ test("el contrato nombra lo que puede enseñar una foto, los tonos, las mencione
   for (const campo of DE_LA_HABITACION) assert.ok(entrega.includes("`" + campo + "`"));
 });
 
+test("el contrato nombra las estaciones que pone el código, y dice que no se deducen de las fechas", () => {
+  const recibe = leer("README.md");
+  for (const valor of [...Object.keys(MESES_DE_LA_ESTACION), "unknown", "stay.season"])
+    assert.ok(recibe.includes("`" + valor + "`"), `README.md no nombra ${valor}`);
+  assert.match(leer("GUIDE.md"), /Never deduce a season from the dates/);
+  assert.match(leer("GUIDE.md"), /If `stay.season` is `unknown`, raise no warning about the season/);
+  // Ningún ejemplo del contrato enseña a sacar el invierno de una fecha.
+  assert.ok(!/"stay\.check_(in|out)"/.test(leer("DELIVERY.md")));
+});
+
 test("las normas del que mira son seis, de la MI1 a la MI6, y el contrato dice lo que no ve", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(MI\d+)\./gm)].map((m) => m[1]);
   assert.deepEqual(codigos, ["MI1", "MI2", "MI3", "MI4", "MI5", "MI6"]);
@@ -144,7 +152,14 @@ test("la ficha de datos del asiento no lleva ni el nombre, ni el precio, ni la n
   assert.ok(!texto.includes(String(FICHA.precio.total)));
   for (const clave of ["nota", "rating", "score", "stars", "estrellas", "price", "precio", "total", "resumen"])
     assert.ok(!new RegExp(`"${clave}"`, "i").test(texto), `la ficha de datos lleva ${clave}`);
-  assert.deepEqual(HOJA.stay, { check_in: ESTANCIA.entrada, check_out: ESTANCIA.salida, adults: 2, children: 0 });
+  // El caso inventado está entre los trópicos: allí no hay estación que decir.
+  assert.deepEqual(HOJA.stay, {
+    check_in: ESTANCIA.entrada,
+    check_out: ESTANCIA.salida,
+    season: "unknown",
+    adults: 2,
+    children: 0,
+  });
   assert.deepEqual(HOJA.room, { id: "h1", name: "Doble", size_m2: 22, beds: ["1 x Double bed"], declared_views: [] });
   assert.deepEqual(HOJA.photos, { room_given: 1, room_total: 1, hotel_given: 2, hotel_total: 2 });
 });
@@ -155,6 +170,62 @@ test("lo que la ficha no sabe va como «unknown», no en blanco", () => {
   assert.equal(hoja.room, "unknown");
   assert.equal(hoja.check_in_from, "unknown");
   assert.deepEqual(hoja.services, []);
+});
+
+// La estación la pone el código, por dónde está el alojamiento: el asiento no la deduce del mes.
+
+test("en el mismo mes, la estación al norte y al sur de los trópicos es la contraria", () => {
+  assert.equal(estacion(48.2, "2027-01-15"), "winter");
+  assert.equal(estacion(-33.9, "2027-01-15"), "summer");
+  assert.equal(estacion(48.2, "2027-07-15"), "summer");
+  assert.equal(estacion(-33.9, "2027-07-15"), "winter");
+  assert.equal(estacion(60, "2027-04-01"), "spring");
+  assert.equal(estacion(-45, "2027-04-01"), "autumn");
+  // Los doce meses, uno a uno: cada mes tiene su estación, y la del sur es siempre la contraria a la del norte.
+  for (let mes = 1; mes <= 12; mes++) {
+    const entrada = `2027-${String(mes).padStart(2, "0")}-10`;
+    const alNorte = estacion(40, entrada);
+    assert.ok(MESES_DE_LA_ESTACION[alNorte].includes(mes), `el mes ${mes} no es de ${alNorte}`);
+    assert.equal(estacion(-40, entrada), ESTACION_CONTRARIA[alNorte]);
+    assert.notEqual(estacion(-40, entrada), alNorte);
+  }
+});
+
+test("entre los trópicos, o sin una latitud o una fecha que valgan, la estación no se sabe", () => {
+  for (const latitud of [0, 10, -10, 23.5, -23.5])
+    for (const entrada of ["2027-01-15", "2027-07-15"]) assert.equal(estacion(latitud, entrada), "unknown");
+  assert.equal(estacion(23.6, "2027-01-15"), "winter");
+  assert.equal(estacion(-23.6, "2027-01-15"), "summer");
+  for (const latitud of [null, undefined, Number.NaN, 91, -120])
+    assert.equal(estacion(latitud, "2027-01-15"), "unknown");
+  for (const entrada of ["", "enero", "2027-13-01", "2027-00-10"]) assert.equal(estacion(48.2, entrada), "unknown");
+});
+
+test("la ficha de datos lleva la estación de la estancia y no dice dónde está el alojamiento", () => {
+  const en = (lat: number, lon: number) =>
+    hojaDeDatos({ ...FICHA, alojamiento: { ...FICHA.alojamiento, lat, lon } }, ESTANCIA, ELEGIDAS);
+  // La estancia del caso inventado entra en marzo: primavera al norte y otoño al sur.
+  const alNorte = en(41.3777, 20.1444);
+  const alSur = en(-41.3777, 20.6555);
+  assert.equal(alNorte.stay.season, "spring");
+  assert.equal(alSur.stay.season, "autumn");
+  for (const hoja of [alNorte, alSur, HOJA]) {
+    const texto = JSON.stringify(hoja);
+    for (const numero of ["41.3777", "20.1444", "20.6555", String(FICHA.alojamiento.lat)])
+      assert.ok(!texto.includes(numero), `la ficha de datos lleva ${numero}`);
+    for (const clave of ["lat", "lon", "latitude", "longitude", "latitud", "longitud", "country", "pais", "city"])
+      assert.ok(!new RegExp(`"${clave}"`, "i").test(texto), `la ficha de datos lleva ${clave}`);
+  }
+  // Lo único que cambia de una ficha a otra, con el alojamiento en otro sitio, es la estación.
+  assert.deepEqual({ ...alSur, stay: { ...alSur.stay, season: "spring" } }, alNorte);
+});
+
+test("una estación que no se sabe no sostiene un aviso, y una que se sabe, sí", () => {
+  const aviso = (e: Entrega) =>
+    (e.warnings = [{ what: "an open-air terrace out of season", label: "deduced", refs: ["stay.season"] }]);
+  assert.deepEqual(rojosDe(aviso), ["warnings[0]: cita stay.season, que no está en su material"]);
+  const enInvierno = { ...MATERIAL.hoja, stay: { ...HOJA.stay, season: "winter" } };
+  assert.deepEqual(rojosDe(aviso, { ...MATERIAL, hoja: enInvierno }), []);
 });
 
 test("las opiniones van de la más reciente a la más antigua, con su referencia y sin su nota", () => {
