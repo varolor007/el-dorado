@@ -30,7 +30,7 @@ const bloques = [
     prueba: "con el viaje inventado, sin IA ni fuentes",
     firma: "no; punto de situación",
     puntos: [
-      { n: "1.1", b: "La forma de lo que deja cada paso.", t: "Hecha la de la búsqueda (el alojamiento, el precio, el detalle, la opinión y el vuelo). Faltan lo que he entendido del viaje, los avisos, la tabla de los papeles, la ruta, la ficha de cómo es, la tabla del cruce y los tres viajes.", estado: "parte" },
+      { n: "1.1", b: "La forma de lo que deja cada paso.", t: "En `agent/scripts/formas.ts`, junto a la de la búsqueda (el alojamiento, el precio, el detalle, la opinión y el vuelo): lo que he entendido del viaje, los avisos, la casilla de los papeles, la ruta con sus zonas, la ficha de cómo es, los sitios elegidos, la tabla del cruce con sus palancas, las tres maneras y lo que escribe el que explica. Lo que entrega o lee un asiento lleva sus campos en inglés, como su contrato.", estado: "hecho" },
       { n: "1.2", b: "La carpeta de cada viaje.", t: "Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa.", estado: "pendiente" },
       { n: "1.3", b: "El viaje inventado, entero.", t: "De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado.", estado: "parte" },
       { n: "1.4", b: "Lo nuestro, en datos.", t: "La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales.", estado: "pendiente" },

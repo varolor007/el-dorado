@@ -74,7 +74,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 
 | Punto | Qué | Estado |
 |---|---|---|
-| 1.1 | **La forma de lo que deja cada paso.** Hecha la de la búsqueda (el alojamiento, el precio, el detalle, la opinión y el vuelo). Faltan lo que he entendido del viaje, los avisos, la tabla de los papeles, la ruta, la ficha de cómo es, la tabla del cruce y los tres viajes. | en parte |
+| 1.1 | **La forma de lo que deja cada paso.** En `agent/scripts/formas.ts`, junto a la de la búsqueda (el alojamiento, el precio, el detalle, la opinión y el vuelo): lo que he entendido del viaje, los avisos, la casilla de los papeles, la ruta con sus zonas, la ficha de cómo es, los sitios elegidos, la tabla del cruce con sus palancas, las tres maneras y lo que escribe el que explica. Lo que entrega o lee un asiento lleva sus campos en inglés, como su contrato. | hecho |
 | 1.2 | **La carpeta de cada viaje.** Qué archivo deja cada paso, el estado de cada cosa y sus versiones, en la mesa. | pendiente |
 | 1.3 | **El viaje inventado, entero.** De las respuestas a los tres viajes, con lo que dejaría cada asiento, para probar toda la cadena sin gastar. Hecho, el alojamiento inventado. | en parte |
 | 1.4 | **Lo nuestro, en datos.** La lista de preguntas de los papeles, lo que descarta, lo que se suma, los niveles con su descripción, los pesos de partida, las palancas, las palabras prohibidas y los dominios oficiales. | pendiente |
