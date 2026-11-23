@@ -195,7 +195,53 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
     que no lleva ninguna. No se fuerza: se le pide al PM de forma expresa. Mientras, van menos fotos y mejor elegidas
     (veinticuatro y no cuarenta y dos, con una de cada clase de la habitación por turnos) y treinta opiniones.
 
+De la tanda 3, el agente hace el viaje (23-nov). Lo que decidió la sesión al construir, con su porqué; el PM lo ve al
+cerrar la tanda:
+
+- **Los asientos de la ruta y del día a día trabajan sin salir a internet**, con lo que el código les da de los datos
+  abiertos. La hoja los quiere con buscador: llega con el lector de webs (3.5). Por eso un viaje con varias bases
+  todavía no pasa la puerta 3: no hay de dónde sacar los tiempos de un traslado.
+- **Ningún asiento escribe coordenadas ni minutos.** El de la ruta nombra sitios de los datos, por su identificador,
+  y el código pone el centro de cada zona y lo que se anda. El del día a día no añade sitios suyos: lo que echa en
+  falta lo dice aparte.
+- **La manera distinta es otra fila de las mismas fechas** (otro alojamiento u otra zona). Un cambio de fechas no es
+  una manera: es una palanca que se cuenta. Así los días son los mismos en las tres, como dice la hoja.
+- **Los dos avisos de siempre los pone el código**, no un asiento, y la puerta 7 mira que estén.
+- **Un rojo vuelve a su asiento con lo que estaba mal**, en un archivo de su material, dos veces como mucho; después,
+  la investigación se para y dice dónde. Es el principio del conductor (2.5), hecho de mano.
+- **Lo que descarta un alojamiento es un dato con su clase**; la frase se la dice la web al viajero, en su idioma.
+
+Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
+
+- **Lo que no declara un imprescindible no se mira.** En la primera búsqueda, cuatro de los cinco finalistas no
+  tenían gimnasio. La fuente dice en su lista qué servicios declara cada alojamiento; ahora, quien no declara lo que
+  el viajero marcó como imprescindible se descarta antes de elegir a quién mirar.
+- **La zona se mide por la mitad de lo que se va a ver**, y no por la media: una excursión a seis kilómetros hundía
+  la nota de un hotel en pleno centro. Y su escala de partida se alarga (un cero a la hora andando, no a los
+  cuarenta minutos), porque solo se sabe lo que se anda y no hay transporte público en los datos.
+- **Los días se abren por cercanía**: una parada va al día que tiene cerca y con sitio, y si no lo hay abre un día
+  nuevo. Un día puede quedar libre. Los de en medio se abren antes que el de llegada y el de salida.
+- **Lo que una puerta pide, el contrato lo dice.** La puerta 3 devolvió la ruta por el largo del nombre de una zona,
+  con un tope que no estaba en su contrato. El fallo era de la casa: el tope se escribió en el contrato y se volvió a
+  pasar la puerta sobre la misma entrega.
+- **Menos fotos no abarata la mirada.** Con veinticuatro fotos y no cuarenta y dos, cada mirada sigue tardando de
+  once a dieciséis minutos. Lo que pesa es el método de seis pasos lanzado como una sesión entera, no las fotos.
+
 ## Pendientes
+
+Lo que deja la tanda 3, a decisión del PM:
+
+- **Encoger las fotos**: pide una dependencia para funcionar en el agente. Con su sí expreso.
+- **Cómo se llama a la IA en el producto**: cada asiento tarda de once a quince minutos lanzado como una sesión
+  entera. Para bajar a un minuto hace falta una llamada directa, con los seis pasos en una sola respuesta, y un
+  método más corto. Es el 2.7, en la tanda 4, y toca el método común.
+- **Guardar la ficha de cómo es de un alojamiento unos días**: mirar es lo que más gasta, y la ficha no depende del
+  viajero. La hoja dice que no se guarda nada que no sea suyo: decide el PM.
+- **A quién se mira**: lo sigue eligiendo la regla provisional. Falta que lo elijan las cribas, y con qué tope de
+  gasto.
+- **El transporte público**: la zona solo sabe lo que se anda. Un hotel a diez minutos en metro del centro sale
+  peor de lo que es.
+- **La hora de llegada y de salida**: sin ella, el día de llegada y el de salida cuentan como los demás.
 
 Lo que pide la versión 2, a decisión del PM:
 
