@@ -16,8 +16,9 @@ every difference included, was computed by the house: you copy it.
   could not be confirmed, what the lodging is like (its levels, each with what was seen or said), its best and its
   worst, its warnings, and `versus_cheapest`: what it costs more, how many minutes on foot it saves and how much
   higher its score is. For the different way, the lever that tells it apart and why it was chosen.
-- `levers.json`: the savings to tell, each with its `lever_row`, what changes (other dates, with their weekdays;
-  another lodging; another zone), what it saves, and how the walk and the score change.
+- `levers.json`: the savings to tell, each with its `lever_row`, what it applies to (`applies_to`: the lodging the
+  change starts from and, if it is the lodging of a way, which one), what changes (other dates, with their
+  weekdays; another lodging; another zone), what it saves, and how the walk and the score change.
 - `checks.json`: what was looked at beyond the table, with its status. It may be an empty list.
 
 ## What you do not see, and why

@@ -38,6 +38,8 @@ export type ManeraParaExplicar = {
 export type PalancaParaExplicar = {
   lever_row: string;
   lever: string;
+  /** Sobre qué se hace el cambio: el alojamiento de partida y, si es el de una manera, cuál. */
+  applies_to: { lodging_label: string; way: string };
   change: Record<string, string | number>;
   saves: number;
   total: number | string;
@@ -129,10 +131,15 @@ export function paraExplicar(
       change.now_check_out = fechas.salida;
       change.now_check_out_weekday = deAhora[deAhora.length - 1].weekday;
     }
+    const sobre = tabla.rows.find((r) => r.id === l.base_row);
     return [
       {
         lever_row: l.id,
         lever: l.lever,
+        applies_to: {
+          lodging_label: sobre?.lodging_label ?? SIN_SABER,
+          way: ways.find((w) => w.row === l.base_row)?.id ?? "none",
+        },
         change,
         saves: l.saves,
         total: l.total,

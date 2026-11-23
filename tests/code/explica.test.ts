@@ -69,6 +69,8 @@ test("a unas fechas nuevas se les pone su día de la semana, y las de ahora al l
   assert.equal(unDiaAntes.change.check_out_weekday, "sunday");
   assert.equal(unDiaAntes.change.now_check_in_weekday, "friday");
   assert.equal(unDiaAntes.chosen_because, "a real saving for the same trip");
+  // Cada palanca dice sobre qué alojamiento se hace el cambio, y de qué manera es.
+  assert.deepEqual(unDiaAntes.applies_to, { lodging_label: "Posada del Río Inventado", way: "cheapest" });
 });
 
 test("lo que escribe un asiento aplicado pasa la puerta", () => {
