@@ -4,8 +4,10 @@
 
 import { buscarAlojamiento } from "../../../agent/scripts/busqueda_alojamiento.ts";
 import { paradasDe } from "../../../agent/scripts/dias.ts";
+import type { ParaExplicar } from "../../../agent/scripts/explica.ts";
 import type {
   EntregaDeCruce,
+  EntregaDeExplicar,
   EntregaDeMirar,
   EntregaDeRuta,
   EntregaDeSitios,
@@ -292,5 +294,31 @@ export function entregaDeCruce(t: Tabla): EntregaDeCruce {
     checks: [{ what: "the arrival time is not in the table", status: "unknown", refs: [] }],
     requests: [],
     unknowns: [],
+  };
+}
+
+/** Lo que escribiría un asiento que explica aplicado: cada número, copiado de lo que se le dio. */
+export function entregaDeExplicar(dado: ParaExplicar): EntregaDeExplicar {
+  return {
+    seat: "trip-explainer",
+    language: "es",
+    ways: dado.ways.ways.map((w) => ({
+      id: w.id,
+      why:
+        w.id === "cheapest"
+          ? "Es el más barato que encontramos con un gimnasio de verdad."
+          : "Duerme junto al puerto, al lado del faro.",
+      gains:
+        w.id === "cheapest"
+          ? `Sale por ${w.total} euros con el vuelo.`
+          : `Estás al lado del faro, por ${w.versus_cheapest.costs_more} euros más.`,
+      loses: w.id === "cheapest" ? "Queda lejos del puerto." : "Andas más hasta el barrio viejo.",
+    })),
+    levers: dado.levers.map((l) => ({
+      lever_row: l.lever_row,
+      what: `Con este cambio ahorras ${l.saves} euros.`,
+      in_exchange: "Cambian tus fechas.",
+    })),
+    unknowns: ["No se sabe a qué hora llega tu vuelo, y no se ha podido comprobar con la entrada al alojamiento."],
   };
 }
