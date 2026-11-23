@@ -168,6 +168,21 @@ test("trampa: nombra cerca un sitio que no está en los datos, o repite una zona
   );
 });
 
+test("trampa: una zona cuyo nombre no es un nombre: sale a buscar a otras fuentes, y no puede llevar otra cosa", () => {
+  assert.deepEqual(
+    rojosDe((e) => (e.bases[0].zones[0].name = "Old town https://example.com/?q=")),
+    ["bases[0].zones[0]: no tiene un nombre corto, de una línea y sin direcciones"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.bases[0].zones[0].name = "x".repeat(61))),
+    ["bases[0].zones[0]: no tiene un nombre corto, de una línea y sin direcciones"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.bases[0].name = "Villa\nInventada")),
+    ["bases[0]: no dice dónde se duerme, con un nombre corto"],
+  );
+});
+
 test("trampa: cuatro zonas en una base, o ninguna", () => {
   assert.deepEqual(
     rojosDe((e) => (e.bases[0].zones = [])),

@@ -25,6 +25,12 @@ const esTexto = (v: unknown): v is string => typeof v === "string" && v.trim() !
 const lista = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const entero = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v);
 
+/**
+ * Un nombre es un nombre: corto, en una línea y sin direcciones. El de una zona sale después a buscar a otras
+ * fuentes, con sus palabras: no puede llevar dentro otra cosa.
+ */
+const esNombre = (v: unknown): v is string => esTexto(v) && v.length <= 60 && !/[\n\r\t<>{}]|https?:|www\./i.test(v);
+
 /** Los imprescindibles que son de la ruta: los que no son una cosa del alojamiento. */
 export function imprescindiblesDeLaRuta(viaje: Entendido): string[] {
   return viaje.tastes.filter((g) => g.weight === "must" && !(g.thing in COSAS)).map((g) => g.thing);
@@ -60,7 +66,7 @@ export function puertaRuta(entrega: unknown, m: MaterialDeRuta): Veredicto {
     if (!esObjeto(cruda) || !esTexto(cruda.id)) return rojo(donde, "no dice qué base es");
     if (idsDeBase.includes(cruda.id)) rojo(donde, `la base ${cruda.id} sale dos veces`);
     idsDeBase.push(cruda.id);
-    if (!esTexto(cruda.name)) rojo(donde, "no dice dónde se duerme");
+    if (!esNombre(cruda.name)) rojo(donde, "no dice dónde se duerme, con un nombre corto");
     if (!esTexto(cruda.why)) rojo(donde, "no dice por qué se duerme ahí");
     if (!entero(cruda.nights) || cruda.nights < 1) rojo(donde, "sus noches no son un número entero de noches");
     else {
@@ -78,7 +84,7 @@ export function puertaRuta(entrega: unknown, m: MaterialDeRuta): Veredicto {
       if (!esObjeto(z) || !esTexto(z.id)) return rojo(aqui, "no dice qué zona es");
       if (idsDeZona.includes(z.id)) rojo(aqui, `la zona ${z.id} sale dos veces`);
       idsDeZona.push(z.id);
-      if (!esTexto(z.name)) rojo(aqui, "no tiene nombre");
+      if (!esNombre(z.name)) rojo(aqui, "no tiene un nombre corto, de una línea y sin direcciones");
       if (!esTexto(z.why)) rojo(aqui, "no dice qué hay ahí");
       if (!(typeof z.radius_m === "number" && RADIOS.includes(z.radius_m))) rojo(aqui, "su radio no es de su lista");
       const anclas = lista(z.anchors);
