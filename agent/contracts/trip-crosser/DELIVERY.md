@@ -12,6 +12,10 @@
 | `requests` | What you ask the house to price for another round. Empty list in round 2 |
 | `unknowns` | What you could not know, in plain sentences. Empty list if nothing |
 
+The examples in this file are invented and show the form only. Their numbers stand for the numbers of your own
+`in/table.json`, which come in its `currency`, whichever it is, and may be of any size: an example fixes neither
+a currency nor an amount. Where there are two examples, they are of two different kinds, so that you copy neither.
+
 ## An entry of `levers`
 
 `{ "lever": "shift_dates", "status": "tested", "rows": ["l3", "l4"], "reason": "leaving a day earlier is the only
@@ -26,9 +30,12 @@ A lever whose rows are in the table is `tested` or `discarded`, never `not_avail
 
 ## `ways`
 
-`{ "cheapest": { "row": "r2", "total": 318.07 }, "best_value": { "row": "r4", "total": 373.5 }, "different": {
-"row": "r5", "total": 402, "lever": "other_zone", "why": "the only one in the old town, next to what they will see
-on the second day" } }`
+`{ "cheapest": { "row": "r2", "total": 1840.5 }, "best_value": { "row": "r4", "total": 2115 }, "different": {
+"row": "r5", "total": 2390, "lever": "other_zone", "why": "the only row in the zone where most of the places they
+asked for are" } }`
+
+A `why` of another kind, for `other_lodging`: `the only row with a pool to swim in, which this traveller said they
+like`.
 
 - `cheapest`: the row marked `cheapest` in the table, with its `total`, copied.
 - `best_value`: the row marked `best_value`, with its `total`, copied.
@@ -39,7 +46,10 @@ If the table marks no `cheapest` or no `best_value`, that way is the string `"no
 
 ## An entry of `tell`
 
-`{ "lever_row": "l3", "saves": 55, "why": "the same room for less by leaving on the Thursday" }`
+`{ "lever_row": "l3", "saves": 64, "why": "the same room for less by leaving a day earlier" }`
+
+`{ "lever_row": "l7", "saves": 9200, "why": "the other zone of the route costs less, for a longer walk to what they
+asked for" }`
 
 `lever_row` is a lever row with `status` `priced` and a `saves` greater than zero; `saves` is copied from it.
 
