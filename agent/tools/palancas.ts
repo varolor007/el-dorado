@@ -77,8 +77,10 @@ export async function pedirPalancas(
         const vuelos = await o.vuelos(entrada, hasta);
         transporte = vuelos.length === 0 ? null : Math.min(...vuelos.map((v) => v.precio));
         if (transporte === null) notaDelTransporte = "sin precio de transporte para esas fechas";
-      } catch (error) {
-        notaDelTransporte = `sin transporte: ${error instanceof Error ? error.message : String(error)}`;
+      } catch {
+        // La nota va en la tabla que lee el asiento que cruza. El mensaje de un fallo lleva un trozo de lo que
+        // contestó la fuente, y eso no viaja hasta un asiento: se dice que no contesta, con una frase de la casa.
+        notaDelTransporte = "sin transporte: la fuente no contesta";
       }
     }
     try {
@@ -95,8 +97,9 @@ export async function pedirPalancas(
           nota: vale ? notaDelTransporte : "sin precio para esas fechas",
         });
       }
-    } catch (error) {
-      sinPrecio(`la fuente no contesta: ${error instanceof Error ? error.message : String(error)}`);
+    } catch {
+      // Lo mismo que con el transporte: una frase de la casa, sin lo que contestó la fuente.
+      sinPrecio("la fuente no contesta");
     }
   }
   return salida;

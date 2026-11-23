@@ -181,15 +181,22 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
     sinNumerosSuyos(donde, cruda.what);
   });
 
-  // 6. Las rondas: dos como mucho, y peticiones solo en la primera, de las que el código sabe contestar.
+  // 6. Las rondas: dos como mucho, y peticiones solo en la primera, de las que el código sabe contestar y sin repetir.
   const peticiones = lista(entrega.requests);
   if (t.round >= RONDAS && peticiones.length > 0)
     rojo("requests", `pide más en la ronda ${t.round}: son ${RONDAS} como mucho`);
   if (peticiones.length > PETICIONES_POR_RONDA)
     rojo("requests", `hace ${peticiones.length} peticiones y el tope es ${PETICIONES_POR_RONDA}`);
+  const yaPedidas = new Set<string>();
   peticiones.forEach((cruda, i) => {
     const donde = `requests[${i}]`;
     if (!esObjeto(cruda) || !esTexto(cruda.lever)) return rojo(donde, "no dice qué palanca pide");
+    // Dos peticiones iguales son dos vueltas a las fuentes por el mismo precio. Son iguales por lo que el código
+    // pediría con ellas: la palanca, la fila y cuánto se mueve; lo demás que lleven no las hace distintas.
+    const cuanto = cruda.lever === "nights" ? cruda.nights : cruda.days;
+    const pedida = JSON.stringify([cruda.lever, cruda.row, cuanto]);
+    if (yaPedidas.has(pedida)) rojo(donde, "repite una petición");
+    yaPedidas.add(pedida);
     const r = typeof cruda.row === "string" ? fila.get(cruda.row) : undefined;
     if (r === undefined) rojo(donde, "no dice para qué fila de la tabla");
     else if (r.discarded !== "") rojo(donde, "pide un precio para una fila descartada");

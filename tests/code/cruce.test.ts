@@ -213,6 +213,30 @@ test("trampa: pide más en la segunda ronda, o algo que el código no sabe pedir
   );
 });
 
+test("trampa: pide dos veces lo mismo: la misma palanca, para la misma fila y con el mismo cambio", () => {
+  const una = { lever: "shift_dates", row: "r2", days: -3 };
+  assert.deepEqual(
+    rojosDe((e) => (e.requests = [una, { ...una }])),
+    ["requests[1]: repite una petición"],
+  );
+  // Seis iguales son cinco de más: cada una sería otra vuelta a las fuentes por el mismo precio.
+  assert.deepEqual(
+    rojosDe((e) => (e.requests = Array.from({ length: 6 }, () => ({ ...una })))),
+    [1, 2, 3, 4, 5].map((i) => `requests[${i}]: repite una petición`),
+  );
+  // Lo que no cambia lo que se pide no la hace distinta: ni un campo de más, ni los días en una petición de noches.
+  const noches = { lever: "nights", row: "r2", nights: -1 };
+  assert.deepEqual(
+    rojosDe((e) => (e.requests = [una, { ...una, again: true }, noches, { ...noches, days: 2 }])),
+    ["requests[1]: repite una petición", "requests[3]: repite una petición"],
+  );
+  // Otra fila, otro cambio u otra palanca son otra petición.
+  assert.deepEqual(
+    rojosDe((e) => (e.requests = [una, { ...una, days: 3 }, { ...una, row: "r3" }, noches, { ...noches, nights: 1 }])),
+    [],
+  );
+});
+
 test("trampa: una mirada que cita una fila que no existe, o sin estado", () => {
   assert.deepEqual(
     rojosDe((e) => (e.checks = [{ what: "the cheapest cannot be cancelled", status: "problem", refs: ["r9"] }])),
