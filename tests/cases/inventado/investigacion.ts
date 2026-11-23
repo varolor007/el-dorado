@@ -2,7 +2,7 @@
 // asiento si trabajara bien. Con ella se prueba toda la cadena sin internet y sin gastar. Nada sale de una fuente de
 // verdad.
 
-import type { EntregaDeRuta, Entendido, Lugar } from "../../../agent/scripts/formas.ts";
+import type { EntregaDeRuta, EntregaDeSitios, Entendido, Lugar } from "../../../agent/scripts/formas.ts";
 import { lugarDe } from "../../../agent/scripts/ruta.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
 import { ESTANCIA, VISTO } from "./inventado.ts";
@@ -101,6 +101,37 @@ export function entregaDeRuta(): EntregaDeRuta {
     exit: { base: "b1", why: "the only base" },
     musts: [{ what: "the lighthouse", covered: true, where_or_why: "b1: the lighthouse anchors zone z2" }],
     left_out: [],
+    unknowns: [],
+  };
+}
+
+/** Lo que elegiría un asiento aplicado: siete sitios que merecen la pena, por orden, y tres que no, con su porqué. */
+export function entregaDeSitios(): EntregaDeSitios {
+  const ir = (id: string, why: string, minutes: number, must = false): EntregaDeSitios["go"][number] => ({
+    id,
+    why,
+    minutes,
+    best_time: "any",
+    book_ahead: "unknown",
+    must,
+  });
+  return {
+    seat: "sights-picker",
+    go: [
+      ir("Q1", "El faro al que querías subir: se ve toda la ría desde arriba.", 60, true),
+      ir("Q2", "La catedral, con un claustro que se recorre en media hora.", 45, true),
+      { ...ir("Q4", "El mercado del puerto, para comer de puesto en puesto.", 90), best_time: "morning" },
+      { ...ir("Q5", "El mirador, sobre los tejados del barrio viejo.", 30), best_time: "evening" },
+      ir("Q7", "El barrio viejo, para pasear sin rumbo entre la catedral y la plaza.", 90),
+      { ...ir("Q8", "El castillo, con sus murallas sobre la ciudad.", 90), book_ahead: "yes" },
+      ir("Q3", "El museo de la sal, pequeño y distinto a los demás.", 60),
+    ],
+    skip: [
+      { id: "Q6", why: "Un parque sin nada que lo distinga, lejos de lo demás." },
+      { id: "Q9", why: "Un puente que se ve de paso, sin visita." },
+      { id: "Q10", why: "Una plaza por la que ya pasas al ir al barrio viejo." },
+    ],
+    missing: [{ what: "a beach for an afternoon", why: "the list has no beach" }],
     unknowns: [],
   };
 }

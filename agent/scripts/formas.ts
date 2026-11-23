@@ -151,7 +151,7 @@ export type EntregaDeSitios = {
   go: SitioElegido[];
   skip: { id: string; why: string }[];
   /** Lo que echa en falta y no está en los datos: no entra en el viaje hasta que una fuente lo traiga. */
-  missing: { name: string; kind: string; why: string }[];
+  missing: { what: string; why: string }[];
   unknowns: string[];
 };
 

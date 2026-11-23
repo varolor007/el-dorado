@@ -29,6 +29,10 @@ export type Parada = {
   imprescindible: boolean;
   foto: Foto | null;
   origen: Origen;
+  /** A qué hora conviene: morning, afternoon, evening o any. Si no se dice, da igual. */
+  mejorHora?: string;
+  /** Verdadero si hay que reservar con tiempo; falso si no; si no se sabe, no se dice. */
+  reservar?: boolean;
 };
 
 /** Un día: sus paradas, en orden, y lo que se anda de cada una a la siguiente. */
