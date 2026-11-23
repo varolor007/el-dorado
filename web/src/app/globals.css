@@ -887,6 +887,17 @@ img {
   font-size: 0.84rem;
   color: var(--tinta-suave);
 }
+.manera__porque {
+  grid-column: 1 / -1;
+  font-family: var(--lugar);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--tinta);
+}
+.manera__cuerpo > .dato {
+  grid-column: 1 / -1;
+}
 .manera__gana {
   grid-column: 1 / -1;
   font-size: 0.84rem;
@@ -1475,6 +1486,25 @@ img {
   border-bottom: 1px solid var(--raya);
   cursor: pointer;
   font-size: 0.92rem;
+}
+.otro[data-descartado="true"] > span {
+  color: var(--tinta-suave);
+}
+.otro__novale {
+  display: block;
+  font-style: normal;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  color: var(--tinta-suave);
+}
+.aviso--novale {
+  display: block;
+  padding: 12px 14px;
+  border-radius: var(--radio);
+  background: var(--papel-2);
+}
+.aviso--novale::before {
+  content: none;
 }
 .otro--quieto {
   cursor: default;

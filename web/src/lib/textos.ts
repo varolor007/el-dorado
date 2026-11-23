@@ -144,9 +144,37 @@ const en = {
     reponer: "Put back",
     tuya: "Added by you",
   },
-  dormir: { otros: "Others that passed the minimums", ficha: "See it", elegir: "Sleep here" },
+  dormir: {
+    otros: "Others that passed the minimums",
+    ficha: "See it",
+    elegir: "Sleep here",
+    donde: (zona: string | null, min: number | null) =>
+      [zona === null ? "" : `In ${zona}`, min === null ? "" : `about ${min} min on foot from what you will see`]
+        .filter((x) => x !== "")
+        .join(", "),
+    puntos: (n: number) => `Our score: ${n} out of 10`,
+    noVale: "Not for you",
+    leFalta: (cosa: string, nivel: string) => `You marked "${cosa}" as a must, and here it is "${nivel}".`,
+    quejas: (queja: string, cuantas: string) =>
+      `Serious complaints that repeat in recent reviews: ${queja} (${cuantas}).`,
+    queja: { bed_bugs: "bed bugs", cockroaches: "cockroaches", mould: "mould", scam: "a scam" } as Record<
+      string,
+      string
+    >,
+  },
+  parada: {
+    reservar: "Book ahead",
+    sinReserva: "No booking needed",
+    hora: {
+      morning: "Best in the morning",
+      afternoon: "Best in the afternoon",
+      evening: "Best at the end of the day",
+    } as Record<string, string>,
+  },
   cuentas: {
     incluye: "Sleeping only. Transport joins the total when there is a price for your dates.",
+    incluyeTodo:
+      "Sleeping and the flight. The flight is a saved price, seen days ago: it is asked for again when you close the trip.",
     lado: "The three ways, side by side",
     fecha: "Every price carries the date it was seen. They are checked again when you close the trip.",
   },
@@ -350,9 +378,29 @@ const es: Textos = {
     reponer: "Volver a poner",
     tuya: "La añadiste tú",
   },
-  dormir: { otros: "Otros que pasaron los mínimos", ficha: "Ver su ficha", elegir: "Dormir aquí" },
+  dormir: {
+    otros: "Otros que pasaron los mínimos",
+    ficha: "Ver su ficha",
+    elegir: "Dormir aquí",
+    donde: (zona, min) =>
+      [zona === null ? "" : `En ${zona}`, min === null ? "" : `a unos ${min} min andando de lo que vas a ver`]
+        .filter((x) => x !== "")
+        .join(", "),
+    puntos: (n) => `Nuestra nota: ${n} de 10`,
+    noVale: "No vale para ti",
+    leFalta: (cosa, nivel) => `Marcaste «${cosa}» como imprescindible, y aquí es «${nivel}».`,
+    quejas: (queja, cuantas) => `Quejas graves que se repiten en las opiniones recientes: ${queja} (${cuantas}).`,
+    queja: { bed_bugs: "chinches", cockroaches: "cucarachas", mould: "moho", scam: "un engaño" },
+  },
+  parada: {
+    reservar: "Reserva con tiempo",
+    sinReserva: "Sin reserva",
+    hora: { morning: "Mejor por la mañana", afternoon: "Mejor por la tarde", evening: "Mejor al final del día" },
+  },
   cuentas: {
     incluye: "Solo dormir. El transporte se suma al total cuando haya precio para tus fechas.",
+    incluyeTodo:
+      "Dormir y el vuelo. El vuelo es un precio guardado, visto hace días: se vuelve a pedir al cerrar el viaje.",
     lado: "Las tres maneras, lado a lado",
     fecha: "Cada precio lleva la fecha en que se vio. Se vuelven a pedir al cerrar el viaje.",
   },

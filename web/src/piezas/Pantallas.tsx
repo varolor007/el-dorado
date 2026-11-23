@@ -5,6 +5,7 @@
 // Son piezas que enseñan: lo que se decide vive en la página.
 
 import { useState } from "react";
+import { COSAS } from "../../../agent/data/gustos.ts";
 import type { Alojamiento, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../agent/output/viaje.ts";
 import type { Reparto } from "../../../agent/scripts/ritmo.ts";
@@ -328,6 +329,10 @@ function Dias(x: DeViaje) {
                       <span className="cabecera__linea">
                         <span className="dato">{duracion(p.minutos)}</span>
                         {p.imprescindible && <span className="pastilla pastilla--oro">{t.viaje.imprescindible}</span>}
+                        {p.mejorHora !== undefined && t.parada.hora[p.mejorHora] !== undefined && (
+                          <span className="pastilla">{t.parada.hora[p.mejorHora]}</span>
+                        )}
+                        {p.reservar === true && <span className="pastilla">{t.parada.reservar}</span>}
                         {x.anadidas.includes(p.id) && <span className="pastilla">{t.acciones.tuya}</span>}
                       </span>
                     </span>
@@ -429,6 +434,10 @@ function Dormir(x: DeViaje) {
                 </button>
                 {elegida && (
                   <div className="manera__cuerpo">
+                    {m.porQue !== undefined && <p className="manera__porque">{m.porQue}</p>}
+                    {a && (a.zona != null || a.andando != null) && (
+                      <p className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null)}</p>
+                    )}
                     <p className="manera__gana">
                       <b>{t.viaje.gana}. </b>
                       {m.gana}
@@ -453,8 +462,17 @@ function Dormir(x: DeViaje) {
         <div className="grupo">
           <span className="rotulo">{t.dormir.otros}</span>
           {otros.map((a) => (
-            <button key={a.id} type="button" className="otro" onClick={() => x.alAlojamiento(a.id)}>
-              <span>{a.nombre}</span>
+            <button
+              key={a.id}
+              type="button"
+              className="otro"
+              data-descartado={a.descartado != null}
+              onClick={() => x.alAlojamiento(a.id)}
+            >
+              <span>
+                {a.nombre}
+                {a.descartado != null && <em className="otro__novale">{t.dormir.noVale}</em>}
+              </span>
               <b>{dinero(a.precio.total, a.precio.moneda, idioma)}</b>
             </button>
           ))}
@@ -488,7 +506,9 @@ function Cuentas(x: DeViaje) {
             </button>
           ))}
         </div>
-        <p className="dato">{t.cuentas.incluye}</p>
+        <p className="dato">
+          {viaje.maneras.some((m) => m.transporte !== null) ? t.cuentas.incluyeTodo : t.cuentas.incluye}
+        </p>
       </div>
       {viaje.palancas.length > 0 && (
         <div className="grupo">
@@ -567,6 +587,15 @@ export function TuViaje(x: DeViaje) {
   );
 }
 
+/** Por qué no vale un alojamiento para este viajero, dicho en su idioma a partir del dato del código. */
+function descarte(t: Textos, d: NonNullable<Alojamiento["descartado"]>): string {
+  if (d.clase === "missing_must") {
+    const campo = COSAS[d.cosa]?.campo;
+    return t.dormir.leFalta(t.campos[campo ?? ""] ?? d.cosa, t.niveles[d.detalle] ?? d.detalle);
+  }
+  return t.dormir.quejas(t.dormir.queja[d.cosa] ?? d.cosa, d.detalle);
+}
+
 export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVolver: () => void }) {
   const fecha = new Intl.DateTimeFormat(idioma, { day: "numeric", month: "short" }).format(new Date(a.precio.visto));
   return (
@@ -583,7 +612,17 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
           )}
         </div>
         <span className="dato">{coordenadas(a.punto)}</span>
+        {(a.zona != null || a.andando != null) && (
+          <span className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null)}</span>
+        )}
+        {a.puntos != null && <span className="dato">{t.dormir.puntos(a.puntos)}</span>}
       </div>
+      {a.descartado != null && (
+        <p className="aviso aviso--novale">
+          <b>{t.dormir.noVale}. </b>
+          {descarte(t, a.descartado)}
+        </p>
+      )}
       {a.fotos.length > 0 && (
         <div className="grupo">
           <span className="rotulo">
