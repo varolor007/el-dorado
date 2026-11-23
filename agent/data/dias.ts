@@ -9,8 +9,12 @@ export const RESERVAR = ["yes", "no", "unknown"];
 /** Lo imprescindible es raro: como mucho, tantos por noche. */
 export const IMPRESCINDIBLES_POR_NOCHE = 2;
 
-/** Cuántos sitios de los datos abiertos se le dan a elegir al asiento. */
-export const SITIOS_PARA_ELEGIR = 60;
+/**
+ * Cuántos sitios de los datos abiertos se le dan a elegir al asiento: tantos por noche, con un suelo y un techo. Una
+ * noche no necesita sesenta sitios, y tres semanas no caben en sesenta.
+ */
+export const SITIOS_POR_NOCHE = 20;
+export const SITIOS_PARA_ELEGIR = { minimo: 20, maximo: 120 };
 
 /**
  * De cuánto se tiene que hablar de un sitio para traerlo: en cuántos idiomas tiene artículo. Se empieza pidiendo

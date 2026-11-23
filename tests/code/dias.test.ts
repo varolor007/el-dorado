@@ -11,7 +11,7 @@ import { LARGO_DE_UN_TEXTO } from "../../agent/data/palabras.ts";
 import { puertaDias, puertaSitios, type MaterialDeSitios, type Repartido } from "../../agent/gates/puerta_dias.ts";
 import { pegasDelTexto } from "../../agent/gates/textos.ts";
 import type { Foto } from "../../agent/output/viaje.ts";
-import { paradasDe, sitiosParaElegir } from "../../agent/scripts/dias.ts";
+import { cuantosSitios, paradasDe, sitiosParaElegir } from "../../agent/scripts/dias.ts";
 import { MOMENTOS_DEL_DIA } from "../../agent/scripts/formas.ts";
 import { fechasDe, repartir } from "../../agent/scripts/ritmo.ts";
 import { ENTENDIDO, entregaDeSitios, SITIOS } from "../cases/inventado/investigacion.ts";
@@ -47,7 +47,12 @@ test("las normas del que elige los sitios van de la DI1 a la DI8, y el contrato 
 });
 
 test("al asiento se le dan los sitios más conocidos, con lo que dice su artículo", () => {
-  const lugares = sitiosParaElegir(SITIOS, new Map([["Q1", "It guides ships into the bay."]]));
+  const lugares = sitiosParaElegir(SITIOS, 3, new Map([["Q1", "It guides ships into the bay."]]));
+  // Cuántos se dan depende de las noches: una noche no necesita sesenta sitios, y tres semanas no caben en sesenta.
+  assert.deepEqual([1, 3, 6, 21].map(cuantosSitios), [20, 60, 120, 120]);
+  const muchos = Array.from({ length: 200 }, (_, i) => ({ ...SITIOS[0], id: `Q${1000 + i}` }));
+  assert.equal(sitiosParaElegir(muchos, 1).length, 20);
+  assert.equal(sitiosParaElegir(muchos, 21).length, 120);
   assert.equal(lugares.length, 10);
   assert.match(lugares[0].about, /It guides ships into the bay\.$/);
   assert.equal(lugares[1].about, "church in an invented city");

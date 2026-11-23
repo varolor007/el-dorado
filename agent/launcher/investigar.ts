@@ -29,7 +29,7 @@ import { puertaExplica } from "../gates/puerta_explica.ts";
 import { puertaRuta } from "../gates/puerta_ruta.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
 import { anadirOfertas, buscarDondeHaya, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
-import { paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
+import { cuantosSitios, paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
 import { paraExplicar } from "../scripts/explica.ts";
 import type {
   Entendido,
@@ -51,7 +51,7 @@ import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
-import { carpetaDeLaMesa } from "./mesa.ts";
+import { carpetaDeLaMesa, dentroDelRepositorio } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
@@ -186,6 +186,9 @@ function recoger<T>(
   return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1).id };
 }
 
+/** Las noches del viaje. */
+const nochesDe = (viaje: Entendido): number => diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
+
 // Cada paso, por su orden.
 
 type DeLosSitios = { sitios: Sitio[]; resumenes: Record<string, string> };
@@ -195,7 +198,7 @@ async function traerSitios(run: string, viaje: Entendido, f: Fuentes): Promise<v
   let resumenes = new Map<string, string>();
   const avisos: string[] = [];
   try {
-    resumenes = await f.resumenes(sitios);
+    resumenes = await f.resumenes(sitios.slice(0, cuantosSitios(nochesDe(viaje))));
   } catch (error) {
     avisos.push(`sin lo que dicen los artículos: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -301,7 +304,10 @@ function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
     { ruta: "trip.json", contenido: json(viaje) },
     { ruta: "route.json", contenido: json(route) },
     { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
-    { ruta: "sights.json", contenido: json(sitiosParaElegir(sitios, new Map(Object.entries(resumenes)))) },
+    {
+      ruta: "sights.json",
+      contenido: json(sitiosParaElegir(sitios, nochesDe(viaje), new Map(Object.entries(resumenes)))),
+    },
     { ruta: "warnings.json", contenido: "[]" },
   ];
 }
@@ -337,7 +343,7 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
   const paradas = paradasDe(entrega, sitios, fotos);
   const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
   const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre);
-  const dados = sitiosParaElegir(sitios).map((s) => s.id);
+  const dados = sitiosParaElegir(sitios, nochesDe(viaje)).map((s) => s.id);
   const puerta = puertaDias({
     paradas,
     dias: reparto.dias,
@@ -476,7 +482,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
   // otra vez, porque los que la pasaron al repartir no son estos.
-  const dados = sitiosParaElegir(leer<DeLosSitios>(run, "sitios.json").sitios).map((s) => s.id);
+  const dados = sitiosParaElegir(leer<DeLosSitios>(run, "sitios.json").sitios, nochesDe(viaje)).map((s) => s.id);
   const deLosDias = puertaDias({
     paradas: hecho.paradas,
     dias: hecho.dias,
@@ -504,6 +510,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
 /** Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. */
 export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   const avisos: string[] = [];
+  if (dentroDelRepositorio(run)) throw new Error("un run no puede estar dentro del repositorio");
   // Un run parado sigue parado: quien lo retome lee por qué, y no pasa por encima de una puerta en rojo. Reabrirlo
   // es una decisión de quien lo lleva, que quita `parado.json` cuando ha arreglado la causa.
   if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };
@@ -582,7 +589,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       pendientes.push(...deMirar.filter((p) => !entregado(p)).map((p) => p.id));
     }
     const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
-    const dados = sitiosParaElegir(sitios, new Map(Object.entries(resumenes)));
+    const dados = sitiosParaElegir(sitios, nochesDe(viaje), new Map(Object.entries(resumenes)));
     const dicho = Object.fromEntries(dados.map((s) => [s.id, `${s.name} ${s.about}`]));
     const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
     const r = recoger<EntregaDeSitios>(
@@ -678,7 +685,7 @@ export function empezar(entendido: string, cuando: Date = new Date()): string {
   if (!claro.verde)
     throw new Error(`lo entendido no está claro: ${claro.rojos.map((r) => `${r.donde}: ${r.que}`).join("; ")}`);
   const run = join(carpetaDeLaMesa(), `${cuando.toISOString().replace(/[:.]/g, "-")}-viaje`);
-  mkdirSync(run, { recursive: true });
+  mkdirSync(run, { recursive: true, mode: 0o700 });
   cpSync(resolve(entendido), join(run, "entendido.json"));
   return run;
 }

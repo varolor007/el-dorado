@@ -2,7 +2,7 @@
 // datos abiertos de sitios y de fotos. Cada una se apaga con ELDORADO_APAGAR sin tocar lo demás: sin transporte o sin
 // otras ofertas, la investigación sigue y lo dice; sin alojamiento o sin sitios, no hay viaje.
 
-import { ESCALERA_DE_ENLACES, SITIOS_PARA_ELEGIR, SITIOS_QUE_BASTAN } from "../data/dias.ts";
+import { ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN } from "../data/dias.ts";
 import { vuelosPorFechas } from "../tools/fuentes/aviasales.ts";
 import { encendida } from "../tools/fuentes/enchufes.ts";
 import { liteapi } from "../tools/fuentes/liteapi.ts";
@@ -28,7 +28,8 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
       const pedido = { idioma: viaje.language, cuantos: SITIOS_QUE_SE_TRAEN };
       return sitiosConEscalera(conMargen(caja, MARGEN), ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN, pedido);
     },
-    resumenes: (sitios) => resumenesDe(sitios.slice(0, SITIOS_PARA_ELEGIR)),
+    // Cuántos se resumen lo decide quien llama, según las noches del viaje.
+    resumenes: (sitios) => resumenesDe(sitios),
     fotos: (archivos) => fotosDe(archivos),
     desde: manana,
   };

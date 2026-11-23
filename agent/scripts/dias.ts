@@ -2,15 +2,21 @@
 // cuando entrega, convierte lo que eligió en las paradas del viaje, con su sitio en el mapa, su fuente y su foto.
 // Repartirlas por días es cosa del ritmo.
 
-import { SITIOS_PARA_ELEGIR } from "../data/dias.ts";
+import { SITIOS_PARA_ELEGIR, SITIOS_POR_NOCHE } from "../data/dias.ts";
 import type { Foto, Parada } from "../output/viaje.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import type { EntregaDeSitios, Lugar } from "./formas.ts";
 import { lugarDe } from "./ruta.ts";
 
-/** Los sitios que se le dan a elegir: los más conocidos, hasta su tope, con lo que dice su artículo. */
-export function sitiosParaElegir(sitios: Sitio[], resumenes: Map<string, string> = new Map()): Lugar[] {
-  return sitios.slice(0, SITIOS_PARA_ELEGIR).map((s) => lugarDe(s, resumenes.get(s.id)));
+/** Cuántos sitios se dan a elegir para un viaje de esas noches. */
+export function cuantosSitios(noches: number): number {
+  const porNoches = SITIOS_POR_NOCHE * Math.max(1, Math.round(noches));
+  return Math.min(SITIOS_PARA_ELEGIR.maximo, Math.max(SITIOS_PARA_ELEGIR.minimo, porNoches));
+}
+
+/** Los sitios que se le dan a elegir: los más conocidos, tantos como pidan las noches, con lo que dice su artículo. */
+export function sitiosParaElegir(sitios: Sitio[], noches: number, resumenes: Map<string, string> = new Map()): Lugar[] {
+  return sitios.slice(0, cuantosSitios(noches)).map((s) => lugarDe(s, resumenes.get(s.id)));
 }
 
 /** Una foto solo se enseña con su autor y su licencia: sin ellos, la parada va sin foto. */
