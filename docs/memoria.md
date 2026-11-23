@@ -3,10 +3,10 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 2, la web en seco** (el estado, punto a punto, en [plan.md](plan.md)). El 23-nov, con la
-tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el viaje del usuario; dio
-libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se rehicieron las dos
-biblias, y las firmó ese mismo día («okay»):
+**Estamos aquí: la tanda 2, hecha, al visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)). El
+23-nov, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el viaje del
+usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se rehicieron
+las dos biblias, y las firmó ese mismo día («okay»):
 
 - **La hoja, versión 2**: nueve momentos (la portada y tu panel, empezar, la investigación, el alojamiento, el
   transporte, el día a día, cerrar el viaje, la guía y cambios), una sección nueva con la web (sus principios y sus
@@ -15,14 +15,17 @@ biblias, y las firmó ese mismo día («okay»):
   ocho tandas. En curso, **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado.
   Lo primero que se le enseña es la identidad de El Dorado, y no se sigue sin su visto bueno a ella.
 
-**Por dónde va la tanda 2** (23-nov). El PM dio su visto bueno a la identidad con la web ya desplegada, eligió el
-mundo en plano y pidió tres cosas: el mapa precargado, una pantalla de carga, y que por dentro sea un panel («el mapa
-solo no vale»). Hecho, en seco y con el viaje grabado: la forma del viaje (1.5), el ritmo con lo que el viajero
-cambia a mano (4.10), el viaje grabado (10.3), el esqueleto (10.1), la identidad (10.2), el mapa con su pantalla de
-carga (10.4), la investigación con sus preguntas (10.5), el viaje por pestañas (10.6), las fichas (10.7), la portada
-(10.8) y el panel: el carril, tus viajes (11.3) y la pantalla de la clave (11.2), con su campo apagado. Las direcciones:
-`/` la portada, `/plan` el mapa, `/trips` tus viajes y `/key` la clave. Falta para cerrar la tanda: el repaso del
-móvil y de la accesibilidad (10.9) y la revisión final con capturas (10.10), y con ella su visto bueno.
+**El punto de situación de la tanda 2** (23-nov). La web, en seco, está hecha y desplegada por el PM en Vercel. Dio
+su visto bueno a la identidad, eligió el mundo en plano y pidió el mapa precargado, una pantalla de carga y que por
+dentro sea un panel («el mapa solo no vale»). Hecho, con el viaje de Lisboa grabado: la forma del viaje (1.5), el
+ritmo con lo que el viajero cambia a mano (4.10), el viaje grabado (10.3) y todo el bloque 10 menos la ficha del
+transporte y el precio en la portada: el esqueleto, la identidad, el mapa con su pantalla de carga, la investigación
+con sus preguntas, el viaje por pestañas, las fichas, la portada, el repaso del móvil y de la accesibilidad y la
+revisión con capturas. Y, adelantado, el panel en seco: el carril, tus viajes (11.3) y la pantalla de la clave (11.2),
+con su campo apagado. Las direcciones: `/` la portada, `/plan` el mapa, `/trips` tus viajes y `/key` la clave. La
+página de la revisión, con su vídeo y sus capturas: https://claude.ai/artifact/12YETqmymoYMjmMVnWd41r. **Espera el visto bueno del PM
+para empezar la tanda 3: el agente hace el viaje** (1.1, 1.4, 3.8, 3.10, 3.12, 4.3 y 4.5 a 4.11), que pide antes sus
+dos decisiones pendientes de la tanda 1: si «descuidado» se parte en dos campos y cómo se abarata la mirada.
 
 Cómo se ve la web: el viaje grabado vive en la mesa (`<mesa>/grabado/viaje.json` y `sucesos.json`), fuera del
 repositorio, porque lleva datos de una búsqueda de verdad; si la mesa se pierde, se vuelve a grabar con `grabar.ts`

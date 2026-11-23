@@ -6,7 +6,7 @@ Plan de El Dorado, versión 2, firmado el 23 de noviembre de 2026.
 
 **La hoja dice qué es El Dorado; este plan, cómo se construye, y sale de ella.** Cada caja de la hoja tiene aquí el punto que la construye. Los bloques agrupan la obra por lo que es (los cimientos, las herramientas, el agente, la web); **las tandas dicen en qué orden se hace y dónde te pido el visto bueno**, con tres criterios: lo que se usa va antes que lo que lo usa, lo que tiene más riesgo va antes y lo que ves, cuanto antes. Cada punto lleva su estado, y cada bloque, lo que deja, cómo se prueba sin gastar y si lleva tu visto bueno.
 
-**Estamos aquí: la tanda 2, la web en seco, casi cerrada.** La identidad tiene tu visto bueno, con el mundo en plano. Hecho en seco, con el viaje grabado: el mapa con su pantalla de carga, la investigación con sus preguntas, el viaje por pestañas con sus paradas a mano, la ficha del alojamiento, la portada y, por tu aviso de que el mapa solo no basta, **el panel**: el carril, tus viajes y tu clave. Falta el repaso final con capturas (10.9 y 10.10) para cerrar la tanda y pedirte el visto bueno.
+**Estamos aquí: la tanda 2, hecha, a tu visto bueno.** **La web, en seco**, está hecha y desplegada: la portada, el panel (el carril, tus viajes y tu clave), el mapa con su pantalla de carga, la investigación con sus preguntas, el viaje por pestañas con sus paradas a mano y la ficha de un alojamiento, con un viaje de Lisboa grabado. Revisada pantalla a pantalla, en ancho y en móvil, en claro y en oscuro. Queda en seco lo que depende de la casa: las preguntas no cambian el viaje, no hay cuentas y la clave no se guarda. Con tu visto bueno empieza la tanda 3: **el agente hace el viaje**.
 
 ## El estado
 
@@ -243,7 +243,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba, y la de una parada, con su enlace a Google Maps y el autor de su foto. Falta la del transporte, que espera a tener un precio. | en parte |
 | 10.8 | **La portada.** Qué es, un viaje que se dibuja solo, cómo funciona en tres pasos y lo que cuida, con la puerta al mapa. En inglés y en español. Primera versión: falta qué cuesta, que es decisión tuya, y decidir con qué datos se hace el viaje de ejemplo. | en parte |
 | 10.9 | **En el móvil, para todos y rápida.** En el móvil, la hoja sube desde abajo, el buscador se recoge en una línea y el carril va al pie. Todo lo que se pulsa tiene nombre, las pestañas y el registro en vivo se anuncian, la página dice en qué idioma está y nada se anima si pides menos movimiento. Las fotos de fuera llegan encogidas. | hecho |
-| 10.10 | **La revisión con capturas.** Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas. | pendiente |
+| 10.10 | **La revisión con capturas.** Nueve pantallas, en ancho y en móvil, en claro y en oscuro, miradas por un repaso que comprueba que ninguna se desborda ni da errores y que cada control tiene nombre; y, una a una, con capturas y un vídeo del recorrido, en una página para ti. | hecho |
 
 ## 11. La cuenta y tu panel
 

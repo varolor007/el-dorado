@@ -182,6 +182,10 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   guarda cifrada.
 - **Lo que el viajero cambia a mano manda sobre el ritmo** (la sesión): lo que quita no vuelve solo, lo que mueve a un
   día se queda en ese día y lo que añade entra aunque el día esté lleno, sin quitarle el sitio a otra parada.
+- **La tanda 2, hecha, al visto bueno del PM** (23-nov). La web en seco, revisada pantalla a pantalla, en ancho y en
+  móvil, en claro y en oscuro, con su vídeo y sus capturas en https://claude.ai/artifact/12YETqmymoYMjmMVnWd41r. Del
+  bloque 10 quedan, para su tanda, la ficha del transporte y el precio en la portada. La tanda 3 no empieza sin su
+  visto bueno.
 
 ## Pendientes
 
