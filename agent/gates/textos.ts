@@ -7,7 +7,7 @@ import { EL_MAS_BARATO, LARGO_DE_UN_TEXTO, PROHIBIDAS, QUE_ENCONTRAMOS } from ".
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
 
 /** Lo que no es letra ni frase: saltos, tabuladores, marcas de control y las que cambian el sentido de la lectura. */
-const DE_CONTROL = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁩﻿]/u;
+const DE_CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/u;
 const ENLACE = /https?:|www\.|\b[\p{L}\p{N}-]+\.(?:com|net|org|info|biz|io|co|app|shop|online|site|xyz|example)\b/iu;
 const CORREO = /[^\s@]+@[^\s@]+\.[^\s@]+/u;
 /** Un teléfono o una cuenta: nueve cifras o más seguidas, juntas o con espacios, puntos, guiones o paréntesis. */
@@ -60,7 +60,7 @@ function cifras(texto: string): { texto: string; ilegibles: boolean } {
     }
     return String(punto - cero);
   });
-  return { texto: salida.replace(/[   ]/g, " "), ilegibles };
+  return { texto: salida.replace(/[\u00a0\u2009\u202f]/g, " "), ilegibles };
 }
 
 /** Un número tal como está escrito, y las maneras de leerlo: cada lectura, los números que serían. */

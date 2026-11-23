@@ -81,6 +81,24 @@ test("ningún dato de un viaje en el repositorio: solo el caso inventado", () =>
   assert.deepEqual(datos, []);
 });
 
+test("ningún carácter invisible en lo que se sube: los que hagan falta van escritos por su código", () => {
+  // Los que no se ven y cambian lo que se lee: marcas de control, espacios raros y los que giran el sentido del texto.
+  const rangos = [
+    [0x00, 0x08],
+    [0x0b, 0x0c],
+    [0x0e, 0x1f],
+    [0x7f, 0xa0],
+    [0x2009, 0x2009],
+    [0x200b, 0x200f],
+    [0x202a, 0x202f],
+    [0x2060, 0x2069],
+    [0xfeff, 0xfeff],
+  ];
+  const invisible = (c: string): boolean => rangos.some(([de, a]) => c.codePointAt(0)! >= de && c.codePointAt(0)! <= a);
+  const malos = TEXTOS.filter((a) => [...readFileSync(join(RAIZ, a), "utf8")].some(invisible));
+  assert.deepEqual(malos, []);
+});
+
 test("ninguna clave en el repositorio", () => {
   const sospechosos = TEXTOS.filter((a) =>
     /(api[_-]?key|access[_-]?token)["']?\s*[:=]\s*["'][A-Za-z0-9_\-]{20,}["']/i.test(
