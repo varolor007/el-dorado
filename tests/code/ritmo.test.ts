@@ -3,7 +3,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { comprobarViaje, type Parada } from "../../agent/output/viaje.ts";
-import { andando, CABE, enLineaRecta, fechasDe, repartir } from "../../agent/scripts/ritmo.ts";
+import { paradasDe } from "../../agent/scripts/dias.ts";
+import { andando, CABE, enLineaRecta, fechasDe, ordenDeApertura, repartir } from "../../agent/scripts/ritmo.ts";
+import { entregaDeSitios, SITIOS } from "../cases/inventado/investigacion.ts";
 import { viajeInventado } from "../cases/inventado/viaje.ts";
 
 const BASE = { lat: 10.05, lon: 20.05 };
@@ -161,4 +163,34 @@ test("lo que reparte el ritmo tiene la forma del viaje para la web", () => {
   v.dias = r.dias.filter((d) => d.paradas.length > 0);
   v.fuera = r.fuera;
   assert.deepEqual(comprobarViaje(v), []);
+});
+
+test("los días libres se abren de los de en medio a los de los bordes: el de llegada y el de salida, al final", () => {
+  assert.deepEqual(ordenDeApertura(4), [1, 2, 0, 3]);
+  assert.deepEqual(ordenDeApertura(3), [1, 0, 2]);
+  assert.deepEqual(ordenDeApertura(1), [0]);
+  assert.deepEqual(ordenDeApertura(0), []);
+});
+
+test("dos sitios que están al lado caen en el mismo día, y un día se abre solo cuando hace falta", () => {
+  // Siete sitios en dos barrios, a dos kilómetros uno de otro, y cuatro días: dos días con paradas y dos libres.
+  const elegidas = paradasDe(entregaDeSitios(), SITIOS);
+  const r = repartir(elegidas, fechasDe("2027-03-05", "2027-03-08"), "normal", BASE);
+  const diaDe = (id: string): number => r.dias.findIndex((d) => d.paradas.includes(id));
+  // El faro y el mercado del puerto están a trescientos metros: mismo día. Y el barrio viejo, junto, en otro.
+  assert.equal(diaDe("Q1"), diaDe("Q4"));
+  assert.equal(new Set(["Q2", "Q5", "Q7", "Q8", "Q3"].map(diaDe)).size, 1);
+  assert.notEqual(diaDe("Q1"), diaDe("Q2"));
+  assert.deepEqual(r.fuera, []);
+  assert.equal(r.dias.filter((d) => d.paradas.length === 0).length, 2);
+  // Lo más importante, que abre el primer día, cae en un día de en medio, no en el de llegada.
+  assert.equal(diaDe("Q1"), 1);
+  assert.equal(diaDe("Q2"), 2);
+});
+
+test("lo imprescindible no se queda fuera aunque no quepa: va al día que tiene más cerca", () => {
+  const todas = paradas().map((p) => ({ ...p, imprescindible: true, minutos: 200 }));
+  const r = repartir(todas, fechasDe("2027-02-12", "2027-02-12"), "calm", BASE);
+  assert.deepEqual(r.fuera, []);
+  assert.equal(r.dias[0].paradas.length, todas.length);
 });

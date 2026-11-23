@@ -20,6 +20,15 @@ export const SALTO = 2000;
 
 export type Reparto = { dias: Dia[]; fuera: string[] };
 
+/**
+ * En qué orden se abren los días libres: primero los de en medio, que son días enteros, y al final el de llegada y
+ * el de salida, que casi nunca lo son. Lo más importante cae así en un día entero.
+ */
+export function ordenDeApertura(cuantos: number): number[] {
+  const alBorde = (i: number): number => Math.min(i, cuantos - 1 - i);
+  return Array.from({ length: cuantos }, (_, i) => i).sort((a, b) => alBorde(b) - alBorde(a) || a - b);
+}
+
 /** Las fechas del viaje, del día de entrada al de salida. */
 export function fechasDe(entrada: string, salida: string): string[] {
   const fechas: string[] = [];
@@ -125,49 +134,23 @@ export function repartir(
     if (i !== undefined && Number.isInteger(i) && i >= 0 && i < dias.length) pon(i, p);
   }
 
-  // 2. Las semillas: una parada para cada día que sigue vacío, las más separadas entre sí y de los días ya ocupados
-  // de entre las más importantes, para que cada día tenga su zona. La primera, la más importante.
+  // 2. Las demás, por importancia. Cada una va al día que tiene cerca (a menos de un salto) y con sitio. Si no hay
+  // ninguno, abre un día nuevo mientras queden días libres; si no quedan, se queda fuera: antes fuera que cruzar la
+  // ciudad por rellenar un hueco. Así dos sitios que están al lado caen en el mismo día, y un día se abre cuando
+  // hace falta, no por tener algo en cada fecha: un día puede quedar libre.
   const libres = porImportancia.filter((p) => !puestas.has(p.id));
-  const candidatas = libres.slice(0, dias.length * cabe.paradas);
-  const vacios = dias.flatMap((d, i) => (d.paradas.length === 0 ? [i] : []));
-  const ocupados = conParadas().map((z) => z.centro);
-  const semillas: Parada[] = [];
-  while (semillas.length < vacios.length && semillas.length < candidatas.length) {
-    const yaHay = [...ocupados, ...semillas.map((s) => s.punto)];
-    if (yaHay.length === 0) {
-      semillas.push(candidatas[0]);
-      continue;
-    }
-    let mejor: Parada | null = null;
-    let lejos = -1;
-    for (const c of candidatas) {
-      if (semillas.includes(c)) continue;
-      const d = Math.min(...yaHay.map((s) => enLineaRecta(s, c.punto)));
-      if (d > lejos) {
-        lejos = d;
-        mejor = c;
-      }
-    }
-    if (mejor === null) break;
-    semillas.push(mejor);
-  }
-  // Los días vacíos se llenan de la zona más cercana a la base a la más lejana: el primero, sin prisa por llegar.
-  semillas.sort((a, b) => enLineaRecta(base, a.punto) - enLineaRecta(base, b.punto));
-  semillas.forEach((s, n) => pon(vacios[n], s));
-
-  // 3. Las demás, por importancia: cada una va al día de su zona, la más cercana, si todavía cabe. Si no cabe, solo
-  // va a otro día que le quede a menos de un salto: antes fuera que cruzar la ciudad por rellenar un hueco.
-  for (const p of porImportancia) {
-    if (puestas.has(p.id) || anadidas.includes(p.id)) continue;
+  const porAbrir = ordenDeApertura(dias.length).filter((i) => dias[i].paradas.length === 0);
+  for (const p of libres) {
+    if (anadidas.includes(p.id)) continue;
     const porCercania = conParadas()
       .map((z) => ({ i: z.i, d: dias[z.i], lejos: enLineaRecta(z.centro, p.punto) }))
-      .sort((a, b) => a.lejos - b.lejos);
+      .sort((a, b) => a.lejos - b.lejos || a.i - b.i);
     const cabeEn = (d: (typeof dias)[number]): boolean =>
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
-    let destino = -1;
-    if (porCercania.length > 0 && cabeEn(porCercania[0].d)) destino = porCercania[0].i;
-    else destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
-    if (destino < 0) destino = dias.findIndex((d) => d.paradas.length === 0);
+    let destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
+    if (destino < 0) destino = porAbrir.shift() ?? -1;
+    // Lo imprescindible no se queda fuera: si no cabe en ningún día, va al que tiene más cerca.
+    if (destino < 0 && p.imprescindible && porCercania.length > 0) destino = porCercania[0].i;
     if (destino < 0) {
       fuera.push(p.id);
       continue;
