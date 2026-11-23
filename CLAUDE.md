@@ -24,23 +24,37 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 1. **La hoja y el plan mandan**, en cuanto existan (etapas 3 a 5). Lo que se construye tiene que caber en ellos; si
    algo no cabe, se para y se pregunta al PM. Si cambian, cambian en el mismo commit, y la decisión va al registro con
    su fecha.
-2. **Un commit por paso**, con su etapa delante mientras se diseña («Etapa 1: ...») y, desde el plan, con el número de
-   su punto («2.3: ...»).
+2. **Un commit por paso**, con su etapa delante mientras se diseña («Etapa 1: ...»), «Bases: ...» en lo que se
+   construye antes del plan y, desde el plan, con el número de su punto («2.3: ...»).
 3. **La memoria y el registro, al día en el mismo commit** que cambia el estado.
 4. **Se trabaja por tandas.** Lo que no necesita al PM va seguido; solo se para para su firma, una decisión suya o un
    gasto. Cada tanda acaba con su punto de situación, en la memoria y al PM.
 5. **Nada que gaste sin el visto bueno explícito del PM**: ni una sesión del agente, ni un run, ni una prueba con un
-   modelo, ni una API de pago. Lanzar es siempre una decisión suya.
+   modelo, ni una API de pago. Lanzar es siempre una decisión suya. Lo que gasta la propia sesión de trabajo, y las
+   pruebas con las tres fuentes que ya aprobó (LiteAPI, Aviasales y Parallel), no esperan su visto bueno cada vez (el
+   PM, 22 y 23-nov).
 6. **Lo medible lo mide el código**, y lo demás lo revisa alguien que no lo hizo: nadie se pone nota a sí mismo. Al
    cerrar cada bloque del plan, tres adversarios que no lo hicieron, cada uno en su copia: la mecánica (lo que se
    rompe), la seguridad (lo que deja pasar lo que no debe) y las biblias (si es lo que dicen la hoja y el plan).
 7. **Primero se construye y después se prueba**: cada pieza, con datos inventados; los casos reales, al final.
-8. **Ningún dato de un viajero ni de un cliente en el repositorio.**
+8. **Ningún dato de un viajero ni de un cliente en el repositorio**, ni lo que devuelve una fuente, ni una clave: lo
+   que saca una búsqueda va a la mesa, fuera, y las pruebas usan el caso inventado.
 9. **Ningún identificador de modelo en el repositorio**: ni en el código, ni en los documentos, ni en los commits.
+
+## Cómo se trabaja
+
+- Al abrir: `npm install` (una vez), la batería (`node tests/bateria.mjs`, segundos, sin internet y sin gastar) y el
+  «Estamos aquí» de la memoria.
+- Antes de cada commit: la batería, en verde. GitHub la vuelve a pasar en cada subida.
+- Dónde va cada cosa: [MAP.md](MAP.md). Cada carpeta nueva del agente o de las pruebas entra ahí; la prueba del
+  repositorio lo comprueba.
+- Es un MVP sin uso comercial (el PM, 23-nov): lo legal de cada fuente, en `docs/condiciones.md`, se cierra antes de
+  vender.
 
 ## Cómo se escribe
 
-- El código, en TypeScript sobre Node 22, a 120 caracteres por línea y sin dependencias mientras no hagan falta.
+- El código, en TypeScript sobre Node 22 (Node ejecuta los `.ts` sin compilar), a 120 caracteres por línea, con
+  `npx prettier --write` para el formato, y sin dependencias para funcionar: solo las de desarrollo.
 - Los contratos de los asientos, en inglés; lo que ve el cliente en la web, en inglés, como la web de Cortex; el agente
   responde al viajero en su idioma. Todo lo demás, en español.
 - En ningún texto, tampoco en el chat, rayas largas, puntos medios ni el carácter de puntos suspensivos.

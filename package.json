@@ -1,0 +1,17 @@
+{
+  "name": "el-dorado",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "bateria": "node tests/bateria.mjs",
+    "buscar": "node agent/launcher/buscar.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "prettier": "^3.10.1",
+    "typescript": "^5.9"
+  }
+}

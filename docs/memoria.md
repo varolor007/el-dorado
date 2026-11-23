@@ -3,30 +3,20 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: etapa 1, el encargo.** La ficha, hecha con las respuestas del PM del 21-nov, y las preguntas al
-viajero, una base aprobada ese día ([encargo.md](encargo.md)). Su proceso se rehace con él paso a paso, en
-conversación, y antes de seguir con el resto del viaje pidió la base: cómo piensa cada asiento, sus normas y sus
-puertas. Está en borrador, a su revisión: los asientos, en [asientos.md](asientos.md); qué mide cada puerta y por qué,
-en [puertas.md](puertas.md); cómo se valora, en [oficio.md](oficio.md), y el inventario, en [piezas.md](piezas.md). El
-22-nov cambió la búsqueda de alojamiento: es código, con los datos de la plataforma y sus mínimos, y el que discierne
-es el que mira el alojamiento. Eso pide una fuente de datos que el código pueda consultar, que choca con «web primero,
-API después». De dónde salen los datos es lo que se trabaja ahora con el PM. Lo que manda: se sacan en el momento, el
-viajero no trae nada, sin base que mantener y sin leer a escondidas; los acuerdos con las grandes, después, con un
-abogado. El mapa, en [datos.md](datos.md): cada pieza de información y de dónde sale, que se amplía con él pieza a
-pieza; lo mirado de cada fuente y lo comprobado, en [fuentes.md](fuentes.md). El índice para IA queda como posible
-solución parcial. El 23-nov el PM se registró en LiteAPI y en Travelpayouts y dio sus claves por el formulario seguro
-(están en su entorno, no en el repositorio): las dos responden, y lo que trae cada una está en datos.md. Se registró
-también en Parallel, que además de imágenes busca hoteles y pisos con el precio de Booking.com y de Airbnb: funciona,
-y falta saber de dónde saca esos datos y leer sus condiciones. Hecho el 23-nov: la primera búsqueda entera, de prueba,
-con Lisboa (lo que enseñó, en datos.md), y las condiciones de las tres fuentes, leídas
-([condiciones.md](condiciones.md)): para probar y montar las bases valen ya; para salir con un producto faltan tres
-respuestas (LiteAPI, sobre la IA y cruzar datos; el PM, sobre el riesgo de Parallel; Travelpayouts, sobre el
-proyecto), en «Pendientes» del registro. Lo siguiente, a decisión del PM: pasar la sonda de la prueba a código de
-verdad en el repositorio, el recolector con sus enchufes, su puerta y sus pruebas con datos inventados; sería empezar
-a construir antes de la hoja, y por eso se le pregunta. El dibujo del run (`paginas/run.html`, publicado en
-https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos buscadores como asientos: se
-rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después, lo que falta por hablar (al
-final de piezas.md) y la etapa 2.
+**Estamos aquí: las bases, montadas (23-nov), y el encargo, abierto.** El PM decidió ese día que es un MVP sin uso
+comercial, que lo aprueba todo y que lo legal de las fuentes lo verá con su abogado antes de vender; y que se montaran
+ya las bases, antes de la hoja. Hecho: el recolector, en `agent/` (un enchufe por fuente: LiteAPI, Aviasales y
+Parallel; los pasos de la búsqueda de alojamiento, su puerta, el arranque desde la terminal y la mesa fuera del
+repositorio), y sus pruebas con el caso inventado, en `tests/`, con la batería en verde (`node tests/bateria.mjs`). La
+búsqueda de Lisboa corre de punta a punta, sin IA, en unos veinte segundos. Lo que enseñó la primera prueba y lo que
+trae cada fuente, en [datos.md](datos.md); sus condiciones, en [condiciones.md](condiciones.md). Del diseño: la ficha
+y las preguntas al viajero, aprobadas ([encargo.md](encargo.md)); el proceso, los asientos, las puertas y cómo se
+valora, en borrador, a revisión del PM ([asientos.md](asientos.md), [puertas.md](puertas.md), [oficio.md](oficio.md),
+[piezas.md](piezas.md)); el dibujo del run (`paginas/run.html`) es del 21-nov y está por rehacer: aún lleva los dos
+buscadores como asientos, y ya son código. Lo siguiente, a decisión del PM: el primer asiento de IA sobre estas bases
+(el que mira el alojamiento, con las fotos de la habitación de ese precio y las opiniones), contrastar la nota con el
+índice, las cribas con sus pesos, y lo que falta por hablar del viaje (el día a día, los papeles y el calendario ya
+tienen su diseño en borrador; los vuelos en vivo no tienen fuente). Y la hoja, que sigue sin hacerse.
 
 ## 1. Qué es
 
@@ -56,7 +46,15 @@ crea. Lo que deja cada una aquí:
 
 ## 3. Dónde vive cada cosa
 
-- **Este repositorio**: `varolor007/el-dorado`. Cada sesión trabaja en su rama (`claude/...`).
+- **Este repositorio**: `varolor007/el-dorado`. Cada sesión trabaja en su rama (`claude/...`). Su mapa, en
+  [MAP.md](../MAP.md): el agente, en `agent/`; sus pruebas, en `tests/`, y los documentos, aquí.
+- **El recolector**: `agent/tools/fuentes/`, un enchufe por fuente, que traduce lo suyo a unos tipos comunes
+  (`tipos.ts`); el resto del agente no sabe de dónde vino cada dato. Una fuente se apaga con `ELDORADO_APAGAR`.
+- **Las claves de las fuentes**: nunca en el repositorio. En las sesiones de la nube están en el entorno del PM, que
+  las dio por el formulario seguro, y su proxy las pone solo (por eso la búsqueda se lanza con `NODE_USE_ENV_PROXY=1`);
+  en otra máquina, en las variables `LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y `PARALLEL_API_KEY`.
+- **La mesa**: lo que saca cada búsqueda, fuera del repositorio, en `ELDORADO_MESA` o en la carpeta temporal. En la
+  nube se pierde al cerrar la sesión.
 - **El método**: en `varolor007/aurora-web`, que desde aquí solo se lee. La hoja del ensamblador
   (`docs/ensamblador/hoja.md`) dice las etapas, las filas, los dos tipos de agente, sus partes como un programa y cómo
   sale el plan de obra; la carpeta que entrega, en `docs/ensamblador/planos/carpeta.md`. Cortex, en
@@ -69,5 +67,7 @@ crea. Lo que deja cada una aquí:
 
 1. Leer el `CLAUDE.md` y esta memoria, por su «Estamos aquí».
 2. Trabajar en la rama de la sesión; mirar antes si otra rama `claude/...` va por delante.
-3. Si hace falta el método, leer la hoja del ensamblador en `aurora-web`.
-4. Antes de lanzar nada que gaste, el visto bueno del PM.
+3. `npm install` y la batería (`node tests/bateria.mjs`): tiene que salir en verde antes de tocar nada.
+4. Para ver una búsqueda de verdad: la orden del `README.md`, con `NODE_USE_ENV_PROXY=1` delante en la nube.
+5. Si hace falta el método, leer la hoja del ensamblador en `aurora-web`.
+6. Antes de lanzar algo nuevo que gaste (otra fuente de pago, un run del agente), el visto bueno del PM.

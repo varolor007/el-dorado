@@ -84,8 +84,22 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **Las condiciones de las tres fuentes, leídas** (el PM: «lee las condiciones de todo»). En `condiciones.md`. Para
   probar y montar las bases, valen ya; para salir con un producto faltan tres respuestas, que van a pendientes.
 - **La primera búsqueda entera, de prueba**, corrió con Lisboa: lo que enseñó, en `datos.md`.
+- **Es un MVP, sin uso comercial, y el PM lo aprueba todo** (el PM): «de momento no es comercial y yo apruebo todo; ya
+  lo pasaré con el abogado cuando llegue el momento de comercializar. De momento seguimos a por el MVP: dale a montar
+  las bases y todo el repositorio». Las tres fuentes se usan ya, también Parallel y la IA sobre las fotos de LiteAPI;
+  lo que dicen sus condiciones queda para antes de vender.
+- **Las bases, antes de la hoja** (el PM): se construye ya el recolector en el repositorio, aunque el método pone la
+  hoja y el plan delante. Sus commits, «Bases: ...».
+- **Las bases, montadas**: el recolector con un enchufe por fuente, los pasos de la búsqueda de alojamiento, su puerta
+  con dieciocho trampas, el arranque desde la terminal, la mesa fuera del repositorio, el caso inventado, la batería y
+  la prueba del repositorio. La búsqueda de Lisboa corre con el código nuevo en unos veinte segundos, con la puerta en
+  verde. En `MAP.md`.
+- **Una dependencia de desarrollo** (la sesión): el comprobador de tipos y el formateador, solo para la batería y el
+  formato. Para funcionar, el agente sigue sin ninguna.
 
 ## Pendientes
+
+Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
 
 - **Preguntar a LiteAPI, por escrito** (23-nov): si nuestra IA puede valorar sus fotos y sus opiniones para el
   viajero, y si sus datos se pueden cruzar con los de otras fuentes; sus condiciones prohíben «obras derivadas» y
