@@ -6,13 +6,13 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { ESCALERA_DE_MINIMOS } from "../../agent/data/cribas.ts";
+import { ESCALERA_DE_MINIMOS, ESCALERA_DE_RADIO, RADIO_MAXIMO } from "../../agent/data/cribas.ts";
 import { AVISOS } from "../../agent/data/palabras.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
 import { estanciaDe, sigue, VUELTAS, type Estado, type Fuentes } from "../../agent/launcher/investigar.ts";
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } from "../../agent/output/viaje.ts";
-import { buscarConEscalera, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
+import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
 import type { Tabla } from "../../agent/scripts/formas.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
@@ -244,6 +244,47 @@ test("la escalera de mínimos: con bastantes alojamientos vale el primer escaló
   assert.ok(escasa.dentro.length > sobra.dentro.length);
   assert.equal(escasa.dentro.length + escasa.fuera.length, escasa.devueltos);
   await assert.rejects(buscarConEscalera(fuenteDeDosBarrios(), ESTANCIA, zonas, [], 5), /no hay mínimos/);
+});
+
+test("si en la zona no hay con qué elegir, se busca más ancho, y se dice hasta dónde", async () => {
+  // Una fuente que solo tiene algo a más de cinco kilómetros del centro de la zona, como pasa en un pueblo.
+  const fuente = fuenteDeDosBarrios();
+  const pedidos: number[] = [];
+  const lejana: FuenteAlojamiento = {
+    ...fuente,
+    async lista(e, m) {
+      pedidos.push(e.radio);
+      return e.radio < 5000 ? [] : fuente.lista(e, m);
+    },
+  };
+  const zonas = [{ id: "z1", nombre: "El pueblo", lat: SITIOS[1].punto.lat, lon: SITIOS[1].punto.lon, radio: 800 }];
+  const como = {
+    minimos: ESCALERA_DE_MINIMOS.slice(0, 1),
+    bastan: 5,
+    radios: ESCALERA_DE_RADIO,
+    radioMaximo: RADIO_MAXIMO,
+  };
+  const b = await buscarDondeHaya(lejana, ESTANCIA, zonas, como);
+  assert.deepEqual(pedidos, [800, 2400, 7200]);
+  assert.equal(b.zonas?.[0].radio, 7200);
+  assert.equal(b.finalistas.length, 5);
+  assert.deepEqual(
+    b.avisos.filter((x) => x.includes("se busca más ancho")),
+    [
+      "a 800 metros solo había 0 alojamientos con precio: se busca más ancho",
+      "a 2400 metros solo había 0 alojamientos con precio: se busca más ancho",
+    ],
+  );
+  // Si en la zona como es ya hay con qué elegir, no se ensancha.
+  pedidos.length = 0;
+  const cercana = await buscarDondeHaya(fuente, ESTANCIA, zonas, como);
+  assert.equal(cercana.zonas?.[0].radio, 800);
+  assert.ok(!cercana.avisos.some((x) => x.includes("se busca más ancho")));
+  // Y nunca más allá del tope: si no hay nada, se queda con lo que haya, y lo dice.
+  const vacia: FuenteAlojamiento = { ...fuente, lista: async () => [] };
+  const nada = await buscarDondeHaya(vacia, ESTANCIA, zonas, { ...como, radioMaximo: 2000 });
+  assert.equal(nada.finalistas.length, 0);
+  assert.equal(nada.avisos.filter((x) => x.includes("se busca más ancho")).length, 2);
 });
 
 test("la investigación inventada, entera: de lo entendido al viaje, por cada asiento y cada puerta", async () => {

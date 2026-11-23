@@ -74,6 +74,14 @@ export const ESCALERA_DE_MINIMOS = [
 ];
 export const MINIMOS_DE_PARTIDA = ESCALERA_DE_MINIMOS[0];
 
+/**
+ * Cuánto se ensancha una zona si en ella no hay bastantes alojamientos ni bajando los mínimos: su radio, por cada
+ * uno de estos números, hasta un tope en metros. En un pueblo o en un valle lo que hay puede estar a varios
+ * kilómetros del centro; lo lejos que quede ya lo dice después la nota de la zona.
+ */
+export const ESCALERA_DE_RADIO = [1, 3, 9];
+export const RADIO_MAXIMO = 25_000;
+
 /** Con cuántos alojamientos con precio se da un escalón por bueno, y cuántos se miran de cerca. */
 export const CANDIDATOS_QUE_BASTAN = 8;
 export const FINALISTAS = 5;

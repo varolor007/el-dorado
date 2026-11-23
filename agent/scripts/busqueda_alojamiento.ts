@@ -135,6 +135,33 @@ export async function buscarConEscalera(
   throw new Error("la escalera de mínimos se acabó sin buscar");
 }
 
+/**
+ * La búsqueda entera, donde haya algo: primero en las zonas como son, bajando los mínimos por su escalera; si ni
+ * así queda con qué elegir, ensancha las zonas y vuelve a empezar. Se queda con la primera búsqueda que basta o, si
+ * ninguna basta, con la que más trajo, y dice hasta dónde tuvo que ensanchar.
+ */
+export async function buscarDondeHaya(
+  fuente: FuenteAlojamiento,
+  e: Estancia,
+  zonas: ZonaDeBusqueda[],
+  p: { minimos: Minimos[]; bastan: number; radios: number[]; radioMaximo: number },
+  o: Opciones = {},
+): Promise<Busqueda> {
+  let mejor: Busqueda | null = null;
+  const ensanches: string[] = [];
+  for (const veces of p.radios) {
+    const anchas = zonas.map((z) => ({ ...z, radio: Math.min(Math.round(z.radio * veces), p.radioMaximo) }));
+    const b = await buscarConEscalera(fuente, e, anchas, p.minimos, p.bastan, o);
+    if (mejor === null || b.conPrecio.length > mejor.conPrecio.length) mejor = b;
+    if (b.conPrecio.length >= (o.finalistas ?? 5)) break;
+    const radio = Math.max(...anchas.map((z) => z.radio));
+    ensanches.push(`a ${radio} metros solo había ${b.conPrecio.length} alojamientos con precio: se busca más ancho`);
+    if (radio >= p.radioMaximo) break;
+  }
+  if (mejor === null) throw new Error("no hay radios con los que buscar");
+  return { ...mejor, avisos: [...ensanches, ...mejor.avisos] };
+}
+
 async function completar(
   fuente: FuenteAlojamiento,
   e: Estancia,

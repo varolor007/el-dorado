@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { leerCalendario, leerVuelos, vistoEnEnlace, type Trayecto } from "../../agent/tools/fuentes/aviasales.ts";
 import { encendida } from "../../agent/tools/fuentes/enchufes.ts";
-import { clave } from "../../agent/tools/fuentes/http.ts";
+import { clave, ErrorDeFuente, pedirJson, REINTENTOS, reloj } from "../../agent/tools/fuentes/http.ts";
 import {
   cuerpoDePrecios,
   dentroDelRadio,
@@ -298,4 +298,43 @@ test("los enchufes se apagan con una variable, y las claves salen del entorno o 
   assert.equal(encendida("liteapi", { ELDORADO_APAGAR: " Parallel , aviasales" }), true);
   assert.equal(encendida("aviasales", { ELDORADO_APAGAR: " Parallel , aviasales" }), false);
   assert.equal(clave("ELDORADO_VARIABLE_QUE_NO_EXISTE"), "proxy-injected");
+});
+
+/** Pone una red de mentira que contesta, por orden, lo que se le diga, y cuenta lo que se espera. */
+async function conRedFalsa<T>(respuestas: Response[], que: () => Promise<T>): Promise<{ sale: T; esperas: number[] }> {
+  const deVerdad = { fetch: globalThis.fetch, dormir: reloj.dormir };
+  const esperas: number[] = [];
+  globalThis.fetch = async () => respuestas.shift() ?? new Response("{}", { status: 500 });
+  reloj.dormir = async (ms) => void esperas.push(ms);
+  try {
+    return { sale: await que(), esperas };
+  } finally {
+    globalThis.fetch = deVerdad.fetch;
+    reloj.dormir = deVerdad.dormir;
+  }
+}
+
+test("si una fuente dice que se le pide demasiado seguido, se espera lo que diga y se vuelve a pedir", async () => {
+  const respuestas = [
+    new Response("", { status: 429, headers: { "retry-after": "4" } }),
+    new Response("", { status: 503 }),
+    new Response('{"data":[1]}', { status: 200 }),
+  ];
+  const { sale, esperas } = await conRedFalsa(respuestas, () => pedirJson("inventada", "https://fuente.invalid/x"));
+  assert.deepEqual(sale, { data: [1] });
+  assert.deepEqual(esperas, [4000, REINTENTOS.segundos[1] * 1000]);
+});
+
+test("si la fuente no deja de pedir que se espere, o falla de otra manera, se dice y no se inventa nada", async () => {
+  const pesada = Array.from({ length: REINTENTOS.veces + 1 }, () => new Response("too many", { status: 429 }));
+  const { sale, esperas } = await conRedFalsa(pesada, () =>
+    pedirJson("inventada", "https://fuente.invalid/x").catch((e: unknown) => e),
+  );
+  assert.ok(sale instanceof ErrorDeFuente && sale.estado === 429);
+  assert.equal(esperas.length, REINTENTOS.veces);
+  const rota = await conRedFalsa([new Response("no", { status: 400 })], () =>
+    pedirJson("inventada", "https://fuente.invalid/x").catch((e: unknown) => e),
+  );
+  assert.ok(rota.sale instanceof ErrorDeFuente && rota.sale.estado === 400);
+  assert.deepEqual(rota.esperas, []);
 });

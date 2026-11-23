@@ -29,24 +29,39 @@ export function ahora(): string {
   return new Date().toISOString();
 }
 
+/** Cuántas veces se vuelve a pedir si la fuente dice que se espere, y cuánto se espera si no dice cuánto. */
+export const REINTENTOS = { veces: 3, segundos: [2, 6, 15], tope: 30 };
+
+/** Para las pruebas: cómo se espera. */
+export const reloj = { dormir: (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms)) };
+
 export async function pedirJson(fuente: string, url: string, p: Pedido = {}): Promise<unknown> {
-  let respuesta: Response;
-  try {
-    respuesta = await fetch(url, {
-      method: p.metodo ?? "GET",
-      headers: { "Content-Type": "application/json", ...p.cabeceras },
-      body: p.cuerpo === undefined ? undefined : JSON.stringify(p.cuerpo),
-      signal: AbortSignal.timeout(p.esperaMs ?? 60_000),
-    });
-  } catch (e) {
-    throw new ErrorDeFuente(fuente, 0, `no responde (${(e as Error).message})`);
-  }
-  const texto = await respuesta.text();
-  if (!respuesta.ok) throw new ErrorDeFuente(fuente, respuesta.status, texto.slice(0, 300));
-  try {
-    return JSON.parse(texto);
-  } catch {
-    throw new ErrorDeFuente(fuente, respuesta.status, "la respuesta no es JSON");
+  for (let intento = 0; ; intento++) {
+    let respuesta: Response;
+    try {
+      respuesta = await fetch(url, {
+        method: p.metodo ?? "GET",
+        headers: { "Content-Type": "application/json", ...p.cabeceras },
+        body: p.cuerpo === undefined ? undefined : JSON.stringify(p.cuerpo),
+        signal: AbortSignal.timeout(p.esperaMs ?? 60_000),
+      });
+    } catch (e) {
+      throw new ErrorDeFuente(fuente, 0, `no responde (${(e as Error).message})`);
+    }
+    const texto = await respuesta.text();
+    // Si la fuente dice que se le pide demasiado seguido, se espera lo que diga, o un poco más cada vez, y se repite.
+    if ((respuesta.status === 429 || respuesta.status === 503) && intento < REINTENTOS.veces) {
+      const dicho = Number(respuesta.headers.get("retry-after"));
+      const segundos = Number.isFinite(dicho) && dicho > 0 ? dicho : REINTENTOS.segundos[intento];
+      await reloj.dormir(Math.min(segundos, REINTENTOS.tope) * 1000);
+      continue;
+    }
+    if (!respuesta.ok) throw new ErrorDeFuente(fuente, respuesta.status, texto.slice(0, 300));
+    try {
+      return JSON.parse(texto);
+    } catch {
+      throw new ErrorDeFuente(fuente, respuesta.status, "la respuesta no es JSON");
+    }
   }
 }
 
