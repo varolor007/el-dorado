@@ -13,7 +13,7 @@ sin comprobar (dicho de memoria). El detalle de cada fuente, en [fuentes.md](fue
 
 | Punto | Qué es | Cómo está |
 |---|---|---|
-| LiteAPI | Una API de hoteles que se abre con un registro | Por probar con claves; sus condiciones sobre IA, sin leer |
+| LiteAPI | Una API de hoteles que se abre con un registro | Comprobado con la clave de pruebas del PM (23-nov); sus condiciones sobre IA, sin leer |
 | El índice para IA | Un buscador que ya tiene la web leída y contesta con texto y su fuente | Comprobado con un hotel; posible solución parcial (el PM) |
 | La web del hotel | Su web propia, su ficha técnica en PDF y su motor de reservas, leídos a cara descubierta | Por probar |
 | Los mapas abiertos | OpenStreetMap y lo que se calcula sobre él: qué hay, dónde y a cuánto | Sin comprobar |
@@ -22,7 +22,7 @@ sin comprobar (dicho de memoria). El detalle de cada fuente, en [fuentes.md](fue
 | El lector oficial de una IA | Lee las páginas de las agencias que lo dejan pasar por su nombre | Por probar; gasta: con el visto bueno del PM |
 | El servidor de fotos | Donde las agencias guardan los archivos de las fotos | Por probar; sus derechos, al abogado |
 | Las fuentes oficiales | Webs de gobiernos y organismos | A cara descubierta |
-| Aviasales | Precios de vuelos guardados de otros usuarios, gratis | Por probar con claves |
+| Aviasales | Precios de vuelos guardados de otros usuarios, gratis | Comprobado con la clave del PM (23-nov) |
 | Kiwi para agentes | Vuelos en vivo, por su servidor para agentes | Sus condiciones de uso comercial, por comprobar |
 | KAYAK para afiliados | Hoteles y vuelos en vivo | Con solicitud |
 | Las API de socios | Booking.com y demás | Con acuerdo: después, con el abogado |
@@ -142,6 +142,34 @@ ensamblador, y un sitio fuera del repositorio para los archivos de cada viaje.
 
 **Lo mínimo para empezar a probar**: la clave de LiteAPI, la de Aviasales y una clave de IA con un tope pequeño. Lo
 que no pide nada (las webs de los hoteles, OpenStreetMap e Inside Airbnb) se puede probar ya.
+
+## Lo comprobado con las claves del PM (23-nov)
+
+Las dos claves están guardadas en su entorno, por el formulario seguro: no están en el repositorio ni las ve la sesión.
+Las respuestas de prueba tampoco entran en el repositorio.
+
+**LiteAPI**, con la clave de pruebas, en Lisboa:
+
+- **La lista por punto y radio funciona.** En 1.500 m alrededor de la Baixa dice 4.344 alojamientos y los da de 200
+  en 200, cada uno con su nota, cuántas opiniones, sus estrellas, su tipo y dónde está. De los 200 primeros, 121 tienen
+  nota de 8 o más y cuatro estrellas o más: el filtro de mínimos se hace con código.
+- **El detalle de un hotel** (uno de cinco estrellas): 62 fotos del hotel, sin leyenda; 14 tipos de habitación, cada
+  uno con sus metros (de 24 a 61), sus camas y diez u once fotos propias; los servicios, con el gimnasio; los horarios
+  de entrada y salida; su web, y un resumen de las opiniones por temas, con nota por tema.
+- **Las opiniones**: veinte, con su fecha (las últimas, de dos días antes), su nota, el tipo de viajero y lo bueno y
+  lo malo en texto.
+- **El precio**: en vivo, para tres noches de febrero y dos adultos, con el nombre de la habitación, si lleva desayuno
+  y si se puede cancelar. Con la clave de pruebas puede no ser el precio de verdad: por confirmar.
+- **Lo que resuelve**: las fotos van por tipo de habitación, así que se puede mirar la habitación de ese precio y no
+  la mejor del hotel.
+- **Lo que no trae**: fotos de viajeros, ni leyendas en las fotos del hotel.
+
+**Aviasales**, de Madrid a Lisboa, en enero:
+
+- Devuelve los vuelos más baratos del mes, cada uno con su día y su hora, su aerolínea, su número, su duración, sus
+  escalas, su precio y su enlace.
+- Trae aerolíneas de bajo coste (Ryanair y easyJet), que era una duda.
+- Cada precio lleva la fecha en que se vio: en la prueba, entre el mismo día y seis días antes.
 
 ## Lo que se ve en el mapa
 

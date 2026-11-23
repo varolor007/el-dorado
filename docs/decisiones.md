@@ -74,6 +74,11 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
   índice de imágenes) y la IA de esta cuenta. La IA de Google y los vídeos de YouTube quedan como idea, fuera de la
   primera versión, salvo que el PM diga otra cosa: meten otra IA y otra cuenta.
 
+## 23-nov-2026
+
+- **El PM se registró en Travelpayouts y en LiteAPI** y dio sus dos claves por el formulario seguro: quedan en su
+  entorno, fuera del repositorio. Las dos responden: lo comprobado, en `datos.md`.
+
 ## Pendientes
 
 - **Qué se enchufa hoy en la herramienta de datos** (22-nov): el nivel A, limpio (LiteAPI y la web propia de cada
