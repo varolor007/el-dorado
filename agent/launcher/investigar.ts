@@ -484,7 +484,17 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     porQue: hecho.porQueFuera,
     sitios: dados,
   }).rojos;
-  const pegas = [...comprobarViaje(hecho), ...comprobarSucesos(sucesos), ...deLosDias];
+  // La nota y el descarte de cada alojamiento son los de la tabla con la que cerró el que cruza: si no casan, lo
+  // que se enseña no es lo que se decidió.
+  const deLaTabla: Rojo[] = [];
+  for (const fila of tabla.rows) {
+    const a = hecho.alojamientos.find((x) => x.id === fila.lodging);
+    if (a === undefined) continue;
+    const nota = typeof fila.score === "number" ? fila.score : null;
+    if ((a.puntos ?? null) !== nota || (a.descartado != null) !== (fila.discarded !== ""))
+      deLaTabla.push({ donde: `alojamientos.${a.id}`, que: "su nota o su descarte no son los de la tabla del cruce" });
+  }
+  const pegas = [...comprobarViaje(hecho), ...comprobarSucesos(sucesos), ...deLosDias, ...deLaTabla];
   if (pegas.length > 0) return pegas;
   guardar(run, "viaje.json", hecho);
   guardar(run, "sucesos.json", sucesos);
@@ -599,6 +609,22 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       const tabla = hay(run, `tabla-${ronda}.json`)
         ? leer<Tabla>(run, `tabla-${ronda}.json`)
         : await montarLaTabla(run, viaje, f, ronda);
+      // Si ninguna fila puede ser una manera, no hay nada que cruzar ni que explicar: se para aquí y se dice.
+      const validas = tabla.rows.filter(
+        (x) => x.discarded === "" && typeof x.score === "number" && x.score >= tabla.minimum_score,
+      );
+      if (validas.length === 0) {
+        const descartadas = tabla.rows.filter((x) => x.discarded !== "").length;
+        return para("la tabla", [
+          {
+            donde: "rows",
+            que:
+              `de los ${tabla.rows.length} alojamientos mirados, ninguno vale para este viajero: ` +
+              `${descartadas} descartados por una criba y ${tabla.rows.length - descartadas} por debajo de la nota ` +
+              "mínima o sin nota",
+          },
+        ]);
+      }
       const r = recoger<EntregaDeCruce>(
         run,
         `cruce-${ronda}`,

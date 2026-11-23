@@ -712,3 +712,19 @@ test("si muchos pasan los mínimos y ninguno tiene precio, no se baja ni se ensa
   assert.ok(b.avisos.some((x) => x.includes("ninguno tiene precio para esas noches y ese grupo")));
   assert.ok(!b.avisos.some((x) => x.includes("se bajan los mínimos") || x.includes("se busca más ancho")));
 });
+
+test("si ningún alojamiento mirado vale para el viajero, se para antes de cruzar, y se dice", async () => {
+  const run = runNuevo();
+  try {
+    // Todos tienen un gimnasio simbólico, y el viajero lo marcó como imprescindible.
+    const { estado, lanzados } = await investiga(run, (asiento, entrega) => {
+      if (asiento === "lodging-viewer") entrega.fields.gym.level = "token";
+    });
+    assert.equal(estado.parado?.paso, "la tabla");
+    assert.match(estado.parado!.rojos[0].que, /de los 5 alojamientos mirados, ninguno vale para este viajero/);
+    assert.ok(!lanzados.some((id) => id.startsWith("cruce") || id.startsWith("explica")));
+    assert.ok(!existsSync(join(run, "viaje.json")));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
