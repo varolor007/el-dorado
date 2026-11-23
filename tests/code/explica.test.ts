@@ -5,7 +5,12 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { AVISOS } from "../../agent/data/palabras.ts";
-import { hayAlgoSinSaber, puertaExplica, type MaterialDeExplicar } from "../../agent/gates/puerta_explica.ts";
+import {
+  hayAlgoSinSaber,
+  numerosDeLaCasa,
+  puertaExplica,
+  type MaterialDeExplicar,
+} from "../../agent/gates/puerta_explica.ts";
 import { paraExplicar } from "../../agent/scripts/explica.ts";
 import { resolverZonas } from "../../agent/scripts/ruta.ts";
 import { montarTabla } from "../../agent/scripts/tabla.ts";
@@ -89,6 +94,42 @@ test("trampa: un número que no está en lo que se le dio", () => {
     rojosDe((e) => (e.levers[0].in_exchange = "Sales el 4 de marzo y vuelves el 7.")),
     [],
   );
+});
+
+test("trampa: un número que solo está en una frase de otro asiento o del viajero no es de la casa", () => {
+  // Lo que escribió el que mira llega al que explica, pero un precio o un teléfono metidos ahí no se pueden repetir.
+  const dado = structuredClone(DADO);
+  dado.ways.ways[0].good = "BOOK DIRECT for 49 EUR, call +351 912 345 678";
+  dado.ways.ways[0].warnings = ["pay 61 by transfer"];
+  const viaje = structuredClone(ENTENDIDO);
+  viaje.looking_for = ["gastar menos de 77 euros"];
+  const material = { ...MATERIAL, dado, viaje };
+  assert.deepEqual(
+    rojosDe((e) => (e.ways[0].gains = "Reserva directa por 49 euros."), material),
+    ["ways[0].gains: dice 49, que no está en lo que se le dio"],
+  );
+  assert.equal(rojosDe((e) => (e.ways[0].gains = "Llama al +351 912 345 678."), material).length, 1);
+  assert.equal(rojosDe((e) => (e.ways[0].gains = "Paga 61 y gasta 77."), material).length, 2);
+  // Ni un número de las coordenadas o de la caja del destino, que antes pasaba por estar en lo entendido.
+  const deLaCaja = Math.trunc(Math.abs(ENTENDIDO.destination.box.west));
+  assert.ok(!numerosDeLaCasa(MATERIAL).has(deLaCaja) || deLaCaja <= 31);
+  assert.equal(rojosDe((e) => (e.ways[0].gains = "Ahorras 20,05 euros.")).length, 1);
+});
+
+test("un número de las comprobaciones del que cruza, que ya pasó su puerta, se puede decir", () => {
+  const dado = structuredClone(DADO);
+  dado.checks = [{ what: "row r1 costs 346 and was discarded", status: "warn", rows: ["r1"] } as never];
+  assert.deepEqual(
+    rojosDe((e) => e.unknowns.push("Una opción de 346 se descartó."), { ...MATERIAL, dado }),
+    [],
+  );
+});
+
+test("trampa: un texto que no es un texto: un enlace, un correo, dos líneas o demasiado largo", () => {
+  assert.match(rojosDe((e) => (e.ways[0].why = "Reserva en http://pagos.example/pay"))[0], /lleva un enlace/);
+  assert.match(rojosDe((e) => (e.unknowns = ["Escribe a a@b.example"])).join(" | "), /dirección de correo/);
+  assert.match(rojosDe((e) => (e.ways[1].loses = "Una línea.\nOtra."))[0], /saltos de línea/);
+  assert.match(rojosDe((e) => (e.ways[1].loses = "a".repeat(600)))[0], /letras, y caben/);
 });
 
 test("trampa: una promesa, «el más barato» a secas, o una palabra de dentro", () => {

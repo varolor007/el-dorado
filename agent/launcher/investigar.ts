@@ -547,15 +547,16 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       const deMirar = puestosDe(run).filter((p) => quienes.some((q) => q.puesto === p.id));
       pendientes.push(...deMirar.filter((p) => !entregado(p)).map((p) => p.id));
     }
-    const { sitios } = leer<DeLosSitios>(run, "sitios.json");
-    const dados = sitiosParaElegir(sitios).map((s) => s.id);
+    const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
+    const dados = sitiosParaElegir(sitios, new Map(Object.entries(resumenes)));
+    const dicho = Object.fromEntries(dados.map((s) => [s.id, `${s.name} ${s.about}`]));
     const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
     const r = recoger<EntregaDeSitios>(
       run,
       "sitios",
       "sights-picker",
       piezasDeLosSitios(run, viaje),
-      (e) => puertaSitios(e, { sitios: dados, noches }).rojos,
+      (e) => puertaSitios(e, { sitios: dados.map((s) => s.id), noches, dicho }).rojos,
     );
     if ("parado" in r) return para("los sitios (puerta 9)", r.parado);
     if ("espera" in r) pendientes.push(r.espera);

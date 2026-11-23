@@ -8,7 +8,7 @@ import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { DIA_ENTERO, MINUTOS_DE_VISITA, RESERVAR, SALTO_MAXIMO } from "../../agent/data/dias.ts";
 import { puertaDias, puertaSitios, type MaterialDeSitios, type Repartido } from "../../agent/gates/puerta_dias.ts";
-import { numerosDe, pegasDelTexto } from "../../agent/gates/textos.ts";
+import { pegasDelTexto } from "../../agent/gates/textos.ts";
 import type { Foto } from "../../agent/output/viaje.ts";
 import { paradasDe, sitiosParaElegir } from "../../agent/scripts/dias.ts";
 import { MOMENTOS_DEL_DIA } from "../../agent/scripts/formas.ts";
@@ -56,11 +56,28 @@ test("un texto para el viajero no promete ni habla de dentro, y «el más barato
   assert.deepEqual(pegasDelTexto("Es el más barato que encontramos. Sale 40 euros menos."), []);
 });
 
-test("los números de un texto se leen como números, con sus miles y sus decimales", () => {
-  assert.deepEqual(numerosDe("55 euros menos, a 12 minutos; total 1.234 euros."), [55, 12, 1234]);
-  assert.deepEqual(numerosDe("It costs 1,234.50, or 318.07 for 3 nights"), [1234.5, 318.07, 3]);
-  assert.deepEqual(numerosDe("Sale 318,07 euros"), [318.07]);
-  assert.deepEqual(numerosDe("la fila r3 y el sitio Q12 no cuentan"), []);
+test("trampa: en el porqué de un sitio, un número que no se le dijo de ese sitio, un enlace o un teléfono", () => {
+  const dicho = { Q1: "Faro Inventado. A lighthouse built in 1502 with 217 steps." };
+  const conDicho = (why: string): string[] => {
+    const entrega = entregaDeSitios() as Entrega;
+    entrega.go[0].why = why;
+    return puertaSitios(entrega, { ...MATERIAL, dicho }).rojos.map((r) => `${r.donde}: ${r.que}`);
+  };
+  assert.equal(entregaDeSitios().go[0].id, "Q1");
+  // Lo que cuenta su artículo se puede decir, y lo que lleva la visita, que lo pone el propio asiento.
+  assert.deepEqual(conDicho("Un faro de 1502, con 217 escalones."), []);
+  assert.deepEqual(conDicho(`Lleva ${entregaDeSitios().go[0].minutes} minutos subir.`), []);
+  // Una hora o un precio de memoria, no: ni sueltos ni pegados a su letra.
+  assert.deepEqual(conDicho("Abre de 9:00 a 17:30 y la entrada cuesta 12 euros."), [
+    "go[0]: dice 9, que no está en lo que se le dio de ese sitio",
+    "go[0]: dice 00, que no está en lo que se le dio de ese sitio",
+    "go[0]: dice 17, que no está en lo que se le dio de ese sitio",
+    "go[0]: dice 30, que no está en lo que se le dio de ese sitio",
+    "go[0]: dice 12, que no está en lo que se le dio de ese sitio",
+  ]);
+  assert.deepEqual(conDicho("Entrada: 12EUR."), ["go[0]: dice 12, que no está en lo que se le dio de ese sitio"]);
+  assert.match(conDicho("Reserva en http://pagos.example/faro")[0], /lleva un enlace/);
+  assert.ok(conDicho("Llama al +351 912 345 678.").some((r) => r.includes("un número largo")));
 });
 
 test("lo que elige un asiento aplicado pasa la puerta", () => {

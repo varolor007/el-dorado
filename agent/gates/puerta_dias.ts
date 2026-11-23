@@ -9,10 +9,13 @@ import type { Dia, Parada } from "../output/viaje.ts";
 import { MOMENTOS_DEL_DIA } from "../scripts/formas.ts";
 import { minutosAndando } from "../tools/distancias.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
-import { pegasDelTexto } from "./textos.ts";
+import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 
-/** Lo que tuvo delante el asiento: los sitios que se le dieron a elegir y las noches del viaje. */
-export type MaterialDeSitios = { sitios: string[]; noches: number };
+/**
+ * Lo que tuvo delante el asiento: los sitios que se le dieron a elegir, las noches del viaje y lo que se le dijo de
+ * cada sitio (su nombre y lo que cuenta su artículo), que es de donde puede sacar un número.
+ */
+export type MaterialDeSitios = { sitios: string[]; noches: number; dicho?: Record<string, string> };
 
 const LO_QUE_LLEVA = ["seat", "go", "skip", "missing", "unknowns"];
 
@@ -41,7 +44,15 @@ export function puertaSitios(entrega: unknown, m: MaterialDeSitios): Veredicto {
     if (vistos.has(cruda.id)) return (rojo(donde, `el sitio ${cruda.id} sale dos veces`), null);
     vistos.add(cruda.id);
     if (!esTexto(cruda.why)) rojo(donde, "no dice por qué");
-    else for (const pega of pegasDelTexto(cruda.why)) rojo(donde, pega);
+    else {
+      for (const pega of pegasDelTexto(cruda.why, { sinNumerosLargos: true })) rojo(donde, pega);
+      // Un número del porqué sale de lo que se le dijo de ese sitio, o es lo que lleva la visita: ni una hora ni un
+      // precio de memoria.
+      const dados = new Set(numerosDe(m.dicho?.[cruda.id] ?? ""));
+      if (typeof cruda.minutes === "number") dados.add(cruda.minutes);
+      for (const n of numerosDeMas(cruda.why, dados))
+        rojo(donde, `dice ${n}, que no está en lo que se le dio de ese sitio`);
+    }
     return cruda;
   };
 

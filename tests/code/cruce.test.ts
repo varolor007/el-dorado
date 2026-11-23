@@ -38,10 +38,10 @@ test("las normas del que cruza van de la CR1 a la CR7, y el contrato dice que no
 });
 
 test("los números de la tabla se recogen todos, también los que van dentro de un texto", () => {
-  const numeros = numerosEn({ a: 12.5, b: [-3, "2027-03-04"], c: { d: "r7" } });
+  const numeros = numerosEn({ a: 12.5, b: [-3, "2027-03-04"], c: { d: "Hotel 1898" } });
   assert.deepEqual(
     [...numeros].sort((x, y) => x - y),
-    [-3, 3, 4, 12.5, 2027],
+    [-3, 3, 4, 12.5, 1898, 2027],
   );
 });
 
@@ -133,6 +133,33 @@ test("trampa: dice que probó una palanca sin filas, o con filas de otra, o que 
   assert.deepEqual(
     rojosDe((e) => (e.levers[4] = { lever: "other_airport", status: "tested", rows: ["l1"], reason: "tested" })),
     ["levers[4]: la fila l1 es de otra palanca: other_lodging", "levers[4]: dice que la probó y la tabla no la trae"],
+  );
+});
+
+test("trampa: un número suyo pegado a su letra, o en lo que no se sabe; el nombre de una fila no cuenta", () => {
+  assert.deepEqual(
+    rojosDe((e) => (e.levers[1].reason = "one night less saves 75EUR")),
+    ["levers[1]: dice 75, que no está en la tabla"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.unknowns = ["a transfer of 999 was not priced"])),
+    ["unknowns[0]: dice 999, que no está en la tabla"],
+  );
+  const fila = TABLA.rows[TABLA.rows.length - 1].id;
+  assert.deepEqual(
+    rojosDe((e) => (e.levers[1].reason = `row ${fila} was looked at and discarded`)),
+    [],
+  );
+});
+
+test("trampa: la manera distinta no pasa de la nota mínima", () => {
+  const tabla = structuredClone(TABLA);
+  const entrega = entregaDeCruce(tabla) as Entrega;
+  const distinta = tabla.rows.find((r) => r.id === entrega.ways.different.row)!;
+  distinta.score = tabla.minimum_score - 0.1;
+  assert.deepEqual(
+    rojosDe(() => {}, { tabla, viaje: ENTENDIDO }).filter((r) => r.startsWith("ways.different")),
+    ["ways.different: la manera distinta no pasa de la nota mínima"],
   );
 });
 

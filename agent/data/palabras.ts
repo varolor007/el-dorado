@@ -4,23 +4,57 @@
 
 export type Prohibida = { clase: "promesa" | "de_dentro"; patron: RegExp; porQue: string };
 
+/**
+ * Una palabra o una frase, entera: ni empieza ni acaba dentro de otra. La «\b» de siempre no vale, porque no cuenta
+ * como letra una vocal con tilde: «encantará» se le escapaba.
+ */
+export function entera(fuente: string): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${fuente})(?![\\p{L}\\p{N}])`, "iu");
+}
+
 export const PROHIBIDAS: Prohibida[] = [
-  { clase: "promesa", patron: /\bguarantee[ds]?\b/i, porQue: "promete" },
-  { clase: "promesa", patron: /\bgarantiz\w*|\bgarant[ií]a\b/i, porQue: "promete" },
-  { clase: "promesa", patron: /\bbest price\b|\bmejor precio\b/i, porQue: "promete el mejor precio" },
-  { clase: "promesa", patron: /\bunbeatable\b|\binmejorable\b|\bimbatible\b/i, porQue: "promete" },
-  { clase: "promesa", patron: /\byou(?:'ll| will) love\b|\bte (?:va a encantar|encantar[áa])\b/i, porQue: "promete" },
-  { clase: "promesa", patron: /\bwithout a doubt\b|\bsin (?:ninguna )?duda\b/i, porQue: "da por seguro" },
-  { clase: "promesa", patron: /\bperfect\b|\bperfect[oa]s?\b/i, porQue: "un adjetivo sin su hecho" },
-  { clase: "de_dentro", patron: /\bLLM\b|\blanguage model\b|\bmodelo de lenguaje\b/i, porQue: "habla de dentro" },
-  { clase: "de_dentro", patron: /\bprompt\b|\bJSON\b|\bpipeline\b|\bscript\b/i, porQue: "habla de dentro" },
-  { clase: "de_dentro", patron: /\b(?:row|fila|lever)\s+[a-z]{1,2}\d+\b/i, porQue: "cita una fila de la tabla" },
-  { clase: "de_dentro", patron: /\bthe (?:house|crosser|seat)\b|\bel que cruza\b/i, porQue: "nombra a un asiento" },
+  { clase: "promesa", patron: entera("guarantee[ds]?"), porQue: "promete" },
+  { clase: "promesa", patron: entera("garantiz\\p{L}*|garant[ií]as?"), porQue: "promete" },
+  { clase: "promesa", patron: entera("best price|mejor precio"), porQue: "promete el mejor precio" },
+  { clase: "promesa", patron: entera("unbeatable|inmejorables?|imbatibles?"), porQue: "promete" },
+  {
+    clase: "promesa",
+    patron: entera("you(?:'ll| will) love|(?:te|os|le|les) (?:va|van) a encantar|(?:te|os|le|les) encantar[áa]n?"),
+    porQue: "promete",
+  },
+  { clase: "promesa", patron: entera("without a doubt|sin (?:ninguna )?duda"), porQue: "da por seguro" },
+  { clase: "promesa", patron: entera("perfect|perfect[oa]s?"), porQue: "un adjetivo sin su hecho" },
+  { clase: "de_dentro", patron: entera("LLM|language model|modelo de lenguaje"), porQue: "habla de dentro" },
+  // Solo lo que no tiene otro sentido en un viaje: «prompt» y «script» son también palabras de todos los días.
+  { clase: "de_dentro", patron: entera("JSON|system prompt|prompt engineering"), porQue: "habla de dentro" },
+  {
+    clase: "de_dentro",
+    patron: entera("(?:row|fila|lever|palanca)\\s+[a-z]{1,2}\\d+"),
+    porQue: "cita una fila de la tabla",
+  },
+  {
+    clase: "de_dentro",
+    // Los asientos, por su nombre. «The seat» o «the house» a secas son palabras de cualquier guía, y no se miran.
+    patron: entera(
+      "route planner|lodging viewer|sights picker|trip crosser|trip explainer|the crosser|el que cruza|" +
+        "el que mira el alojamiento|el asiento que \\p{L}+",
+    ),
+    porQue: "nombra a un asiento",
+  },
 ];
 
-/** «El más barato» solo vale con su «que encontramos», en la misma frase. */
-export const EL_MAS_BARATO = /\bthe cheapest\b|\b(?:el|la|lo) más barat[oa]\b/i;
-export const QUE_ENCONTRAMOS = /\bwe found\b|\bque (?:hemos encontrado|encontramos)\b|\bde l[oa]s que\b|\bof the\b/i;
+/**
+ * «El más barato», en singular o en plural, solo vale si la misma frase dice entre qué se compara: lo que
+ * encontramos, o las maneras que se le enseñan al viajero. «Of the» a secas no lo dice.
+ */
+export const EL_MAS_BARATO = entera("(?:the )?cheapest|más barat[oa]s?");
+export const QUE_ENCONTRAMOS = entera(
+  "we (?:have |could )?f(?:ou|i)nd|que (?:hemos encontrado|encontramos|hemos visto|vimos)|" +
+    "of (?:the|these) (?:two|three|ways|options)|de (?:las|los|estas|estos) (?:dos|tres|maneras|opciones)",
+);
+
+/** Lo más largo que puede ser un texto para el viajero, en letras. Una o dos frases caben de sobra. */
+export const LARGO_DE_UN_TEXTO = 500;
 
 /** Los avisos que lleva siempre lo que se entrega, por idioma. Los pone el código, no un asiento. */
 export const AVISOS: Record<string, { ia: string; precios: string }> = {

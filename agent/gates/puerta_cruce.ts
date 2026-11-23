@@ -14,7 +14,7 @@ import {
 } from "../data/palancas.ts";
 import { ESTADOS_EN_EL_CRUCE, type Entendido, type FilaDelCruce, type Tabla } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
-import { numerosDe } from "./textos.ts";
+import { numerosDe, numerosDeMas } from "./textos.ts";
 
 export type MaterialDeCruce = { tabla: Tabla; viaje: Entendido };
 
@@ -53,10 +53,16 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
   const fila = new Map(t.rows.map((r) => [r.id, r]));
   const filaDePalanca = new Map(t.levers.map((l) => [l.id, l]));
   const numeros = numerosEn(t);
-  /** Un texto del asiento no puede traer un número que no esté en la tabla. */
+  // Lo que el asiento puede citar por su nombre de dentro: las filas, las palancas, los alojamientos, las zonas y el
+  // transporte. La cifra de «r3» no es un número que haya que buscar en la tabla.
+  const ids = [
+    ...t.rows.flatMap((r) => [r.id, r.lodging, r.zone ?? "", r.transport ?? ""]),
+    ...t.levers.map((l) => l.id),
+  ];
+  /** Un texto del asiento no puede traer un número que no esté en la tabla, vaya suelto o pegado a una letra. */
   const sinNumerosSuyos = (donde: string, texto: unknown): void => {
     if (typeof texto !== "string") return;
-    for (const n of numerosDe(texto)) if (!numeros.has(n)) rojo(donde, `dice ${n}, que no está en la tabla`);
+    for (const n of numerosDeMas(texto, numeros, ids)) rojo(donde, `dice ${n}, que no está en la tabla`);
   };
 
   // 2. Las palancas: la lista fija, entera, cada una una vez y con su estado.
@@ -125,6 +131,9 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
     const r = filaDe("ways.different", distinta);
     if (r !== null && esObjeto(distinta)) {
       if (usadas.includes(r.id)) rojo("ways.different", "es la misma fila que otra manera: no es distinta");
+      // Ninguna manera se ofrece por debajo de la nota mínima: tampoco la distinta.
+      if (!(typeof r.score === "number" && r.score >= t.minimum_score))
+        rojo("ways.different", "la manera distinta no pasa de la nota mínima");
       if (!esTexto(distinta.lever) || !PALANCAS_DE_UNA_MANERA.includes(distinta.lever))
         rojo("ways.different", "no lleva una palanca que cambie una fila por otra");
       else if (distinta.lever === "other_zone") {
@@ -194,6 +203,7 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
   });
 
   if (!lista(entrega.unknowns).every(esTexto)) rojo("unknowns", "cada cosa que no se sabe va en una frase");
+  lista(entrega.unknowns).forEach((v, i) => sinNumerosSuyos(`unknowns[${i}]`, v));
   if (distinta === "none" && lista(entrega.unknowns).length === 0)
     rojo("unknowns", "no hay manera distinta y no dice por qué");
   return { verde: rojos.length === 0, rojos };

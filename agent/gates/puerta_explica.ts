@@ -9,7 +9,7 @@ import type { ParaExplicar } from "../scripts/explica.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { numerosEn } from "./puerta_cruce.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
-import { numerosDe, pegasDelTexto } from "./textos.ts";
+import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 
 /** Lo que tuvo delante el asiento, y los avisos que la casa pone en lo que se entrega. */
 export type MaterialDeExplicar = { viaje: Entendido; dado: ParaExplicar; avisos: string[] };
@@ -29,6 +29,38 @@ export function hayAlgoSinSaber(dado: ParaExplicar): boolean {
   return deLasManeras || dado.checks.some((c) => c.status !== "ok");
 }
 
+/** Los campos del material cuyo texto es un nombre: un número dentro de un nombre se puede decir. */
+const NOMBRES = ["lodging_label", "zone_name"];
+const ES_FECHA = /^\d{4}-\d{2}-\d{2}/;
+
+/**
+ * Los números que el que explica puede decir: los que calculó la casa. Son los campos que son números, los de los
+ * nombres y las fechas, los del grupo que viaja y los de las comprobaciones del que cruza, que ya pasaron su puerta
+ * contra la tabla. Los que van dentro de una frase de otro asiento o del viajero no cuentan: una frase puede traer
+ * un precio o un teléfono que nadie calculó, y por ahí se colaría hasta el viajero.
+ */
+export function numerosDeLaCasa(m: MaterialDeExplicar): Set<number> {
+  const dados = new Set<number>();
+  const recorre = (algo: unknown, campo: string): void => {
+    if (typeof algo === "number" && Number.isFinite(algo)) {
+      dados.add(algo);
+      dados.add(Math.abs(algo));
+    } else if (typeof algo === "string") {
+      if (NOMBRES.includes(campo) || ES_FECHA.test(algo)) for (const n of numerosDe(algo)) dados.add(n);
+    } else if (Array.isArray(algo)) for (const x of algo) recorre(x, campo);
+    else if (esObjeto(algo)) for (const [k, x] of Object.entries(algo)) recorre(x, k);
+  };
+  recorre(m.dado.ways, "");
+  recorre(m.dado.levers, "");
+  for (const n of numerosEn(m.dado.checks)) dados.add(n);
+  const v = m.viaje;
+  for (const n of numerosDe(`${v.dates.check_in} ${v.dates.check_out}`)) dados.add(n);
+  const grupo = [v.travellers.adults, v.travellers.children.length, ...v.travellers.children];
+  for (const n of [...grupo, v.travellers.adults + v.travellers.children.length, m.dado.ways.ways.length])
+    if (Number.isFinite(n)) dados.add(n);
+  return dados;
+}
+
 export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredicto {
   const rojos: Rojo[] = [];
   const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
@@ -42,12 +74,12 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
   for (const nombre of ["ways", "levers", "unknowns"])
     if (nombre in entrega && !Array.isArray(entrega[nombre])) rojo(nombre, "no es una lista");
 
-  const numeros = numerosEn([m.dado.ways, m.dado.levers, m.viaje]);
-  /** Un texto para el viajero: con algo dicho, sin palabras prohibidas y sin números que no se le dieron. */
+  const numeros = numerosDeLaCasa(m);
+  /** Un texto para el viajero: con algo dicho, sin palabras prohibidas y sin números que no dio la casa. */
   const texto = (donde: string, v: unknown): void => {
     if (!esTexto(v)) return rojo(donde, "está en blanco");
     for (const pega of pegasDelTexto(v)) rojo(donde, pega);
-    for (const n of numerosDe(v)) if (!numeros.has(n)) rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+    for (const n of numerosDeMas(v, numeros)) rojo(donde, `dice ${n}, que no está en lo que se le dio`);
   };
 
   // Cada manera, una vez, con su porqué, lo que gana y lo que pierde.
@@ -86,7 +118,7 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
 
   // Los avisos de siempre, que pone la casa.
   // En el idioma del viajero si están escritos en él; si no, en inglés: nunca sin ellos.
-  const deSiempre = AVISOS[m.viaje.language] ?? AVISOS.en;
+  const deSiempre = Object.hasOwn(AVISOS, m.viaje.language) ? AVISOS[m.viaje.language] : AVISOS.en;
   if (!m.avisos.includes(deSiempre.ia)) rojo("avisos", "falta el aviso de que está hecho con IA");
   if (!m.avisos.includes(deSiempre.precios)) rojo("avisos", "falta el aviso de que los precios son orientativos");
   return { verde: rojos.length === 0, rojos };
