@@ -42,7 +42,12 @@ export const PESOS_DEL_VUELO = { puertaAPuerta: 0.35, escalas: 0.25, horarios: 0
 export const MAS_POR_GUSTO = 3;
 
 /** La zona: los minutos andando a los que queda la mitad de lo que se va a ver. Hasta aquí, diez; desde aquí, cero. */
-export const ZONA = { minutosDeDiez: 8, minutosDeCero: 40 } as const;
+/**
+ * Ajustada con Lisboa (23-nov): con el cero a cuarenta minutos, un hotel a treinta y cinco andando del centro, que
+ * son diez en metro, sacaba casi un cero. Solo se sabe lo que se anda: mientras no haya transporte público en los
+ * datos, la escala es larga, y una hora andando es el cero.
+ */
+export const ZONA = { minutosDeDiez: 10, minutosDeCero: 60 } as const;
 
 /** Las opiniones se corrigen: una nota con pocas opiniones tira hacia esta media, con este peso. */
 export const OPINIONES = { media: 8, comoSiHubiera: 150, notaDeCero: 6, notaDeDiez: 9.6 } as const;
