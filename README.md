@@ -17,5 +17,6 @@ Está en diseño. Por dónde vamos, en [docs/memoria.md](docs/memoria.md); el en
 | [docs/paginas/run.html](docs/paginas/run.html) | El run en un dibujo, publicado en https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw |
 | [docs/puertas.md](docs/puertas.md) | Borrador: qué mide cada puerta, cómo, y lo que no puede ver |
 | [docs/datos.md](docs/datos.md) | El mapa de los datos: cada pieza de información que hace falta y de dónde sale |
+| [docs/condiciones.md](docs/condiciones.md) | Las condiciones de las tres fuentes, leídas: lo que dejan y lo que hay que cerrar |
 | [docs/fuentes.md](docs/fuentes.md) | Las fuentes de datos de la búsqueda: qué hay, con sus condiciones y su precio, y la recomendación |
 | [docs/piezas.md](docs/piezas.md) | Borrador: los asientos, el código, las puertas y los datos que salen de lo hablado |

@@ -81,8 +81,21 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **El PM se registró también en Parallel**, por su índice de imágenes, y dio su clave por el formulario seguro. Al
   probarlo, la sesión vio que busca además hoteles y pisos, con el precio de Booking.com y de Airbnb y su enlace: lo
   comprobado, en `datos.md`. Falta saber de dónde saca esos datos y leer sus condiciones.
+- **Las condiciones de las tres fuentes, leídas** (el PM: «lee las condiciones de todo»). En `condiciones.md`. Para
+  probar y montar las bases, valen ya; para salir con un producto faltan tres respuestas, que van a pendientes.
+- **La primera búsqueda entera, de prueba**, corrió con Lisboa: lo que enseñó, en `datos.md`.
 
 ## Pendientes
+
+- **Preguntar a LiteAPI, por escrito** (23-nov): si nuestra IA puede valorar sus fotos y sus opiniones para el
+  viajero, y si sus datos se pueden cruzar con los de otras fuentes; sus condiciones prohíben «obras derivadas» y
+  «mapear» sus datos con terceros. Y qué cuenta como búsqueda y qué cuesta pasarse. La pregunta la manda el PM.
+- **El riesgo de Parallel** (23-nov): no dice de dónde saca los precios de Booking.com y de Airbnb, y todo el riesgo
+  frente a terceros es del cliente. Decide el PM, con su abogado, si se enchufa en el producto.
+- **Preguntar al soporte de Travelpayouts** (23-nov): si el proyecto, declarado como web de contenido, vale para una
+  web de planificar viajes con un agente de IA que aún no es pública. La manda el PM.
+- **La clave de producción de LiteAPI** (23-nov): la de pruebas da datos de muestra; la de verdad pide una tarjeta y
+  los datos de la empresa. Del PM.
 
 - **Qué se enchufa hoy en la herramienta de datos** (22-nov): el nivel A, limpio (LiteAPI y la web propia de cada
   finalista), o el A más el B, con un servicio que lee Google Hotels por nosotros, de pago y con riesgo legal y de

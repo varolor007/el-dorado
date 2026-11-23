@@ -17,9 +17,13 @@ pieza; lo mirado de cada fuente y lo comprobado, en [fuentes.md](fuentes.md). El
 solución parcial. El 23-nov el PM se registró en LiteAPI y en Travelpayouts y dio sus claves por el formulario seguro
 (están en su entorno, no en el repositorio): las dos responden, y lo que trae cada una está en datos.md. Se registró
 también en Parallel, que además de imágenes busca hoteles y pisos con el precio de Booking.com y de Airbnb: funciona,
-y falta saber de dónde saca esos datos y leer sus condiciones. Lo siguiente: la prueba entera con una ciudad (la
-lista, los mínimos y la ficha de unos finalistas con cada fuente) y leer las condiciones de LiteAPI sobre IA antes de
-montar sobre sus fotos el asiento que mira. El dibujo del run (`paginas/run.html`, publicado en
+y falta saber de dónde saca esos datos y leer sus condiciones. Hecho el 23-nov: la primera búsqueda entera, de prueba,
+con Lisboa (lo que enseñó, en datos.md), y las condiciones de las tres fuentes, leídas
+([condiciones.md](condiciones.md)): para probar y montar las bases valen ya; para salir con un producto faltan tres
+respuestas (LiteAPI, sobre la IA y cruzar datos; el PM, sobre el riesgo de Parallel; Travelpayouts, sobre el
+proyecto), en «Pendientes» del registro. Lo siguiente, a decisión del PM: pasar la sonda de la prueba a código de
+verdad en el repositorio, el recolector con sus enchufes, su puerta y sus pruebas con datos inventados; sería empezar
+a construir antes de la hoja, y por eso se le pregunta. El dibujo del run (`paginas/run.html`, publicado en
 https://claude.ai/artifact/8Sbboq8J5gdjZARHRG7Gyw) es del 21-nov y aún lleva los dos buscadores como asientos: se
 rehace con su decisión. Lo siguiente: esa decisión y sus cambios a los asientos; después, lo que falta por hablar (al
 final de piezas.md) y la etapa 2.
