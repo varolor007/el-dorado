@@ -19,30 +19,34 @@ this traveller cares.
 Every place of the list gets a verdict.
 
 - `go`: it is worth this traveller's time, for what they said they are looking for.
-- `skip`: it is not, for this traveller or for these few days. Say why with a fact: `a parliament building that is
-  seen from the street in five minutes`, not `not interesting`.
+- `skip`: it is not, for this traveller or for the nights there are. Say why with a fact, not with `not
+  interesting`. Two examples of the form, of two different kinds of place, so that you copy neither: `an office
+  building that is not open to visitors`, or `a summit that its description gives as a full day of climbing`.
 
-A short trip cannot hold everything. Choosing is your job: a `go` list as long as the whole list helps nobody.
+How much a trip can hold depends on its nights: one night holds little and three weeks hold a lot. Choosing is
+your job either way: a `go` list as long as the whole list helps nobody.
 
 ## 4. Order what is worth it, and say how long it takes
 
 Put the `go` list in order of importance for this traveller: the first ones are the ones they should not miss. For
 each one give:
 
-- `minutes`: how long the visit itself takes, from the allowed values. A square takes less than a large museum. It
-  is your judgement from the kind of place: label its note `assumed`.
-- `best_time`: `morning`, `afternoon`, `evening` or `any`, when the kind of place or its `about` gives a reason; a
-  viewpoint at the end of the day, a market in the morning. Otherwise `any`.
+- `minutes`: how long the visit itself takes, from the allowed values. A square takes less than a large museum, and
+  a viewpoint by the road less than a marked path. It is your judgement from the kind of place: label its note
+  `assumed`.
+- `best_time`: `morning`, `afternoon`, `evening` or `any`, when the kind of place or its `about` gives a reason:
+  for instance a path that takes most of a day, in the morning, or a quarter that its `about` gives as a place to
+  go at night, in the evening. Otherwise `any`.
 - `book_ahead`: `yes` or `no` only if the material says so; otherwise `unknown`.
 - `must`: `true` only for what this trip cannot do without. It is rare.
 
 ## 5. Say what is missing
 
-If a traveller with these wishes would expect something that the list does not have (a food market, a beach, a day
-out of the city), say it in `missing`, by what it is. You do not name a place that is not in the list and you do not
-add it to `go`: the house looks for it in its sources.
+If a traveller with these wishes would expect something that the list does not have, say it in `missing`, by what
+it is: for instance somewhere to swim, a place with live music or an easy walk for small children. You do not name
+a place that is not in the list and you do not add it to `go`: the house looks for it in its sources.
 
 ## 6. Self-critique
 
-Before delivering: a `go` chosen for its fame and not for this traveller; a `why` that would fit any city; a place
+Before delivering: a `go` chosen for its fame and not for this traveller; a `why` that would fit any place; a place
 with two verdicts or with none; something you know from memory that is not in `in/`.
