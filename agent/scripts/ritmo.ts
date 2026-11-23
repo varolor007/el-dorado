@@ -4,6 +4,9 @@
 // nada de fuera: lo corren igual la casa y la web, al instante.
 
 import type { Dia, Parada, Punto, Ritmo } from "../output/viaje.ts";
+import { andando, centroDe, enLineaRecta } from "../tools/distancias.ts";
+
+export { andando, enLineaRecta, RODEO } from "../tools/distancias.ts";
 
 /** Cuántas paradas caben en un día, y cuántos minutos de visita, con cada ritmo. Son de partida. */
 export const CABE: Record<Ritmo, { paradas: number; minutos: number }> = {
@@ -12,27 +15,8 @@ export const CABE: Record<Ritmo, { paradas: number; minutos: number }> = {
   full: { paradas: 7, minutos: 480 },
 };
 
-/** Lo que se anda de más sobre la línea recta: las calles no van rectas. */
-export const RODEO = 1.3;
-
 /** El salto más largo, en línea recta, que se acepta para meter una parada en un día que no es el de su zona. */
 export const SALTO = 2000;
-
-const RADIO_DE_LA_TIERRA = 6_371_000;
-
-/** Los metros en línea recta entre dos puntos del mapa. */
-export function enLineaRecta(a: Punto, b: Punto): number {
-  const rad = (g: number): number => (g * Math.PI) / 180;
-  const dLat = rad(b.lat - a.lat);
-  const dLon = rad(b.lon - a.lon);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
-  return 2 * RADIO_DE_LA_TIERRA * Math.asin(Math.sqrt(h));
-}
-
-/** Lo que se anda de un sitio a otro: la línea recta con su rodeo, redondeada a la decena. */
-export function andando(a: Punto, b: Punto): number {
-  return Math.round((enLineaRecta(a, b) * RODEO) / 10) * 10;
-}
 
 export type Reparto = { dias: Dia[]; fuera: string[] };
 
@@ -45,13 +29,6 @@ export function fechasDe(entrada: string, salida: string): string[] {
 }
 
 const puntosDe = (d: { paradas: Parada[] }): Punto[] => d.paradas.map((p) => p.punto);
-
-function centro(puntos: Punto[]): Punto {
-  return {
-    lat: puntos.reduce((s, p) => s + p.lat, 0) / puntos.length,
-    lon: puntos.reduce((s, p) => s + p.lon, 0) / puntos.length,
-  };
-}
 
 /** Todas las maneras de ordenar una lista corta. */
 function ordenes<T>(lista: T[]): T[][] {
@@ -136,7 +113,7 @@ export function repartir(
     puestas.add(p.id);
   };
   const conParadas = (): { i: number; centro: Punto }[] =>
-    dias.flatMap((d, i) => (d.paradas.length === 0 ? [] : [{ i, centro: centro(puntosDe(d)) }]));
+    dias.flatMap((d, i) => (d.paradas.length === 0 ? [] : [{ i, centro: centroDe(puntosDe(d)) }]));
   const masCercano = (p: Parada): number => {
     const zonas = conParadas().sort((a, b) => enLineaRecta(a.centro, p.punto) - enLineaRecta(b.centro, p.punto));
     return zonas[0]?.i ?? 0;

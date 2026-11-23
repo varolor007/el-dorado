@@ -1,14 +1,10 @@
 // Saber que dos fuentes hablan del mismo alojamiento: por lo cerca que están y por lo que se parecen sus nombres. Por
 // el nombre solo no vale: en la primera prueba, de cinco se encontró uno.
 
-const RADIO_TIERRA = 6_371_000;
+import { enLineaRecta } from "../tools/distancias.ts";
 
 export function metros(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const rad = (g: number): number => (g * Math.PI) / 180;
-  const a =
-    Math.sin(rad(lat2 - lat1) / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
-  return 2 * RADIO_TIERRA * Math.asin(Math.sqrt(a));
+  return enLineaRecta({ lat: lat1, lon: lon1 }, { lat: lat2, lon: lon2 });
 }
 
 const RELLENO = new Set(["hotel", "hotels", "the", "by", "and", "de", "la", "el", "lisbon", "lisboa"]);

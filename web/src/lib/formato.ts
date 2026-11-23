@@ -1,6 +1,7 @@
 // Cómo se escribe cada cosa en la web: el dinero, las fechas, lo que se anda, las coordenadas y los enlaces al mapa.
 
 import type { Punto } from "../../../agent/output/viaje.ts";
+import { minutosAndando } from "../../../agent/tools/distancias.ts";
 
 export function dinero(total: number, moneda: string, idioma: string): string {
   return new Intl.NumberFormat(idioma, { style: "currency", currency: moneda, maximumFractionDigits: 0 }).format(total);
@@ -28,7 +29,7 @@ export function andar(metros: number, idioma: string): { lejos: string; minutos:
     metros < 1000
       ? `${Math.round(metros / 10) * 10} m`
       : `${new Intl.NumberFormat(idioma, { maximumFractionDigits: 1 }).format(metros / 1000)} km`;
-  return { lejos, minutos: Math.max(1, Math.round(metros / 75)) };
+  return { lejos, minutos: minutosAndando(metros) };
 }
 
 /** «1 h 30 min». */
