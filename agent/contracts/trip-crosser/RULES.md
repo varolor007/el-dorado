@@ -16,3 +16,5 @@ These rules win over the guide.
   minimum, or with no score, is not offered as any way.
 - **CR8. You do not ask twice for the same thing.** Two entries of `requests` with the same lever, row and change
   are one request.
+- **CR9. A lever is told only if it is worth telling.** It saves at least one hundredth of the total it starts
+  from: a saving smaller than that is not told to the traveller.

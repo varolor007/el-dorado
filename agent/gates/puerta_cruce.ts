@@ -5,6 +5,7 @@
 // más de dos rondas. No mide si había un viaje mejor sin probar: eso lo cubre que la lista de palancas sea fija.
 
 import {
+  AHORRO_QUE_SE_CUENTA,
   PALANCAS,
   PALANCAS_DE_UNA_MANERA,
   PALANCAS_QUE_SE_CUENTAN,
@@ -161,6 +162,9 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
     if (l.status !== "priced" || typeof l.saves !== "number")
       return rojo(donde, "cuenta una palanca que no tiene precio");
     if (!(l.saves > 0)) rojo(donde, "cuenta una palanca que no ahorra");
+    // Lo que ahorra, sobre el total del que sale: por debajo de su parte mínima no merece contarse.
+    else if (typeof l.total === "number" && l.saves / (l.saves + l.total) < AHORRO_QUE_SE_CUENTA)
+      rojo(donde, "cuenta una palanca que ahorra menos de lo que merece contarse");
     if (cruda.saves !== l.saves) rojo(donde, `dice que ahorra ${String(cruda.saves)} y la tabla dice ${l.saves}`);
     const cambiada = typeof l.change.row === "string" ? fila.get(l.change.row) : undefined;
     if (cambiada !== undefined && cambiada.discarded !== "") rojo(donde, "cuenta un cambio a una fila descartada");

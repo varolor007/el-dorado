@@ -55,5 +55,8 @@ export const NOCHES_QUE_SE_MUEVEN = [-1, 1];
 export const RONDAS = 2;
 export const PETICIONES_POR_RONDA = 6;
 
-/** Una palanca que ahorra menos que esto no se le cuenta al viajero. */
-export const AHORRO_QUE_SE_CUENTA = 10;
+/**
+ * Una palanca que ahorra menos que esta parte del total del que sale no se le cuenta al viajero. Va en proporción y
+ * no en dinero, porque diez no es lo mismo en una moneda que en otra ni en un viaje que en otro.
+ */
+export const AHORRO_QUE_SE_CUENTA = 0.01;

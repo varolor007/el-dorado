@@ -30,9 +30,10 @@ test("el contrato nombra los estados, las palancas de una manera y lo que se pue
   for (const marca of ["cheapest", "best_value", "different"]) assert.ok(entrega.includes("`" + marca + "`"));
 });
 
-test("las normas del que cruza van de la CR1 a la CR8, y el contrato dice que no hace cuentas", () => {
+test("las normas del que cruza van de la CR1 a la CR9, y el contrato dice que no hace cuentas", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(CR\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["CR1", "CR2", "CR3", "CR4", "CR5", "CR6", "CR7", "CR8"]);
+  assert.deepEqual(codigos, ["CR1", "CR2", "CR3", "CR4", "CR5", "CR6", "CR7", "CR8", "CR9"]);
+  assert.match(leer("RULES.md"), /saves at least one hundredth of the total it starts\s+from/);
   // Lo que pide la puerta, lo dice el contrato: la distinta no baja de la nota mínima, y no se pide dos veces.
   assert.match(leer("RULES.md"), /is not below `minimum_score`/);
   assert.match(leer("RULES.md"), /You do not ask twice for the same thing/);
@@ -260,4 +261,19 @@ test("trampa: una fila que no es de las fechas del viaje", () => {
 
 test("las palancas de la lista dicen cómo se leen, para el asiento", () => {
   for (const p of PALANCAS) assert.ok(p.what.length > 10, p.id);
+});
+
+test("trampa: cuenta una palanca que ahorra menos de lo que merece contarse", () => {
+  const tabla = structuredClone(TABLA);
+  const contada = tabla.levers.find((l) => l.status === "priced" && typeof l.total === "number")!;
+  // Ahorra uno sobre un total de cientos: menos de la centésima parte.
+  contada.saves = 1;
+  const rojos = rojosDe((e) => (e.tell = [{ lever_row: contada.id, saves: 1, why: "a small saving" }]), {
+    tabla,
+    viaje: ENTENDIDO,
+  });
+  assert.deepEqual(
+    rojos.filter((r) => r.startsWith("tell[0]")),
+    ["tell[0]: cuenta una palanca que ahorra menos de lo que merece contarse"],
+  );
 });
