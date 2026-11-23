@@ -3,6 +3,7 @@ node_modules/
 .env.*
 mesa/
 *.log
+.claude/worktrees/
 
 # La web
 web/node_modules/

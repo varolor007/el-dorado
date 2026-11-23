@@ -8,6 +8,8 @@ import { carpetaDeLaMesa } from "../../agent/launcher/mesa.ts";
 
 const RAIZ = resolve(import.meta.dirname, "..", "..");
 const FUERA = new Set([".git", "node_modules", ".next"]);
+// Las copias de trabajo de quien revisa, que no son del repositorio: cada una es el repositorio entero otra vez.
+const COPIAS = join(".claude", "worktrees");
 const DE_TEXTO = /\.(md|ts|tsx|mjs|js|css|json|html|yml|yaml|txt)$/;
 
 function archivos(carpeta: string): string[] {
@@ -15,6 +17,7 @@ function archivos(carpeta: string): string[] {
   for (const nombre of readdirSync(carpeta)) {
     if (FUERA.has(nombre)) continue;
     const ruta = join(carpeta, nombre);
+    if (relative(RAIZ, ruta) === COPIAS) continue;
     if (statSync(ruta).isDirectory()) salida.push(...archivos(ruta));
     else salida.push(relative(RAIZ, ruta));
   }
