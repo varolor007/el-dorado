@@ -4,6 +4,7 @@
 // casa. No mide si el texto es bueno: eso lo cubre quien lo lee.
 
 import { EL_MAS_BARATO, LARGO_DE_UN_TEXTO, PROHIBIDAS, QUE_ENCONTRAMOS } from "../data/palabras.ts";
+import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
 
 /** Lo que no es letra ni frase: saltos, tabuladores, marcas de control y las que cambian el sentido de la lectura. */
 const DE_CONTROL = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁩﻿]/u;
@@ -152,4 +153,18 @@ export function numerosDeMas(texto: string, dados: Set<number>, ids: string[] = 
   const { leidos, ilegibles } = leerNumeros(texto, ids);
   const deMas = leidos.filter((l) => !l.lecturas.some((una) => una.every((n) => dados.has(n)))).map((l) => l.crudo);
   return ilegibles ? [...deMas, "cifras que no se saben leer"] : deMas;
+}
+
+/**
+ * Un nombre es un nombre: corto, en una línea y sin direcciones. El de un sitio o el de una zona acaba delante del
+ * viajero y sale a buscar a otras fuentes, con sus palabras: no puede llevar dentro otra cosa. Vale para el que
+ * escribe un asiento (lo mira la puerta 3) y para el que viene de fuera, de los datos abiertos o del viajero.
+ */
+export const esNombre = (v: unknown): v is string =>
+  typeof v === "string" && v.trim() !== "" && v.length <= LETRAS_DE_UN_NOMBRE && !/[\n\r\t<>{}]|https?:|www\./i.test(v);
+
+/** Un nombre que viene de fuera: sin los espacios de alrededor si es un nombre, y null si no lo es. */
+export function nombreDeFuera(texto: string): string | null {
+  const limpio = typeof texto === "string" ? texto.trim() : "";
+  return esNombre(limpio) ? limpio : null;
 }

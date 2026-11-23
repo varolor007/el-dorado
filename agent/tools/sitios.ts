@@ -4,6 +4,7 @@
 // sitio la lleva. Aquí no se elige qué merece el tiempo del viajero: eso es de un asiento.
 
 import { ATRACCION, BLANDAS, DIVISIONES, GENERICA, NO_SE_VA_A_VER, RAICES } from "../data/sitios.ts";
+import { nombreDeFuera } from "../gates/textos.ts";
 import type { Encuadre, Foto, Punto } from "../output/viaje.ts";
 
 export type Sitio = {
@@ -123,6 +124,18 @@ export type Candidato = Omit<Sitio, "clase"> & { clasesQ: string[] };
 
 const esQ = (v: string): boolean => /^Q\d+$/.test(v);
 
+/**
+ * Un trozo de una dirección, leído como texto. La fuente lo manda con sus signos de dirección, y un «%» suelto no se
+ * puede leer: null, y quien lo pedía se queda sin ello, en vez de caerse todo lo demás.
+ */
+function deDireccion(trozo: string): string | null {
+  try {
+    return decodeURIComponent(trozo).replaceAll("_", " ");
+  } catch {
+    return null;
+  }
+}
+
 /** Lo que devuelve Wikidata de una caja, leído sin fiarse de su forma: un candidato por identificador. */
 export function leerCandidatos(json: unknown, visto: string): Candidato[] {
   const candidatos = new Map<string, Candidato>();
@@ -132,7 +145,9 @@ export function leerCandidatos(json: unknown, visto: string): Candidato[] {
     const lat = Number(valor(fila, "lat"));
     const lon = Number(valor(fila, "lon"));
     const enlaces = Number(valor(fila, "enlaces"));
-    const nombre = valor(fila, "nombre") ?? valor(fila, "nombreEn");
+    // La etiqueta la escribe quien quiera en los datos abiertos, y de aquí va a la pantalla del viajero y, como
+    // nombre de zona, a otra fuente: si no es un nombre (corto, en una línea y sin direcciones), la cosa no entra.
+    const nombre = nombreDeFuera(valor(fila, "nombre") ?? valor(fila, "nombreEn") ?? "");
     if (id === undefined || candidatos.has(id) || nombre === null) continue;
     if (!(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180) || !(enlaces >= 0)) continue;
     const foto = valor(fila, "foto");
@@ -147,7 +162,7 @@ export function leerCandidatos(json: unknown, visto: string): Candidato[] {
       descripcion: valor(fila, "about"),
       articulo: deWikimedia(valor(fila, "articulo")) ?? deWikimedia(valor(fila, "articuloEn")),
       articuloEnIngles: deWikimedia(valor(fila, "articuloEn")),
-      archivo: archivo === null ? null : decodeURIComponent(archivo).replaceAll("_", " "),
+      archivo: archivo === null ? null : deDireccion(archivo),
       fuente: "wikidata",
       visto,
     });
@@ -190,9 +205,15 @@ export function clasificar(candidatos: Candidato[], raicesDe: Map<string, string
   return sitios.sort((a, b) => b.enlaces - a.enlaces || a.id.localeCompare(b.id)).slice(0, cuantos);
 }
 
+/** Lo más que se lee del autor o de la licencia de una foto, con sus marcas: de ahí sale lo que se enseña. */
+const LETRAS_CON_MARCAS = 2000;
+
 const sinMarcas = (html: unknown): string | null => {
   if (typeof html !== "string") return null;
-  const limpio = html
+  // Se corta antes de limpiar: quitar las marcas a un texto enorme hecho de «<» tarda con el cuadrado de su largo,
+  // y la casa se queda parada. Si el corte cae dentro de una marca, lo que queda de ella tampoco es texto.
+  const corto = html.length > LETRAS_CON_MARCAS ? html.slice(0, LETRAS_CON_MARCAS).replace(/<[^>]*$/, "") : html;
+  const limpio = corto
     .replace(/<[^>]*>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
@@ -353,7 +374,7 @@ export async function fotosDe(archivos: string[], o: Salida = {}, ancho = 640): 
 export async function resumenesDe(sitios: Sitio[], o: Salida = {}): Promise<Map<string, string>> {
   const titulo = (s: Sitio): string | null => {
     const m = /^https:\/\/en\.wikipedia\.org\/wiki\/(.+)$/.exec(s.articuloEnIngles ?? "");
-    return m === null ? null : decodeURIComponent(m[1]).replaceAll("_", " ");
+    return m === null ? null : deDireccion(m[1]);
   };
   const conTitulo = sitios.flatMap((s) => {
     const t = titulo(s);

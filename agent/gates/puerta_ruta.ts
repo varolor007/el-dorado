@@ -5,17 +5,14 @@
 // viajero, que la puede cambiar.
 
 import { COSAS } from "../data/gustos.ts";
-import {
-  ANCLAS_POR_ZONA,
-  CERCA_POR_ZONA,
-  LETRAS_DE_UN_NOMBRE,
-  MEDIOS,
-  NOCHES_POR_BASE,
-  RADIOS,
-  ZONAS_POR_BASE,
-} from "../data/ruta.ts";
+import { ANCLAS_POR_ZONA, CERCA_POR_ZONA, MEDIOS, NOCHES_POR_BASE, RADIOS, ZONAS_POR_BASE } from "../data/ruta.ts";
 import { FORMAS_DE_VIAJE, SIN_SABER, type Entendido, type Lugar } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
+import { esNombre } from "./textos.ts";
+
+// Qué es un nombre (corto, en una línea y sin direcciones) se dice en `textos.ts`, para que lo use también quien lee
+// nombres de fuera. Sigue saliendo de aquí, que es donde estaba.
+export { esNombre };
 
 /** Lo que tuvo delante el asiento: el viaje, sus noches, los sitios de los datos y los traslados que se saben. */
 export type MaterialDeRuta = {
@@ -32,13 +29,6 @@ const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object
 const esTexto = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
 const lista = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const entero = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v);
-
-/**
- * Un nombre es un nombre: corto, en una línea y sin direcciones. El de una zona sale después a buscar a otras
- * fuentes, con sus palabras: no puede llevar dentro otra cosa.
- */
-const esNombre = (v: unknown): v is string =>
-  esTexto(v) && v.length <= LETRAS_DE_UN_NOMBRE && !/[\n\r\t<>{}]|https?:|www\./i.test(v);
 
 /** Los imprescindibles que son de la ruta: los que no son una cosa del alojamiento. */
 export function imprescindiblesDeLaRuta(viaje: Entendido): string[] {

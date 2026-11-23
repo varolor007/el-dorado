@@ -6,7 +6,8 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { LETRAS_DE_UN_NOMBRE, MEDIOS, RADIOS } from "../../agent/data/ruta.ts";
-import { imprescindiblesDeLaRuta, puertaRuta, type MaterialDeRuta } from "../../agent/gates/puerta_ruta.ts";
+import { esNombre, imprescindiblesDeLaRuta, puertaRuta, type MaterialDeRuta } from "../../agent/gates/puerta_ruta.ts";
+import { nombreDeFuera } from "../../agent/gates/textos.ts";
 import { FORMAS_DE_VIAJE, type EntregaDeRuta } from "../../agent/scripts/formas.ts";
 import { diasDe, lugarDe, resolverZonas } from "../../agent/scripts/ruta.ts";
 import { minutosEntre } from "../../agent/tools/distancias.ts";
@@ -187,6 +188,22 @@ test("trampa: una zona cuyo nombre no es un nombre: sale a buscar a otras fuente
     rojosDe((e) => (e.bases[0].name = "Villa\nInventada")),
     ["bases[0]: no dice dónde se duerme, con un nombre corto"],
   );
+});
+
+test("un nombre que viene de fuera vale recortado si es un nombre, y si no lo es, no vale", () => {
+  assert.equal(nombreDeFuera("  Villa Inventada "), "Villa Inventada");
+  assert.equal(nombreDeFuera("Villa\nInventada"), null);
+  assert.equal(nombreDeFuera("Villa Inventada, see https://example.com/pay"), null);
+  assert.equal(nombreDeFuera("Villa Inventada www.example.com"), null);
+  assert.equal(nombreDeFuera("   "), null);
+  assert.equal(nombreDeFuera("x".repeat(LETRAS_DE_UN_NOMBRE + 1)), null);
+  // Lo que se mide es el nombre, no los espacios de alrededor.
+  assert.equal(nombreDeFuera(` ${"x".repeat(LETRAS_DE_UN_NOMBRE)} `), "x".repeat(LETRAS_DE_UN_NOMBRE));
+  // Lo que no es un texto tampoco es un nombre, venga de donde venga.
+  assert.equal(nombreDeFuera(7 as unknown as string), null);
+  // Es la misma regla que la puerta 3 le aplica al nombre de una zona.
+  assert.equal(esNombre("Villa Inventada"), true);
+  assert.equal(esNombre("Villa\nInventada"), false);
 });
 
 test("trampa: cuatro zonas en una base, o ninguna", () => {
