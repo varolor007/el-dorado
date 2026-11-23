@@ -43,7 +43,10 @@ export function useAlto(): number {
 export function useIdioma(): Idioma {
   const [idioma, setIdioma] = useState<Idioma>("en");
   useEffect(() => {
-    setIdioma(idiomaDe(new URLSearchParams(window.location.search).get("lang"), navigator.language));
+    const elegido = idiomaDe(new URLSearchParams(window.location.search).get("lang"), navigator.language);
+    setIdioma(elegido);
+    // La página dice en qué idioma está, para quien la lee con un lector de pantalla.
+    document.documentElement.lang = elegido;
   }, []);
   return idioma;
 }

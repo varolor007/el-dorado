@@ -242,7 +242,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | 10.6 | **Tu viaje, en el mapa.** Una capa por día, las paradas numeradas con su foto y sus flechas, y la hoja por pestañas: los días, con el ritmo y con quitar, añadir y mover una parada; dónde dormir, con las tres maneras; las cuentas, con las palancas, y los avisos. Arriba, tres cifras: lo que cuesta, las paradas y lo que se anda. | hecho |
 | 10.7 | **Las fichas.** La de un alojamiento, con sus fotos y cómo es con su prueba, y la de una parada, con su enlace a Google Maps y el autor de su foto. Falta la del transporte, que espera a tener un precio. | en parte |
 | 10.8 | **La portada.** Qué es, un viaje que se dibuja solo, cómo funciona en tres pasos y lo que cuida, con la puerta al mapa. En inglés y en español. Primera versión: falta qué cuesta, que es decisión tuya, y decidir con qué datos se hace el viaje de ejemplo. | en parte |
-| 10.9 | **En el móvil, para todos y rápida.** La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla. | pendiente |
+| 10.9 | **En el móvil, para todos y rápida.** En el móvil, la hoja sube desde abajo, el buscador se recoge en una línea y el carril va al pie. Todo lo que se pulsa tiene nombre, las pestañas y el registro en vivo se anuncian, la página dice en qué idioma está y nada se anima si pides menos movimiento. Las fotos de fuera llegan encogidas. | hecho |
 | 10.10 | **La revisión con capturas.** Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas. | pendiente |
 
 ## 11. La cuenta y tu panel

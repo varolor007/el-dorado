@@ -198,7 +198,7 @@ const bloques = [
       { n: "10.6", b: "Tu viaje, en el mapa.", t: "Una capa por día, las paradas numeradas con su foto y sus flechas, y la hoja por pestañas: los días, con el ritmo y con quitar, añadir y mover una parada; dónde dormir, con las tres maneras; las cuentas, con las palancas, y los avisos. Arriba, tres cifras: lo que cuesta, las paradas y lo que se anda.", estado: "hecho" },
       { n: "10.7", b: "Las fichas.", t: "La de un alojamiento, con sus fotos y cómo es con su prueba, y la de una parada, con su enlace a Google Maps y el autor de su foto. Falta la del transporte, que espera a tener un precio.", estado: "parte" },
       { n: "10.8", b: "La portada.", t: "Qué es, un viaje que se dibuja solo, cómo funciona en tres pasos y lo que cuida, con la puerta al mapa. En inglés y en español. Primera versión: falta qué cuesta, que es decisión tuya, y decidir con qué datos se hace el viaje de ejemplo.", estado: "parte" },
-      { n: "10.9", b: "En el móvil, para todos y rápida.", t: "La hoja de abajo en el móvil, el teclado, el lector de pantalla, menos movimiento si lo pides y el peso de cada pantalla.", estado: "pendiente" },
+      { n: "10.9", b: "En el móvil, para todos y rápida.", t: "En el móvil, la hoja sube desde abajo, el buscador se recoge en una línea y el carril va al pie. Todo lo que se pulsa tiene nombre, las pestañas y el registro en vivo se anuncian, la página dice en qué idioma está y nada se anima si pides menos movimiento. Las fotos de fuera llegan encogidas.", estado: "hecho" },
       { n: "10.10", b: "La revisión con capturas.", t: "Cada pantalla, en ancho y en móvil, en claro y en oscuro, y cada animación, miradas una a una antes de enseñártelas.", estado: "pendiente" },
     ],
   },

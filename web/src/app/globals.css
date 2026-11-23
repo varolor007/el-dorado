@@ -907,7 +907,7 @@ img {
   border-radius: var(--radio);
   background: var(--papel-2);
 }
-.palanca__ahorra {
+.palanca .palanca__ahorra {
   grid-row: span 2;
   align-self: center;
   font: 500 1.25rem/1 var(--titulos);
@@ -1329,6 +1329,11 @@ img {
   background: var(--ojo-tinte);
   color: var(--ojo);
   text-align: center;
+}
+.pestana {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 .titulo--grande {
   font-size: 1.8rem;

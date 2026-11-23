@@ -557,10 +557,12 @@ export function TuViaje(x: DeViaje) {
           </button>
         ))}
       </div>
-      {x.pestana === "days" && <Dias {...x} />}
-      {x.pestana === "stay" && <Dormir {...x} />}
-      {x.pestana === "money" && <Cuentas {...x} />}
-      {x.pestana === "notes" && <Avisos {...x} />}
+      <div className="pestana" role="tabpanel" aria-label={t.pestanas[x.pestana]}>
+        {x.pestana === "days" && <Dias {...x} />}
+        {x.pestana === "stay" && <Dormir {...x} />}
+        {x.pestana === "money" && <Cuentas {...x} />}
+        {x.pestana === "notes" && <Avisos {...x} />}
+      </div>
     </>
   );
 }
@@ -589,8 +591,8 @@ export function Ficha({ t, idioma, a, alVolver }: Comun & { a: Alojamiento; alVo
             {a.metros === null ? t.ficha.sinMetros : t.ficha.metros(a.metros)}
           </span>
           <div className="tira">
-            {a.fotos.slice(0, 10).map((f) => (
-              <img key={f} src={foto(f, 640)} alt="" loading="lazy" />
+            {a.fotos.slice(0, 10).map((f, i) => (
+              <img key={f} src={foto(f, 640)} alt={`${a.nombre}, ${i + 1}`} loading="lazy" />
             ))}
           </div>
         </div>
