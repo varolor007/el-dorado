@@ -3,22 +3,33 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 1, el primer asiento de IA** (el estado, punto a punto, en [plan.md](plan.md)). La hoja y el
-plan, firmados por el PM el 23-nov. De la tanda, hechos el método común de los asientos (2.4: su contrato, en inglés,
-en `agent/contracts/common/`, y la puerta de todos, `agent/gates/puerta_metodo.ts`) cómo se lanza un asiento (2.3:
-`agent/launcher/puesto.ts` y `asiento.ts`) y las fotos (3.6: `agent/tools/fotos.ts`). Del que mira el alojamiento (4.2), hecho el asiento
-(su contrato, en `agent/contracts/lodging-viewer/`; sus niveles, en `agent/scripts/niveles.ts`; la puerta 5, en
-`agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge, `agent/launcher/mirar.ts`); en curso, su prueba con
-los cinco finalistas de Lisboa, dos pasadas a ciegas por alojamiento, lanzadas a mano por la sesión. El
-23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de alojamiento, con su
-puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos biblias, versión 1: la
-hoja ([hoja.md](hoja.md)), con el formato de las hojas de Cortex, por momentos, y el plan ([plan.md](plan.md)), que
-sale de ella. Con su firma empieza la primera tanda: el primer asiento de IA, el que mira el alojamiento (2.3, 2.4,
-3.6 y 4.2), probado con los finalistas de Lisboa. Lo que el PM decidió ese día: es un MVP sin uso comercial, lo
-aprueba todo y lo legal de las fuentes lo verá con su abogado antes de vender. Los borradores de antes
-([asientos.md](asientos.md), [puertas.md](puertas.md), [oficio.md](oficio.md) y [piezas.md](piezas.md)) quedan como
-detalle: donde digan otra cosa, manda la hoja. Lo que trae cada fuente y lo que enseñó la primera prueba, en
-[datos.md](datos.md); sus condiciones, en [condiciones.md](condiciones.md).
+**Estamos aquí: la tanda 1, hecha, al visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)). La
+hoja y el plan, firmados por el PM el 23-nov. Ese mismo día se cerró la primera tanda, el primer asiento de IA:
+
+- **2.4, el método común**: su contrato, en inglés, en `agent/contracts/common/`, y la puerta de todos
+  (`agent/gates/puerta_metodo.ts`).
+- **2.3, cómo se lanza un asiento**: `agent/launcher/puesto.ts` y `asiento.ts`.
+- **3.6, las fotos**: `agent/tools/fotos.ts`.
+- **4.2, el que mira el alojamiento**: su contrato, en `agent/contracts/lodging-viewer/`; sus niveles, en
+  `agent/scripts/niveles.ts`; la puerta 5, en `agent/gates/puerta_como_es.ts`, y lo que lo prepara y lo recoge,
+  `agent/launcher/mirar.ts`.
+
+**El punto de situación de la tanda 1.** Se probó con los cinco finalistas de Lisboa, dos pasadas a ciegas por
+alojamiento, lanzadas a mano por la sesión: diez fichas, las dos puertas en verde en las diez, y las dos pasadas
+coinciden en 38 de 40 campos. Cada asiento tardó unos catorce minutos. La página para que el PM lo compare con sus
+ojos, en https://claude.ai/artifact/G2ATff6Kp9J9fq4hVn7xpE (sus fotos y sus fichas son datos de una búsqueda: viven en
+la mesa y en esa página, no aquí). Lo que enseñó, en [datos.md](datos.md). Deja tres decisiones del PM, en el
+registro: si «descuidado» se parte en dos campos (cómo se ve y cómo lo mantienen), cómo se abarata la mirada (encoger
+las fotos) y con quién piensa cada asiento en el producto. **La tanda 2 (de alojamientos a viajes: 1.1, 1.4, 4.3, 4.6
+y 4.7) no empieza sin su visto bueno.**
+
+Lo de antes: el 23-nov quedaron hechas las bases (el recolector, con un enchufe por fuente, y la búsqueda de
+alojamiento, con su puerta y sus pruebas: Lisboa corre de punta a punta, sin IA, en unos veinte segundos) y las dos
+biblias, versión 1. Lo que el PM decidió ese día: es un MVP sin uso comercial, lo aprueba todo y lo legal de las
+fuentes lo verá con su abogado antes de vender. Los borradores de antes ([asientos.md](asientos.md),
+[puertas.md](puertas.md), [oficio.md](oficio.md) y [piezas.md](piezas.md)) quedan como detalle: donde digan otra cosa,
+manda la hoja. Lo que trae cada fuente y lo que enseñaron las pruebas, en [datos.md](datos.md); sus condiciones, en
+[condiciones.md](condiciones.md).
 
 ## 1. Qué es
 
@@ -73,6 +84,8 @@ se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
 1. Leer el `CLAUDE.md` y esta memoria, por su «Estamos aquí».
 2. Trabajar en la rama de la sesión; mirar antes si otra rama `claude/...` va por delante.
 3. `npm install` y la batería (`node tests/bateria.mjs`): tiene que salir en verde antes de tocar nada.
-4. Para ver una búsqueda de verdad: la orden del `README.md`, con `NODE_USE_ENV_PROXY=1` delante en la nube.
+4. Para ver una búsqueda de verdad: la orden del `README.md`, con `NODE_USE_ENV_PROXY=1` delante en la nube. Para
+   mirar sus finalistas: `mirar.ts preparar`, lanzar cada asiento con su orden (un asiento por puesto, que lea su
+   `contract/README.md` y escriba solo en su `out/`) y `mirar.ts recoger`.
 5. Si hace falta el método, leer la hoja del ensamblador en `aurora-web`.
 6. Antes de lanzar algo nuevo que gaste (otra fuente de pago, un run del agente), el visto bueno del PM.

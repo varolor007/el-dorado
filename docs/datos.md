@@ -235,6 +235,29 @@ Con el punto 3.6 se bajaron las fotos de un finalista de Lisboa. Lo que enseñó
   asiento, y entonces dice «no se sabe». Verlas todas pide encogerlas antes, y eso necesita una pieza que hoy el
   código no lleva: por decidir.
 
+## La primera mirada de la IA a cinco alojamientos de verdad (23-nov)
+
+Con el punto 4.2 se probó el asiento que mira el alojamiento con los cinco finalistas de Lisboa, dos pasadas a ciegas
+por alojamiento: diez asientos, lanzados a mano por la sesión de trabajo. Las fichas quedan en la mesa, fuera del
+repositorio; lo que enseñaron:
+
+- **Entregan y pasan las puertas.** Diez de diez, con la puerta de todos y la puerta 5 en verde.
+- **Dos miradas ven casi lo mismo.** Rotulan igual 196 de 198 fotos y coinciden en 38 de 40 campos. Donde no
+  coinciden es donde la foto no alcanza: una piscina de la que solo se ve una esquina y una vista tras un visillo.
+- **Cuando la foto no está, dice «no se sabe».** Un hotel lista una piscina y ninguna de las treinta fotos dadas la
+  enseña: las dos pasadas dejan su nivel sin poner y lo explican, en vez de darle uno medio.
+- **Caza lo que existe pero no para ese viaje.** Las dos piscinas son exteriores y el viaje es en febrero: lo avisan,
+  marcado como deducido.
+- **Las opiniones pesan más que las fotos, y a veces demasiado.** En dos hoteles con fotos de habitación nueva, el
+  estado sale «descuidado» por averías sin arreglar o desgaste que repiten las opiniones recientes; en otro, la luz
+  sale «oscura» por opiniones que hablan de habitaciones sin ventana, aunque la foto enseña una. Las opiniones no
+  dicen de qué habitación son. Queda a decisión del PM si el estado se parte en dos campos.
+- **Lo que cuesta.** De once a dieciséis minutos por asiento, con unas cincuenta o sesenta lecturas cada uno. Lo que
+  más pesa son las fotos en grande, hasta cuarenta y dos por alojamiento.
+- **Lo que esta prueba no mide.** Si el nivel es el acertado: eso lo dicen los ojos del PM, con la página. Y que el
+  asiento no lea fuera de su puesto: aquí se le pidió, y el sello solo ve lo que escribe; en el producto se le quitan
+  las herramientas.
+
 ## Lo que se ve en el mapa
 
 - **Lo que hoy no tiene salida segura**: las fotos de viajeros (9) y los pisos de particulares (13). Sus salidas

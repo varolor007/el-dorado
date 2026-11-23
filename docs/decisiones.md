@@ -108,7 +108,34 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **La hoja y el plan, firmados** (el PM, 23-nov: «dale, sí»). Desde aquí mandan, y empieza la primera tanda: el
   primer asiento de IA, el que mira el alojamiento.
 
+- **La tanda 1, hecha** (la sesión, con el «dale, sí» del PM): el método común de los asientos y la puerta de todos
+  (2.4), cómo se lanza un asiento (2.3), las fotos (3.6) y el que mira el alojamiento con la puerta 5 (4.2). En esta
+  tanda los asientos los lanzó la sesión de trabajo, a mano: quién piensa en cada asiento en el producto sigue por
+  decidir.
+- **El que mira el alojamiento, a ciegas** (la sesión): no recibe ni el nombre, ni el precio, ni la nota, ni las
+  estrellas, ni el resumen de opiniones que hace la fuente. Sí las fechas, porque hay cosas que existen pero no para
+  ese viaje. En esta tanda no sale a internet: el contraste con otras webs espera al lector de webs (3.5).
+- **Otra pasada a ciegas, de serie en la prueba** (la sesión): cada finalista lo miran dos asientos que no saben el
+  uno del otro, y el código compara sus niveles. Es la medida de lo que las puertas no pueden ver.
+- **La prueba con los cinco finalistas de Lisboa** (23-nov): diez asientos, diez fichas; las dos puertas, en verde en
+  las diez; las dos pasadas rotulan igual 196 de 198 fotos y coinciden en 38 de 40 campos. Cada asiento tardó unos
+  catorce minutos. Lo que enseñó, en `datos.md`; la página para el PM, en
+  https://claude.ai/artifact/G2ATff6Kp9J9fq4hVn7xpE.
+- **Una nota puede hablar de toda una carpeta** (la sesión, por lo que enseñó la primera entrega): «ninguna foto
+  enseña un gimnasio» cita la carpeta de las fotos. El método y la puerta de todos lo aceptan.
+
 ## Pendientes
+
+Lo que deja la tanda 1, a decisión del PM:
+
+- **«Descuidado», ¿un campo o dos?** (23-nov): el estado sale «descuidado» en dos hoteles cuyas fotos se ven nuevas,
+  porque varias opiniones recientes hablan de averías sin arreglar o de desgaste y la norma dice que mandan las
+  opiniones. Las dos pasadas lo hicieron igual. La sesión propone partirlo en dos: cómo se ve (de las fotos) y cómo
+  lo mantienen (de las opiniones). Cambia la hoja: decide el PM.
+- **Abaratar la mirada** (23-nov): unos catorce minutos y mucha lectura por alojamiento es demasiado para el producto.
+  Lo que más pesa son las fotos en grande. Va con «Encoger las fotos», más abajo.
+- **Con quién piensa cada asiento en el producto**: en la tanda 1 lo hizo la sesión de trabajo. Es la fila «La IA» de
+  la hoja, por decidir.
 
 Lo de las tres fuentes, para antes de vender, con el abogado (el PM, 23-nov):
 
