@@ -149,9 +149,12 @@ const en = {
     ficha: "See it",
     elegir: "Sleep here",
     donde: (zona: string | null, min: number | null) =>
-      [zona === null ? "" : `In ${zona}`, min === null ? "" : `half of what you will see is within ${min} min on foot`]
+      [
+        zona === null ? "" : `Around ${zona}.`,
+        min === null ? "" : `Half of what you will see is within ${min} min on foot.`,
+      ]
         .filter((x) => x !== "")
-        .join(", "),
+        .join(" "),
     puntos: (n: number) => `Our score: ${n} out of 10`,
     noVale: "Not for you",
     leFalta: (cosa: string, nivel: string) => `You marked "${cosa}" as a must, and here it is "${nivel}".`,
@@ -181,6 +184,7 @@ const en = {
   preguntas: {
     titulo: "While I search",
     origen: "Leaving from",
+    origenOpciones: ["Where I am now", "Somewhere else"],
     quienes: "Who is going",
     fechas: "Your dates",
     fechasOpciones: ["Fixed", "I can move them"],
@@ -383,9 +387,12 @@ const es: Textos = {
     ficha: "Ver su ficha",
     elegir: "Dormir aquí",
     donde: (zona, min) =>
-      [zona === null ? "" : `En ${zona}`, min === null ? "" : `la mitad de lo que vas a ver te queda a ${min} min andando o menos`]
+      [
+        zona === null ? "" : `Por ${zona}.`,
+        min === null ? "" : `La mitad de lo que vas a ver te queda a ${min} min andando o menos.`,
+      ]
         .filter((x) => x !== "")
-        .join(", "),
+        .join(" "),
     puntos: (n) => `Nuestra nota: ${n} de 10`,
     noVale: "No vale para ti",
     leFalta: (cosa, nivel) => `Marcaste «${cosa}» como imprescindible, y aquí es «${nivel}».`,
@@ -407,6 +414,7 @@ const es: Textos = {
   preguntas: {
     titulo: "Mientras busco",
     origen: "Sales de",
+    origenOpciones: ["Donde estoy ahora", "Otro sitio"],
     quienes: "Quiénes vais",
     fechas: "Tus fechas",
     fechasOpciones: ["Fijas", "Puedo moverlas"],

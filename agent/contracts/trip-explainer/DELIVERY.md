@@ -31,4 +31,5 @@ tus fechas: del 4 al 7 de marzo." }`
 
 Every number in every text is a number of `in/ways.json`, `in/levers.json` or `in/trip.json`: a total, a saving, a
 difference, a count of minutes, a day of the month. Written as a number, not as a word, so that the house can check
-it.
+it, and written the way the traveller's language writes numbers: the house reads both `263.87` and `263,87` as the
+same number.

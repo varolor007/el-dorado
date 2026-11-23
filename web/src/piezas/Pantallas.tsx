@@ -138,7 +138,7 @@ function Preguntas({ t, viaje }: { t: Textos; viaje: Viaje }) {
   return (
     <div className="preguntas">
       <h2 className="titulo">{p.titulo}</h2>
-      <Toques titulo={p.origen} opciones={["Madrid", "Barcelona", "Valencia"]} />
+      <Toques titulo={p.origen} opciones={p.origenOpciones} />
       <Toques titulo={p.quienes} opciones={[t.vistazo.adultos(viaje.adultos), "1", "3", "4"]} />
       <Toques titulo={p.fechas} opciones={p.fechasOpciones} />
       <Toques titulo={p.gasto} opciones={p.gastoOpciones} />
