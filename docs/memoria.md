@@ -3,17 +3,45 @@
 Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 2, hecha, al visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)). El
-23-nov, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el viaje del
-usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se rehicieron
-las dos biblias, y las firmó ese mismo día («okay»):
+**Estamos aquí: la tanda 3, hecha y revisada, al visto bueno del PM** (el estado, punto a punto, en
+[plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él empezó la 3, **el agente hace
+el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
+absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje».
+
+**El punto de situación de la tanda 3** (23-nov). La investigación corre entera, de lo entendido al viaje en el mapa,
+y se llevó de punta a punta con un viaje de verdad; ese viaje es el que enseña la web. La lleva
+`agent/launcher/investigar.ts`, paso a paso y desde el disco: `empezar <entendido.json>` abre el run en la mesa y
+`sigue <run>` da los pasos de código que puede hasta que toca esperar a un asiento, para una puerta o está hecho. Los
+asientos los lanza a mano quien lleva el run, con la orden de `ordenes/<puesto>.txt`, hasta que exista el lanzador
+(2.7). Lo que deja en el run: `sitios.json`, `ruta.json`, `busqueda.json`, `mirar.json` y `como_es.json`, `dias.json`,
+`tabla-N.json`, `cruce-N.json`, `explica.json` y, al final, `viaje.json` y `sucesos.json`. Si se para, `parado.json`
+dice dónde y por qué, y el run sigue parado hasta que se quita ese archivo.
+
+Al cerrarla, la revisaron tres adversarios que no la hicieron: su informe, hallazgo a hallazgo y con lo que se hizo,
+en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394. Lo que hay que saber de
+cómo quedó:
+
+- **Lo que lee el viajero lo dice la web por claves, o lo escribe el que explica y pasa la puerta 7.** Ninguna frase
+  de otro asiento llega a la pantalla: ni la ficha de un alojamiento, ni un aviso de la casa.
+- **Un run que se retoma no vuelve a juzgar lo que ya juzgó**: lee del disco lo que recogió, con su veredicto.
+- **Tres viajes no los sabe hacer todavía, y para y lo dice**: el de varias bases, el que no se anda y el del grupo
+  que no cabe en una habitación. Los tres tocan la hoja: son del PM.
+- **La web desplegada** enseña el viaje grabado que se le dé; uno con una forma de antes no lo enseña (dice que no
+  hay viaje). Tras cada cambio de la forma del viaje hay que darle al PM el archivo nuevo.
+
+**Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo y tu cuenta**, la primera que gasta de una
+clave. Antes de lanzar un asiento con una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el
+asiento, confinado a su salida.
+
+El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
+viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se
+rehicieron las dos biblias, y las firmó ese mismo día («okay»):
 
 - **La hoja, versión 2**: nueve momentos (la portada y tu panel, empezar, la investigación, el alojamiento, el
   transporte, el día a día, cerrar el viaje, la guía y cambios), una sección nueva con la web (sus principios y sus
   pantallas), el día a día diseñado y la guía.
 - **El plan, versión 2**: cuatro bloques nuevos (10, la web; 11, la cuenta y tu panel; 12, la guía; 13, enseñarlo) y
-  ocho tandas. En curso, **la tanda 2: la web, en seco** (el 1.5 y el bloque 10), con un viaje de Lisboa ya grabado.
-  Lo primero que se le enseña es la identidad de El Dorado, y no se sigue sin su visto bueno a ella.
+  ocho tandas.
 
 **El punto de situación de la tanda 2** (23-nov). La web, en seco, está hecha y desplegada por el PM en Vercel. Dio
 su visto bueno a la identidad, eligió el mundo en plano y pidió el mapa precargado, una pantalla de carga y que por
@@ -23,9 +51,7 @@ transporte y el precio en la portada: el esqueleto, la identidad, el mapa con su
 con sus preguntas, el viaje por pestañas, las fichas, la portada, el repaso del móvil y de la accesibilidad y la
 revisión con capturas. Y, adelantado, el panel en seco: el carril, tus viajes (11.3) y la pantalla de la clave (11.2),
 con su campo apagado. Las direcciones: `/` la portada, `/plan` el mapa, `/trips` tus viajes y `/key` la clave. La
-página de la revisión, con su vídeo y sus capturas: https://claude.ai/artifact/12YETqmymoYMjmMVnWd41r. **Espera el visto bueno del PM
-para empezar la tanda 3: el agente hace el viaje** (1.1, 1.4, 3.8, 3.10, 3.12, 4.3 y 4.5 a 4.11), que pide antes sus
-dos decisiones pendientes de la tanda 1: si «descuidado» se parte en dos campos y cómo se abarata la mirada.
+página de la revisión, con su vídeo y sus capturas: https://claude.ai/artifact/12YETqmymoYMjmMVnWd41r.
 
 Cómo se ve la web: el viaje grabado vive en la mesa (`<mesa>/grabado/viaje.json` y `sucesos.json`), fuera del
 repositorio, porque lleva datos de una búsqueda de verdad; si la mesa se pierde, se vuelve a grabar con `grabar.ts`

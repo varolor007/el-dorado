@@ -18,6 +18,11 @@ Y el primer asiento de IA, el que mira el alojamiento: su contrato, en inglés; 
 precio, la nota ni las estrellas), con las fotos de la habitación de ese precio y las opiniones; y sus dos puertas, la
 de todos y la 5, que comprueban desde fuera que cada nivel de su ficha es de su lista y tiene su prueba.
 
+Y la investigación entera, de lo que se entiende de un viaje al viaje en el mapa: la ruta, la búsqueda por zonas,
+mirar cada finalista, elegir los sitios, repartir los días, cruzar y explicar, con cada puerta en su sitio. La lleva
+el código paso a paso y desde el disco; los asientos de IA los lanza todavía quien lleva el run. Lo que aún no sabe
+hacer (un viaje de varias bases, uno que no se anda, un grupo que no cabe en una habitación), lo para y lo dice.
+
 ## Cómo se usa
 
 ```bash
@@ -27,6 +32,16 @@ node tests/bateria.mjs      # la batería: las pruebas y los tipos, en segundos,
 node agent/launcher/buscar.ts --pais <país> --lat <latitud> --lon <longitud> \
   --entrada AAAA-MM-DD --salida AAAA-MM-DD --moneda <tres letras> --nacionalidad <país del pasaporte>
 ```
+
+Para llevar una investigación entera, con lo entendido de un viaje escrito en un archivo:
+
+```bash
+node agent/launcher/investigar.ts empezar <entendido.json>   # abre el run en la mesa y dice su carpeta
+node agent/launcher/investigar.ts sigue <carpeta del run>    # da los pasos que puede, y dice a quién espera
+```
+
+Cada vez que `sigue` espera a un asiento, alguien lo lanza con la orden que queda en `ordenes/`, y se vuelve a
+llamar. Si una puerta lo para, dice dónde y por qué, y el run sigue parado hasta que se quita su `parado.json`.
 
 Para mirar los finalistas de una búsqueda ya guardada:
 

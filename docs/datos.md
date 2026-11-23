@@ -209,7 +209,7 @@ opiniones y cuatro estrellas. Lo que enseñó:
 - **La habitación de ese precio se identifica**: en los cinco finalistas, con sus fotos propias (de 5 a 24) y, en
   cuatro, sus metros (de 14 a 45).
 - **Las opiniones dan para leer por temas**: sesenta por hotel, de los últimos meses, con lo bueno y lo malo; y la
-  fuente trae ya un resumen por temas con sus contras («ruido del tranvía de noche», «sin ascensor»).
+  fuente trae ya un resumen por temas con sus contras, en frases cortas.
 - **El índice caza lo que el dato tapa.** Un finalista tiene piscina según el dato, y el índice dice que es exterior y
   de temporada, de abril a noviembre: cerrada en febrero. Es la trampa que estaba apuntada.
 - **La nota de la fuente no es la de Booking.com.** En un finalista, 9,5 en la fuente y 8,6 en Booking.com según el
@@ -257,6 +257,75 @@ repositorio; lo que enseñaron:
 - **Lo que esta prueba no mide.** Si el nivel es el acertado: eso lo dicen los ojos del PM, con la página. Y que el
   asiento no lea fuera de su puesto: aquí se le pidió, y el sello solo ve lo que escribe; en el producto se le quitan
   las herramientas.
+
+## La primera investigación entera, con un viaje de verdad (23-nov)
+
+Con la tanda 3 se llevó un viaje de punta a punta: tres noches en una capital europea para dos, con un gimnasio de
+verdad como imprescindible. Lo entendido del viaje se escribió a mano (el asiento que escucha es de la tanda 4) y los
+asientos los lanzó la sesión de trabajo, uno por puesto. El run queda en la mesa, fuera del repositorio; aquí, lo que
+enseñó.
+
+**Lo que salió.** La ruta (una base, dos zonas donde buscar), la búsqueda en las dos zonas, cinco fichas de cómo es,
+doce sitios elegidos de sesenta y cuarenta y ocho descartados con su porqué, cuatro días repartidos, la tabla con
+catorce palancas con precio, las tres maneras de hacerlo y lo que lee el viajero. Todas las puertas, en verde. El
+vuelo no: la fuente no tenía ningún precio guardado para esas fechas, y el viaje salió solo con el alojamiento,
+diciéndolo.
+
+**Lo que aporta la IA, visto.** El que cruza no se queda en el precio: avisa de que la más barata no se puede
+cancelar y de que sus opiniones recientes hablan de mal mantenimiento; de que el único alojamiento de la zona
+céntrica no tiene confirmado el gimnasio, que era lo imprescindible, y tampoco se puede cancelar; de que una piscina
+exterior en invierno puede estar cerrada. Y pide por su cuenta cuatro precios más para una segunda ronda.
+
+**Lo que tarda.** Los pasos de código, segundos: los sitios, catorce; la búsqueda en dos zonas con sus fichas, de
+quince a cuarenta y tres; las palancas y la tabla, de veinticinco a cuarenta y ocho. Cada asiento, lanzado como una
+sesión entera con su método de seis pasos, de nueve a dieciséis minutos:
+
+| Asiento | Lo que tardó | Puertas |
+|---|---|---|
+| La ruta | 14 min 43 s | verde |
+| Mirar un alojamiento (diez veces, en dos búsquedas) | de 10 min 55 s a 16 min 6 s | verde, las diez |
+| Elegir los sitios | 13 min 36 s | verde |
+| Cruzar, primera ronda | 15 min 10 s | verde |
+| Cruzar, segunda ronda | 8 min 40 s | verde |
+| Explicar, primera vuelta | 11 min | roja: «el más barato» a secas, tres veces |
+| Explicar, segunda vuelta | 10 min 52 s | verde |
+
+Con los asientos a la vez donde se puede, la investigación entera son algo más de una hora. El objetivo de la hoja
+son tres minutos.
+
+**Menos fotos no abarata la mirada.** Con veinticuatro fotos en vez de cuarenta y dos, mirar un alojamiento tarda lo
+mismo. Lo que pesa no son las fotos: es el método de seis pasos lanzado como una sesión entera, con una lectura por
+archivo y miles de palabras de notas. Para bajar a un minuto hace falta llamar a la IA una sola vez por asiento, con
+los seis pasos en una respuesta, y un método más corto.
+
+**Las puertas hacen su trabajo.** La 7 devolvió la explicación por decir «el más barato» sin su «que encontramos», y
+la segunda vuelta, que llevaba lo que estaba mal, pasó. La 3 devolvió la ruta por una regla que su contrato no decía:
+el fallo era de la casa, y se escribió en el contrato.
+
+**Lo que hubo que cambiar, y vale para cualquier viaje:**
+
+- Los finalistas se elegían sin mirar lo imprescindible, y cuatro de cinco no tenían gimnasio. La fuente dice en su
+  lista qué servicios declara cada alojamiento: lo que no declara un imprescindible se descarta antes de mirar.
+- La nota de la zona medía la media de lo que se anda hasta todas las paradas, y una excursión lejana la hundía para
+  todos. Mide ahora a cuánto queda la mitad de lo que se va a ver.
+- Los días se repartían con una parada de partida por día, y dos sitios vecinos caían en días distintos. Ahora una
+  parada va al día que tiene cerca, y un día se abre solo cuando hace falta.
+- El sitio más conocido del destino se quedaba fuera por estar en el borde de la caja de la ciudad. A la caja se le da
+  un margen.
+- La fuente de alojamiento no acepta menos de mil metros de radio, y corta si se le pide muy seguido: el enchufe pide
+  su mínimo y recorta, y espera y vuelve a pedir.
+
+**Lo que se repasó para que no dependa del caso** (el PM, 23-nov: «tiene que servir para cualquier tipo de viaje»):
+
+- Qué es un sitio que ver lo dice la clase de la que desciende en la fuente, no palabras de su nombre: probado con una
+  capital europea, una ciudad de Asia, una de África y un pueblo de montaña. Entran los sitios de naturaleza.
+- La moneda, el pasaporte y el mercado de los vuelos son datos del viajero: el código no supone ninguno.
+- Si en un sitio pequeño no hay bastantes alojamientos o sitios, se bajan los mínimos por una escalera y, si hace
+  falta, se ensancha la zona. Probado: en una gran ciudad basta el primer escalón; en un pueblo, no.
+
+**Lo que esta prueba no mide.** Un solo viaje no dice si vale para todos: faltan un pueblo, un sitio de naturaleza con
+coche, un país con varias bases y un viajero de otro idioma. Los días se reparten por lo que se anda, que vale para
+una ciudad y no para un viaje por carretera. Y los precios son de la clave de pruebas.
 
 ## Lo que se ve en el mapa
 

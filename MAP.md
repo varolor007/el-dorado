@@ -23,12 +23,13 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
 | `web/` | La web de El Dorado, con su propio paquete y sus dependencias: la identidad (`src/app/globals.css`); la portada (`src/app/page.tsx`); el panel (`src/app/(panel)/`), con el mapa (`plan/`), tus viajes (`trips/`) y tu clave (`key/`); las piezas (`src/piezas/`: el mapa, el carril, el buscador, la hoja, las pantallas y la de carga), y lo que le pide a la casa (`src/app/api/`). Sus textos, en inglés y en español, en `src/lib/textos.ts` | En seco, con el viaje grabado |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |
-| `docs/paginas/` | Las dos biblias: los datos de la hoja y del plan (`hoja.datos.mjs` y `plan.datos.mjs`), el formato de las hojas de Cortex, el pintor (`pinta.mjs`) y las páginas que salen de ahí y se publican | La hoja y el plan, versión 1, a la firma del PM |
+| `docs/paginas/` | Las dos biblias: los datos de la hoja y del plan (`hoja.datos.mjs` y `plan.datos.mjs`), el formato de las hojas de Cortex, el pintor (`pinta.mjs`) y las páginas que salen de ahí y se publican | La hoja y el plan, versión 2, firmados el 23-nov |
+| `docs/revisiones/` | El informe de los tres adversarios al cerrar cada tanda: cada hallazgo, con lo que se hizo | La de la tanda 3, del 23-nov |
 
 ## Lo que aún no existe
 
-El contrato de cada asiento (en `agent/contracts/`, junto al método común) y `tests/runs/` llegan con su punto del
-plan.
+Los contratos de los asientos de empezar, del transporte y de la guía (en `agent/contracts/`, junto al método
+común y a los cinco que ya hay) y `tests/runs/` llegan con su punto del plan.
 
 ## Lo que no va aquí
 

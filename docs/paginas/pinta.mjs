@@ -139,6 +139,10 @@ function seccion(s) {
 
 // ---------- la hoja
 
+/** Una caja construida a medias dice, detrás de lo que es, lo que le falta. */
+const conLoQueFalta = (p) => (p.parte ? `${p.d} **Lo que falta:** ${p.parte}` : p.d);
+const hecha = (p) => (p.hecho ? ". Ya construido" : p.parte ? ". Construido en parte" : "");
+
 function paso(p) {
   if (p.grupo) return `<span class="group${p.n ? " new" : ""}">${e(p.grupo)}</span>`;
   const [clase, tipo] = TIPOS[p.tipo];
@@ -146,15 +150,16 @@ function paso(p) {
   const etiquetas =
     (p.web ? ' <span class="tag web">WEB</span>' : "") +
     (p.detras ? ' <span class="tag bg">DETRÁS</span>' : "") +
-    (p.hecho ? ' <span class="tag done">HECHO</span>' : "");
+    (p.hecho ? ' <span class="tag done">HECHO</span>' : "") +
+    (p.parte ? ' <span class="tag part">EN PARTE</span>' : "");
   const dentro = `<span class="k">${e(p.k)}${etiquetas}</span><span class="x">${e(p.x)}</span>`;
   const cuerpo = clase.startsWith("gate")
     ? `<span class="dia" aria-hidden="true"></span><span>${dentro}</span>`
     : dentro;
   const porque = p.n ? ` data-new="${e(p.n === true ? "Por decidir." : p.n)}"` : "";
   return (
-    `<button type="button" class="${clases}" data-kind="${e(tipo)}${p.hecho ? ". Ya construido" : ""}" ` +
-    `data-t="${e(p.titulo ?? p.k)}" data-d="${e(plano(p.d))}"${porque}>${cuerpo}</button>`
+    `<button type="button" class="${clases}" data-kind="${e(tipo)}${hecha(p)}" ` +
+    `data-t="${e(p.titulo ?? p.k)}" data-d="${e(plano(conLoQueFalta(p)))}"${porque}>${cuerpo}</button>`
   );
 }
 
@@ -204,6 +209,7 @@ const LEYENDA = [
   ['<span class="tag web">WEB</span>', "busca en internet"],
   ['<span class="tag bg">DETRÁS</span>', "corre por detrás"],
   ['<span class="tag done">HECHO</span>', "ya construido"],
+  ['<span class="tag part">EN PARTE</span>', "construido, con algo que falta: lo dice al abrirlo"],
   ['<span class="sw new"></span>', "por decidir o por diseñar"],
 ];
 
@@ -313,11 +319,14 @@ function textoDeLaHoja(h) {
     }
     const pasos = m.flujo[i].map((p, n) => {
       if (p.grupo) return `   *${p.grupo}*`;
-      const marcas = [p.opt ? "solo si hace falta" : "", p.hecho ? "hecho" : "", p.n ? "por decidir" : ""].filter(
-        Boolean,
-      );
+      const marcas = [
+        p.opt ? "solo si hace falta" : "",
+        p.hecho ? "hecho" : "",
+        p.parte ? "en parte" : "",
+        p.n ? "por decidir" : "",
+      ].filter(Boolean);
       const cola = marcas.length ? ` *(${marcas.join(", ")})*` : "";
-      return `${n + 1}. **${p.titulo ?? p.k}** (${TIPOS[p.tipo][1].toLowerCase()})${cola}. ${plano(p.d)}`;
+      return `${n + 1}. **${p.titulo ?? p.k}** (${TIPOS[p.tipo][1].toLowerCase()})${cola}. ${plano(conLoQueFalta(p))}`;
     });
     partes.push(`**Flujo**\n\n${pasos.join("\n")}`);
     for (const f of m.filas.filter((x) => !x.antes)) {

@@ -263,7 +263,44 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
   con sus números. Ahora el destino grabado y los mínimos con los que se buscó salen de los datos, y el aviso de que
   no hay precio de vuelo solo sale si no lo hay.
 
+- **La revisión de los tres adversarios, al cerrar la tanda 3** (23-nov; el informe, en
+  [revisiones/tanda-3.md](revisiones/tanda-3.md)). Lo que se decidió al arreglar sus hallazgos:
+  - **Un run parado sigue parado.** El paro queda escrito (`parado.json`), y quien lleva el run lo reabre cuando ha
+    arreglado la causa. Y un run que se retoma lee lo que ya juzgó: no lo vuelve a juzgar.
+  - **Antes parar y decirlo que entregar algo que no vale.** Sin sitios, sin alojamiento con precio, con todos los
+    alojamientos descartados, con un viaje de varias bases o con uno que no se anda, la investigación se para antes
+    de gastar más y dice por qué. Antes acababa en «hecho».
+  - **El transporte se cuenta para todos los que viajan.** Un precio dice para cuántos es; un precio guardado es el
+    de un billete.
+  - **Lo que no cabe en ningún día se queda fuera y dice por qué**, también si es imprescindible: queda lejos de lo
+    demás, o los días están llenos. Es lo que ya decía la hoja. El ritmo y su puerta miran lo mismo.
+  - **Los números de un texto para el viajero son los de la casa.** Los que van dentro de una frase de otro asiento
+    o del viajero no se pueden repetir: por ahí se colaba un precio o un teléfono metido en una opinión. Y un texto
+    para el viajero no lleva enlaces ni correos, y mide quinientas letras como mucho.
+  - **Lo entendido se mira antes de gastar nada**: la mitad de código de la puerta 1.
+  - **Al ensanchar una búsqueda, lo de la zona se queda** y va por delante al elegir a quién mirar.
+  - **La hoja tiene «en parte».** Una caja construida a medias lo dice, con lo que le falta.
+  - **Las cuentas de pruebas salen del plan**: se quedaban atrás en cada commit. El total, en el «Estamos aquí».
+
 ## Pendientes
+
+Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
+
+- **Cómo se mueve el viajero.** Hoy todo se mide a pie: la zona de un alojamiento, lo que cabe en un día, lo que
+  enseña la web. Para un parque en coche o una ciudad grande en metro hace falta que lo entendido lo diga (a pie, en
+  transporte, en coche) y decidir de dónde salen los tiempos: una cuenta por distancia, que es aproximada, o una
+  fuente de rutas, que sería una fuente nueva. Hasta entonces, un viaje que no se anda se para y se dice.
+- **Las habitaciones de un grupo.** Hoy se pide una para todos, y con una familia grande casi nada tiene precio.
+  Hay que decidir si lo dice el viajero, si se reparte por una regla, o las dos.
+- **Lo que no lleva estrellas.** Los mínimos de partida piden cuatro, y una casa de 9,5 sin estrellas solo entra en
+  el último escalón. La sesión propone que quien no las lleva se juzgue por su nota y sus opiniones.
+- **Las quejas graves.** Hoy descartan a un alojamiento por palabras en tres opiniones, de cualquier fecha y también
+  si es una negación. La sesión propone que marquen y que lo confirme el que mira.
+- **La segunda mirada a ciegas.** La hoja la nombra; la investigación mira cada alojamiento una vez, porque cada
+  mirada son más de diez minutos. Va con el abaratado de la mirada (4.11).
+- **Las cifras de búsquedas de verdad en `docs/datos.md`** (recuentos, un rango de precios, la nota de dos
+  finalistas): son agregados, sin nombres ni viajeros. La regla 8 dice «ni lo que devuelve una fuente»: decide el PM
+  si los agregados valen o se quitan. Las dos frases literales de la fuente ya se han quitado.
 
 Lo que deja la tanda 3, a decisión del PM:
 

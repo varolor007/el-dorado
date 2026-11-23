@@ -337,6 +337,7 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 16px; line-height
 /* Añadidos de El Dorado */
 .grid { --cols: 9.5rem repeat(var(--n, 7), minmax(0, 1fr)); }
 .tag.done { color: var(--accent-ink); }
+.tag.part { color: var(--ink-soft); }
 .st.script .tag.done { color: var(--accent); }
 .estado { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; background: var(--muted); color: var(--ink-soft); white-space: nowrap; }
 .estado.hecho { color: var(--accent-ink); }
