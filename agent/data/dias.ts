@@ -42,5 +42,11 @@ export const CABE = {
  */
 export const CERCA_DE_UN_DIA = 2000;
 
+/**
+ * Si más de esta parte de lo elegido se queda fuera por lejos, el viaje no es de los que se andan. El Dorado mide
+ * hoy todo a pie: un viaje así no lo sabe planear todavía, y lo dice en vez de dar unos días que no se pueden hacer.
+ */
+export const NO_SE_ANDA = 0.5;
+
 /** Por qué una parada no está en ningún día: el viajero la quitó, queda lejos de las demás o no cabe en los días. */
 export const MOTIVOS_DE_FUERA = ["removed", "far", "full"] as const;

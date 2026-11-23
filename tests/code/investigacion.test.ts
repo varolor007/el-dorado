@@ -728,3 +728,20 @@ test("si ningún alojamiento mirado vale para el viajero, se para antes de cruza
     rmSync(run, { recursive: true, force: true });
   }
 });
+
+test("un viaje que no se anda se para tras elegir los sitios, y lo dice", async () => {
+  const run = runNuevo();
+  try {
+    // Los mismos sitios, repartidos a decenas de kilómetros unos de otros: un parque que se recorre en coche.
+    const lejanos = (): Fuentes => ({
+      ...fuentesInventadas(),
+      sitios: async () => SITIOS.map((s, i) => ({ ...s, punto: { lat: s.punto.lat + 0.2 * i, lon: s.punto.lon } })),
+    });
+    const { estado, lanzados } = await investiga(run, undefined, lejanos);
+    assert.equal(estado.parado?.paso, "los días");
+    assert.match(estado.parado!.rojos[0].que, /este viaje no es de los que se andan/);
+    assert.ok(!lanzados.some((id) => id.startsWith("cruce") || id.startsWith("explica")));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
