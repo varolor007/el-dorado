@@ -20,7 +20,8 @@ ritmo (4.10, `agent/scripts/ritmo.ts`, adelantado porque la web lo usa), el viaj
 `agent/scripts/monta_viaje.ts` y `agent/launcher/grabar.ts`), el esqueleto de la web (10.1) y su identidad (10.2),
 puesta en las primeras pantallas de `/plan`: el mapa del mundo, el primer vistazo, la investigación en vivo, el viaje
 por días y la ficha de un alojamiento. **Está parada en el visto bueno del PM a la identidad**, con un vídeo y doce
-capturas en una página suya. Falta de la tanda: las preguntas dentro de la investigación, quitar, añadir y mover
+capturas en una página suya (https://claude.ai/artifact/9fmWumQxtsKB7pmyaLCUn3), y en su elección del mundo: plano,
+como pidió, o como un globo que se aplana al acercarse. Falta de la tanda: las preguntas dentro de la investigación, quitar, añadir y mover
 paradas, las fichas de una parada y del transporte, la portada (10.8), el repaso del móvil y de la accesibilidad
 (10.9) y la revisión final con capturas (10.10).
 

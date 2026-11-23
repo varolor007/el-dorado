@@ -155,10 +155,22 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **La versión 2, firmada** (el PM, 23-nov: «okay»). Desde aquí manda, y empieza la tanda 2: la web, en seco.
 - **El primer vistazo, sin cuenta** (la sesión; el PM lo dejó «a lo que veas»): lo que no gasta IA se ve sin
   registrarse. Si las consultas a las fuentes se disparan, se le pone un tope.
+- **La identidad de El Dorado** (la sesión, al visto bueno del PM): de la familia de Cortex, la tinta, el gris y las
+  letras de leer y de contar; lo suyo, el oro, que solo se usa para lo que el agente encuentra, una cursiva de mapa
+  antiguo para los lugares y un mapa propio y callado. Enseñada con un vídeo y doce capturas en
+  https://claude.ai/artifact/9fmWumQxtsKB7pmyaLCUn3.
+- **El ritmo, adelantado a la tanda 2** (la sesión): la web lo usa para su mando, y lo que se usa va antes.
+- **El viaje grabado no entra en el repositorio** (la sesión): lleva datos de una búsqueda de verdad. Vive en la mesa
+  y se vuelve a grabar con `grabar.ts`. El viaje de ejemplo de la portada, cuando se publique, necesita antes su
+  decisión: con datos de verdad o inventados.
 
 ## Pendientes
 
 Lo que pide la versión 2, a decisión del PM:
+
+- **La identidad** y **el mundo, plano o globo** (23-nov): con la página de la tanda 2 delante.
+- **El viaje de ejemplo de la portada** (23-nov): con datos de verdad de las fuentes, que hay que poder publicar, o
+  inventado. Antes de publicar la portada.
 
 - **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de la tanda 4.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
