@@ -32,6 +32,13 @@ repositorio, porque lleva datos de una búsqueda de verdad; si la mesa se pierde
 `?at=look`, `?at=live` o `?at=trip`, con `&day=2`, `&stay=3`, `&lang=es` y `&globe=1`. Las fotos de fuera pasan por el
 servidor de la web, que las encoge; Wikimedia corta si se le piden muchas seguidas, así que algunas tardan.
 
+La web, desplegada (23-nov): el PM la pone en Vercel, en su equipo Aurora, desde la rama de la sesión y con `web` de
+carpeta raíz; cada subida la vuelve a desplegar. Allí no hay mesa: el viaje grabado se le da en un archivo
+(`grabado.json`, con el viaje y sus sucesos) que él sube a un sitio privado, y su dirección va en la variable
+`ELDORADO_GRABADO_URL`. Sin ella, la web enseña solo el mapa del mundo y el buscador. En la sesión de la nube, compilar
+para producción falla al bajar las letras de Google por el proxy; en Vercel no. Para comprobar aquí el resto de la
+compilación se le da a Next una hoja de letras de prueba con `NEXT_FONT_GOOGLE_MOCKED_RESPONSES`.
+
 Lo que se miró antes de rehacerlas, para no repetirlo: `aurora-web` no tiene cuentas, ni pago, ni páginas por agente;
 DaVi vive en su propia web (portada con precios y lista de espera, entrada aparte, y la IA con la clave de cada
 uno); el ensamblador corre con una web que solo habla con su motor y lo escucha en vivo. El mapa abierto (MapLibre

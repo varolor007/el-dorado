@@ -221,7 +221,7 @@ Por tandas: una tanda es un trozo de obra que acaba en algo que puedes mirar, y 
 | 9.1 | **Lo legal de las fuentes.** La IA sobre sus fotos, cruzar sus datos y guardar resultados; y los acuerdos con las grandes. | pendiente |
 | 9.2 | **Las claves de producción.** Precios de verdad, con los datos de la empresa. | pendiente |
 | 9.3 | **El precio y el cobro.** Lo que cuesta El Dorado y cómo se cobra. La IA va aparte: Claude, con la clave de cada viajero (tu decisión del 23-nov). | por decidir |
-| 9.4 | **Dónde corre.** En qué servidores viven la web y la casa, y con qué dirección. | por decidir |
+| 9.4 | **Dónde corre.** La web, en Vercel, en tu equipo (tu decisión del 23-nov), protegida mientras no esté publicada. Falta dónde corre la casa y con qué dirección se abre al público. | por decidir |
 | 9.5 | **La carpeta de entrega.** El README, el mapa y cómo conectarlo. | pendiente |
 
 ## 10. La web

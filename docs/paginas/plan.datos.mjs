@@ -177,7 +177,7 @@ const bloques = [
       { n: "9.1", b: "Lo legal de las fuentes.", t: "La IA sobre sus fotos, cruzar sus datos y guardar resultados; y los acuerdos con las grandes.", estado: "pendiente" },
       { n: "9.2", b: "Las claves de producción.", t: "Precios de verdad, con los datos de la empresa.", estado: "pendiente" },
       { n: "9.3", b: "El precio y el cobro.", t: "Lo que cuesta El Dorado y cómo se cobra. La IA va aparte: Claude, con la clave de cada viajero (tu decisión del 23-nov).", estado: "decidir" },
-      { n: "9.4", b: "Dónde corre.", t: "En qué servidores viven la web y la casa, y con qué dirección.", estado: "decidir" },
+      { n: "9.4", b: "Dónde corre.", t: "La web, en Vercel, en tu equipo (tu decisión del 23-nov), protegida mientras no esté publicada. Falta dónde corre la casa y con qué dirección se abre al público.", estado: "decidir" },
       { n: "9.5", b: "La carpeta de entrega.", t: "El README, el mapa y cómo conectarlo.", estado: "pendiente" },
     ],
   },

@@ -163,6 +163,13 @@ Cada decisión, con su fecha y quién la tomó; lo viejo, tachado; lo pendiente,
 - **El viaje grabado no entra en el repositorio** (la sesión): lleva datos de una búsqueda de verdad. Vive en la mesa
   y se vuelve a grabar con `grabar.ts`. El viaje de ejemplo de la portada, cuando se publique, necesita antes su
   decisión: con datos de verdad o inventados.
+- **La web, en Vercel** (el PM, 23-nov: «¿te lo meto en Vercel para tener la web ahí?»): en su equipo, Aurora, desde
+  esta rama y con `web` de carpeta raíz, para tocarla en vez de mirar capturas. Cada subida la vuelve a desplegar. Es
+  solo la web, en seco: la casa aún no corre en ningún servidor. Como nada está publicado y enseña datos de las
+  fuentes, se le pide que la deje protegida, para que solo entre su equipo.
+- **El viaje grabado, en una web desplegada** (la sesión): sigue sin entrar en el repositorio. La web lo lee de una
+  dirección privada que se le da en el entorno (`ELDORADO_GRABADO_URL`); sin ella, enseña solo el mapa del mundo y el
+  buscador.
 
 ## Pendientes
 
