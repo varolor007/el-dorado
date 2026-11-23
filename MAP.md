@@ -8,7 +8,8 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 |---|---|---|
 | `agent/tools/fuentes/` | El recolector: la salida a internet, los tipos comunes y un enchufe por fuente de datos (LiteAPI, Aviasales y Parallel). Cada enchufe se apaga sin tocar lo demás | Las bases, del 23-nov |
 | `agent/scripts/` | Los pasos que hace el código, sin IA: los mínimos, los finalistas, las opiniones por temas, el cruce entre fuentes y la búsqueda de alojamiento entera | Las bases, del 23-nov |
-| `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La primera, la de la búsqueda de alojamiento | Las bases, del 23-nov |
+| `agent/contracts/common/` | El método común de los asientos, en inglés: el orden de lectura, los seis pasos, las diez normas de todos, cómo se entrega y la orden que abre un asiento | Hecho, con el punto 2.4 |
+| `agent/gates/` | Las puertas: lo que el código comprueba desde fuera. La de la búsqueda de alojamiento y la de todos, que mira el método de cualquier asiento | La de todos, con el punto 2.4 |
 | `agent/launcher/` | Lo que lanza el agente: hoy, una búsqueda desde la terminal, y la mesa, donde queda lo que saca | Las bases, del 23-nov |
 | `tests/cases/inventado/` | El caso inventado: una ciudad y unos alojamientos que no existen, para probar sin internet y sin gastar | Las bases, del 23-nov |
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
@@ -17,8 +18,8 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 
 ## Lo que aún no existe
 
-`agent/contracts/` (los contratos de los asientos), `agent/output/` (la salida: el mapa) y `tests/runs/` llegan con su
-punto del plan.
+El contrato de cada asiento (en `agent/contracts/`, junto al método común), `agent/output/` (la salida: el mapa) y
+`tests/runs/` llegan con su punto del plan.
 
 ## Lo que no va aquí
 

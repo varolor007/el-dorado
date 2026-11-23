@@ -584,7 +584,7 @@ Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de u
 | 6. ¿Cada número sale de la tabla? | El primer viaje, El transporte y Cambios | Los números, iguales a los del código; las piezas, de las mismas fechas; cada palanca, con su estado; dos rondas | en borrador |
 | 7. ¿Sin promesas y con su aviso? | El primer viaje y Elegir | Los números del texto, en la tabla; ninguna palabra prohibida; el aviso de IA y el de los precios | en borrador |
 | 8. ¿Todo cuadra? | Elegir y reservar | Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado | en borrador |
-| La de todos | Cada asiento, al entregar | Cada paso dejó su archivo y en su orden; cada dato, con su fuente, su fecha y su etiqueta; cada página citada se consultó de verdad | en borrador |
+| La de todos | Cada asiento, al entregar | Cada paso dejó su archivo y en su orden; cada dato, con su fuente, su fecha y su etiqueta; cada página citada se consultó de verdad. Hecha, menos lo de las páginas, que espera al lector de webs | en parte |
 
 Una puerta mide las cuentas, la forma, de dónde sale cada cosa y que las piezas casen. No mide si un juicio es acertado: eso lo cubren el banco, las dos fuentes, otra pasada a ciegas y tu confirmación. Un rojo vuelve a su dueño, dos veces como mucho; después lo coge el conductor.
 
@@ -661,10 +661,10 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 |---|---|---|
 | El recolector | En `agent/tools/fuentes/`. Traduce lo de cada fuente a unos tipos comunes; el resto del agente no sabe de dónde vino cada dato. Las claves, en el entorno, nunca en el repositorio | hecho |
 | Los pasos de código | En `agent/scripts/`: los mínimos, los finalistas, las opiniones por temas, el cruce por posición y la búsqueda de alojamiento entera | en parte |
-| Las puertas | En `agent/gates/`. La de la búsqueda, con sus trampas | en parte |
+| Las puertas | En `agent/gates/`. La de la búsqueda y la de todos, con sus trampas | en parte |
 | Lo que lanza | En `agent/launcher/`. Hoy, una búsqueda desde la terminal; falta lo que corre los pasos en su orden y lanza a los asientos | en parte |
 | La mesa | Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones | en parte |
-| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento | pendiente |
+| Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hecho, el método común | en parte |
 | La web y el mapa | Dónde vive y con qué se pinta | por decidir |
 | La IA | Con cuál piensa cada asiento, quién la paga y dónde corre el agente | por decidir |
 
