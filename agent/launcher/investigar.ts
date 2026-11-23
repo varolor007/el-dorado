@@ -619,9 +619,10 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   // la mayor parte de lo elegido queda lejos de lo demás, o desde ninguna zona de la ruta se llega andando a la mitad
   // de lo elegido antes de que la zona valga cero, no se anda: se para y se dice, en vez de cruzar y explicar unos
   // días que no se pueden hacer.
-  const repartido = leer<DeLosDias & { reparto: { porQue: Record<string, string> } }>(run, "dias.json");
+  const repartido = leer<DeLosDias & { reparto: { porQue?: Record<string, string> } }>(run, "dias.json");
   const elegidos = repartido.paradas.map((x) => x.punto);
-  const lejos = Object.values(repartido.reparto.porQue).filter((m) => m === "far").length;
+  // Un run de antes de que el reparto dijera sus porqués no los lleva: entonces no hay ninguno que contar.
+  const lejos = Object.values(repartido.reparto.porQue ?? {}).filter((m) => m === "far").length;
   const desdeLasZonas = leer<DeLaRuta>(run, "ruta.json").zonas.flatMap((z) => medianaAndando(z.centre, elegidos) ?? []);
   const desdeLaMejor = desdeLasZonas.length === 0 ? null : Math.min(...desdeLasZonas);
   if (elegidos.length > 0 && lejos / elegidos.length > NO_SE_ANDA)
