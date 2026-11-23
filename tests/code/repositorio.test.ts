@@ -50,8 +50,9 @@ test("ningún identificador de modelo en el repositorio", () => {
 
 test("el código, a 120 caracteres por línea", () => {
   const largas: string[] = [];
-  // Los datos de las biblias son prosa, no código: sus frases no se parten a 120.
-  for (const a of TODOS.filter((x) => /\.(ts|tsx|mjs)$/.test(x) && !x.endsWith(".datos.mjs"))) {
+  // Los datos de las biblias y los textos de la web son prosa, no código: sus frases no se parten a 120.
+  const prosa = (x: string): boolean => x.endsWith(".datos.mjs") || x === "web/src/lib/textos.ts";
+  for (const a of TODOS.filter((x) => /\.(ts|tsx|mjs)$/.test(x) && !prosa(x))) {
     readFileSync(join(RAIZ, a), "utf8")
       .split("\n")
       .forEach((linea, i) => {
@@ -67,10 +68,7 @@ test("ningún dato de un viaje en el repositorio: solo el caso inventado", () =>
   const deLaWeb = new Set(["web/package.json", "web/package-lock.json", "web/tsconfig.json"]);
   const datos = TODOS.filter(
     (a) =>
-      /\.(json|csv|jsonl)$/.test(a) &&
-      !permitidos.has(a) &&
-      !deLaWeb.has(a) &&
-      !a.startsWith("tests/cases/inventado/"),
+      /\.(json|csv|jsonl)$/.test(a) && !permitidos.has(a) && !deLaWeb.has(a) && !a.startsWith("tests/cases/inventado/"),
   );
   assert.deepEqual(datos, []);
 });

@@ -32,5 +32,14 @@ if (existsSync(tscLocal)) {
   verde = false;
 }
 
+// La web tiene su propio paquete: si está instalado, se miran también sus tipos.
+const tscDeLaWeb = join(raiz, "web", "node_modules", ".bin", "tsc");
+if (existsSync(tscDeLaWeb)) {
+  verde = corre("los tipos de la web", tscDeLaWeb, ["--noEmit", "-p", join("web", "tsconfig.json")]) && verde;
+} else {
+  console.error("los tipos de la web: falta instalar sus dependencias (cd web && npm install)");
+  verde = false;
+}
+
 console.log(verde ? "\nBatería en verde." : "\nBatería en ROJO.");
 process.exit(verde ? 0 : 1);
