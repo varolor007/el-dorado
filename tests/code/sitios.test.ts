@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   claseDe,
+  conMargen,
   consultaDeSitios,
   fotosDe,
   leerFotos,
@@ -69,6 +70,15 @@ test("la consulta lleva la caja, el idioma y el mínimo, y no se hace con una ca
   assert.throws(() => consultaDeSitios({ ...CAJA, norte: Number.NaN }), /no encierra nada/);
 });
 
+test("a una caja se le da un margen, para no dejar fuera lo que está justo en su borde", () => {
+  assert.deepEqual(conMargen({ oeste: 20, sur: 10, este: 21, norte: 11 }, 0.5), {
+    oeste: 19.5,
+    sur: 9.5,
+    este: 21.5,
+    norte: 11.5,
+  });
+});
+
 test("un idioma que no es un idioma no entra en la consulta", () => {
   const q = consultaDeSitios(CAJA, { idioma: 'es" } UNION { ?x ?y ?z' });
   assert.match(q, /LANG\(\?nombreSuyo\) = "en"/);
@@ -116,6 +126,7 @@ test("qué es un sitio: manda cómo se llama; después, cómo se describe, y al 
   assert.equal(claseDe("Saint Mark", "church and monastery", ["museum"]), "church");
   assert.equal(claseDe("The Mound", null, ["scenic viewpoint"]), "viewpoint");
   assert.equal(claseDe("Central Arena", "football stadium", ["tourist attraction"]), null);
+  assert.equal(claseDe("Big Hall", "indoor arena in a city", ["tourist attraction"]), null);
   assert.equal(claseDe("North District", null, ["district of somewhere"]), null);
   assert.equal(claseDe("Unknown Thing", null, ["company"]), null);
 });

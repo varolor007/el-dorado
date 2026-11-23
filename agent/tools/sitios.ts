@@ -47,7 +47,7 @@ export const CLASES: [string, RegExp][] = [
 
 /** Lo que tiene sitio en el mapa y se nombra mucho, pero no se va a ver. */
 export const NO_ES_UN_SITIO =
-  /stadium|\bstation\b|stock exchange|regulated market|airport|aerodrome|universit|race track|motorsport|circuit/i;
+  /stadium|\barena\b|\bstation\b|stock exchange|regulated market|airport|aerodrome|universit|race track|motorsport/i;
 
 /** Lo que es una división del mapa (un distrito, un municipio, una parroquia) y no un sitio al que ir. */
 export const ES_UNA_DIVISION =
@@ -67,6 +67,19 @@ export function claseDe(nombre: string, descripcion: string | null, clases: stri
 }
 
 export type Pedido = { minimoDeEnlaces?: number; cuantos?: number; idioma?: string };
+
+/**
+ * Una caja, con un margen alrededor, en grados. La caja de una ciudad es la de su término, y lo que está en su
+ * borde (un faro, una torre en el agua) se queda fuera por metros: al pedir sus sitios se le da un margen.
+ */
+export function conMargen(caja: Encuadre, grados: number): Encuadre {
+  return {
+    oeste: caja.oeste - grados,
+    sur: caja.sur - grados,
+    este: caja.este + grados,
+    norte: caja.norte + grados,
+  };
+}
 
 const idiomaSeguro = (idioma: string): string => (/^[a-z]{2,3}$/.test(idioma) ? idioma : "en");
 
