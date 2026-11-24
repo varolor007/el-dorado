@@ -22,7 +22,7 @@ export type Consultado = {
 
 export const NADA_CONSULTADO: Consultado = { busquedas: [], paginas: [], fallidas: [] };
 
-const DIRECCION = /\bhttps?:\/\/[^\s"'<>()[\]{}|\\^`]+/gi;
+const DIRECCION = /\b(?:https?:\/\/|www\.)[^\s"'<>()[\]{}|\\^`]+/gi;
 
 /**
  * Una dirección escrita de forma que dos maneras de escribir la misma página digan lo mismo: sin el fragmento, sin
@@ -45,6 +45,27 @@ export function direccionComparable(texto: string): string | null {
   const puerto = u.port === "" || u.port === "80" || u.port === "443" ? "" : `:${u.port}`;
   const camino = u.pathname.replace(/\/+$/, "");
   return `https://${sitio}${puerto}${camino}${u.search === "?" ? "" : u.search}`;
+}
+
+/** Cómo acaba el nombre de una máquina de dentro de una red: las de una casa, las de una nube y las de un clúster. */
+const DE_DENTRO = /(^|\.)(localhost|local|internal|lan|home|corp|svc|consul)$/;
+
+/**
+ * Si una dirección es de una página de fuera, de las que puede abrir un asiento: https, con nombre (no un número),
+ * sin puerto ni claves, y no de una máquina de dentro de la red donde corre la casa. Una página puede pedirle a un
+ * asiento que abra lo que sea: lo de dentro no se abre.
+ */
+export function paginaDeFuera(url: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" || u.username !== "" || u.password !== "" || u.port !== "") return false;
+  const maquina = u.hostname.toLowerCase().replace(/\.+$/, "");
+  if (/^[\d.]+$/.test(maquina) || maquina.includes(":") || maquina.startsWith("[")) return false;
+  return maquina.includes(".") && !DE_DENTRO.test(maquina);
 }
 
 /** Si un texto es, él entero, una dirección de la web: así se distingue una cita de una página de una de un archivo. */

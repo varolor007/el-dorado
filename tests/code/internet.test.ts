@@ -15,6 +15,7 @@ import {
   abiertas,
   direccionComparable,
   direccionesEn,
+  paginaDeFuera,
   leerConsultado,
   loQueNoPuedeSalir,
   type Consultado,
@@ -177,6 +178,9 @@ test("la puerta: la misma página escrita de otra forma vale; una que ni se inte
     from_material: "https://dada.invalid/x",
     ok: `${ABIERTA}/`,
     tried: "https://caida.invalid/",
+    // Una dirección sin su esquema, o puesta como nombre de un campo, se mira igual.
+    bare: "see www.sin-abrir.invalid/visa for more",
+    "https://como-clave.invalid/x": "price 10",
   };
   const { pensar } = busca(respuesta(notas, entrega));
   const r = await lanzarAsiento(p, lanzadorDirecto(pensar, { entrada: 4, salida: 20 }), { segundos: 5 });
@@ -190,6 +194,10 @@ test("la puerta: la misma página escrita de otra forma vale; una que ni se inte
       "out/delivery.json.source: el dato cita la página https://inventada.invalid/datos, " +
         "que no se abrió ni venía en su material",
       "out/delivery.json.tried: el dato cita la página https://caida.invalid/, " +
+        "que no se abrió ni venía en su material",
+      "out/delivery.json.bare: el dato cita la página www.sin-abrir.invalid/visa, " +
+        "que no se abrió ni venía en su material",
+      "out/delivery.json: el dato cita la página https://como-clave.invalid/x, " +
         "que no se abrió ni venía en su material",
     ],
   );
@@ -482,6 +490,29 @@ test("Claude Code: la casa cuenta lo que pide según llega y lo corta al pasar d
     /no se le dio: Bash/,
   );
   assert.match(contadorDeTopes(null)(SUCESOS[0]) ?? "", /este asiento no tiene ninguna/);
+  // Una página no le hace abrir lo de dentro de la red de la casa, ni nada que no sea https con su nombre.
+  const pide = (url: unknown): string | null =>
+    contadorDeTopes({ busquedas: 9, paginas: 9 })({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "w", name: "WebFetch", input: { url } }] },
+    });
+  for (const deDentro of [
+    "http://127.0.0.1:4320/salud",
+    "https://127.0.0.1/",
+    "https://localhost/",
+    "https://casa.internal/x",
+    "https://[::1]/",
+    "https://servidor/",
+    "https://fuera.example:8443/x",
+    "https://u:p@fuera.example/x",
+    "http://fuera.example/x",
+    "file:///etc/passwd",
+    "",
+    7,
+  ])
+    assert.match(pide(deDentro) ?? "", /no es una página https de fuera/, String(deDentro));
+  assert.equal(pide("https://www.gobierno.example/visados?pais=zz"), null);
+  assert.equal(paginaDeFuera("https://oficial.invalid/requisitos"), true);
 });
 
 test("Claude Code, entero, con un claude de mentira que pide una página de más: se le corta y se dice", async () => {

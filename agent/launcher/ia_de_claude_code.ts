@@ -23,7 +23,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { StringDecoder } from "node:string_decoder";
 import { join } from "node:path";
-import type { Busqueda, Consultado, Pagina } from "./consultado.ts";
+import { paginaDeFuera, type Busqueda, type Consultado, type Pagina } from "./consultado.ts";
 import type { Internet, Pensar, Respuesta } from "./ia.ts";
 import { mensajesDe, type ConQue } from "./ia_de_verdad.ts";
 
@@ -277,8 +277,12 @@ export function contadorDeTopes(internet: Internet | null): (suceso: unknown) =>
     for (const p of pedidosEn(suceso)) {
       if (internet === null) return `Claude Code pidió una herramienta, ${p.nombre}, y este asiento no tiene ninguna`;
       if (p.nombre === "WebSearch") busquedas++;
-      else if (p.nombre === "WebFetch") paginas++;
-      else return `Claude Code pidió una herramienta que no se le dio: ${p.nombre}`;
+      else if (p.nombre === "WebFetch") {
+        paginas++;
+        // Su lector corre en la máquina de la casa: una página no le puede hacer abrir lo que hay dentro de su red.
+        if (!paginaDeFuera(typeof p.entrada.url === "string" ? p.entrada.url : ""))
+          return "Claude Code pidió abrir una dirección que no es una página https de fuera";
+      } else return `Claude Code pidió una herramienta que no se le dio: ${p.nombre}`;
       if (busquedas > internet.busquedas) return `Claude Code pasó de su tope de ${internet.busquedas} búsquedas`;
       if (paginas > internet.paginas) return `Claude Code pasó de su tope de ${internet.paginas} páginas`;
     }
