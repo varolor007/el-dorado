@@ -162,6 +162,8 @@ export function fraseDeSuceso(s: Suceso, t: Textos, idioma: string, deNoches: nu
       return { n: null, texto: t.vivo.done() };
     case "stopped":
       return { n: null, texto: t.vivo.stopped() };
+    case "retry":
+      return { n: null, texto: t.vivo.retry(t.casa.pasos[s.ref ?? ""] ?? "") };
     case "conductor": {
       const texto = t.vivo.conductor(s.ref ?? "");
       return texto === null ? null : { n: null, texto };

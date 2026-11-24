@@ -23,6 +23,8 @@ export type Investigacion = {
     options?: string[];
     said?: { text: string; lang: string } | null;
     looking?: boolean;
+    /** Volver a intentarlo sigue desde aquí: solo se repite este paso. Si no, la investigación empieza otra vez. */
+    resumes?: boolean;
   } | null;
   told: number;
   /** Es tu turno: confirmar lo que he entendido, o contestar lo que te pregunto. */
@@ -76,6 +78,12 @@ export async function cambiarLoEntendido(id: string, understood: unknown): Promi
 /** El botón: confirma lo entendido y da el adelante. Lo que se gasta lo limita cada uno en su cuenta de Claude. */
 export async function empezarLaInvestigacion(id: string): Promise<FalloDeViaje | null> {
   const r = await pideALaCasa("POST", `viajes/${id}/empezar`, {});
+  return r.estado === 202 ? null : falloDe(r.cuerpo);
+}
+
+/** Volver a intentarlo en una investigación parada: solo el paso que la paró, y sigue sola desde ahí. */
+export async function reintentarElPaso(id: string): Promise<FalloDeViaje | null> {
+  const r = await pideALaCasa("POST", `viajes/${id}/reintentar`, {});
   return r.estado === 202 ? null : falloDe(r.cuerpo);
 }
 

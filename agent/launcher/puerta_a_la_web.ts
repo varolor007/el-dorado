@@ -21,6 +21,7 @@
 //   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante (con su techo, si se da) y lanza
 //   POST   /viajes/<id>/confirmar      tu confirmación de lo que he entendido, o tus respuestas, o que sigues
 //                                       aunque un papel bloquee ({ "papers": "go_on" }): y sigue
+//   POST   /viajes/<id>/reintentar     volver a intentarlo en un run parado: solo el paso que lo paró, y sigue
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
@@ -52,6 +53,7 @@ import {
 import { gastoDeLaCuenta } from "./gasto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
+import { FalloAlReintentar, reintentar } from "./reintentar.ts";
 import {
   abrirViaje,
   apuntar,
@@ -459,6 +461,37 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 202, cuerpo: { done: hecho } };
   }
 
+  /**
+   * Volver a intentarlo, en el último run de un viaje parado por un asiento (o porque la casa se rompió): una vuelta
+   * más de ese paso, y solo de ese, sin volver a empezar. Solo su dueño, nunca con el run en marcha, y con la misma
+   * cuenta o clave con la que piensa. Lo demás del run se queda como está.
+   */
+  function reintentarElPaso(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id)) throw new Fallo(409, "already_running");
+    const run = ultimoRun(v);
+    if (run === null) throw new Fallo(409, "not_now");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: { n: number; en: string | null };
+    try {
+      hecho = reintentar(run, hoy());
+    } catch (error) {
+      if (error instanceof FalloAlReintentar) throw new Fallo(409, error.message);
+      throw error;
+    }
+    apuntar(v, "button", { boton: "retry", n: hecho.n, paso: hecho.en }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, run, lanzador);
+    return { estado: 202, cuerpo: { retry: hecho.n } };
+  }
+
   /** La casa lleva la investigación de un run, de fondo: si se rompe a medias, queda parada, y se cuenta. */
   function marchar(id: string, run: string, lanzador: Lanzador): void {
     const marcha = llevar(run, o.fuentes(), lanzador, o.alLlevar)
@@ -509,6 +542,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === "confirmar" && cual === undefined) {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       return confirmarLoEntendido(p);
+    }
+    if (que === "reintentar" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return reintentarElPaso(p);
     }
     if (que === "acta" && cual === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

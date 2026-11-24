@@ -8,7 +8,7 @@ import { useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
-import { confirmarLoEntendido, empezarLaInvestigacion, type EnLaCasa } from "../lib/viajeVivo.ts";
+import { confirmarLoEntendido, empezarLaInvestigacion, reintentarElPaso, type EnLaCasa } from "../lib/viajeVivo.ts";
 import { Confirmacion } from "./Confirmacion.tsx";
 import { fraseDeSuceso, TusPapeles } from "./Pantallas.tsx";
 
@@ -49,10 +49,13 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
     .reverse()
     .slice(0, 6);
 
+  // Volver a intentarlo sigue desde donde se paró, si la casa dice que se puede: solo se repite ese paso. Si no (una
+  // casa de antes, o una parada que no se retoma así), la investigación empieza otra vez.
+  const desdeAqui = parado?.resumes === true;
   const otraVez = async (): Promise<void> => {
     setOcupado(true);
     setFallo(null);
-    const mal = await empezarLaInvestigacion(estado.trip.id);
+    const mal = desdeAqui ? await reintentarElPaso(estado.trip.id) : await empezarLaInvestigacion(estado.trip.id);
     setOcupado(false);
     if (mal !== null)
       setFallo(
@@ -104,6 +107,7 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
               {i !== null && !i.running && (
                 <>
                   <p className="rotulo">{t.casa.queHacer}</p>
+                  {desdeAqui && salidas.includes("retry") && <p className="suave">{t.casa.soloEstePaso}</p>}
                   <div className="parado__salidas">
                     {salidas.includes("retry") && (
                       <button

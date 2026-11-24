@@ -68,3 +68,15 @@ export const LARGO_DEL_PORQUE = 600;
 export const CONDUCTOR = "conductor.json";
 /** El acta del run, que se rehace leyendo el disco. */
 export const ACTA = "acta.json";
+
+/**
+ * Lo que deja en el run cada vez que el viajero pide otra vuelta del paso que lo paró: una línea por pulsación, con el
+ * puesto que la paró y el de la vuelta nueva. Solo crece.
+ */
+export const REINTENTOS = "reintentos.json";
+/**
+ * Cuántas veces puede pedir el viajero otra vuelta en un mismo run: tres. Cada una es una vuelta de un asiento, con su
+ * adelante y bajo su techo; el tope cuida de que un fallo que se repite tal cual no se pague sin fin. Después, lo que
+ * le queda es cambiar lo que pidió. Es lo más prudente mientras el PM no diga otra cosa.
+ */
+export const REINTENTOS_POR_RUN = 3;

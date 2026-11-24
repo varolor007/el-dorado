@@ -20,6 +20,7 @@ import { pararRun, sigue, type Estado, type Fuentes } from "./investigar.ts";
 import { guardarJson } from "./mesa.ts";
 import { porDondeVa } from "./pasos.ts";
 import { puestosDe } from "./puesto.ts";
+import { aplicarReintento } from "./reintentar.ts";
 import { acaboSinEntregar, apuntarTrabajo, gastoDe, trabajosDe } from "./trabajos.ts";
 
 export const ADELANTE = "adelante.json";
@@ -144,6 +145,8 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
   // Lo que avisa cada vuelta se junta: quien llama una vez no pierde lo que se dijo por el camino.
   const avisos: string[] = [];
   cerrarLosCortados(run, ahora);
+  // Si el viajero pidió otra vuelta del paso que paró el run, es ahora cuando se quita la parada y se sigue.
+  aplicarReintento(run);
 
   const lanzarUno = async (id: string): Promise<void> => {
     const puesto = puestosDe(run).find((p) => p.id === id);

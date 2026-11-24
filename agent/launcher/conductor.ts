@@ -31,6 +31,7 @@ import {
   baseDe,
   causaDe,
   delConductor,
+  reintentosDe,
   veredictoDe,
   vueltaDe,
   type DelConductor,
@@ -57,7 +58,8 @@ function guardar(run: string, c: DelConductor): void {
 
 /**
  * La parada a la que le toca el conductor, si le toca: un run parado por un asiento (en rojo en su última vuelta, o
- * sin entregar), aún sin viaje, y sin que se le haya llamado antes a otra parada de este run.
+ * sin entregar), aún sin viaje, sin que se le haya llamado antes a otra parada de este run y sin que el viajero haya
+ * pedido otra vuelta.
  */
 export function paradaParaElConductor(run: string): ParadaDelActa | null {
   if (existsSync(join(run, "viaje.json"))) return null;
@@ -65,6 +67,8 @@ export function paradaParaElConductor(run: string): ParadaDelActa | null {
   if (causa === null || causa.puesto === null || causa.asiento === null) return null;
   if (causa.clase !== "seat_kept_failing" && causa.clase !== "seat_did_not_finish") return null;
   if (causa.asiento === ASIENTO_DEL_CONDUCTOR) return null;
+  // Tras una vuelta que pidió el viajero ya no se le llama: es uno por run, y lo que sigue lo dice el código.
+  if (reintentosDe(run).length > 0) return null;
   const c = delConductor(run);
   if (c !== null && c.para.puesto !== causa.puesto) return null;
   // Si la casa se cortó tras montar su puesto y antes de apuntarlo, el puesto ya dice que se le llamó.

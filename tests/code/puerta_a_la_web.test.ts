@@ -254,6 +254,7 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
         options: ["retry"],
         said: null,
         looking: false,
+        resumes: true,
       });
       assert.deepEqual(
         cuerpo.research.jobs.filter((t: Objeto) => t.step !== "calendar" && t.step !== "papers"),
@@ -470,6 +471,7 @@ test("un run parado: el conductor lo cuenta por claves, y el acta del run la pid
         options: ["retry"],
         said: null,
         looking: false,
+        resumes: true,
       });
       const acta = await casa.pide("GET", `/viajes/${id}/acta`);
       assert.equal(acta.estado, 200);
@@ -493,6 +495,80 @@ test("un run parado: el conductor lo cuenta por claves, y el acta del run la pid
       assert.equal((await casa.pide("POST", `/viajes/${id}/acta`)).estado, 405);
     },
     { asientos: { falla: (asiento) => (asiento === "route-planner" ? "rompe y lo dice" : null) } },
+  );
+});
+
+test("volver a intentarlo (2.5): solo su dueño, nunca en marcha, con su clave, y solo el paso que paró", async () => {
+  let suelta = (): void => {};
+  const espera = new Promise<void>((r) => (suelta = r));
+  const base = lanzadorDeMentira({ falla: (_a, puesto) => (puesto === "sitios-v1" ? "rompe y lo dice" : null) });
+  const lanzados: string[] = [];
+  const lanzador: Lanzador = async (orden, puesto, corte) => {
+    lanzados.push(puesto.id);
+    if (puesto.id === "sitios-v2") await espera;
+    return base(orden, puesto, corte);
+  };
+  await conCasa(
+    async (casa) => {
+      const id = await abre(casa);
+      // Sin investigación no hay nada que retomar.
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/reintentar`), {
+        estado: 409,
+        cuerpo: { error: "not_now" },
+      });
+      await casa.pide("POST", `/viajes/${id}/empezar`);
+      await casa.puerta.esperar();
+      const parado = (await casa.pide("GET", `/viajes/${id}`)).cuerpo.research.stopped;
+      assert.equal(parado.at, "pick");
+      assert.equal(parado.resumes, true);
+      const antes = [...lanzados];
+      // A otro, no hay tal viaje; y no se pide con otro método.
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/reintentar`, { dueno: "luis" }), {
+        estado: 404,
+        cuerpo: { error: "not_found" },
+      });
+      assert.equal((await casa.pide("GET", `/viajes/${id}/reintentar`)).estado, 405);
+      // Sin su clave, no se lanza.
+      const sesion = await casa.sesion("ana");
+      await casa.pide("DELETE", "/cuenta/clave", { sesion });
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/reintentar`), {
+        estado: 409,
+        cuerpo: { error: "no_key" },
+      });
+      await casa.pide("PUT", "/cuenta/clave", { sesion, cuerpo: { key: CLAVE } });
+
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/reintentar`), { estado: 202, cuerpo: { retry: 1 } });
+      assert.deepEqual(casa.puerta.enMarcha(), [id]);
+      // Con el run en marcha: ni otra vez, ni empezar de nuevo.
+      for (const que of ["reintentar", "empezar"])
+        assert.deepEqual(await casa.pide("POST", `/viajes/${id}/${que}`), {
+          estado: 409,
+          cuerpo: { error: "already_running" },
+        });
+      suelta();
+      await casa.puerta.esperar();
+      const { cuerpo } = await casa.pide("GET", `/viajes/${id}`);
+      assert.equal(cuerpo.trip.state, "on_map");
+      assert.equal(cuerpo.research.stopped, null);
+      // Se lanzó la vuelta nueva de ese paso y lo que venía después: nada de lo de antes, ni el conductor otra vez.
+      const nuevos = lanzados.slice(antes.length);
+      assert.equal(nuevos[0], "sitios-v2");
+      for (const p of nuevos) assert.ok(!antes.includes(p) && !p.startsWith("conductor"), p);
+      // Con la misma clave, que no queda escrita en ningún sitio.
+      assert.deepEqual(casa.claves, [CLAVE, CLAVE]);
+      assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
+      // El acta lo dice; y el viaje que se enseña sale como cualquiera.
+      const acta = await casa.pide("GET", `/viajes/${id}/acta`);
+      assert.deepEqual(
+        acta.cuerpo.record.reintentos.map((r: Objeto) => [r.n, r.en, r.puesto]),
+        [[1, "pick", "sitios-v2"]],
+      );
+      const version = await casa.pide("GET", `/viajes/${id}/version`);
+      assert.deepEqual(comprobarSucesos(version.cuerpo.events as Suceso[]), []);
+      // Con el viaje hecho, ya no hay nada que retomar.
+      assert.equal((await casa.pide("POST", `/viajes/${id}/reintentar`)).estado, 409);
+    },
+    { conLanzador: lanzador },
   );
 });
 
