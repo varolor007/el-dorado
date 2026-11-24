@@ -724,3 +724,47 @@ test("el primer vistazo, sin fuentes: lo dice con su clave, y nada de por qué",
     },
   );
 });
+
+test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el siguiente cuando ya se sabe", async () => {
+  await conCasa(async (casa) => {
+    const nada = await casa.pide("GET", "/cuenta/gasto");
+    assert.deepEqual(nada, {
+      estado: 200,
+      cuerpo: { spend: { trips: [], total: { usd: 0, calls: 0, known: true }, next: null } },
+    });
+    const id = await abre(casa);
+    await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: {} });
+    await casa.puerta.esperar();
+    const { cuerpo } = await casa.pide("GET", "/cuenta/gasto");
+    assert.equal(cuerpo.spend.trips.length, 1);
+    const viaje = cuerpo.spend.trips[0];
+    assert.deepEqual(Object.keys(viaje).sort(), [
+      "calls",
+      "check_in",
+      "check_out",
+      "destination",
+      "id",
+      "known",
+      "last",
+      "researches",
+      "usd",
+    ]);
+    assert.deepEqual([viaje.id, viaje.calls, viaje.known, viaje.researches], [id, 9, true, 1]);
+    assert.ok(Math.abs(viaje.usd - 0.45) < 1e-9);
+    assert.equal(typeof viaje.last, "string");
+    assert.deepEqual([cuerpo.spend.total.calls, cuerpo.spend.total.known], [9, true]);
+    assert.deepEqual(cuerpo.spend.next.from, 1);
+    assert.ok(Math.abs(cuerpo.spend.next.usd - 0.45) < 1e-9);
+    // Ni la mesa, ni el puesto, ni el asiento.
+    const dicho = JSON.stringify(cuerpo);
+    for (const callado of [casa.mesa, "route-planner", "trabajos"]) assert.ok(!dicho.includes(callado), callado);
+    // A otro, nada de lo de ana; sin sesión, nada de nadie; y solo se lee.
+    assert.deepEqual((await casa.pide("GET", "/cuenta/gasto", { dueno: "luis" })).cuerpo.spend.trips, []);
+    assert.deepEqual(await casa.pide("GET", "/cuenta/gasto", { dueno: null }), {
+      estado: 401,
+      cuerpo: { error: "no_session" },
+    });
+    assert.equal((await casa.pide("PUT", "/cuenta/gasto", { cuerpo: {} })).estado, 405);
+    assert.equal((await casa.pide("GET", "/cuenta/gasto/mas")).estado, 404);
+  });
+});

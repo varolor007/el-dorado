@@ -498,6 +498,7 @@ const en = {
     nuevoTexto: "Where and when. The rest is asked while it already searches.",
     estado: "On the map",
     ejemplo: "An example, already on the map",
+    gastoIA: (usd: string) => `AI ${usd}`,
     // Cómo está cada viaje tuyo, por su estado en la casa.
     estados: {
       started: "Not confirmed yet",
@@ -525,7 +526,20 @@ const en = {
     entra: "To save a key you need an account. Go to",
     sinClave: "Without a key you can look around and open the first look. Research needs it.",
     gasto: "What each trip has spent",
-    sinGasto: "Nothing yet: no trip has been researched with your key.",
+    sinGasto: "Nothing yet: no trip has been researched.",
+    mirandoGasto: "Adding up what your trips have spent",
+    llamadas: (n: number) => EN.cuenta(n, "AI call", "AI calls"),
+    investigaciones: (n: number) => EN.cuenta(n, "research", "researches"),
+    ultima: (dia: string) => `last on ${dia}`,
+    sinSaberUno: "Part of it is not known: at least this.",
+    total: "All your trips",
+    sinSaberTotal: "Part of it is not known, so the total is at least this.",
+    siguiente: (usd: string, n: number) =>
+      `The next research should cost about ${usd}: what ${n === 1 ? "your finished one" : `your ${EN.cifra(n)} finished ones`} cost on average.`,
+    sinSiguiente: "What the next research will cost is not known yet. It will be once one of yours has finished.",
+    comoClave:
+      "Your account thinks with this site's Claude account: these amounts are what it would have cost with a key, not a charge.",
+    sinGastoCasa: "Spending could not be read right now.",
     deLaCasa:
       "Your account thinks with this site's own Claude account: you don't need a key to research. If you save one, it stays in your account, encrypted, for later.",
   },
@@ -1008,6 +1022,7 @@ const es: Textos = {
     nuevoTexto: "Dónde y cuándo. Lo demás se pregunta mientras ya busca.",
     estado: "En el mapa",
     ejemplo: "Un ejemplo, ya en el mapa",
+    gastoIA: (usd) => `IA ${usd}`,
     estados: {
       started: "Sin confirmar todavía",
       confirmed: "Listo para investigar",
@@ -1034,7 +1049,20 @@ const es: Textos = {
     entra: "Para guardar una clave hace falta una cuenta. Ve a",
     sinClave: "Sin clave puedes mirar y abrir el primer vistazo. Para investigar hace falta.",
     gasto: "Lo que ha gastado cada viaje",
-    sinGasto: "Nada todavía: ningún viaje se ha investigado con tu clave.",
+    sinGasto: "Nada todavía: ningún viaje se ha investigado.",
+    mirandoGasto: "Sumando lo que han gastado tus viajes",
+    llamadas: (n) => ES.cuenta(n, "llamada a la IA", "llamadas a la IA"),
+    investigaciones: (n) => ES.cuenta(n, "investigación", "investigaciones"),
+    ultima: (dia) => `la última, el ${dia}`,
+    sinSaberUno: "Una parte no se sabe: como poco, esto.",
+    total: "Todos tus viajes",
+    sinSaberTotal: "Una parte no se sabe, así que el total es como poco esto.",
+    siguiente: (usd, n) =>
+      `La siguiente investigación debería costar unos ${usd}: lo que costó de media ${n === 1 ? "la tuya que acabó" : `cada una de las ${ES.cifra(n)} tuyas que acabaron`}.`,
+    sinSiguiente: "Lo que costará la siguiente investigación aún no se sabe. Se sabrá cuando acabe una tuya.",
+    comoClave:
+      "Tu cuenta piensa con la cuenta de Claude de esta web: estas cifras son lo que habría costado con una clave, no un cobro.",
+    sinGastoCasa: "Ahora mismo no se puede leer lo gastado.",
     deLaCasa:
       "Tu cuenta piensa con la cuenta de Claude de esta web: no te hace falta clave para investigar. Si guardas una, se queda en tu cuenta, cifrada, para más adelante.",
   },
