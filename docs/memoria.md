@@ -144,7 +144,13 @@ qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no 
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
 PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de la casa (2.9, primera parte,
 `claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
-primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). No hay ninguna en marcha.
+primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda, en marcha desde el 24-nov**: el arranque
+en el servidor (2.9, segunda parte, `claude/eldorado-2-9-arranque`, con las dos maneras de llegar desde Vercel: la
+puerta con candado y el túnel), el gasto de cada viaje (11.4, `claude/eldorado-11-4-gasto`) y los días baratos del
+vistazo con los aeropuertos de la búsqueda de transporte (5.5, `claude/eldorado-5-5-dias-baratos`). **Lo que queda
+por repartir y pide antes un diseño de quien orquesta**: el que escucha (5.2), que cambia el flujo de empezar; el
+conductor (2.5); el buscador y el lector de webs (3.5), y con ellos el del calendario (5.3) y el de los papeles
+(5.4); y Geoapify dentro de la casa (3.14), que tiene que caber en su cupo gratuito.
 
 **El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):
 `agent/scripts/vistazo.ts` (`primerVistazo`, `paraElVistazo`), su freno en `agent/launcher/freno.ts` y sus números
