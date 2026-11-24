@@ -6,7 +6,7 @@
 |---|---|
 | `seat` | Always `"papers"` |
 | `cells` | One entry for each cell of `questions.json`, no more and no less |
-| `unknowns` | What you could not find out, in plain sentences. Empty list if nothing |
+| `unknowns` | What you could not find out: plain sentences, each in one line of 300 characters at most and with no web address in it (name the site in words). Empty list if nothing |
 
 The examples in this file are invented. Where there are two, they come from two different kinds of trip, so that
 you copy neither: they show the form only, and everything you write comes from the pages you open.

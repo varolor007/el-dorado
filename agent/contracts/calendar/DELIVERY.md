@@ -7,7 +7,7 @@
 | `seat` | Always `"calendar"` |
 | `findings` | What matters in the weeks of the trip, `findings_allowed` at most. Empty list if nothing |
 | `windows` | Other dates, `windows_allowed` at most. Empty list if none, and always when the dates cannot move |
-| `unknowns` | What you could not find out or left out, in plain sentences. Empty list if nothing |
+| `unknowns` | What you could not find out or left out: plain sentences, each in one line of 300 characters at most and with no web address in it (name the site in words). Empty list if nothing |
 
 The examples in this file are invented. Where there are two, they come from two different kinds of trip, so that
 you copy neither: they show the form only, and everything you write comes from the pages you open.

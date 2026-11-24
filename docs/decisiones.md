@@ -551,6 +551,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   o empeora lo cuenta el código. Los días que pide el destino se comparan con las noches más uno.
 - **A quien viaja por el país de su pasaporte no se le pregunta por papeles** (la sesión, al revisar): ese país no
   le pide nada para entrar, y preguntarlo gastaba un asiento con búsquedas para nada. Si son todos, no se lanza.
+- **Una nota puede decir que una página no se abrió, con su dirección** (la sesión, por el estreno del de los
+  papeles). La casa sabe qué páginas se intentaron abrir sin éxito. Nombrarlas en una nota vale; citarlas en la
+  entrega, nunca. Una página que ni se intentó abrir sigue siendo un rojo.
+- **Las puertas dicen qué frase falla y por qué** (la sesión, por el estreno del del calendario): un rojo que no
+  dice qué arreglar cuesta una vuelta entera. Y los contratos dicen lo que mide la puerta.
+- **El del calendario y el de los papeles, estrenados solos con la cuenta del PM** (la sesión, con su sí a las
+  pruebas con su cuenta): unos 1,13 dólares de equivalente entre los dos.
 - **El conductor, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): sobre una
   copia de la parada real de Lisboa, pidió la vuelta de más y la investigación acabó. Unos 1,8 dólares de
   equivalente entre el conductor, esa vuelta y lo que quedaba del viaje.

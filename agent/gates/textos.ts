@@ -168,3 +168,24 @@ export function nombreDeFuera(texto: string): string | null {
   const limpio = typeof texto === "string" ? texto.trim() : "";
   return esNombre(limpio) ? limpio : null;
 }
+
+/**
+ * Las pegas de una lista de frases de un asiento (lo que no sabe, lo que supone), cada una con su sitio y dicha de
+ * forma que el asiento sepa qué arreglar: que sea una lista, cuántas caben, y de cada frase, que lo sea, lo que mide y
+ * que no lleve una dirección de la web (el sitio se dice con palabras) ni signos que no son de una frase.
+ */
+export function pegasDeFrases(lista: unknown, campo: string, largo: number, cuantas: number): [string, string][] {
+  if (!Array.isArray(lista)) return [[campo, "no es una lista de frases"]];
+  const pegas: [string, string][] = [];
+  if (lista.length > cuantas) pegas.push([campo, `lleva ${lista.length} frases, y caben ${cuantas}`]);
+  lista.forEach((frase, i) => {
+    const donde = `${campo}[${i}]`;
+    if (typeof frase !== "string" || frase.trim() === "") pegas.push([donde, "no es una frase"]);
+    else if (frase.length > largo) pegas.push([donde, `mide ${frase.length} letras, y caben ${largo}`]);
+    else if (/https?:|www\./i.test(frase))
+      pegas.push([donde, "lleva una dirección de la web: en una frase, el sitio se dice con palabras"]);
+    else if (/[\u0000-\u001f<>{}]/.test(frase))
+      pegas.push([donde, "lleva un salto de línea o signos que no son de una frase"]);
+  });
+  return pegas;
+}

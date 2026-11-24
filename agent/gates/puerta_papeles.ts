@@ -13,6 +13,7 @@ import { direccionComparable, esDireccion } from "../launcher/consultado.ts";
 import { celdasDe, filasDe } from "../launcher/papeles.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
+import { pegasDeFrases } from "./textos.ts";
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -159,8 +160,9 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
         );
 
   const desconocido = v.unknowns;
-  if (!Array.isArray(desconocido) || desconocido.length > FRASES_DEL_VIAJERO || !desconocido.every((x) => esTexto(x)))
-    rojo("unknowns", "no es una lista corta de frases");
-  else if (desconocido.some((x) => PUEDE_ENTRAR.test(x))) rojo("unknowns", "dice que se puede entrar (RP1)");
+  const pegas = pegasDeFrases(desconocido, "unknowns", FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO);
+  for (const [donde, que] of pegas) rojo(donde, que);
+  if (pegas.length === 0 && (desconocido as string[]).some((x) => PUEDE_ENTRAR.test(x)))
+    rojo("unknowns", "dice que se puede entrar (RP1)");
   return { verde: rojos.length === 0, rojos };
 }

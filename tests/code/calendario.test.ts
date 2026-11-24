@@ -213,6 +213,9 @@ test("las trampas: cada fallo puesto a propósito, cazado", () => {
     // Moverse un día no saca de la fiesta: no mejora nada.
     ["windows[0]", con((e) => (e.windows[0].check_in = "2031-07-11"))],
     ["unknowns", con((e) => (e.unknowns = "nada"))],
+    // Cada frase de lo que no se sabe dice su pega: una dirección de la web, o más larga de lo que cabe.
+    ["unknowns[1]", con((e) => (e.unknowns = ["Fine.", "See https://www.example.org/page."]))],
+    ["unknowns[0]", con((e) => (e.unknowns = ["x".repeat(301)]))],
   ];
   for (const [donde, entrega, viaje] of trampas) {
     const r = rojos(entrega, viaje);

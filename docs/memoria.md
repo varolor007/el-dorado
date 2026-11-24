@@ -250,7 +250,21 @@ PM: los topes de los papeles (16 búsquedas y 24 páginas) y los números del ca
 días); que un fallo de los papeles pare y le pregunte; el paso 14; y cómo saber qué dominio es oficial en
 cualquier país (la sesión de obra propone, sin construirlo: dar por oficial el dominio del destino al que enlaza
 la página de consejos de viaje del ministerio del viajero, y patrones de dominio de gobierno, revisados por una
-persona).
+persona). **Estrenados los dos, solos, con la cuenta del PM (24-nov)**, desde la terminal y con un techo de 30
+céntimos para que no arrancara nada más (mesa aparte, fuera del repositorio): el del calendario, 7 búsquedas y 8
+páginas en 134 segundos y unos 0,48 dólares de equivalente; el de los papeles (dos pasaportes españoles a
+Portugal), 9 búsquedas y 7 páginas en 174 segundos y unos 0,64. Trabajaron bien y los dos dieron un rojo de forma,
+ya arreglado de manera general. El de los papeles dijo en una nota que una web oficial no se abría, con su
+dirección, como pide su contrato, y la puerta de todos lo tomó por citar una página sin abrir: desde entonces una
+nota puede nombrar una página que se intentó abrir sin éxito (la casa lo sabe por la memoria de lo consultado), y
+ningún dato de la entrega puede citarla (3.5). El del calendario puso una dirección de la web dentro de una frase
+de lo que no sabe, y su puerta solo decía «no es una lista corta de frases»: ahora las tres puertas que miran
+esas listas (calendario, papeles y el que escucha) dicen qué frase falla y por qué (`pegasDeFrases` en
+`agent/gates/textos.ts`), y los tres contratos dicen lo que mide cada frase y que no lleva direcciones. Con las
+puertas de ahora, la tabla de los papeles de esa prueba pasa entera (sin visado, en regla con dos fuentes; el DNI
+o el pasaporte en vigor; la tarjeta sanitaria, como aviso; lo demás, dudoso por no encontrarlo en una web
+oficial; nada bloquea) y al calendario solo le queda esa frase. Cada investigación entera gasta, por estos dos
+asientos, alrededor de 1,1 dólares de equivalente más, y los papeles se esperan unos 3 minutos antes de buscar.
 
 **El conductor (2.5), junto** (una sesión de obra, revisada el 24-nov). El acta del run (`agent/launcher/acta.ts`,
 `acta.json` en el run) la rehace el código del disco: pasos, trabajos con su vuelta, tiempo y gasto, cada vuelta en

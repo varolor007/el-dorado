@@ -20,6 +20,7 @@ import { esDireccion } from "../launcher/consultado.ts";
 import { diasEntre, loQueCambia } from "../launcher/calendario.ts";
 import type { Aviso, Entendido } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
+import { pegasDeFrases } from "./textos.ts";
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -167,8 +168,7 @@ export function puertaCalendario(v: unknown, p: ParaElCalendario): Veredicto {
       if (!enElViaje) rojo(`findings[${i}]`, "no toca los días del viaje ni los de ninguna ventana");
     });
 
-  const desconocido = v.unknowns;
-  if (!Array.isArray(desconocido) || desconocido.length > FRASES_DEL_VIAJERO || !desconocido.every((x) => esTexto(x)))
-    rojo("unknowns", "no es una lista corta de frases");
+  for (const [donde, que] of pegasDeFrases(v.unknowns, "unknowns", FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO))
+    rojo(donde, que);
   return { verde: rojos.length === 0, rojos };
 }

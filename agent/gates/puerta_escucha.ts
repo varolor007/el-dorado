@@ -10,6 +10,7 @@ import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, LARGO_DE_UNA_PREGUNTA } from "..
 import { CHOQUES, PESOS_DE_GUSTO, type Dicho, type Entendido, type EntregaDeEscucha } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { estaDicho, puertaEntendido } from "./puerta_entendido.ts";
+import { pegasDeFrases } from "./textos.ts";
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -111,11 +112,8 @@ export function puertaEscucha(v: unknown, p: ParaEscuchar): Veredicto {
     cita(`questions[${i}].quote`, q.quote);
   });
 
-  for (const campo of ["assumed", "unknowns"]) {
-    const x = v[campo];
-    if (!Array.isArray(x) || x.length > FRASES_DEL_VIAJERO || !x.every((y) => esTexto(y)))
-      rojo(campo, "no es una lista corta de frases");
-  }
+  for (const campo of ["assumed", "unknowns"])
+    for (const [donde, que] of pegasDeFrases(v[campo], campo, FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO)) rojo(donde, que);
 
   // Lo que queda, juntado con la base, tiene que seguir pasando la mitad de código de la puerta 1.
   if (rojos.length === 0) {

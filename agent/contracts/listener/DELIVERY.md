@@ -11,7 +11,7 @@
 | `clashes` | What they wrote that does not fit with what they said. Empty list if nothing clashes |
 | `questions` | What you ask, `questions_allowed` at most. Empty list if nothing |
 | `assumed` | What you had to suppose and did not ask, in plain sentences. Empty list if nothing |
-| `unknowns` | What you could not know, in plain sentences. Empty list if nothing |
+| `unknowns` | What you could not know: plain sentences, each in one line of 300 characters at most and with no web address in it. Empty list if nothing |
 
 Every `quote` is a piece of one sentence of `in/words.json`, copied letter by letter (RE1).
 
