@@ -10,6 +10,7 @@ import {
   type TemaDelCalendario,
 } from "../data/calendario.ts";
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
+import { DUDAS, ESTADOS_DE_PAPEL, LADOS, PREGUNTAS, type EstadoDePapel } from "../data/papeles.ts";
 import { avisosDe } from "../data/palabras.ts";
 import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
 import { DIAS_ALREDEDOR } from "../data/transporte.ts";
@@ -248,6 +249,43 @@ export type DelCalendario = {
   falta: (typeof FALTAS_DEL_CALENDARIO)[number] | null;
 };
 
+/** Una fila de la tabla de los papeles: un pasaporte, una edad (null si es adulto) y cuántos viajan así. Sin nombre. */
+export type FilaDePapeles = { pasaporte: string; edad: number | null; cuantos: number };
+
+/**
+ * Una casilla de la tabla de los papeles, como la enseña la web: de qué fila (su posición), qué país y qué pregunta,
+ * por sus claves; su estado, sus fuentes con su lado y su fecha, y los plazos que cuenta el código: hasta cuándo
+ * tiene que valer el pasaporte y antes de qué día hay que hacer algo (y si ese día ya pasó). Ninguna frase del asiento.
+ */
+export type CasillaDePapel = {
+  viajero: number;
+  pais: string;
+  pregunta: (typeof PREGUNTAS)[number];
+  estado: EstadoDePapel;
+  duda: (typeof DUDAS)[number] | null;
+  fuentes: { url: string; lado: (typeof LADOS)[number]; estado: Exclude<EstadoDePapel, "doubtful">; visto: string }[];
+  hasta: string | null;
+  antesDe: string | null;
+  tarde: boolean;
+  coste: { importe: number; moneda: string } | null;
+};
+
+/** Lo que no se pregunta, y por qué: lo de menores a un adulto, y la escala hasta que se sepa el transporte. */
+export const NO_PREGUNTADO = ["no_minors", "transit_unknown"] as const;
+
+/**
+ * La tabla de los papeles de un viaje (puerta 2): sus filas, sus casillas, lo que no se pregunta, si algo bloquea, por
+ * qué falta si falta, y si el viajero decidió seguir igual.
+ */
+export type DeLosPapeles = {
+  viajeros: FilaDePapeles[];
+  casillas: CasillaDePapel[];
+  fuera: { viajero: number; pregunta: (typeof PREGUNTAS)[number]; porQue: (typeof NO_PREGUNTADO)[number] }[];
+  bloquea: boolean;
+  falta: "failed" | "rejected" | null;
+  sigue: boolean;
+};
+
 export const RITMOS = ["calm", "normal", "full"] as const;
 export type Ritmo = (typeof RITMOS)[number];
 
@@ -289,6 +327,8 @@ export type Viaje = {
   caminos?: TablaDeCaminos;
   /** Los avisos de las fechas, del del calendario, o por qué faltan. Un viaje de antes no los trae. */
   calendario?: DelCalendario;
+  /** La tabla de los papeles, con sus fuentes y sus plazos, o por qué falta. Un viaje de antes no la trae. */
+  papeles?: DeLosPapeles;
 };
 
 /** Lo que la casa cuenta en vivo. Solo datos: la frase la monta la web, en el idioma de quien mira. */
@@ -429,6 +469,45 @@ export function pegasDelCalendario(c: DelCalendario, entrada: string, salida: st
   return pegas;
 }
 
+/** Lo que se comprueba de la tabla de los papeles: cada casilla por sus claves, con fuentes https y sus fechas. */
+export function pegasDeLosPapeles(p: DeLosPapeles): Pega[] {
+  const pegas: Pega[] = [];
+  const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  if (!Array.isArray(p.viajeros) || !Array.isArray(p.casillas) || !Array.isArray(p.fuera))
+    return [{ donde: "papeles", que: "no es una tabla" }];
+  if (p.falta !== null && p.falta !== "failed" && p.falta !== "rejected") pega("papeles", "no dice por qué falta");
+  p.viajeros.forEach((f, i) => {
+    if (!/^[A-Z]{2}$/.test(f.pasaporte) || !(Number.isInteger(f.cuantos) && f.cuantos > 0))
+      pega(`papeles.viajeros[${i}]`, "no es un pasaporte con cuántos viajan con él");
+    if (f.edad !== null && !(Number.isInteger(f.edad) && f.edad >= 0 && f.edad < 18))
+      pega(`papeles.viajeros[${i}]`, "la edad de un menor no es la de un menor");
+  });
+  const fila = (n: number): boolean => Number.isInteger(n) && n >= 0 && n < p.viajeros.length;
+  p.casillas.forEach((c, i) => {
+    const donde = `papeles.casillas[${i}]`;
+    if (!fila(c.viajero) || !/^[A-Z]{2}$/.test(c.pais) || !PREGUNTAS.includes(c.pregunta))
+      pega(donde, "no dice de qué viajero, país o pregunta es");
+    if (!ESTADOS_DE_PAPEL.includes(c.estado)) pega(donde, "su estado no es de su lista");
+    if ((c.estado === "doubtful") !== (c.duda !== null) || (c.duda !== null && !DUDAS.includes(c.duda)))
+      pega(donde, "lo dudoso no dice por qué, o lo dice lo que no es dudoso");
+    for (const f of c.fuentes)
+      if (!enlaceQueVale(f.url) || !LADOS.includes(f.lado) || !fecha(f.visto))
+        pega(donde, "una fuente no es una dirección https con su lado y su fecha");
+    if (c.estado !== "doubtful" && c.fuentes.length === 0) pega(donde, "lo que no es dudoso lleva su fuente");
+    if ((c.hasta !== null && !fecha(c.hasta)) || (c.antesDe !== null && !fecha(c.antesDe)))
+      pega(donde, "un plazo no es una fecha");
+    if (c.tarde && c.antesDe === null) pega(donde, "dice que llega tarde sin un plazo");
+    if (c.coste !== null && !(c.coste.importe > 0 && /^[A-Z]{3}$/.test(c.coste.moneda)))
+      pega(donde, "su coste no es un importe con su moneda");
+  });
+  if (p.bloquea !== p.casillas.some((c) => c.estado === "blocks"))
+    pega("papeles", "lo que bloquea no casa con la tabla");
+  for (const f of p.fuera)
+    if (!fila(f.viajero) || !NO_PREGUNTADO.includes(f.porQue))
+      pega("papeles.fuera", "lo que no se pregunta no dice por qué");
+  return pegas;
+}
+
 /** Lo que el código puede comprobar de un viaje antes de dárselo a la web. No mira si el viaje es bueno. */
 export function comprobarViaje(v: Viaje): Pega[] {
   const pegas: Pega[] = [];
@@ -514,6 +593,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
   }
   if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
   if (v.calendario !== undefined) pegas.push(...pegasDelCalendario(v.calendario, v.entrada, v.salida));
+  if (v.papeles !== undefined) pegas.push(...pegasDeLosPapeles(v.papeles));
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))
     pega("habitaciones", "no dice en cuántas habitaciones duerme el grupo");

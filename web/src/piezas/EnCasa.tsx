@@ -7,9 +7,9 @@ import { useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
-import { empezarLaInvestigacion, type EnLaCasa } from "../lib/viajeVivo.ts";
+import { confirmarLoEntendido, empezarLaInvestigacion, type EnLaCasa } from "../lib/viajeVivo.ts";
 import { Confirmacion } from "./Confirmacion.tsx";
-import { fraseDeSuceso } from "./Pantallas.tsx";
+import { fraseDeSuceso, TusPapeles } from "./Pantallas.tsx";
 
 type Props = { t: Textos; idioma: string; estado: EnLaCasa; sucesos: Suceso[]; deNoches: number };
 
@@ -25,6 +25,17 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
   // Tu turno: la investigación espera a que confirmes lo que he entendido. No es una parada.
   const tuTurno = parado === null && i?.waiting_for_you === true && i.heard != null ? i.heard : null;
   const nombreDe = (paso: string | null): string => (paso === null ? "" : (t.casa.pasos[paso] ?? paso));
+  // Los papeles, en cuanto están; si algo bloquea, o faltan, y no es lo que he entendido, es tu turno de decidir.
+  const papeles = i?.papers ?? null;
+  const turnoDePapeles =
+    parado === null && tuTurno === null && i?.waiting_for_you === true && papeles !== null && !papeles.sigue;
+  const seguir = async (): Promise<void> => {
+    setOcupado(true);
+    setFallo(null);
+    const mal = await confirmarLoEntendido(estado.trip.id, { papers: "go_on" });
+    setOcupado(false);
+    if (mal !== null) setFallo(t.empezar.fallo(mal.clave, []));
+  };
 
   // Mientras se mira un alojamiento se dice que se está mirando; al acabar, esa línea pasa a ser la de lo mirado.
   const mirados = new Set(sucesos.filter((s) => s.clase === "looked").map((s) => s.ref));
@@ -55,7 +66,11 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
         <h1 className="titulo">{estado.trip.destination ?? t.casa.titulo}</h1>
         {parado === null && (
           <p className="suave">
-            {tuTurno !== null ? t.escucha.rotulo : ahora === null ? t.casa.esperando : nombreDe(ahora)}
+            {tuTurno !== null || turnoDePapeles
+              ? t.escucha.rotulo
+              : ahora === null
+                ? t.casa.esperando
+                : nombreDe(ahora)}
           </p>
         )}
         <div
@@ -84,6 +99,15 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
         </p>
       )}
       {tuTurno !== null && <Confirmacion key={tuTurno.round} t={t} viaje={estado.trip.id} escuchado={tuTurno} />}
+      {papeles !== null && (turnoDePapeles || papeles.bloquea || papeles.falta !== null) && (
+        <TusPapeles
+          t={t}
+          idioma={idioma}
+          papeles={papeles}
+          ocupado={ocupado}
+          alSeguir={turnoDePapeles ? () => void seguir() : undefined}
+        />
+      )}
       <ol className="sucesos" aria-live="polite">
         {lineas.map(({ s, n, f }, orden) => (
           <li key={n} className={orden === 0 ? "suceso suceso--ultimo" : "suceso"}>

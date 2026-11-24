@@ -209,11 +209,12 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     assert.deepEqual(r.parado, null);
     assert.equal(r.hecho, true);
     assert.deepEqual(comprobarViaje(leerJson(join(run, "viaje.json")) as Viaje), []);
-    // Diez llamadas, una por asiento: el del calendario, la ruta, los cinco que miran, el que elige, el que cruza y
-    // el que explica.
+    // Once llamadas, una por asiento: el del calendario, la ruta, los cinco que miran, el que elige, el que cruza,
+    // el que explica y el de los papeles.
     assert.deepEqual(pensar.llamadas.map((l) => l.asiento).sort(), [
       "calendar",
       ...Array(5).fill("lodging-viewer"),
+      "papers",
       "route-planner",
       "sights-picker",
       "trip-crosser",
@@ -227,9 +228,9 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     }
     // Cada trabajo, con lo que gastó; y lo que contestó cada asiento, guardado en el run y fuera de su puesto.
     const trabajos = trabajosDe(run);
-    assert.equal(trabajos.length, 10);
+    assert.equal(trabajos.length, 11);
     assert.ok(trabajos.every((t) => t.estado === "done" && t.gasto?.usd === 0.108 && t.gasto.turnos === 1));
-    assert.ok(Math.abs(r.gasto.usd - 10 * 0.108) < 1e-9);
+    assert.ok(Math.abs(r.gasto.usd - 11 * 0.108) < 1e-9);
     assert.deepEqual(readdirSync(join(run, "respuestas")).sort(), trabajos.map((t) => `${t.puesto}.txt`).sort());
     assert.ok(readFileSync(join(run, "respuestas", "ruta-v1.txt"), "utf8").startsWith("=== 1-acknowledgement.md ==="));
     assert.deepEqual(readdirSync(join(run, "puestos", "ruta-v1", "out")).sort(), [...PASOS, ENTREGA].sort());
@@ -243,7 +244,14 @@ test("si la IA no quiere contestar, o su respuesta se corta, el trabajo falla y 
     const run = runNuevo();
     try {
       darElAdelante(run, 5);
-      const r = await llevar(run, fuentesInventadas(), lanzadorDirecto(pensarDeMentira({ fin }), PRECIO));
+      // Solo la ruta no contesta bien: lo demás, sí.
+      const pensar = pensarDeMentira();
+      const ruta = pensarDeMentira({ fin });
+      const r = await llevar(
+        run,
+        fuentesInventadas(),
+        lanzadorDirecto((p) => (p.contrato.includes('Always `"route-planner"`') ? ruta(p) : pensar(p)), PRECIO),
+      );
       assert.equal(r.parado?.en, "route");
       const trabajo = trabajosDe(run).find((t) => t.puesto === "ruta-v1")!;
       assert.equal(trabajo.estado, "failed");

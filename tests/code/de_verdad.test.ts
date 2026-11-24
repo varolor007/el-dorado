@@ -37,13 +37,13 @@ test("lleva la investigación entera con su adelante, cuenta lo que pasa y dice 
     assert.ok(contado.every((s, i) => i === 0 || s.t >= contado[i - 1].t));
     const resumen = resumenDe(hecho);
     assert.match(resumen[0], /^Hecho\. El viaje, en .*viaje\.json$/);
-    // Diez llamadas, con el calendario, a 12.000 de entrada y 3.000 de salida cada una, con el precio que se le dio.
-    const gasto = (10 * (12_000 * PRECIO.entrada + 3_000 * PRECIO.salida)) / 1_000_000;
+    // Once llamadas, con calendario y papeles, a 12.000 de entrada y 3.000 de salida cada una, con su precio.
+    const gasto = (11 * (12_000 * PRECIO.entrada + 3_000 * PRECIO.salida)) / 1_000_000;
     assert.ok(
-      resumen.some((l) => l.includes(`Gastó ${gasto.toFixed(2)} USD, en 10 llamadas`)),
+      resumen.some((l) => l.includes(`Gastó ${gasto.toFixed(2)} USD, en 11 llamadas`)),
       resumen.join("\n"),
     );
-    assert.equal(resumen.filter((l) => /^ {2}\S+ \([a-z-]+\): done, \d+ s, \d+\.\d\d USD$/.test(l)).length, 10);
+    assert.equal(resumen.filter((l) => /^ {2}\S+ \([a-z-]+\): done, \d+ s, \d+\.\d\d USD$/.test(l)).length, 11);
     assert.equal(resumen.at(-1), `El run, en ${run}`);
   } finally {
     rmSync(run, { recursive: true, force: true });

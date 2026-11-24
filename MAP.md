@@ -14,6 +14,7 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `agent/contracts/calendar/` | El contrato del del calendario, en inglés: busca en la web lo de las semanas del viaje (el tiempo, la temporada, las fiestas y los eventos, los festivos de allí y de donde se sale, lo que cierra y lo que se agota), lo pone en una de cuatro clases con su página y su fecha, y propone otras fechas solo a quien puede moverlas; sus ocho normas, su entrega y lo que busca (`INTERNET.md`) | Hecho, con el punto 5.3 |
 | `agent/contracts/listener/` | El contrato del que escucha, en inglés: separa lo que escribió el viajero en límites, gustos y lo reservado, cada uno con su cita letra a letra; dice lo que choca y pregunta tres cosas como mucho; sus siete normas y su entrega | Hecho, con el punto 5.2 |
 | `agent/contracts/lodging-viewer/` | El contrato del que mira el alojamiento, en inglés: qué recibe y qué no ve, su guía paso a paso, sus seis normas y su entrega, campo a campo y nivel a nivel | Hecho, con el punto 4.2 |
+| `agent/contracts/papers/` | El contrato del de los papeles, en inglés: llena la tabla de cada viajero (por su pasaporte y su edad, sin nombre) por cada país, con la lista fija de preguntas, buscando cada respuesta en el gobierno del destino y en el ministerio del viajero; nunca dice que se puede entrar; sus siete normas, su entrega y lo que busca (`INTERNET.md`) | Hecho, con el punto 5.4 |
 | `agent/contracts/route-planner/` | El contrato del asiento de la ruta, en inglés: qué recibe y qué no ve, su guía paso a paso, sus siete normas y su entrega | Hecho, con el punto 4.5 |
 | `agent/contracts/sights-picker/` | El contrato del asiento del día a día, que elige los sitios, en inglés: qué recibe y qué no ve, su guía, sus siete normas y su entrega | Hecho, con el punto 4.9 |
 | `agent/contracts/trip-crosser/` | El contrato del asiento que cruza, en inglés: lee la tabla del código, recorre la lista fija de palancas, cierra las tres maneras y elige qué palancas contar; sus siete normas y su entrega | Hecho, con el punto 4.6 |
@@ -31,8 +32,8 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 
 ## Lo que aún no existe
 
-Los contratos de los asientos de los papeles, del transporte y de la guía (en `agent/contracts/`, junto al método
-común y a los siete que ya hay) y `tests/runs/` llegan con su punto del plan.
+Los contratos de los asientos del transporte y de la guía (en `agent/contracts/`, junto al método común y a los
+ocho que ya hay) y `tests/runs/` llegan con su punto del plan.
 
 ## Lo que no va aquí
 

@@ -214,14 +214,14 @@ test("el botón confirma, da el adelante con su techo y lleva la investigación 
     assert.equal(cuerpo.research.ceiling, 5);
     assert.ok(cuerpo.research.steps.every((p: Objeto) => p.state === "done" && p.waiting === 0));
     // De cada trabajo de la IA se dice el paso, cómo está y lo que gastó: nunca el asiento ni su puesto.
-    assert.equal(cuerpo.research.jobs.length, 10);
+    assert.equal(cuerpo.research.jobs.length, 11);
     assert.deepEqual(Object.keys(cuerpo.research.jobs[0]).sort(), ["state", "step", "usd"]);
     assert.deepEqual(
       [...new Set(cuerpo.research.jobs.map((t: Objeto) => t.step))],
-      ["calendar", "route", "look", "pick", "cross", "explain"],
+      ["calendar", "papers", "route", "look", "pick", "cross", "explain"],
     );
-    assert.ok(Math.abs(cuerpo.research.spent.usd - 0.5) < 1e-9);
-    assert.deepEqual([cuerpo.research.spent.turns, cuerpo.research.spent.known], [30, true]);
+    assert.ok(Math.abs(cuerpo.research.spent.usd - 0.55) < 1e-9);
+    assert.deepEqual([cuerpo.research.spent.turns, cuerpo.research.spent.known], [33, true]);
 
     // El viaje que se enseña pasa lo que se comprueba de un viaje antes de enseñarlo.
     const version = await casa.pide("GET", `/viajes/${id}/version`);
@@ -249,7 +249,7 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
       assert.equal(cuerpo.trip.state, "researching");
       assert.deepEqual(cuerpo.research.stopped, { at: "route" });
       assert.deepEqual(
-        cuerpo.research.jobs.filter((t: Objeto) => t.step !== "calendar"),
+        cuerpo.research.jobs.filter((t: Objeto) => t.step !== "calendar" && t.step !== "papers"),
         [{ step: "route", state: "failed", usd: null }],
       );
       assert.equal(cuerpo.research.spent.known, false);
@@ -752,12 +752,12 @@ test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el sigui
       "researches",
       "usd",
     ]);
-    assert.deepEqual([viaje.id, viaje.calls, viaje.known, viaje.researches], [id, 10, true, 1]);
-    assert.ok(Math.abs(viaje.usd - 0.5) < 1e-9);
+    assert.deepEqual([viaje.id, viaje.calls, viaje.known, viaje.researches], [id, 11, true, 1]);
+    assert.ok(Math.abs(viaje.usd - 0.55) < 1e-9);
     assert.equal(typeof viaje.last, "string");
-    assert.deepEqual([cuerpo.spend.total.calls, cuerpo.spend.total.known], [10, true]);
+    assert.deepEqual([cuerpo.spend.total.calls, cuerpo.spend.total.known], [11, true]);
     assert.deepEqual(cuerpo.spend.next.from, 1);
-    assert.ok(Math.abs(cuerpo.spend.next.usd - 0.5) < 1e-9);
+    assert.ok(Math.abs(cuerpo.spend.next.usd - 0.55) < 1e-9);
     // Ni la mesa, ni el puesto, ni el asiento.
     const dicho = JSON.stringify(cuerpo);
     for (const callado of [casa.mesa, "route-planner", "trabajos"]) assert.ok(!dicho.includes(callado), callado);
@@ -790,7 +790,11 @@ test("tu confirmación (5.2): la casa espera tu turno, solo tú confirmas, y la 
     assert.equal(espera.research.stopped, null);
     assert.equal(espera.research.steps[0].state, "yours");
     // Lo demás espera; el del calendario, que corre por detrás, puede estar trabajando o haber acabado ya.
-    assert.ok(espera.research.steps.slice(1).every((p: Objeto) => p.id === "calendar" || p.state === "pending"));
+    assert.ok(
+      espera.research.steps
+        .slice(1)
+        .every((p: Objeto) => ["calendar", "papers"].includes(p.id) || p.state === "pending"),
+    );
     // Lo que ve: sus palabras y las claves; ni qué es cada cosa ni por qué, que lo escribió el asiento.
     assert.deepEqual(espera.research.heard, {
       round: 1,
@@ -825,4 +829,48 @@ test("tu confirmación (5.2): la casa espera tu turno, solo tú confirmas, y la 
       cuerpo: { error: "not_now" },
     });
   });
+});
+
+test("los papeles (5.4): si no se pudieron mirar, la casa espera tu decisión, y con ella sigue", async () => {
+  await conCasa(
+    async (casa) => {
+      const id = await abre(casa);
+      assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: {} })).estado, 202);
+      await casa.puerta.esperar();
+      const espera = (await casa.pide("GET", `/viajes/${id}`)).cuerpo;
+      assert.equal(espera.research.waiting_for_you, true);
+      assert.equal(espera.research.stopped, null);
+      assert.equal(espera.research.steps.find((p: Objeto) => p.id === "papers").state, "yours");
+      assert.ok(
+        espera.research.steps.filter((p: Objeto) => p.id === "route").every((p: Objeto) => p.state === "pending"),
+      );
+      // Lo que se le dice: que faltan, por su clave, sin el porqué de quien lo lleva.
+      assert.equal(espera.research.papers.falta, "failed");
+      assert.equal(espera.research.papers.sigue, false);
+      assert.ok(!JSON.stringify(espera).includes("la IA no contestó"));
+      // Solo vale decir que sigue, y nada más.
+      for (const cuerpo of [{}, { papers: "yes" }, { papers: "go_on", tastes: [] }])
+        assert.deepEqual(await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo }), {
+          estado: 400,
+          cuerpo: { error: "bad_request" },
+        });
+      // Nadie más decide por su dueño.
+      assert.equal(
+        (await casa.pide("POST", `/viajes/${id}/confirmar`, { dueno: "eva", cuerpo: { papers: "go_on" } })).estado,
+        404,
+      );
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo: { papers: "go_on" } }), {
+        estado: 202,
+        cuerpo: { done: "papers_go_on" },
+      });
+      await casa.puerta.esperar();
+      const hecho = (await casa.pide("GET", `/viajes/${id}`)).cuerpo;
+      assert.equal(hecho.trip.state, "on_map");
+      const { cuerpo } = await casa.pide("GET", `/viajes/${id}/version`);
+      assert.deepEqual([cuerpo.trip.papeles.falta, cuerpo.trip.papeles.sigue], ["failed", true]);
+      // Ya no es su turno.
+      assert.equal((await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo: { papers: "go_on" } })).estado, 409);
+    },
+    { asientos: { falla: (asiento) => (asiento === "papers" ? "rompe" : null) } },
+  );
 });

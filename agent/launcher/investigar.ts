@@ -27,6 +27,7 @@ import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
 import { puertaBusqueda, type Rojo } from "../gates/puerta_busqueda.ts";
 import { puertaCalendario } from "../gates/puerta_calendario.ts";
+import { puertaPapeles } from "../gates/puerta_papeles.ts";
 import { puertaCruce } from "../gates/puerta_cruce.ts";
 import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
@@ -39,6 +40,7 @@ import type {
   Entendido,
   EntregaDeCruce,
   EntregaDelCalendario,
+  EntregaDeLosPapeles,
   EntregaDeEscucha,
   EntregaDeExplicar,
   EntregaDeMirar,
@@ -95,6 +97,16 @@ import {
   type Escuchado,
 } from "./escuchar.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
+import {
+  PAPELES,
+  papelesDelRun,
+  paraElViajero,
+  paraEnsenarPapeles,
+  paranElViaje,
+  piezasDeLosPapeles,
+  sinPapeles,
+  type DeLosPapelesGuardado,
+} from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { acaboSinEntregar } from "./trabajos.ts";
 import { contar } from "./vivo.ts";
@@ -632,6 +644,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     calendario: ((c) => (c === null ? null : { avisos: c.avisos, ventanas: c.ventanas, falta: c.falta }))(
       calendarioDelRun(run),
     ),
+    papeles: paraElViajero(run),
   });
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
@@ -700,6 +713,38 @@ function delCalendario(run: string, base: Entendido, f: Fuentes): string | null 
       entrega: r.entrega,
       cuando: new Date().toISOString(),
     } satisfies DelCalendarioGuardado);
+  return null;
+}
+
+/**
+ * El de los papeles, por detrás desde el principio, como el del calendario: se recoge en cuanto entrega y pasa la
+ * puerta 2. Devuelve el puesto que espera, si espera. Si falló, o no pasó la puerta tras sus vueltas, se guarda que
+ * falta: sin saber, no se puede decir que nada bloquee, y decide el viajero.
+ */
+function deLosPapeles(run: string, base: Entendido): string | null {
+  if (hay(run, PAPELES)) return null;
+  const viaje = sinPalabras(base);
+  const hoy = hoyEnLaCasa();
+  const puesto = puestoDe(run, "papeles");
+  if (puesto !== null && !entregado(puesto) && acaboSinEntregar(run, puesto.id)) {
+    guardar(run, PAPELES, sinPapeles(viaje, "failed", new Date()));
+    return null;
+  }
+  const r = recoger<EntregaDeLosPapeles>(
+    run,
+    "papeles",
+    "papers",
+    piezasDeLosPapeles(viaje, hoy),
+    (e) => puertaPapeles(e, { viaje }).rojos,
+  );
+  if ("espera" in r) return r.espera;
+  if ("parado" in r) guardar(run, PAPELES, sinPapeles(viaje, "rejected", new Date()));
+  else
+    guardar(run, PAPELES, {
+      ...paraEnsenarPapeles(r.entrega, viaje, hoy),
+      entrega: r.entrega,
+      cuando: new Date().toISOString(),
+    } satisfies DeLosPapelesGuardado);
   return null;
 }
 
@@ -797,6 +842,9 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   // El del calendario, desde el principio y por detrás: no frena nada hasta que se monta el viaje.
   const calendario = delCalendario(run, base, f);
   if (calendario !== null) porDetras.push(calendario);
+  // El de los papeles, también desde el principio: su puerta 2 se mira antes de gastar en buscar.
+  const papeles = deLosPapeles(run, base);
+  if (papeles !== null) porDetras.push(papeles);
 
   // 0. El que escucha y tu confirmación. Lo que sigue lo hace lo entendido ya confirmado, y sin tus palabras: a los
   // demás asientos les llegan tus gustos y tus límites, cada uno con su cita, y no lo que escribiste entero.
@@ -808,6 +856,13 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     }
   }
   const viaje = sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido);
+
+  // La puerta 2: antes de gastar en buscar, los papeles. Si aún se miran, ahora sí se les espera. Si algo bloquea, o
+  // no se pudieron mirar, el viaje se para aquí y espera la decisión del viajero, sin gastar más.
+  if (papeles !== null) return espera(papeles);
+  const tabla = papelesDelRun(run);
+  if (tabla !== null && paranElViaje(tabla) && !tabla.sigue)
+    return { esperan: [], hecho: false, parado: null, avisos, alViajero: true, porDetras: conLoDeDetras([]) };
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);

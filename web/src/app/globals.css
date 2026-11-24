@@ -2093,3 +2093,19 @@ select.toque {
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* ---------- Tus papeles (5.4): lo que piden las fuentes oficiales, por viajero */
+
+.papeles__viajero {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fecha--papel-blocks,
+.fecha--papel-to_do {
+  border-left-color: var(--ojo);
+}
+.fecha--papel-doubtful {
+  border-left-style: dashed;
+  border-left-color: var(--tinta-tenue);
+}

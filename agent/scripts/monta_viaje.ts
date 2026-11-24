@@ -26,7 +26,7 @@ import { elegirFotos } from "../tools/fotos.ts";
 import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
 import type { TablaDeCaminos } from "../tools/caminos.ts";
-import type { DelCalendario } from "../output/viaje.ts";
+import type { DeLosPapeles, DelCalendario } from "../output/viaje.ts";
 import { cribar } from "./cribas.ts";
 import type { Entendido, EntregaDeCruce, EntregaDeExplicar, EntregaDeMirar, Tabla, ZonaResuelta } from "./formas.ts";
 import { fechasDe, repartir } from "./ritmo.ts";
@@ -197,6 +197,8 @@ export type Decidido = {
   caminos?: TablaDeCaminos | null;
   /** Los avisos de las fechas, o por qué faltan: viajan tal cual, ya con las cuentas del código. */
   calendario?: DelCalendario | null;
+  /** La tabla de los papeles, con lo que decidió el viajero: viaja tal cual. */
+  papeles?: DeLosPapeles | null;
 };
 
 export function montarViaje(b: Busqueda, d: Decidido): Viaje {
@@ -246,6 +248,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     // Un viaje sin tabla de caminos no la lleva: se mide con la cuenta de la casa, como siempre.
     ...(caminos === null ? {} : { caminos }),
     ...(d.calendario == null ? {} : { calendario: d.calendario }),
+    ...(d.papeles == null ? {} : { papeles: d.papeles }),
   };
 }
 
@@ -330,6 +333,8 @@ export type Hecho = {
   caminos?: TablaDeCaminos | null;
   /** Los avisos de las fechas del del calendario, o por qué faltan. */
   calendario?: DelCalendario | null;
+  /** La tabla de los papeles, o por qué falta. */
+  papeles?: DeLosPapeles | null;
 };
 
 /** Un vuelo como lo enseña la web. El precio que se enseña es el de todos los que viajan, como el del alojamiento. */
@@ -424,5 +429,6 @@ export function montarViajeHecho(h: Hecho): Viaje {
     mirados: h.mirados,
     caminos: h.caminos,
     calendario: h.calendario,
+    papeles: h.papeles,
   });
 }
