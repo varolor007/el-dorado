@@ -19,10 +19,11 @@ import {
   trozoDe,
   type FuentesDelVistazo,
 } from "../../agent/scripts/vistazo.ts";
+import { lugaresDelViaje, paresDe } from "../../agent/scripts/transporte.ts";
 import type { Alojamiento, FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
 import { fuentesInventadas } from "../cases/inventado/asientos.ts";
 import { fuenteInventada, VISTO } from "../cases/inventado/inventado.ts";
-import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
+import { ENTENDIDO, transporteInventado } from "../cases/inventado/investigacion.ts";
 
 const RAPIDO = { lista: 200, precios: 200, vuelos: 200 };
 const nunca = <T>(): Promise<T> => new Promise<T>(() => undefined);
@@ -52,6 +53,8 @@ test("el vistazo inventado: lo que hay, lo que pasa y desde cuánto, por zonas, 
   assert.deepEqual(v.vuelos, {
     origen: "OOO",
     destino: "VVV",
+    // Con los aeropuertos dichos no se piden los lugares a la fuente: su nombre es su código.
+    nombres: { origen: "OOO", destino: "VVV" },
     mes: "2027-03",
     noches: 3,
     moneda: "EUR",
@@ -149,29 +152,101 @@ test("si la fuente no contesta, no hay vistazo; si contesta a medias, se dice", 
   assert.equal(p.devueltos, 0);
 });
 
-test("los días para volar: solo si se sabe de dónde se sale, del mes del viaje y en su moneda", async () => {
-  let preguntado = 0;
-  const f: FuentesDelVistazo = {
-    alojamiento: fuenteInventada(),
-    diasBaratos: async (_v, mes) => {
-      preguntado++;
-      return [
-        { fuente: "inventada", visto: VISTO, dia: `${mes}-03`, precio: 80, moneda: "USD" },
-        { fuente: "inventada", visto: VISTO, dia: "2027-04-01", precio: 70, moneda: "EUR" },
-        { fuente: "inventada", visto: VISTO, dia: `${mes}-04`, precio: 0, moneda: "EUR" },
-      ];
-    },
+test("los días para volar: del mes del viaje, en su moneda y el más barato de cada día", async () => {
+  const transporte = transporteInventado();
+  transporte.diasBaratos = async (t, mes) => {
+    transporte.pedidos.push({ como: "dias", t });
+    return [
+      { fuente: "inventada", visto: VISTO, dia: `${mes}-03`, precio: 80, moneda: "USD" },
+      { fuente: "inventada", visto: VISTO, dia: "2027-04-01", precio: 70, moneda: "EUR" },
+      { fuente: "inventada", visto: VISTO, dia: `${mes}-04`, precio: 0, moneda: "EUR" },
+      { fuente: "inventada", visto: VISTO, dia: `${mes}-09`, precio: 120, moneda: "EUR" },
+      { fuente: "inventada", visto: "2027-01-01T00:00:00Z", dia: `${mes}-09`, precio: 110, moneda: "EUR" },
+    ];
   };
-  assert.equal((await primerVistazo(ENTENDIDO, f, RAPIDO)).vuelos, null);
-  assert.equal(preguntado, 1);
-  const sinSalida = { ...ENTENDIDO, origin: null };
-  assert.equal((await primerVistazo(sinSalida, f, RAPIDO)).vuelos, null);
-  const sinAeropuerto = { ...ENTENDIDO, origin: { ...ENTENDIDO.origin!, airport: null } };
-  assert.equal((await primerVistazo(sinAeropuerto, f, RAPIDO)).vuelos, null);
-  assert.equal(preguntado, 1);
-  // Si tarda, el vistazo no lo espera.
-  const lenta = { ...f, diasBaratos: nunca };
-  assert.equal((await primerVistazo(ENTENDIDO, lenta, RAPIDO)).vuelos, null);
+  const v = await primerVistazo(ENTENDIDO, { alojamiento: fuenteInventada(), transporte }, RAPIDO);
+  assert.deepEqual(v.vuelos?.dias, [{ dia: "2027-03-09", precio: 110 }]);
+  // El día en que se vio es el más antiguo: el precio es de entonces.
+  assert.equal(v.vuelos?.visto, "2027-01-01T00:00:00Z");
+  // Una sola petición de precios, con los aeropuertos dichos, y sin pedir los lugares, que no hacen falta.
+  assert.deepEqual(
+    transporte.pedidos.map((p) => p.como),
+    ["dias"],
+  );
+  assert.deepEqual(transporte.pedidos[0].t, {
+    origen: "OOO",
+    destino: "VVV",
+    ida: "2027-03",
+    vuelta: null,
+    moneda: "EUR",
+    mercado: "yy",
+  });
+});
+
+test("los días para volar salen de los aeropuertos de la búsqueda de transporte: el par principal", async () => {
+  // Sin aeropuertos dichos: se sale por el punto (o por el nombre de la ciudad) y se llega por el más cercano.
+  const sinAeropuertos: Entendido = {
+    ...ENTENDIDO,
+    origin: { name: "Pueblo Sin Aeropuerto", country: "YY", airport: null, centre: { lat: 40.1, lon: -3 } },
+    destination: { ...ENTENDIDO.destination, airport: null },
+  };
+  const transporte = transporteInventado();
+  const v = await primerVistazo(sinAeropuertos, { alojamiento: fuenteInventada(), transporte }, RAPIDO);
+  assert.deepEqual(comprobarVistazo(v), []);
+  assert.equal(v.vuelos?.origen, "OOO");
+  assert.equal(v.vuelos?.destino, "VVV");
+  assert.deepEqual(v.vuelos?.nombres, { origen: "Origen Inventado", destino: "Villa Inventada" });
+  assert.deepEqual(
+    transporte.pedidos.map((p) => p.como),
+    ["lugares", "dias"],
+  );
+  // Son los mismos que pide la parrilla primero.
+  const { salida, llegada } = await lugaresDelViaje(sinAeropuertos, transporte);
+  assert.deepEqual(paresDe(salida, llegada)[0], ["OOO", "VVV"]);
+  // Por el nombre de la ciudad, sin punto.
+  const porNombre: Entendido = {
+    ...sinAeropuertos,
+    origin: { name: "Pueblo Sin Aeropuerto", country: "YY", airport: null },
+  };
+  const n = await primerVistazo(
+    porNombre,
+    { alojamiento: fuenteInventada(), transporte: transporteInventado() },
+    RAPIDO,
+  );
+  assert.equal(n.vuelos?.origen, "OOO");
+});
+
+test("los días para volar: sin saber de dónde se sale, sin fuente o si tarda, no salen y no se espera", async () => {
+  const transporte = transporteInventado();
+  const f: FuentesDelVistazo = { alojamiento: fuenteInventada(), transporte };
+  assert.equal((await primerVistazo({ ...ENTENDIDO, origin: null }, f, RAPIDO)).vuelos, null);
+  assert.equal(transporte.pedidos.length, 0);
+  // Un sitio que la fuente no sabe dónde está: no hay aeropuerto de salida, y no se piden precios.
+  const perdido: Entendido = { ...ENTENDIDO, origin: { name: "Ningún Sitio", country: "YY", airport: null } };
+  assert.equal((await primerVistazo(perdido, f, RAPIDO)).vuelos, null);
+  assert.deepEqual(
+    transporte.pedidos.map((p) => p.como),
+    ["lugares"],
+  );
+  // Se sale y se llega por el mismo sitio: no hay vuelo que buscar.
+  const mismo: Entendido = { ...ENTENDIDO, destination: { ...ENTENDIDO.destination, airport: "OOO" } };
+  assert.equal((await primerVistazo(mismo, f, RAPIDO)).vuelos, null);
+  assert.equal(transporte.pedidos.filter((p) => p.como === "dias").length, 0);
+  // Sin fuente de transporte, o una que no sabe dar días baratos.
+  assert.equal((await primerVistazo(ENTENDIDO, { alojamiento: fuenteInventada() }, RAPIDO)).vuelos, null);
+  const sinDias = { ...transporteInventado(), diasBaratos: undefined };
+  assert.equal((await primerVistazo(ENTENDIDO, { ...f, transporte: sinDias }, RAPIDO)).vuelos, null);
+  // Si falla, o no tiene precios, o tarda (también al dar sus lugares), el vistazo sale igual, sin vuelos.
+  for (const rota of [transporteInventado({ falla: true }), transporteInventado({ vacia: true })])
+    assert.equal((await primerVistazo(ENTENDIDO, { ...f, transporte: rota }, RAPIDO)).vuelos, null);
+  const lenta = { ...transporteInventado(), diasBaratos: nunca };
+  assert.equal((await primerVistazo(ENTENDIDO, { ...f, transporte: lenta }, RAPIDO)).vuelos, null);
+  const lugaresLentos = { ...transporteInventado(), lugares: nunca };
+  const sinAeropuerto: Entendido = { ...ENTENDIDO, destination: { ...ENTENDIDO.destination, airport: null } };
+  const inicio = Date.now();
+  const v = await primerVistazo(sinAeropuerto, { ...f, transporte: lugaresLentos }, RAPIDO);
+  assert.equal(v.vuelos, null);
+  assert.ok(Date.now() - inicio < 2000);
 });
 
 test("lo que se pide para el vistazo sale de lo que se ha dicho, con lo más probable en lo demás", () => {
@@ -206,6 +281,38 @@ test("la clave del vistazo cambia con el grupo y las fechas, y no con el gasto n
   assert.notEqual(claveDelVistazo(mas), claveDelVistazo(ENTENDIDO));
   const fechas = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_out: "2027-03-09" } };
   assert.notEqual(claveDelVistazo(fechas), claveDelVistazo(ENTENDIDO));
+});
+
+test("la clave del vistazo cambia si cambia de dónde se sale, y no por cómo se escribe", () => {
+  const base: Entendido = { ...ENTENDIDO, origin: { name: "Pueblo Sin Aeropuerto", country: "YY", airport: null } };
+  const clave = claveDelVistazo(base);
+  assert.notEqual(claveDelVistazo({ ...base, origin: null }), clave);
+  assert.notEqual(claveDelVistazo({ ...base, origin: { ...base.origin!, name: "Otro Pueblo" } }), clave);
+  assert.notEqual(claveDelVistazo({ ...base, origin: { ...base.origin!, country: "XX" } }), clave);
+  assert.notEqual(claveDelVistazo({ ...base, origin: { ...base.origin!, airport: "OOO" } }), clave);
+  const conPunto = { ...base, origin: { ...base.origin!, centre: { lat: 40.1, lon: -3 } } };
+  assert.notEqual(claveDelVistazo(conPunto), clave);
+  assert.notEqual(
+    claveDelVistazo({ ...base, origin: { ...base.origin!, centre: { lat: 40.2, lon: -3 } } }),
+    claveDelVistazo(conPunto),
+  );
+  assert.equal(claveDelVistazo({ ...base, origin: { ...base.origin!, name: "  pueblo sin AEROPUERTO " } }), clave);
+});
+
+test("la web vuelve a pedir el vistazo al elegir de dónde se sale: su clave cambia", () => {
+  const destino = {
+    nombre: "Villa Inventada",
+    pais: "ZZ",
+    clase: "city" as const,
+    centro: ENTENDIDO.destination.centre,
+    caja: ENTENDIDO.destination.box,
+  };
+  const r = respuestasDe(destino, { entrada: "2027-03-05", salida: "2027-03-08" }, { idioma: "es", moneda: "EUR" });
+  const sin = claveDelVistazo(paraElVistazo(r, "YY")!);
+  const elegido = { ...r, origen: { nombre: "Origen Inventado", pais: "YY", centro: { lat: 40.04, lon: -3.01 } } };
+  const e = paraElVistazo(elegido, "YY")!;
+  assert.deepEqual(e.origin?.centre, { lat: 40, lon: -3 });
+  assert.notEqual(claveDelVistazo(e), sin);
 });
 
 test("lo que comprueba el código de un vistazo antes de dárselo a la web", async () => {

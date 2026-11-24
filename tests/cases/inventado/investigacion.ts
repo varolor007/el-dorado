@@ -17,7 +17,14 @@ import type {
 } from "../../../agent/scripts/formas.ts";
 import { lugarDe, resolverZonas } from "../../../agent/scripts/ruta.ts";
 import { montarTabla, type PiezasDeLaTabla } from "../../../agent/scripts/tabla.ts";
-import type { Aeropuerto, Ciudad, FuenteTransporte, Trayecto, Vuelo } from "../../../agent/tools/fuentes/tipos.ts";
+import type {
+  Aeropuerto,
+  Ciudad,
+  DiaBarato,
+  FuenteTransporte,
+  Trayecto,
+  Vuelo,
+} from "../../../agent/tools/fuentes/tipos.ts";
 import { cambiosDePartida, mover, pedirPalancas } from "../../../agent/tools/palancas.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
 import { ESTANCIA, fuenteInventada, MINIMOS, VISTO } from "./inventado.ts";
@@ -229,12 +236,24 @@ export const CIUDADES: Ciudad[] = [
   { codigo: "PPP", nombre: "Pueblo Sin Aeropuerto", pais: "YY", lat: 41.0, lon: -3.5 },
 ];
 
+/** Los días baratos para volar de un mes inventado: el 2 es el más barato y el 6, el más caro. */
+export function diasBaratosInventados(mes: string): DiaBarato[] {
+  const dia = (n: string, precio: number): DiaBarato => ({
+    fuente: "inventada",
+    visto: VISTO,
+    dia: `${mes}-${n}`,
+    precio,
+    moneda: "EUR",
+  });
+  return [dia("05", 100), dia("02", 90), dia("06", 160)];
+}
+
 /**
- * La fuente de transporte inventada: sus aeropuertos, y para cada par y fechas, el vuelo inventado de esas fechas.
- * Cuenta lo que se le pide. Se le puede decir que no conteste, o que no tenga precios.
+ * La fuente de transporte inventada: sus aeropuertos, para cada par y fechas el vuelo inventado de esas fechas, y
+ * los días baratos de un mes. Cuenta lo que se le pide. Se le puede decir que no conteste, o que no tenga precios.
  */
 export function transporteInventado(o: { falla?: boolean; vacia?: boolean; semana?: boolean } = {}) {
-  const pedidos: { como: "fechas" | "alrededor" | "lugares"; t?: Trayecto }[] = [];
+  const pedidos: { como: "fechas" | "alrededor" | "lugares" | "dias"; t?: Trayecto }[] = [];
   const vuelo = (t: Trayecto, ida: string, vuelta: string): Vuelo => ({
     ...vueloInventado(ida, vuelta),
     origen: t.origen,
@@ -252,6 +271,11 @@ export function transporteInventado(o: { falla?: boolean; vacia?: boolean; seman
       pedidos.push({ como: "fechas", t });
       if (o.falla) throw new Error("no contesta: un trozo de lo que dijo");
       return o.vacia ? [] : [vuelo(t, t.ida, t.vuelta!)];
+    },
+    async diasBaratos(t, mes) {
+      pedidos.push({ como: "dias", t });
+      if (o.falla) throw new Error("no contesta");
+      return o.vacia ? [] : diasBaratosInventados(mes);
     },
   };
   if (o.semana !== false)

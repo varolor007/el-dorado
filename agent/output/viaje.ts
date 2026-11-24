@@ -163,10 +163,16 @@ export type ZonaDelVistazo = {
   desde: number | null;
 };
 
-/** El precio más barato visto para cada día de salida de un mes, para un viaje de tantas noches, por billete. */
+/**
+ * El precio más barato visto para cada día de salida de un mes, para un viaje de tantas noches, por billete y por
+ * viajero. Es un precio guardado de búsquedas de otros, de hace días: no es el de ahora.
+ */
 export type DiasParaVolar = {
+  /** Los códigos del par principal de la búsqueda de transporte: el de su ciudad, o el aeropuerto que se dijo. */
   origen: string;
   destino: string;
+  /** Sus nombres, como los da la fuente. Un vistazo de antes no los trae. */
+  nombres?: { origen: string; destino: string };
   /** AAAA-MM. */
   mes: string;
   noches: number;
@@ -409,6 +415,9 @@ export function comprobarVistazo(v: Vistazo): Pega[] {
   if (d !== undefined && d !== null) {
     if (!/^[A-Z]{3}$/.test(d.origen) || !/^[A-Z]{3}$/.test(d.destino))
       pega("vuelos", "un aeropuerto no son tres letras");
+    const n = d.nombres;
+    if (n !== undefined && (n.origen.trim() === "" || n.destino.trim() === ""))
+      pega("vuelos", "un sitio con vuelos no tiene nombre");
     if (!/^\d{4}-\d{2}$/.test(d.mes)) pega("vuelos", "el mes no es un mes");
     if (!/^[A-Z]{3}$/.test(d.moneda)) pega("vuelos", "no dice su moneda");
     if (!(Number.isInteger(d.noches) && d.noches > 0)) pega("vuelos", "no dice de cuántas noches es el viaje");

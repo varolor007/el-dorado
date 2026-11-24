@@ -178,6 +178,11 @@ export type FuenteTransporte = {
   fechas(t: Trayecto): Promise<Vuelo[]>;
   /** Los vuelos en los días de alrededor de unas fechas, con una sola petición. Si no lo sabe, no lo tiene. */
   alrededor?(t: Trayecto): Promise<Vuelo[]>;
+  /**
+   * El precio más barato guardado de cada día de salida de un mes (AAAA-MM) para un viaje de tantas noches, por
+   * viajero, con una sola petición. Lo usa el primer vistazo. Si no lo sabe, no lo tiene.
+   */
+  diasBaratos?(t: Trayecto, mes: string, noches: number): Promise<DiaBarato[]>;
 };
 
 /**

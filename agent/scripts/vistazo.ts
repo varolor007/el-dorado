@@ -19,15 +19,26 @@ import {
 } from "../data/vistazo.ts";
 import type { DiasParaVolar, Punto, Vistazo, ZonaDelVistazo } from "../output/viaje.ts";
 import { enLineaRecta } from "../tools/distancias.ts";
-import type { Alojamiento, DiaBarato, Estancia, FuenteAlojamiento, Minimos } from "../tools/fuentes/tipos.ts";
+import type {
+  Alojamiento,
+  Estancia,
+  FuenteAlojamiento,
+  FuenteTransporte,
+  Minimos,
+  Trayecto,
+} from "../tools/fuentes/tipos.ts";
 import { entendidoDe, type Respuestas } from "./empezar.ts";
 import type { Caja, Entendido } from "./formas.ts";
 import { separar } from "./minimos.ts";
+import { lugaresDelViaje, normalizado, parPrincipal } from "./transporte.ts";
 
-/** Lo de fuera que usa el primer vistazo: la fuente de alojamiento y, si la hay, la de los días baratos. */
+/**
+ * Lo de fuera que usa el primer vistazo: la fuente de alojamiento y, si la hay, la de transporte, que da los días
+ * baratos con los mismos aeropuertos que la búsqueda de transporte.
+ */
 export type FuentesDelVistazo = {
   alojamiento: FuenteAlojamiento;
-  diasBaratos?: (viaje: Entendido, mes: string, noches: number) => Promise<DiaBarato[]>;
+  transporte?: FuenteTransporte;
 };
 
 /** Por qué no hay vistazo: la fuente no contesta, o no contesta a tiempo. La frase la pone la web. */
@@ -68,9 +79,10 @@ export function paraElVistazo(r: Respuestas, paisDeQuienMira: string | null): En
 const redondo = (x: number): number => Math.round(x * 1000) / 1000;
 
 /**
- * Lo que cambia un primer vistazo, en una línea: el destino, las fechas, el grupo, la moneda, el pasaporte y los
- * aeropuertos. Dos peticiones con la misma línea tienen la misma respuesta; lo demás (el gasto, lo que busca) no lo
- * cambia.
+ * Lo que cambia un primer vistazo, en una línea: el destino, las fechas, el grupo, la moneda, el pasaporte, de dónde
+ * se sale (su nombre, su país, su punto o su aeropuerto: de ahí salen los aeropuertos de los días baratos) y el
+ * aeropuerto de llegada. Dos peticiones con la misma línea tienen la misma respuesta; lo demás (el gasto, lo que
+ * busca) no lo cambia.
  */
 export function claveDelVistazo(e: Entendido): string {
   const d = e.destination;
@@ -86,9 +98,21 @@ export function claveDelVistazo(e: Entendido): string {
     e.travellers.rooms,
     e.currency.toUpperCase(),
     (e.travellers.passports[0] ?? e.origin?.country ?? "").toUpperCase(),
-    e.origin?.airport ?? null,
+    origenDe(e.origin),
     d.airport,
   ]);
+}
+
+/** De dónde se sale, para la clave: lo que decide sus aeropuertos. */
+function origenDe(o: Entendido["origin"]): unknown {
+  if (o === null) return null;
+  const c = o.centre;
+  return [
+    normalizado(o.name),
+    o.country.toUpperCase(),
+    o.airport ?? null,
+    c == null ? null : [redondo(c.lat), redondo(c.lon)],
+  ];
 }
 
 // ---------- las zonas: la caja del destino, partida en trozos
@@ -244,23 +268,38 @@ function aQuienPreguntar(dentro: Alojamiento[], zonaDe: Map<string, string>, cua
   return salida;
 }
 
+/**
+ * Los días baratos para volar del mes del viaje, del par principal de la búsqueda de transporte (el primer sitio con
+ * vuelos de salida con el primero de llegada), con una sola petición de precios. Sin saber de dónde se sale no se
+ * pide nada. Todo, aeropuertos incluidos, dentro de su espera: lo que no llega no se espera.
+ */
 async function diasParaVolar(e: Entendido, f: FuentesDelVistazo, ms: number): Promise<DiasParaVolar | null> {
-  const origen = e.origin?.airport ?? null;
-  const destino = e.destination.airport;
-  if (f.diasBaratos === undefined || origen === null || destino === null) return null;
+  const fuente = f.transporte;
+  const origen = e.origin;
+  if (fuente?.diasBaratos === undefined || origen === null) return null;
   const mes = e.dates.check_in.slice(0, 7);
   const noches = nochesDe(e);
   const moneda = e.currency.toUpperCase();
-  const llegado = await aTiempo(f.diasBaratos(e, mes, noches), ms);
-  if (!llegado.ok) return null;
-  const dias = llegado.v
+  const pedido = (async () => {
+    const { salida, llegada } = await lugaresDelViaje(e, fuente);
+    const par = parPrincipal(salida, llegada);
+    if (par === null) return null;
+    const mercado = origen.country.toLowerCase();
+    const t: Trayecto = { origen: par.de.codigo, destino: par.a.codigo, ida: mes, vuelta: null, moneda, mercado };
+    return { par, dias: await fuente.diasBaratos!(t, mes, noches) };
+  })();
+  const llegado = await aTiempo(pedido, ms);
+  if (!llegado.ok || llegado.v === null) return null;
+  const { par, dias: dados } = llegado.v;
+  const dias = dados
     .filter((d) => d.dia.startsWith(mes) && d.moneda.toUpperCase() === moneda && d.precio > 0)
-    .sort((a, b) => a.dia.localeCompare(b.dia))
+    .sort((a, b) => a.dia.localeCompare(b.dia) || a.precio - b.precio)
     .filter((d, i, todos) => i === 0 || d.dia !== todos[i - 1].dia);
   if (dias.length === 0) return null;
   return {
-    origen,
-    destino,
+    origen: par.de.codigo,
+    destino: par.a.codigo,
+    nombres: { origen: par.de.nombre, destino: par.a.nombre },
     mes,
     noches,
     moneda,

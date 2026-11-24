@@ -129,11 +129,14 @@ const en = {
         ? "On the map, one area with its lowest price."
         : `On the map, ${EN.cifra(n)} areas, each with its lowest price.`,
     zona: (pasan: number) => EN.cuenta(pasan, "place passes", "places pass"),
-    vuelos: (origen: string, destino: string) => `Cheapest days to fly, ${origen} to ${destino}`,
+    // Entre los aeropuertos que mira la búsqueda de transporte: el primero de salida y el primero de llegada.
+    vuelos: (origen: string, destino: string) => `Cheapest days to fly this month, ${origen} to ${destino}`,
     vuelosNota: (noches: number) =>
-      `Saved prices from other people's searches, per ticket, for a ${EN.cuenta(noches, "night", "nights")} trip. Not a fare for now.`,
+      `Saved prices that other people's searches found in recent days, per traveller, return, for a trip of ${EN.cuenta(noches, "night", "nights")}. Today's fare can be different.`,
     tuDia: "your day",
-    sinVuelos: "Cheap days to fly show up here once we know the airport you fly from.",
+    sinTuDia: "There is no saved price for your day yet.",
+    sinOrigen: "Say where you leave from and the cheapest days to fly show up here.",
+    sinVuelos: "No saved price to fly this month came in. The research looks again.",
     fallo: (clave: string, espera: number | null) =>
       clave === "busy"
         ? `Many people are looking right now. Try again in ${espera !== null && espera > 90 ? EN.cuenta(Math.ceil(espera / 60), "minute", "minutes") : EN.cuenta(espera ?? 30, "second", "seconds")}.`
@@ -655,11 +658,13 @@ const es: Textos = {
         ? "En el mapa, una zona con su precio más bajo."
         : `En el mapa, ${ES.cifra(n)} zonas, cada una con su precio más bajo.`,
     zona: (pasan) => ES.cuenta(pasan, "pasa", "pasan"),
-    vuelos: (origen, destino) => `Los días más baratos para volar, de ${origen} a ${destino}`,
+    vuelos: (origen, destino) => `Los días más baratos para volar este mes, de ${origen} a ${destino}`,
     vuelosNota: (noches) =>
-      `Precios guardados de búsquedas de otras personas, por billete, para un viaje de ${ES.cuenta(noches, "noche", "noches")}. No es una tarifa de ahora.`,
+      `Precios guardados que encontraron búsquedas de otras personas en los últimos días, por viajero, ida y vuelta, para un viaje de ${ES.cuenta(noches, "noche", "noches")}. La tarifa de hoy puede ser otra.`,
     tuDia: "tu día",
-    sinVuelos: "Los días baratos para volar salen aquí cuando sepamos de qué aeropuerto sales.",
+    sinTuDia: "Para tu día aún no hay ningún precio guardado.",
+    sinOrigen: "Di de dónde sales y aquí salen los días más baratos para volar.",
+    sinVuelos: "No ha llegado ningún precio guardado para volar este mes. La investigación lo vuelve a mirar.",
     fallo: (clave, espera) =>
       clave === "busy"
         ? `Ahora mismo mira mucha gente. Prueba otra vez en ${espera !== null && espera > 90 ? ES.cuenta(Math.ceil(espera / 60), "minuto", "minutos") : ES.cuenta(espera ?? 30, "segundo", "segundos")}.`

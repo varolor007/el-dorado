@@ -280,12 +280,16 @@ export async function lugaresDeVuelo(carpeta?: string, hoy: Date = new Date()): 
   return enMemoria.lugares;
 }
 
-/** Aviasales como fuente de transporte: sus lugares, los precios de unas fechas y los de la semana de alrededor. */
+/**
+ * Aviasales como fuente de transporte: sus lugares, los precios de unas fechas, los de la semana de alrededor y los
+ * días baratos de un mes.
+ */
 export function aviasales(carpeta?: string): FuenteTransporte {
   return {
     nombre: NOMBRE,
     lugares: () => lugaresDeVuelo(carpeta),
     fechas: vuelosPorFechas,
     alrededor: vuelosDeLaSemana,
+    diasBaratos,
   };
 }

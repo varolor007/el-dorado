@@ -17,33 +17,51 @@ type Props = {
   salida: string;
   adultos: number;
   habitaciones: number;
+  /** Si se sabe de dónde sales: sin eso no hay días baratos para volar. */
+  conOrigen: boolean;
 };
 
-/** Los días más baratos para volar, como mucho tres, y el tuyo, si está entre los que se saben. */
-function DiasParaVolar({ t, idioma, v, entrada }: { t: Textos; idioma: string; v: Vistazo; entrada: string }) {
+/** Un sitio con vuelos, con su nombre si la fuente lo dice: «Valencia (VLC)». */
+const sitio = (codigo: string, nombre: string | undefined): string =>
+  nombre === undefined || nombre.trim() === "" || nombre === codigo ? codigo : `${nombre} (${codigo})`;
+
+/**
+ * Los días más baratos para volar del mes, como mucho tres, y el tuyo, entre los aeropuertos que mira la búsqueda de
+ * transporte. Sin saber de dónde sales, se dice que salen al decirlo.
+ */
+function DiasParaVolar({ t, idioma, v, entrada, conOrigen, listo }: DiasProps) {
+  const x = t.primerVistazo;
   const d = v.vuelos;
-  if (d === undefined || d === null) return <p className="dato">{t.primerVistazo.sinVuelos}</p>;
+  if (d === undefined || d === null) {
+    if (!conOrigen) return <p className="dato">{x.sinOrigen}</p>;
+    return listo ? <p className="dato">{x.sinVuelos}</p> : null;
+  }
   const baratos = [...d.dias].sort((a, b) => a.precio - b.precio || a.dia.localeCompare(b.dia)).slice(0, 3);
-  const tuyo = d.dias.find((x) => x.dia === entrada);
-  const dia = (x: { dia: string; precio: number }, oro: boolean, rotulo?: string) => (
-    <span key={`${x.dia}-${rotulo ?? ""}`} className={`pastilla${oro ? " pastilla--oro" : ""}`}>
-      {diaDeLaSemana(x.dia, idioma)} {diaCorto(x.dia, idioma)}: {dinero(x.precio, d.moneda, idioma)}
-      {rotulo !== undefined && ` (${rotulo})`}
+  const tuyo = d.dias.find((y) => y.dia === entrada);
+  const dia = (y: { dia: string; precio: number }, oro: boolean) => (
+    <span key={y.dia} className={`pastilla${oro ? " pastilla--oro" : ""}`}>
+      {diaDeLaSemana(y.dia, idioma)} {diaCorto(y.dia, idioma)}: {dinero(y.precio, d.moneda, idioma)}
+      {y === tuyo && ` (${x.tuDia})`}
     </span>
   );
   return (
     <div className="toques">
-      <span className="rotulo">{t.primerVistazo.vuelos(d.origen, d.destino)}</span>
+      <span className="rotulo">
+        {x.vuelos(sitio(d.origen, d.nombres?.origen), sitio(d.destino, d.nombres?.destino))}
+      </span>
       <div className="cabecera__linea">
-        {baratos.map((x, i) => dia(x, i === 0))}
-        {tuyo !== undefined && !baratos.includes(tuyo) && dia(tuyo, false, t.primerVistazo.tuDia)}
+        {baratos.map((y, i) => dia(y, i === 0))}
+        {tuyo !== undefined && !baratos.includes(tuyo) && dia(tuyo, false)}
       </div>
-      <p className="dato">{t.primerVistazo.vuelosNota(d.noches)}</p>
+      {tuyo === undefined && <p className="dato">{x.sinTuDia}</p>}
+      <p className="dato">{x.vuelosNota(d.noches)}</p>
     </div>
   );
 }
 
-export function PrimerVistazo({ t, idioma, estado, entrada, salida, adultos, habitaciones }: Props) {
+type DiasProps = { t: Textos; idioma: string; v: Vistazo; entrada: string; conOrigen: boolean; listo: boolean };
+
+export function PrimerVistazo({ t, idioma, estado, entrada, salida, adultos, habitaciones, conOrigen }: Props) {
   const x = t.primerVistazo;
   const v = estado.vistazo;
   const numero = (n: number): string => new Intl.NumberFormat(idioma).format(n);
@@ -86,7 +104,14 @@ export function PrimerVistazo({ t, idioma, estado, entrada, salida, adultos, hab
             <p className="dato">{x.mirados(v.mirados, v.pasan)}</p>
           )}
           {zonasConAlgo > 0 && <p className="dato">{x.zonas(zonasConAlgo)}</p>}
-          <DiasParaVolar t={t} idioma={idioma} v={v} entrada={entrada} />
+          <DiasParaVolar
+            t={t}
+            idioma={idioma}
+            v={v}
+            entrada={entrada}
+            conOrigen={conOrigen}
+            listo={estado.como === "listo"}
+          />
         </>
       )}
     </section>
