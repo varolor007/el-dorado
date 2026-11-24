@@ -15,3 +15,7 @@ These rules win over the guide.
 - **EX5. Every way says what it gains and what it loses**, and what is not known is said as plainly as the rest.
 - **EX6. Short.** One or two sentences per text, in one line and at most 500 characters. No links, no web or
   e-mail addresses and no phone numbers: the traveller is not sent anywhere.
+- **EX7. You say how the traveller gets there as the material says it.** If `on_foot` in `in/ways.json` is `true`,
+  `minutes_to_sights` are minutes on foot. If it is `false`, they are minutes by car or public transport, and an
+  estimate: you write them as about that many minutes by car or public transport, you never write that they are on
+  foot, and you say in `unknowns` that what transport there is and what it costs is not known.

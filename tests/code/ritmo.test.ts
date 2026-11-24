@@ -2,11 +2,13 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { SALTO_MAXIMO } from "../../agent/data/dias.ts";
 import { puertaDias } from "../../agent/gates/puerta_dias.ts";
 import { comprobarViaje, RITMOS, type Parada, type Ritmo } from "../../agent/output/viaje.ts";
 import { paradasDe } from "../../agent/scripts/dias.ts";
 import { andando, CABE, enLineaRecta, fechasDe, ordenDeApertura, repartir } from "../../agent/scripts/ritmo.ts";
 import { entregaDeSitios, SITIOS } from "../cases/inventado/investigacion.ts";
+import { trayecto } from "../../agent/tools/distancias.ts";
 import { viajeInventado } from "../cases/inventado/viaje.ts";
 
 const BASE = { lat: 10.05, lon: 20.05 };
@@ -215,8 +217,16 @@ test("lo que reparte el código pasa siempre su puerta: nunca un día que no se 
 });
 
 test("un imprescindible que no cabe en ningún día se queda fuera y dice por qué: lejos, o los días llenos", () => {
-  // Un solo día y tres barrios a kilómetros: se anda el del primero, y los otros dos quedan lejos.
-  const lejos = paradas().filter((p) => p.imprescindible);
+  // Un solo día y tres sitios imprescindibles a más de cinco kilómetros: no se andan, pero cogiendo algo caben los
+  // tres en el día. Ninguno se queda fuera, y lo que hay entre ellos pasa de lo que se anda.
+  const aKilometros = paradas().filter((p) => p.imprescindible);
+  const juntos = repartir(aKilometros, fechasDe("2027-02-12", "2027-02-12"), "normal", BASE);
+  assert.equal(juntos.dias[0].paradas.length, 3);
+  assert.deepEqual(juntos.fuera, []);
+  assert.ok(juntos.dias[0].metros.every((m) => m > SALTO_MAXIMO && !trayecto(m).aPie));
+  // A cientos de kilómetros no: eso no es un trayecto de un día, lo coja quien lo coja. Se hace uno, y los otros dos
+  // quedan lejos.
+  const lejos = aKilometros.map((p, i) => ({ ...p, punto: { lat: p.punto.lat + 2 * i, lon: p.punto.lon } }));
   const r = repartir(lejos, fechasDe("2027-02-12", "2027-02-12"), "normal", BASE);
   assert.equal(r.dias[0].paradas.length, 1);
   assert.deepEqual(Object.values(r.porQue), ["far", "far"]);

@@ -16,6 +16,8 @@ import { AVISOS_DE_FICHA, PRUEBAS, type Transporte } from "../../agent/output/vi
 import { CLASES_DE_DESTINO } from "../../agent/scripts/formas.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
+import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
+import { ir } from "../../web/src/lib/formato.ts";
 import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
 import { SUCESOS_INVENTADOS, viajeInventado } from "../cases/inventado/viaje.ts";
 
@@ -386,4 +388,25 @@ test("del buscador solo sale un sitio con nombre, en el mapa y de una clase que 
   // El país no se repite como «dónde» cuando el sitio es el propio país.
   const pais = { type: "country", osm_key: "place", osm_value: "country", name: "País Inventado", state: undefined };
   assert.equal(lugarDe(resultado(pais))?.donde, "");
+});
+
+test("un trayecto que no se anda se dice con lo que tiene sentido coger, y nada va «andando» si no se anda", () => {
+  for (const idioma of IDIOMAS) {
+    const t = TEXTOS[idioma];
+    // A pie, lo que se anda: no hace falta decir más.
+    assert.deepEqual(ir(1200, idioma).cogiendo, []);
+    // Pasado lo que se anda, en transporte o en coche, y la web sabe decir cada manera.
+    const lejos = ir(8000, idioma);
+    assert.deepEqual(lejos.cogiendo, ["transit", "car"]);
+    for (const manera of MANERAS_DE_IR) assert.ok(t.viaje.maneraDeIr[manera.id], manera.id);
+    const dicho = t.viaje.cogiendo(
+      lejos.lejos,
+      lejos.minutos,
+      lejos.cogiendo.map((m) => t.viaje.maneraDeIr[m]),
+    );
+    assert.ok(!/andando|a pie|on foot/i.test(dicho), dicho);
+    // De un alojamiento desde el que no se llega a pie tampoco se dice que queda andando.
+    assert.match(t.dormir.donde(null, 12, true), /andando|on foot/i);
+    assert.ok(!/andando|a pie|on foot/i.test(t.dormir.donde(null, 25, false)));
+  }
 });

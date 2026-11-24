@@ -219,13 +219,21 @@ test("trampa: una parada que no está en los datos, o sin su fuente", () => {
   );
 });
 
-test("trampa: un salto entre dos paradas seguidas que pasa del tope", () => {
+test("un trayecto que no se anda no es un rojo; uno que no cabe en un día, sí", () => {
+  // Pasado lo que se anda, el trayecto se cuenta en transporte o en coche: cabe en el día, y pasa.
+  assert.deepEqual(
+    rojosDeLosDias((r) => {
+      const dia = r.dias.find((d) => d.paradas.length > 1)!;
+      dia.metros[0] = SALTO_MAXIMO + 10;
+    }),
+    [],
+  );
+  // Doscientos kilómetros entre dos paradas del mismo día no caben: eso es otro sitio donde dormir.
   const rojos = rojosDeLosDias((r) => {
     const dia = r.dias.find((d) => d.paradas.length > 1)!;
-    dia.metros[0] = SALTO_MAXIMO + 10;
+    dia.metros[0] = 200_000;
   });
-  assert.equal(rojos.length, 1);
-  assert.match(rojos[0], /de la parada 1 a la 2 hay 3510 m andando, y el tope es 3500/);
+  assert.match(rojos.join(" | "), /de la parada 1 a la 2 hay 200000 m: ese trayecto no cabe dentro de un día/);
 });
 
 test("trampa: un día en el que no caben sus horas", () => {

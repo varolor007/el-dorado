@@ -12,7 +12,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
-  ZONA,
   CANDIDATOS_QUE_BASTAN,
   ESCALERA_DE_MINIMOS,
   ESCALERA_DE_RADIO,
@@ -20,7 +19,7 @@ import {
   FINALISTAS,
   RADIO_MAXIMO,
 } from "../data/cribas.ts";
-import { NO_SE_ANDA } from "../data/dias.ts";
+import { DEMASIADO_LEJOS } from "../data/dias.ts";
 import { COSAS } from "../data/gustos.ts";
 import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
@@ -48,7 +47,6 @@ import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
-import { medianaAndando } from "../tools/distancias.ts";
 import { paraElGrupo } from "../tools/fuentes/tipos.ts";
 import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
@@ -189,9 +187,6 @@ function recoger<T>(
   };
   return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1).id };
 }
-
-const NO_ES_DE_ANDAR =
-  "este viaje no es de los que se andan, y El Dorado todavía no sabe planear uno en coche o en transporte";
 
 /** Las noches del viaje. */
 const nochesDe = (viaje: Entendido): number => diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
@@ -617,32 +612,19 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     const rojos = await repartirLosDias(run, viaje, r.entrega, f);
     if (rojos.length > 0) return para("los días (puerta 9)", rojos);
   }
-  // ¿Este viaje se anda? Todo lo que mide la casa (la zona de un alojamiento, lo que cabe en un día) es a pie. Si
-  // la mayor parte de lo elegido queda lejos de lo demás, o desde ninguna zona de la ruta se llega andando a la mitad
-  // de lo elegido antes de que la zona valga cero, no se anda: se para y se dice, en vez de cruzar y explicar unos
-  // días que no se pueden hacer.
+  // Si la mayor parte de lo elegido se queda fuera por lejos, es que ni cogiendo algo se llega desde una sola base
+  // dentro de un día: ese viaje pide dormir en más de un sitio, y eso todavía no se sabe planear. Se para y se dice.
   const repartido = leer<DeLosDias & { reparto: { porQue?: Record<string, string> } }>(run, "dias.json");
-  const elegidos = repartido.paradas.map((x) => x.punto);
   // Un run de antes de que el reparto dijera sus porqués no los lleva: entonces no hay ninguno que contar.
   const lejos = Object.values(repartido.reparto.porQue ?? {}).filter((m) => m === "far").length;
-  const desdeLasZonas = leer<DeLaRuta>(run, "ruta.json").zonas.flatMap((z) => medianaAndando(z.centre, elegidos) ?? []);
-  const desdeLaMejor = desdeLasZonas.length === 0 ? null : Math.min(...desdeLasZonas);
-  if (elegidos.length > 0 && lejos / elegidos.length > NO_SE_ANDA)
+  if (repartido.paradas.length > 0 && lejos / repartido.paradas.length > DEMASIADO_LEJOS)
     return para("los días", [
       {
         donde: "dias",
         que:
-          `${lejos} de los ${elegidos.length} sitios elegidos quedan demasiado lejos de los demás para andarlos en ` +
-          `un día: ${NO_ES_DE_ANDAR}`,
-      },
-    ]);
-  if (desdeLaMejor !== null && desdeLaMejor > ZONA.minutosDeCero)
-    return para("los días", [
-      {
-        donde: "dias",
-        que:
-          `desde la zona mejor situada, la mitad de los sitios elegidos queda a más de ${desdeLaMejor} minutos ` +
-          `andando: ${NO_ES_DE_ANDAR}`,
+          `${lejos} de los ${repartido.paradas.length} sitios elegidos quedan a más de lo que se puede ir y volver ` +
+          "en un día desde una sola base: este viaje pide dormir en más de un sitio, y El Dorado todavía no sabe " +
+          "planear uno de varias bases",
       },
     ]);
 

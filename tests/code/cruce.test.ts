@@ -161,8 +161,10 @@ test("trampa: la manera distinta no pasa de la nota mínima", () => {
   const entrega = entregaDeCruce(tabla) as Entrega;
   const distinta = tabla.rows.find((r) => r.id === entrega.ways.different.row)!;
   distinta.score = tabla.minimum_score - 0.1;
+  // El asiento elige como distinta una fila que, en la tabla, está por debajo del mínimo.
+  const rojos = rojosDe((e) => (e.ways.different = entrega.ways.different), { tabla, viaje: ENTENDIDO });
   assert.deepEqual(
-    rojosDe(() => {}, { tabla, viaje: ENTENDIDO }).filter((r) => r.startsWith("ways.different")),
+    rojos.filter((r) => r.startsWith("ways.different")),
     ["ways.different: la manera distinta no pasa de la nota mínima"],
   );
 });

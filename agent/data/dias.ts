@@ -26,7 +26,10 @@ export const SITIOS_QUE_BASTAN = 25;
 /** Lo que cabe en un día entero, en minutos, contando las visitas y lo que se anda entre ellas. */
 export const DIA_ENTERO = 600;
 
-/** El salto más largo, en metros andados, entre dos paradas seguidas de un mismo día. */
+/**
+ * Lo más que se anda de una parada a la siguiente, en metros. Más allá no se manda a nadie a pie: ese trayecto se
+ * hace con lo que haya que coger. Es el mismo tope que el de andar en `moverse.ts`.
+ */
 export const SALTO_MAXIMO = 3500;
 
 /** Cuántas paradas caben en un día, y cuántos minutos de visita, con cada ritmo. Son de partida. */
@@ -43,10 +46,10 @@ export const CABE = {
 export const CERCA_DE_UN_DIA = 2000;
 
 /**
- * Si más de esta parte de lo elegido se queda fuera por lejos, el viaje no es de los que se andan. El Dorado mide
- * hoy todo a pie: un viaje así no lo sabe planear todavía, y lo dice en vez de dar unos días que no se pueden hacer.
+ * Si más de esta parte de lo elegido se queda fuera por lejos, es que desde una sola base no se llega, ni cogiendo
+ * algo: el viaje pide dormir en más de un sitio.
  */
-export const NO_SE_ANDA = 0.5;
+export const DEMASIADO_LEJOS = 0.5;
 
 /** Por qué una parada no está en ningún día: el viajero la quitó, queda lejos de las demás o no cabe en los días. */
 export const MOTIVOS_DE_FUERA = ["removed", "far", "full"] as const;

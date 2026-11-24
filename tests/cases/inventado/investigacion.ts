@@ -256,16 +256,23 @@ export function entregaDeCruce(t: Tabla): EntregaDeCruce {
   const marcada = (marca: string): Tabla["rows"][number] => t.rows.find((r) => r.marks.includes(marca))!;
   const barata = marcada("cheapest");
   const mejor = marcada("best_value");
-  const otra = t.rows.find(
-    (r) => r.discarded === "" && r.id !== barata.id && r.id !== mejor.id && r.zone !== mejor.zone,
-  )!;
+  // La distinta: otra fila que valga, mejor si es de otra zona; y si no queda ninguna, no hay manera distinta.
+  const valen = t.rows.filter(
+    (r) =>
+      r.discarded === "" &&
+      typeof r.score === "number" &&
+      r.score >= t.minimum_score &&
+      r.id !== barata.id &&
+      r.id !== mejor.id,
+  );
+  const deOtraZona = valen.find((r) => r.zone !== mejor.zone);
+  const otra = deOtraZona ?? valen[0] ?? null;
   const deLaLista = (lever: string): string[] => t.levers.filter((l) => l.lever === lever).map((l) => l.id);
-  const probada = (lever: string, reason: string): EntregaDeCruce["levers"][number] => ({
-    lever,
-    status: "tested",
-    rows: deLaLista(lever),
-    reason,
-  });
+  // Una palanca se da por probada si la tabla trae filas suyas; si no trae ninguna, no se pudo probar.
+  const probada = (lever: string, reason: string): EntregaDeCruce["levers"][number] =>
+    deLaLista(lever).length === 0
+      ? { lever, status: "not_available", rows: [], reason: "the table has no row for it" }
+      : { lever, status: "tested", rows: deLaLista(lever), reason };
   const espera = (lever: string): EntregaDeCruce["levers"][number] => ({
     lever,
     status: "not_available",
@@ -292,12 +299,20 @@ export function entregaDeCruce(t: Tabla): EntregaDeCruce {
     ways: {
       cheapest: { row: barata.id, total: barata.total },
       best_value: { row: mejor.id, total: mejor.total },
-      different: { row: otra.id, total: otra.total, lever: "other_zone", why: "the only way that sleeps by the port" },
+      different:
+        otra === null
+          ? "none"
+          : {
+              row: otra.id,
+              total: otra.total,
+              lever: deOtraZona === undefined ? "other_lodging" : "other_zone",
+              why: "the only way that sleeps by the port",
+            },
     },
     tell: ahorra.map((l) => ({ lever_row: l.id, saves: l.saves as number, why: "a real saving for the same trip" })),
     checks: [{ what: "the arrival time is not in the table", status: "unknown", refs: [] }],
     requests: [],
-    unknowns: [],
+    unknowns: otra === null ? ["There is no third lodging above the minimum score to offer as a different way."] : [],
   };
 }
 

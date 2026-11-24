@@ -184,7 +184,7 @@ export type Decidido = {
   maneras: (Omit<Manera, "total" | "moneda"> & { total?: number })[];
   transportes?: Transporte[];
   /** Lo que el código sabe de cada alojamiento además de su ficha: su zona, lo que se anda, su nota y su descarte. */
-  deCadaAlojamiento?: Record<string, Pick<Alojamiento, "zona" | "andando" | "puntos" | "descartado">>;
+  deCadaAlojamiento?: Record<string, Pick<Alojamiento, "zona" | "andando" | "aPie" | "puntos" | "descartado">>;
   palancas: Palanca[];
   avisos: string[];
   /** Lo que el que mira entregó de cada alojamiento, por su identificador. */
@@ -354,7 +354,8 @@ export function montarViajeHecho(h: Hecho): Viaje {
     const r = h.tabla.rows.find((x) => x.lodging === c.id);
     deCadaAlojamiento[c.id] = {
       zona: h.zonas.find((z) => z.id === r?.zone)?.label ?? null,
-      andando: c.minutosAndando,
+      andando: c.minutos,
+      aPie: c.aPie,
       puntos: c.nota.nota,
       descartado: c.descarte,
     };

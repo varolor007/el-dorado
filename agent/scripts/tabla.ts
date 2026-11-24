@@ -102,7 +102,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
       currency: e.moneda,
       score: cribado.nota.nota ?? SIN_SABER,
       unconfirmed: [...cribado.nota.sinConfirmar.map((parte) => PARTE[parte] ?? parte), ...sinSaber],
-      walk_minutes: cribado.minutosAndando ?? SIN_SABER,
+      minutes_to_sights: cribado.minutos ?? SIN_SABER,
       cancellable: f.precio.cancelable ?? SIN_SABER,
       marks: [],
       discarded: cribado.descartado ?? "",
@@ -137,7 +137,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
         status: "priced",
         total: r.total,
         saves: dinero(partida.total - r.total),
-        walk_minutes_change: resta(r.walk_minutes, partida.walk_minutes),
+        minutes_change: resta(r.minutes_to_sights, partida.minutes_to_sights),
         score: r.score,
         note: "",
       });
@@ -153,7 +153,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
         status: "priced",
         total: r.total,
         saves: dinero(partida.total - r.total),
-        walk_minutes_change: resta(r.walk_minutes, partida.walk_minutes),
+        minutes_change: resta(r.minutes_to_sights, partida.minutes_to_sights),
         score: r.score,
         note: "",
       });
@@ -177,7 +177,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
         status: total === null ? "no_price" : "priced",
         total: total ?? SIN_SABER,
         saves: total === null ? SIN_SABER : dinero(sobre.total - total),
-        walk_minutes_change: 0,
+        minutes_change: 0,
         score: sobre.score,
         note: m.nota,
       });
@@ -189,7 +189,13 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
     }
   }
 
-  return { currency: e.moneda, minimum_score: NOTA_MINIMA, round: p.ronda, rows, levers, notes: notas };
+  const aPie = cribados.every((c) => c.aPie);
+  if (!aPie)
+    notas.push(
+      "getting around: this trip is not walked from where one sleeps; minutes_to_sights are by car or public " +
+        "transport, an estimate from the distance and not a route: what there is and what it costs is not known",
+    );
+  return { currency: e.moneda, on_foot: aPie, minimum_score: NOTA_MINIMA, round: p.ronda, rows, levers, notes: notas };
 }
 
 /** Lo que se anda, de media, desde un alojamiento hasta unas paradas: para decir qué te deja más cerca de cada día. */

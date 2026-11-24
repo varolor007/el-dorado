@@ -3,9 +3,10 @@
 // que se anda de una parada a la siguiente. La misma entrada da siempre los mismos días. No sale a internet ni usa
 // nada de fuera: lo corren igual la casa y la web, al instante.
 
-import { CABE, CERCA_DE_UN_DIA, DIA_ENTERO, MOTIVOS_DE_FUERA, SALTO_MAXIMO } from "../data/dias.ts";
+import { CABE, CERCA_DE_UN_DIA, DIA_ENTERO, MOTIVOS_DE_FUERA } from "../data/dias.ts";
+import { TRAYECTO_DE_UN_DIA } from "../data/moverse.ts";
 import type { Dia, Parada, Punto, Ritmo } from "../output/viaje.ts";
-import { andando, centroDe, enLineaRecta, minutosAndando } from "../tools/distancias.ts";
+import { andando, centroDe, enLineaRecta, trayecto } from "../tools/distancias.ts";
 
 export { CABE } from "../data/dias.ts";
 export { andando, enLineaRecta, RODEO } from "../tools/distancias.ts";
@@ -85,20 +86,29 @@ function enOrden(paradas: Parada[], base: Punto): Parada[] {
   return orden;
 }
 
-/** Lo que se anda entre las paradas de un día, en su orden, y lo que suma el día con sus visitas. */
+/**
+ * Lo que hay de camino entre las paradas de un día, en su orden, y lo que suma el día con sus visitas. Cada trayecto
+ * se cuenta andando si se puede andar; si no, con la manera más rápida de las que tienen sentido.
+ */
 export function medirDia(orden: Parada[]): { metros: number[]; minutos: number } {
   const metros = orden.slice(1).map((p, i) => andando(orden[i].punto, p.punto));
   const visitas = orden.reduce((suma, p) => suma + p.minutos, 0);
-  return { metros, minutos: visitas + metros.reduce((suma, m) => suma + minutosAndando(m), 0) };
+  return { metros, minutos: visitas + metros.reduce((suma, m) => suma + trayecto(m).minutos, 0) };
 }
 
 /**
- * Si un día se puede andar: ningún salto pasa del tope y las visitas, con lo que se anda, caben en un día entero.
- * Es la misma regla que mira la puerta 9: el código no reparte un día que su puerta rechazaría.
+ * Si un día se puede hacer: ningún trayecto pasa de lo que cabe en un día y las visitas, con lo que se tarda en ir
+ * de una a otra, caben en un día entero. Es la misma regla que mira la puerta 9: el código no reparte un día que su
+ * puerta rechazaría.
  */
-export function seAnda(orden: Parada[]): boolean {
+export function cabeElDia(orden: Parada[]): boolean {
   const { metros, minutos } = medirDia(orden);
-  return metros.every((m) => m <= SALTO_MAXIMO) && minutos <= DIA_ENTERO;
+  return metros.every((m) => trayecto(m).minutos <= TRAYECTO_DE_UN_DIA) && minutos <= DIA_ENTERO;
+}
+
+/** Si de donde se duerme a una parada se llega dentro de un día, con la manera que tenga sentido. */
+export function alAlcance(base: Punto, p: Parada): boolean {
+  return trayecto(andando(base, p.punto)).minutos <= TRAYECTO_DE_UN_DIA;
 }
 
 /** Lo que el viajero ha cambiado a mano: lo que quitó, lo que añadió de lo que se quedó fuera y lo que movió de día. */
@@ -159,19 +169,25 @@ export function repartir(
 
   // 2. Las demás, por importancia. Cada una va al día que tiene cerca y en el que cabe. Si no hay ninguno, abre un
   // día nuevo mientras queden días libres. Si no quedan, lo imprescindible prueba en cualquier día en el que quepa,
-  // aunque no sea el de al lado; y lo que ni así entra se queda fuera, con su porqué: antes fuera que cruzar la
-  // ciudad por rellenar un hueco. Así dos sitios que están al lado caen en el mismo día, y un día se abre cuando
-  // hace falta, no por tener algo en cada fecha: un día puede quedar libre.
+  // aunque no sea el de al lado y haya que coger algo para llegar; y lo que ni así entra se queda fuera, con su
+  // porqué: antes fuera que cruzar la ciudad por rellenar un hueco. Así dos sitios que están al lado caen en el
+  // mismo día, y un día se abre cuando hace falta, no por tener algo en cada fecha: un día puede quedar libre.
   const libres = porImportancia.filter((p) => !puestas.has(p.id));
   const porAbrir = ordenDeApertura(dias.length).filter((i) => dias[i].paradas.length === 0);
   for (const p of libres) {
     if (anadidas.includes(p.id)) continue;
+    // Lo que queda a más de un día de donde se duerme no entra en ningún día, se coja lo que se coja: es otro sitio
+    // donde dormir.
+    if (!alAlcance(base, p)) {
+      seQueda(p, "far");
+      continue;
+    }
     const porCercania = conParadas()
       .map((z) => ({ i: z.i, d: dias[z.i], lejos: enLineaRecta(z.centro, p.punto) }))
       .sort((a, b) => a.lejos - b.lejos || a.i - b.i);
     const hayHueco = (d: (typeof dias)[number]): boolean =>
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
-    const cabeEn = (d: (typeof dias)[number]): boolean => hayHueco(d) && seAnda(enOrden([...d.paradas, p], base));
+    const cabeEn = (d: (typeof dias)[number]): boolean => hayHueco(d) && cabeElDia(enOrden([...d.paradas, p], base));
     let destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
     if (destino < 0) destino = porAbrir.shift() ?? -1;
     if (destino < 0 && p.imprescindible) destino = porCercania.find((x) => cabeEn(x.d))?.i ?? -1;

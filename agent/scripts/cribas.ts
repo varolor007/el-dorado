@@ -16,7 +16,7 @@ import {
 } from "../data/cribas.ts";
 import { COSAS, valorDelNivel } from "../data/gustos.ts";
 import { CAMPOS, GRAVE_REPETIDA, GRAVES, INSTALACIONES, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
-import { medianaAndando, type Punto } from "../tools/distancias.ts";
+import { medianaAndando, medianaDeCamino, trayecto, type Punto } from "../tools/distancias.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
 import type { EntregaDeMirar, Gusto } from "./formas.ts";
 
@@ -39,6 +39,13 @@ export type Cribado = {
   nota: Nota;
   /** La mitad de lo que se va a ver queda a estos minutos andando, o menos. */
   minutosAndando: number | null;
+  /** Verdadero si este viaje se anda: desde algún candidato se llega a pie a la mitad de lo que se va a ver. */
+  aPie: boolean;
+  /**
+   * Los minutos con los que se mide su zona: andando si el viaje se anda; si no, con lo que haya que coger, y
+   * entonces son aproximados.
+   */
+  minutos: number | null;
 };
 
 const entre = (v: number, minimo: number, maximo: number): number => Math.min(maximo, Math.max(minimo, v));
@@ -162,17 +169,26 @@ export function notaDe(c: Candidato, ctx: Contexto, minutos: number | null): Not
 
 /** Las tres cribas, de una vez, sobre unos candidatos. La misma entrada da siempre lo mismo. */
 export function cribar(candidatos: Candidato[], ctx: Contexto): Cribado[] {
-  return candidatos.map((c) => {
-    const a = c.ficha.alojamiento;
-    const minutos = medianaAndando({ lat: a.lat, lon: a.lon }, ctx.paradas);
+  const puntoDe = (c: Candidato): Punto => ({ lat: c.ficha.alojamiento.lat, lon: c.ficha.alojamiento.lon });
+  const andando = candidatos.map((c) => medianaAndando(puntoDe(c), ctx.paradas));
+  // ¿Este viaje se anda? Si desde alguno de los candidatos se llega a pie a la mitad de lo que se va a ver antes de
+  // que la zona valga cero, sí: la zona se mide andando, y quien queda lejos, pierde. Si desde ninguno se llega, es
+  // un viaje en el que hay que coger algo se duerma donde se duerma: la zona se mide con lo que se tarda con la
+  // manera que tenga sentido, que es un tiempo aproximado.
+  const aPie = andando.every((m) => m === null) || andando.some((m) => m !== null && m <= ZONA.minutosDeCero);
+  return candidatos.map((c, i) => {
+    const camino = medianaDeCamino(puntoDe(c), ctx.paradas);
+    const minutos = aPie || camino === null ? andando[i] : trayecto(camino).minutos;
     const descarte = descarteDe(c, ctx);
     return {
-      id: a.id,
+      id: c.ficha.alojamiento.id,
       descarte,
       descartado: motivoDe(descarte),
       total: c.ficha.precioCompleto,
       nota: notaDe(c, ctx, minutos),
-      minutosAndando: minutos,
+      minutosAndando: andando[i],
+      aPie,
+      minutos,
     };
   });
 }

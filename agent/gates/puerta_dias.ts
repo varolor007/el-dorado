@@ -4,10 +4,11 @@
 // imprescindible está dentro o dice por qué no, que las horas de cada día caben y que ningún salto pasa del tope.
 // No mide si la elección es buena: eso lo ve el viajero, que quita, añade y mueve.
 
-import { DIA_ENTERO, IMPRESCINDIBLES_POR_NOCHE, MINUTOS_DE_VISITA, RESERVAR, SALTO_MAXIMO } from "../data/dias.ts";
+import { DIA_ENTERO, IMPRESCINDIBLES_POR_NOCHE, MINUTOS_DE_VISITA, RESERVAR } from "../data/dias.ts";
+import { TRAYECTO_DE_UN_DIA } from "../data/moverse.ts";
 import type { Dia, Parada } from "../output/viaje.ts";
 import { MOMENTOS_DEL_DIA } from "../scripts/formas.ts";
-import { minutosAndando } from "../tools/distancias.ts";
+import { trayecto } from "../tools/distancias.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 
@@ -124,14 +125,16 @@ export function puertaDias(r: Repartido): Veredicto {
       puestas.push(id);
     }
     dia.metros.forEach((metros, j) => {
-      minutos += minutosAndando(metros);
-      if (metros > SALTO_MAXIMO)
-        rojo(donde, `de la parada ${j + 1} a la ${j + 2} hay ${metros} m andando, y el tope es ${SALTO_MAXIMO}`);
+      // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger.
+      const ir = trayecto(metros);
+      minutos += ir.minutos;
+      if (!(metros >= 0) || ir.minutos > TRAYECTO_DE_UN_DIA)
+        rojo(donde, `de la parada ${j + 1} a la ${j + 2} hay ${metros} m: ese trayecto no cabe dentro de un día`);
     });
     if (dia.metros.length !== Math.max(0, dia.paradas.length - 1))
       rojo(donde, "no dice lo que se anda entre sus paradas");
     if (minutos > DIA_ENTERO)
-      rojo(donde, `sus visitas y lo que se anda suman ${minutos} minutos, y caben ${DIA_ENTERO}`);
+      rojo(donde, `sus visitas y sus trayectos suman ${minutos} minutos, y caben ${DIA_ENTERO}`);
   });
 
   for (const p of r.paradas) {

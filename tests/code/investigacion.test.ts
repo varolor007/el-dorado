@@ -17,6 +17,7 @@ import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/s
 import type { ParaExplicar } from "../../agent/scripts/explica.ts";
 import type { Entendido, Tabla } from "../../agent/scripts/formas.ts";
 import { avisosDeSiempre, vistazoDe } from "../../agent/scripts/monta_viaje.ts";
+import { andando, trayecto } from "../../agent/tools/distancias.ts";
 import type { FuenteAlojamiento } from "../../agent/tools/fuentes/tipos.ts";
 import { ALOJAMIENTOS, ESTANCIA, fuenteInventada, MINIMOS } from "../cases/inventado/inventado.ts";
 import {
@@ -731,17 +732,43 @@ test("si ningún alojamiento mirado vale para el viajero, se para antes de cruza
   }
 });
 
-test("un viaje que no se anda se para tras elegir los sitios, y lo dice", async () => {
+test("un viaje que no se anda se hace igual, con lo que haya que coger", async () => {
   const run = runNuevo();
   try {
-    // Los mismos sitios, repartidos a decenas de kilómetros unos de otros: un parque que se recorre en coche.
-    const lejanos = (): Fuentes => ({
+    // Los mismos sitios, a unos seis kilómetros unos de otros: no se andan, pero se llega cogiendo algo.
+    const aKilometros = (): Fuentes => ({
       ...fuentesInventadas(),
-      sitios: async () => SITIOS.map((s, i) => ({ ...s, punto: { lat: s.punto.lat + 0.2 * i, lon: s.punto.lon } })),
+      sitios: async () => SITIOS.map((s, i) => ({ ...s, punto: { lat: s.punto.lat + 0.05 * i, lon: s.punto.lon } })),
     });
-    const { estado, lanzados } = await investiga(run, undefined, lejanos);
+    const { estado } = await investiga(run, undefined, aKilometros);
+    assert.deepEqual(estado.parado, null);
+    assert.equal(estado.hecho, true);
+    const viaje = leerJson(join(run, "viaje.json")) as Viaje;
+    // De donde se duerme a lo que se va a ver no se llega andando: hay que coger algo, y aun así el viaje sale.
+    const centro = ENTENDIDO.destination.centre;
+    assert.ok(viaje.paradas.some((p) => !trayecto(andando(centro, p.punto)).aPie));
+    assert.ok(viaje.dias.some((d) => d.paradas.length > 0));
+    // La tabla dice que este viaje no se anda, y los minutos de cada alojamiento son los de coger algo.
+    const tabla = leerJson(join(run, "tabla-1.json")) as Tabla;
+    assert.equal(tabla.on_foot, false);
+    assert.ok(tabla.notes.some((n) => n.startsWith("getting around:")));
+    assert.ok(tabla.rows.every((r) => typeof r.minutes_to_sights === "number"));
+    assert.ok(viaje.alojamientos.every((a) => a.aPie === false));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("si lo elegido no cabe desde una sola base ni cogiendo algo, se para y dice que pide varias bases", async () => {
+  const run = runNuevo();
+  try {
+    const aCientos = (): Fuentes => ({
+      ...fuentesInventadas(),
+      sitios: async () => SITIOS.map((s, i) => ({ ...s, punto: { lat: s.punto.lat + 2 * i, lon: s.punto.lon } })),
+    });
+    const { estado, lanzados } = await investiga(run, undefined, aCientos);
     assert.equal(estado.parado?.paso, "los días");
-    assert.match(estado.parado!.rojos[0].que, /este viaje no es de los que se andan/);
+    assert.match(estado.parado!.rojos[0].que, /pide dormir en más de un sitio/);
     assert.ok(!lanzados.some((id) => id.startsWith("cruce") || id.startsWith("explica")));
   } finally {
     rmSync(run, { recursive: true, force: true });

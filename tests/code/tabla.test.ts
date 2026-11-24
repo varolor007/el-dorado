@@ -67,7 +67,7 @@ test("la tabla: lo que descarta una criba sigue en la tabla con su motivo, y no 
 test("la tabla: cada fila dice su zona, lo que se anda y lo que no se pudo confirmar", () => {
   assert.equal(fila("a2").zone, "z1");
   assert.equal(fila("a6").zone, "z2");
-  assert.equal(typeof fila("a2").walk_minutes, "number");
+  assert.equal(typeof fila("a2").minutes_to_sights, "number");
   assert.deepEqual(fila("a2").unconfirmed, ["fit_with_the_group"]);
 });
 
@@ -87,7 +87,10 @@ test("las palancas: otro alojamiento y otra zona, con lo que ahorran o cuestan s
   assert.equal(zona.length, 1);
   assert.equal(zona[0].change.zone, "z2");
   assert.equal(zona[0].change.lodging, "a6");
-  assert.equal(zona[0].walk_minutes_change, (fila("a6").walk_minutes as number) - (partida.walk_minutes as number));
+  assert.equal(
+    zona[0].minutes_change,
+    (fila("a6").minutes_to_sights as number) - (partida.minutes_to_sights as number),
+  );
 });
 
 test("las palancas: las mismas noches movidas, con el alojamiento y el transporte de esas fechas", () => {

@@ -9,7 +9,7 @@ import { COSAS } from "../../../agent/data/gustos.ts";
 import type { Alojamiento, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../agent/output/viaje.ts";
 import type { Reparto } from "../../../agent/scripts/ritmo.ts";
-import { andar, coordenadas, diaCorto, diaDeLaSemana, diaEnGoogleMaps, dinero, duracion } from "../lib/formato.ts";
+import { andar, coordenadas, diaCorto, diaDeLaSemana, diaEnGoogleMaps, dinero, duracion, ir } from "../lib/formato.ts";
 import { enGoogleMaps, noches } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
@@ -502,12 +502,7 @@ function Dias(x: DeViaje) {
                   )}
                   {i < todas.length - 1 && (
                     <div className="tramo">
-                      <span className="dato">
-                        {t.viaje.andando(
-                          andar(abierto.metros[i], idioma).lejos,
-                          andar(abierto.metros[i], idioma).minutos,
-                        )}
-                      </span>
+                      <span className="dato">{tramo(t, abierto.metros[i], idioma)}</span>
                     </div>
                   )}
                 </div>
@@ -516,7 +511,12 @@ function Dias(x: DeViaje) {
           {abierto.paradas.length > 1 && (
             <a
               className="enlace"
-              href={diaEnGoogleMaps(abierto.paradas.flatMap((id) => deParada.get(id)?.punto ?? [])) ?? undefined}
+              href={
+                diaEnGoogleMaps(
+                  abierto.paradas.flatMap((id) => deParada.get(id)?.punto ?? []),
+                  abierto.metros.every((m) => ir(m, idioma).cogiendo.length === 0),
+                ) ?? undefined
+              }
               target="_blank"
               rel="noreferrer"
             >
@@ -586,7 +586,7 @@ function Dormir(x: DeViaje) {
                   <div className="manera__cuerpo">
                     {m.porQue !== undefined && <p className="manera__porque">{m.porQue}</p>}
                     {a && (a.zona != null || a.andando != null) && (
-                      <p className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null)}</p>
+                      <p className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null, a.aPie ?? true)}</p>
                     )}
                     <p className="manera__gana">
                       <b>{t.viaje.gana}. </b>
@@ -679,11 +679,16 @@ function Cuentas(x: DeViaje) {
   );
 }
 
-function Avisos({ t, viaje }: DeViaje) {
+function Avisos({ t, idioma, viaje }: DeViaje) {
   return (
     <>
       <div className="grupo">
         <h2 className="titulo">{t.viaje.avisos}</h2>
+        {/* Si el viaje no se anda entero, se dice antes que nada: los tiempos que no son a pie son aproximados. */}
+        {(viaje.alojamientos.some((a) => a.aPie === false) ||
+          viaje.dias.some((d) => d.metros.some((m) => ir(m, idioma).cogiendo.length > 0))) && (
+          <p className="aviso">{t.viaje.noSeAnda}</p>
+        )}
         {viaje.avisos.map((a) => (
           <p className="aviso" key={a}>
             {a}
@@ -703,6 +708,10 @@ export function TuViaje(x: DeViaje) {
   const elegida = viaje.maneras.find((m) => m.id === x.manera) ?? viaje.maneras[0];
   const puestas = reparto.dias.reduce((s, d) => s + d.paradas.length, 0);
   const andado = reparto.dias.reduce((s, d) => s + d.metros.reduce((a, m) => a + m, 0), 0);
+  // Si algún trayecto entre paradas no se anda, o no se anda desde donde se duerme, se dice: nada va «andando» que
+  // no se ande.
+  const trayectosAPie = reparto.dias.every((d) => d.metros.every((m) => ir(m, idioma).cogiendo.length === 0));
+  const todoAPie = trayectosAPie && viaje.alojamientos.every((a) => a.aPie !== false);
   const pestanas: Pestana[] = ["days", "stay", "money", "notes"];
   // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega.
   const llega = comoSeLlega(viaje, elegida);
@@ -720,7 +729,7 @@ export function TuViaje(x: DeViaje) {
         </div>
         <div>
           <b>{andar(andado, idioma).lejos}</b>
-          <span>{t.cifras.andando}</span>
+          <span>{todoAPie ? t.cifras.andando : t.cifras.entreParadas}</span>
         </div>
       </div>
       <div className="pestanas" role="tablist" aria-label={t.viaje.rotulo}>
@@ -742,6 +751,17 @@ export function TuViaje(x: DeViaje) {
 }
 
 /** Por qué no vale un alojamiento para este viajero, dicho en su idioma a partir del dato del código. */
+/** Un trayecto entre dos paradas, dicho: andando, con sus minutos, o con lo que tenga sentido coger. */
+function tramo(t: Textos, metros: number, idioma: string): string {
+  const x = ir(metros, idioma);
+  if (x.cogiendo.length === 0) return t.viaje.andando(x.lejos, x.minutos);
+  return t.viaje.cogiendo(
+    x.lejos,
+    x.minutos,
+    x.cogiendo.map((m) => t.viaje.maneraDeIr[m] ?? m),
+  );
+}
+
 function descarte(t: Textos, d: NonNullable<Alojamiento["descartado"]>): string {
   if (d.clase === "missing_must") {
     const campo = COSAS[d.cosa]?.campo;
@@ -777,7 +797,7 @@ export function Ficha({ t, idioma, a, nochesDelViaje, alVolver }: DeFicha) {
         </div>
         <span className="dato">{coordenadas(a.punto)}</span>
         {(a.zona != null || a.andando != null) && (
-          <span className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null)}</span>
+          <span className="dato">{t.dormir.donde(a.zona ?? null, a.andando ?? null, a.aPie ?? true)}</span>
         )}
         {a.puntos != null && <span className="dato">{t.dormir.puntos(a.puntos)}</span>}
       </div>

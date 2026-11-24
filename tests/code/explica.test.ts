@@ -42,9 +42,9 @@ function rojosDe(cambia: (e: Entrega) => void, material: MaterialDeExplicar = MA
   return puertaExplica(entrega, material).rojos.map((r) => `${r.donde}: ${r.que}`);
 }
 
-test("las normas del que explica van de la EX1 a la EX6, y el contrato dice que no decide ni hace cuentas", () => {
+test("las normas del que explica van de la EX1 a la EX7, y el contrato dice que no decide ni hace cuentas", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(EX\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["EX1", "EX2", "EX3", "EX4", "EX5", "EX6"]);
+  assert.deepEqual(codigos, ["EX1", "EX2", "EX3", "EX4", "EX5", "EX6", "EX7"]);
   // Lo que pide la puerta, lo dice el contrato: el largo de un texto y qué números son de la casa.
   assert.ok(leer("RULES.md").includes(`at most ${LARGO_DE_UN_TEXTO} characters`));
   assert.match(leer("RULES.md"), /A number that appears only inside a sentence/);
@@ -58,11 +58,11 @@ test("al que explica se le dan las maneras con las diferencias frente a la más 
     DADO.ways.ways.map((w) => w.id),
     ["cheapest", "best_value", "different"],
   );
-  assert.deepEqual(barata.versus_cheapest, { costs_more: 0, walk_minutes_less: 0, score_higher: 0 });
+  assert.deepEqual(barata.versus_cheapest, { costs_more: 0, minutes_less: 0, score_higher: 0 });
   assert.equal(distinta.versus_cheapest.costs_more, distinta.total - barata.total);
   assert.equal(
-    distinta.versus_cheapest.walk_minutes_less,
-    (barata.walk_minutes as number) - (distinta.walk_minutes as number),
+    distinta.versus_cheapest.minutes_less,
+    (barata.minutes_to_sights as number) - (distinta.minutes_to_sights as number),
   );
   assert.equal(distinta.lever, "other_zone");
   assert.equal(distinta.zone_name, "Faro Inventado");

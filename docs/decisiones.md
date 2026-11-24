@@ -295,6 +295,13 @@ empieza hasta que lo dé.
   antemano cómo se mueve: de cada trayecto, El Dorado dice las maneras que tienen sentido por su distancia, con lo que
   cuestan y si las hay cuando una fuente lo sabe, y si no, la distancia. Lo que se anda en un rato no se manda en
   coche, y lo que está a treinta kilómetros no se manda andando.
+  Hecho así, sin fuente de rutas: cada trayecto lleva su distancia y las maneras que tienen sentido (a pie hasta
+  3,5 km de camino; en transporte, de 1 a 60 km; en coche, de 1 km en adelante), y se cuenta andando si se anda y,
+  si no, con una cuenta aproximada de lo que se tarda. Un día puede llevar un trayecto que no se anda; lo que queda
+  a más de hora y media de donde se duerme no entra en ningún día. La zona de un alojamiento se mide andando si el
+  viaje se anda, y si desde ningún alojamiento se llega a pie a lo que se va a ver, con lo que se tarda cogiendo
+  algo. Lo que cuesta cada manera y si la hay donde se viaja no se sabe todavía: pide una fuente, por decidir
+  (3.14). La web y el que explica nunca dicen «andando» de lo que no se anda.
 - **Las habitaciones de un grupo las dice el viajero** (el PM: «lo dice el viajero»).
 - **Un alojamiento sin estrellas se juzga por su nota y sus opiniones** (el PM: «ok»). Las estrellas se le piden a
   quien las lleva.

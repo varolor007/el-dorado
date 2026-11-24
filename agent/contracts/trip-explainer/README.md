@@ -10,16 +10,18 @@ every difference included, was computed by the house: you copy it.
 ## What you receive, in `in/`
 
 - `trip.json`: what the traveller asked for, with their own words, and `language`: the language they read.
-- `ways.json`: the currency of every amount (`currency`), the nights of the trip (`nights`) and the ways of doing
-  it (`ways`), each with its `id` (`cheapest`, `best_value`, `different`), its lodging, its zone, its totals, its
-  score, `walk_minutes` (half of what they will see is within that many minutes on foot), whether it can be
-  cancelled, what could not be confirmed, what the lodging is like (its levels, each with what was seen or said),
-  its best and its worst, its warnings, and `versus_cheapest`: what it costs more, how many minutes on foot it
-  saves and how much higher its score is. For the different way, the lever that tells it apart and why it was
-  chosen.
+- `ways.json`: the currency of every amount (`currency`), the nights of the trip (`nights`), whether the trip is
+  walked from where the traveller sleeps (`on_foot`: see EX7) and the ways of doing it (`ways`), each with its `id`
+  (`cheapest`, `best_value`, `different`), its lodging, its zone, its totals, its score, `minutes_to_sights` (half
+  of what they will see is within that many minutes: on foot if `on_foot` is `true`, by car or public transport
+  and approximate if it is `false`), whether it can be cancelled, what could not be confirmed, what the lodging is
+  like (its levels, each with what was seen or said), its best and its worst, its warnings, and `versus_cheapest`:
+  what it costs more, how many minutes closer it is (`minutes_less`) and how much higher its score is. For the
+  different way, the lever that tells it apart and why it was chosen.
 - `levers.json`: the savings to tell, each with its `lever_row`, what it applies to (`applies_to`: the lodging the
   change starts from and, if it is the lodging of a way, which one), what changes (other dates, with their
-  weekdays; another lodging; another zone), what it saves, and how the walk and the score change.
+  weekdays; another lodging; another zone), what it saves, and how the minutes to what they will see
+  (`minutes_change`) and the score change.
 - `checks.json`: what was looked at beyond the table, with its status. It may be an empty list.
 
 ## What you do not see, and why

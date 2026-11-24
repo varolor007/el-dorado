@@ -190,8 +190,11 @@ export type FilaDelCruce = {
   score: number | string;
   /** Las partes de la nota que no tienen dato: no bajan la nota, se dicen. */
   unconfirmed: string[];
-  /** La mitad de las paradas del viaje queda a estos minutos andando, o menos. */
-  walk_minutes: number | string;
+  /**
+   * La mitad de las paradas del viaje queda a estos minutos, o menos: andando si la tabla dice `on_foot`; si no, con
+   * lo que haya que coger, y entonces son aproximados.
+   */
+  minutes_to_sights: number | string;
   cancellable: boolean | string;
   /** Lo que saca el código: la más barata que pasa de la nota mínima y la mejor por lo que cuesta. */
   marks: string[];
@@ -211,13 +214,18 @@ export type FilaDePalanca = {
   total: number | string;
   /** Positivo si ahorra; negativo si sale más caro. */
   saves: number | string;
-  walk_minutes_change: number | string;
+  minutes_change: number | string;
   score: number | string;
   note: string;
 };
 
 export type Tabla = {
   currency: string;
+  /**
+   * Verdadero si este viaje se anda desde donde se duerme. Si no, de un alojamiento a lo que se va a ver se va en
+   * coche o en transporte, y sus minutos son una cuenta aproximada, no una ruta.
+   */
+  on_foot: boolean;
   minimum_score: number;
   round: number;
   rows: FilaDelCruce[];

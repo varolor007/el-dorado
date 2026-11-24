@@ -411,7 +411,7 @@ const flujo = [
       tipo: "asiento",
       web: true,
       detras: true,
-      parte: "hoy solo llega al final un viaje de una sola base. Si el viaje pide varias, la casa para tras la ruta y lo dice, porque todavía no sabe medir los traslados ni buscar alojamiento en más de una. Tampoco trae sitios de fuera de la caja del destino para una base con excursiones. Y todo se mide a pie: un viaje que no se anda, también se para y se dice.",
+      parte: "hoy solo llega al final un viaje de una sola base. Si el viaje pide varias, o lo elegido queda a más de un día de donde se duerme, la casa para tras la ruta o tras elegir los sitios y lo dice, porque todavía no sabe medir los traslados ni buscar alojamiento en más de una. Tampoco trae sitios de fuera de la caja del destino para una base con excursiones.",
       k: "El de la ruta",
       x: "dónde duermes cada noche y en qué zonas buscar",
       d: "Decide la forma del viaje: una base, una base con excursiones o una ruta. Lista los sitios por lo que buscas, con las noches que merece cada uno, y los encaja en tus días; si no caben, quita sitios, no aprieta. Los ordena para no volver atrás y propone por dónde entrar y por dónde salir. En cada base marca de una a tres zonas donde buscar alojamiento, con su centro, su radio y su porqué, en minutos y no en adjetivos. Sin precios ni hoteles.",
@@ -499,7 +499,8 @@ const flujo = [
       k: "ritmo",
       x: "reparte las paradas por días, por cercanía y a tu ritmo",
       titulo: "El ritmo",
-      d: "Sin IA. Reparte las paradas en tus días: junta en el mismo día lo que está cerca, respeta el orden de importancia y lo que cierra cada día, y pone tantas paradas como pida tu ritmo: tranquilo, normal o intenso. Ordena cada día para no cruzar la ciudad dos veces y calcula lo que se anda entre parada y parada. La misma entrada da siempre los mismos días.",
+      d: "Sin IA. Reparte las paradas en tus días: junta en el mismo día lo que está cerca, respeta el orden de importancia y lo que cierra cada día, y pone tantas paradas como pida tu ritmo: tranquilo, normal o intenso. Ordena cada día para no cruzar la ciudad dos veces y dice lo que hay de camino entre parada y parada, con las maneras de ir que tienen sentido: a pie lo que se anda; en transporte o en coche lo que no, con un tiempo aproximado. Lo que no cabe en un día, o queda a más de un día de donde duermes, se queda fuera y dice por qué. La misma entrada da siempre los mismos días.",
+      parte: "no mira todavía lo que cierra cada día. Y de un trayecto que no se anda solo sabe la distancia y un tiempo aproximado: lo que cuesta cada manera de ir y si la hay donde viajas lo dirá una fuente de rutas, que está por decidir.",
     },
     {
       tipo: "puerta",

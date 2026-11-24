@@ -135,13 +135,18 @@ const en = {
     paradas: (n: number) => EN.cuenta(n, "stop", "stops"),
     sinParadas: "A free day.",
     andando: (lejos: string, min: number) => `${lejos} on foot, about ${min} min`,
+    // Un trayecto que no se anda: lo que hay y las maneras que tienen sentido, con un tiempo aproximado.
+    cogiendo: (lejos: string, min: number, maneras: string[]) => `${lejos}: ${maneras.join(" or ")}, about ${min} min`,
+    maneraDeIr: { walk: "on foot", transit: "by public transport", car: "by car" } as Record<string, string>,
+    noSeAnda:
+      "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet.",
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
     imprescindible: "Not to miss",
     // En inglés se dice igual de una parada que de varias; en español, no.
     fuera: (_n: number) => "Left out at this pace",
     // Lo que el código dejó fuera por la distancia, no por el ritmo: ni con más paradas al día entraría.
-    fueraLejos: (_n: number) => "Too far from the rest to walk in one day",
+    fueraLejos: (_n: number) => "Too far to fit in your days",
     // Las maneras que tenga el viaje: una, dos o tres.
     maneras: (n: number) =>
       n === 0 ? "No way to do it yet" : `${conMayuscula(cuantasEn(n))} ${EN.plural(n, "way", "ways")} to do it`,
@@ -263,6 +268,7 @@ const en = {
       transporte === null ? `for ${tusNochesEn(noches)}` : `${tusNochesEn(noches)} and ${transporteEn(transporte)}`,
     paradas: (n: number) => EN.plural(n, "stop", "stops"),
     andando: "on foot",
+    entreParadas: "between stops",
   },
   acciones: {
     quitar: "Remove",
@@ -276,10 +282,14 @@ const en = {
     otros: (n: number) => EN.plural(n, "Another that passed the minimums", "Others that passed the minimums"),
     ficha: "See it",
     elegir: "Sleep here",
-    donde: (zona: string | null, min: number | null) =>
+    donde: (zona: string | null, min: number | null, aPie: boolean) =>
       [
         zona === null ? "" : `Around ${zona}.`,
-        min === null ? "" : `Half of what you will see is within ${min} min on foot.`,
+        min === null
+          ? ""
+          : aPie
+            ? `Half of what you will see is within ${min} min on foot.`
+            : `Half of what you will see is about ${min} min away by car or public transport.`,
       ]
         .filter((x) => x !== "")
         .join(" "),
@@ -466,12 +476,15 @@ const es: Textos = {
     paradas: (n) => ES.cuenta(n, "parada", "paradas"),
     sinParadas: "Un día libre.",
     andando: (lejos, min) => `${lejos} andando, unos ${min} min`,
+    cogiendo: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}, unos ${min} min`,
+    maneraDeIr: { walk: "a pie", transit: "en transporte", car: "en coche" },
+    noSeAnda:
+      "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
     imprescindible: "Imprescindible",
     fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
-    fueraLejos: (n) =>
-      ES.plural(n, "Queda lejos de lo demás para andarlo en un día", "Quedan lejos de lo demás para andarlo en un día"),
+    fueraLejos: (n) => ES.plural(n, "Queda demasiado lejos para tus días", "Quedan demasiado lejos para tus días"),
     maneras: (n) =>
       n === 0
         ? "Todavía no hay ninguna manera de hacerlo"
@@ -589,6 +602,7 @@ const es: Textos = {
       transporte === null ? `por ${tusNochesEs(noches)}` : `${tusNochesEs(noches)} y ${transporteEs(transporte)}`,
     paradas: (n) => ES.plural(n, "parada", "paradas"),
     andando: "andando",
+    entreParadas: "entre paradas",
   },
   acciones: {
     quitar: "Quitar",
@@ -602,10 +616,14 @@ const es: Textos = {
     otros: (n) => ES.plural(n, "Otro que pasó los mínimos", "Otros que pasaron los mínimos"),
     ficha: "Ver su ficha",
     elegir: "Dormir aquí",
-    donde: (zona, min) =>
+    donde: (zona, min, aPie) =>
       [
         zona === null ? "" : `Por ${zona}.`,
-        min === null ? "" : `La mitad de lo que vas a ver te queda a ${min} min andando o menos.`,
+        min === null
+          ? ""
+          : aPie
+            ? `La mitad de lo que vas a ver te queda a ${min} min andando o menos.`
+            : `La mitad de lo que vas a ver te queda a unos ${min} min en coche o en transporte.`,
       ]
         .filter((x) => x !== "")
         .join(" "),

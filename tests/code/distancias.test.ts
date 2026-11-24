@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  trayecto,
+  minutosPor,
+  manerasDeIr,
   andando,
   centroDe,
   enLineaRecta,
@@ -11,6 +14,8 @@ import {
   PASO,
   RODEO,
 } from "../../agent/tools/distancias.ts";
+import { SALTO_MAXIMO } from "../../agent/data/dias.ts";
+import { MANERAS_DE_IR, TRAYECTO_DE_UN_DIA } from "../../agent/data/moverse.ts";
 
 const A = { lat: 10, lon: 20 };
 const UN_KM_AL_NORTE = { lat: 10 + 1000 / 111_195, lon: 20 };
@@ -54,4 +59,32 @@ test("la mediana de lo que se anda no la hunde lo que está lejos para todos", (
   assert.ok(mediana! < media!);
   assert.equal(medianaAndando(A, [cerca[0], cerca[1], cerca[2]]), minutosEntre(A, cerca[1]));
   assert.equal(medianaAndando(A, []), null);
+});
+
+test("de cada trayecto, las maneras que tienen sentido: ni coche para cruzar la calle, ni andar diez km", () => {
+  assert.deepEqual(manerasDeIr(300), ["walk"]);
+  assert.deepEqual(manerasDeIr(2000), ["walk", "transit", "car"]);
+  assert.deepEqual(manerasDeIr(SALTO_MAXIMO), ["walk", "transit", "car"]);
+  assert.deepEqual(manerasDeIr(SALTO_MAXIMO + 10), ["transit", "car"]);
+  assert.deepEqual(manerasDeIr(90_000), ["car"]);
+  // El tope de andar es el mismo en las dos listas.
+  assert.equal(MANERAS_DE_IR.find((m) => m.id === "walk")!.hasta, SALTO_MAXIMO);
+});
+
+test("un trayecto se cuenta andando si se anda; si no, con lo más rápido que tenga sentido", () => {
+  const cerca = trayecto(1500);
+  assert.deepEqual([cerca.aPie, cerca.minutos], [true, minutosAndando(1500)]);
+  const lejos = trayecto(8000);
+  assert.equal(lejos.aPie, false);
+  assert.equal(lejos.minutos, Math.min(minutosPor("transit", 8000), minutosPor("car", 8000)));
+  // Ningún trayecto que no se anda sale más corto por estar más lejos.
+  let antes = 0;
+  for (let m = SALTO_MAXIMO + 10; m < 120_000; m += 990) {
+    const ahora = trayecto(m).minutos;
+    assert.ok(ahora >= antes, `${m} m`);
+    antes = ahora;
+  }
+  // Y lo que cabe en un día tiene un límite: a doscientos kilómetros no se va y se vuelve en el día.
+  assert.ok(trayecto(200_000).minutos > TRAYECTO_DE_UN_DIA);
+  assert.ok(trayecto(30_000).minutos <= TRAYECTO_DE_UN_DIA);
 });

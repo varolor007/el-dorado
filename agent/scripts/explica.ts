@@ -21,7 +21,7 @@ export type ManeraParaExplicar = {
   lodging_total: number;
   transport_total: number | string;
   score: number | string;
-  walk_minutes: number | string;
+  minutes_to_sights: number | string;
   cancellable: boolean | string;
   unconfirmed: string[];
   /** Cómo es el alojamiento: cada campo, con su nivel y lo que se vio o se dijo. */
@@ -30,7 +30,7 @@ export type ManeraParaExplicar = {
   bad: string;
   warnings: string[];
   /** Las diferencias frente a la más barata, ya hechas. */
-  versus_cheapest: { costs_more: number | string; walk_minutes_less: number | string; score_higher: number | string };
+  versus_cheapest: { costs_more: number | string; minutes_less: number | string; score_higher: number | string };
   lever?: string;
   chosen_because?: string;
 };
@@ -43,13 +43,14 @@ export type PalancaParaExplicar = {
   change: Record<string, string | number>;
   saves: number;
   total: number | string;
-  walk_minutes_change: number | string;
+  minutes_change: number | string;
   score: number | string;
   chosen_because: string;
 };
 
 export type ParaExplicar = {
-  ways: { currency: string; nights: number; ways: ManeraParaExplicar[] };
+  /** `on_foot`: si el viaje se anda desde donde se duerme. Si no, los minutos son en coche o en transporte. */
+  ways: { currency: string; nights: number; on_foot: boolean; ways: ManeraParaExplicar[] };
   levers: PalancaParaExplicar[];
   checks: EntregaDeCruce["checks"];
 };
@@ -92,7 +93,7 @@ export function paraExplicar(
       lodging_total: r.lodging_total,
       transport_total: r.transport_total ?? "none",
       score: r.score,
-      walk_minutes: r.walk_minutes,
+      minutes_to_sights: r.minutes_to_sights,
       cancellable: r.cancellable,
       unconfirmed: r.unconfirmed,
       is_like: comoEs(mirado),
@@ -101,7 +102,7 @@ export function paraExplicar(
       warnings: (mirado?.warnings ?? []).map((a) => a.what),
       versus_cheapest: {
         costs_more: barata === null ? SIN_SABER : resta(r.total, barata.total),
-        walk_minutes_less: barata === null ? SIN_SABER : resta(barata.walk_minutes, r.walk_minutes),
+        minutes_less: barata === null ? SIN_SABER : resta(barata.minutes_to_sights, r.minutes_to_sights),
         score_higher: barata === null ? SIN_SABER : resta(r.score, barata.score),
       },
     };
@@ -143,7 +144,7 @@ export function paraExplicar(
         change,
         saves: l.saves,
         total: l.total,
-        walk_minutes_change: l.walk_minutes_change,
+        minutes_change: l.minutes_change,
         score: l.score,
         chosen_because: dicha.why,
       },
@@ -151,5 +152,7 @@ export function paraExplicar(
   });
 
   const noches = diasDe(fechas.entrada, fechas.salida).nights;
-  return { ways: { currency: tabla.currency, nights: noches, ways }, levers, checks: cruce.checks };
+  // Una tabla de antes de que dijera si el viaje se anda es de un viaje que se andaba: no había otros.
+  const aPie = tabla.on_foot ?? true;
+  return { ways: { currency: tabla.currency, nights: noches, on_foot: aPie, ways }, levers, checks: cruce.checks };
 }

@@ -80,8 +80,13 @@ export type Alojamiento = {
   avisos: AvisoDeFicha[];
   /** La zona de la ruta en la que está, por su nombre. */
   zona?: string | null;
-  /** La mitad de las paradas del viaje queda a estos minutos andando, o menos. */
+  /**
+   * La mitad de las paradas del viaje queda a estos minutos, o menos: andando si `aPie`; si no, en coche o en
+   * transporte, y entonces son aproximados.
+   */
   andando?: number | null;
+  /** Falso si este viaje no se anda desde donde se duerme: entonces los minutos son de coger algo. */
+  aPie?: boolean;
   /** Nuestra nota, de 0 a 10: la zona, cómo es, las opiniones y las condiciones. */
   puntos?: number | null;
   /** Si una criba lo descarta para este viajero, por qué: la frase la monta la web. */

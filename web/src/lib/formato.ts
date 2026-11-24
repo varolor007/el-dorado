@@ -1,7 +1,8 @@
 // Cómo se escribe cada cosa en la web: el dinero, las fechas, lo que se anda, las coordenadas y los enlaces al mapa.
 
 import type { Punto } from "../../../agent/output/viaje.ts";
-import { minutosAndando } from "../../../agent/tools/distancias.ts";
+import type { ManeraDeIr } from "../../../agent/data/moverse.ts";
+import { minutosAndando, trayecto } from "../../../agent/tools/distancias.ts";
 
 export function dinero(total: number, moneda: string, idioma: string): string {
   return new Intl.NumberFormat(idioma, { style: "currency", currency: moneda, maximumFractionDigits: 0 }).format(total);
@@ -52,12 +53,25 @@ export function enGoogleMaps(p: Punto, nombre?: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
 
-/** El enlace de un día entero a Google Maps, andando. Google admite pocas paradas intermedias: van las que caben. */
-export function diaEnGoogleMaps(puntos: Punto[]): string | null {
+/**
+ * Cómo se hace un trayecto: lo que hay de camino y, si se anda, lo que se tarda a pie; si no, las maneras que tienen
+ * sentido y lo que se tarda con la más rápida, que es una cuenta aproximada y no una ruta.
+ */
+export function ir(metros: number, idioma: string): { lejos: string; minutos: number; cogiendo: ManeraDeIr[] } {
+  const t = trayecto(metros);
+  return { lejos: andar(metros, idioma).lejos, minutos: t.minutos, cogiendo: t.aPie ? [] : t.maneras };
+}
+
+/**
+ * El enlace de un día entero a Google Maps. Va andando si todo el día se anda; si algún trayecto no, se deja que
+ * Google proponga cómo ir. Google admite pocas paradas intermedias: van las que caben.
+ */
+export function diaEnGoogleMaps(puntos: Punto[], aPie = true): string | null {
   if (puntos.length < 2) return null;
   const a = (p: Punto): string => `${p.lat},${p.lon}`;
   const intermedias = puntos.slice(1, -1).slice(0, 3).map(a).join("|");
-  const base = `https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${a(puntos[0])}`;
+  const modo = aPie ? "&travelmode=walking" : "";
+  const base = `https://www.google.com/maps/dir/?api=1${modo}&origin=${a(puntos[0])}`;
   const paradas = intermedias ? `&waypoints=${encodeURIComponent(intermedias)}` : "";
   return `${base}&destination=${a(puntos[puntos.length - 1])}${paradas}`;
 }

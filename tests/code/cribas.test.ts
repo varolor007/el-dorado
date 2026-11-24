@@ -182,3 +182,22 @@ test("la mejor por lo que cuesta depende de lo que quieres gastar: cuanto más c
   assert.equal(laMejorPorLoQueCuesta([FILAS[0], FILAS[4]], NOTA_MINIMA, "medium"), null);
   assert.equal(laMejorPorLoQueCuesta([], NOTA_MINIMA, "medium"), null);
 });
+
+test("la zona se mide andando si el viaje se anda, y con lo que haya que coger si no", () => {
+  // Con los sitios cerca, andando: lo que dice la criba son minutos a pie.
+  const cerca = cribar([candidato("a1", { gym: "full" }), candidato("a2", { gym: "full" })], CTX);
+  assert.ok(cerca.every((c) => c.aPie && c.minutos === c.minutosAndando));
+  // Con los sitios a veinte kilómetros de todos los alojamientos, no se anda desde ninguno: se mide en lo que se
+  // tarda cogiendo algo, y la zona deja de valer cero para todos.
+  const lejos: Contexto = { ...CTX, paradas: PARADAS.map((p) => ({ lat: p.lat + 0.18, lon: p.lon })) };
+  const enCoche = cribar([candidato("a1", { gym: "full" }), candidato("a2", { gym: "full" })], lejos);
+  assert.ok(enCoche.every((c) => !c.aPie));
+  assert.ok(enCoche.every((c) => (c.minutos ?? 0) < (c.minutosAndando ?? 0)));
+  assert.ok(enCoche.every((c) => (c.nota.partes.zona ?? 0) > 0));
+  // Si uno solo de los candidatos está a pie de lo que se va a ver, el viaje se anda, y quien queda lejos, pierde.
+  const mezcla = [candidato("a1", { gym: "full" }), candidato("a2", { gym: "full" })];
+  mezcla[1].ficha.alojamiento.lat += 0.18;
+  const [aPie, lejano] = cribar(mezcla, CTX);
+  assert.ok(aPie.aPie && lejano.aPie);
+  assert.equal(lejano.nota.partes.zona, 0);
+});
