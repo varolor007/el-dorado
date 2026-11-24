@@ -158,7 +158,8 @@ llaves de la casa viven en el volumen `eldorado_datos` y salen en su registro; e
 deja pasar las rutas de la casa: **una ruta nueva de la puerta hay que añadirla también en el `Caddyfile`** (lo
 vigila `tests/code/arranque.test.ts`). En la web, la cabecera de ngrok, `maxDuration` de 300 segundos y 120 para lo
 que no es en vivo. El repositorio no tiene `main`: su rama de partida es la de la sesión, y es la que baja el
-servidor y la que despliega Vercel. **Pendiente**: que el PM elija puerta o túnel e instale con la guía; lo que hay
+servidor y la que despliega Vercel. El PM eligió la puerta, por el momento (24-nov). **Pendiente**: que instale con
+la guía; lo que hay
 que mirar al instalar (que la imagen se construye, que Claude Code piensa con el disco de solo lectura, que Caddy
 saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
 Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de

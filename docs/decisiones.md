@@ -485,6 +485,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   métodos de la casa, con sus topes de tamaño y de tiempo, y no apunta las peticiones, para no guardar la sesión de
   nadie. Lo que no cubre: nada limita las peticiones por dirección, y `/salud` contesta sin llave. La dirección
   gratuita puede quedarse sin certificado unos días; por eso la sesión propone al PM un subdominio suyo.
+- **Vercel llega a la casa por la puerta con candado, por el momento** (el PM, a las dos maneras explicadas: «esta
+  opción por el momento vale»). Es la de partida de la guía.
+- **El token del PM, en el entorno de las sesiones** (el PM: «listo», «todo listo creo»). Lo puso él, con el nombre
+  `ELDORADO_TOKEN_DE_CLAUDE`. Con su sí a las pruebas con su cuenta, se empieza por dos llamadas mínimas desde una
+  sesión auxiliar. El modelo de los asientos es el que la sesión le propuso tres veces y él no cambió; no lo dijo
+  con sus palabras, y así se le cuenta.
 
 ## Pendientes
 
