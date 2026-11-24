@@ -608,7 +608,7 @@ test("un viaje que pide varias bases se para tras la ruta, con un solo asiento g
   }
 });
 
-/** Una fuente de pueblo: cuatro casas en la zona, que solo pasan el último escalón, y diez hoteles a seis km. */
+/** Una fuente de pueblo: cuatro casas en la zona, con pocas opiniones y sin estrellas, y diez hoteles a seis km. */
 function fuenteDePueblo(cuenta: { listas: number; precios: string[]; detalles: string[] }): FuenteAlojamiento {
   const centro = SITIOS[1].punto;
   const base = fuenteInventada();
@@ -672,7 +672,7 @@ test("al ensanchar no se pierde lo de la zona: va por delante, y lo de fuera ent
     [
       [1, 8.5, 0],
       [1, 8, 0],
-      [1, 7.5, 0],
+      [1, 7.5, 4],
       [1, 7, 4],
       [3, 8.5, 0],
       [3, 8, 0],

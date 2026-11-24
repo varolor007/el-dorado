@@ -19,7 +19,7 @@ test("cada descarte dice su motivo, y un dato que falta no se da por bueno", () 
   const { fuera } = separar(ALOJAMIENTOS, MINIMOS);
   assert.match(fuera[0].motivo, /nota 7\.9/);
   assert.match(fuera[1].motivo, /12 opiniones/);
-  assert.equal(fuera[2].motivo, "sin estrellas");
+  assert.equal(fuera[2].motivo, "3 estrellas, menos de 4");
   assert.equal(motivoDeDescarte({ ...ALOJAMIENTOS[0], nota: null }, MINIMOS), "sin nota");
   assert.equal(motivoDeDescarte({ ...ALOJAMIENTOS[0], opiniones: null }, MINIMOS), "sin número de opiniones");
 });
@@ -28,8 +28,14 @@ test("el que está justo en el mínimo pasa", () => {
   assert.equal(motivoDeDescarte({ ...ALOJAMIENTOS[0], nota: 8.5, opiniones: 200, estrellas: 4 }, MINIMOS), null);
 });
 
-test("si no se piden estrellas, no hace falta saberlas: hay alojamientos que no las llevan", () => {
-  const sinEstrellas = { ...ALOJAMIENTOS[0], estrellas: null };
-  assert.equal(motivoDeDescarte(sinEstrellas, { nota: 7, opiniones: 10, estrellas: 0 }), null);
-  assert.equal(motivoDeDescarte(sinEstrellas, { nota: 7, opiniones: 10, estrellas: 1 }), "sin estrellas");
+test("las estrellas se le piden a quien las lleva: lo que no las lleva se juzga por su nota y sus opiniones", () => {
+  // Una casa de 9,2 con 600 opiniones y sin estrellas pasa los mínimos de partida, que piden cuatro.
+  const casa = { ...ALOJAMIENTOS[0], nota: 9.2, opiniones: 600, estrellas: null };
+  assert.equal(motivoDeDescarte(casa, MINIMOS), null);
+  assert.equal(motivoDeDescarte(casa, { nota: 7, opiniones: 10, estrellas: 0 }), null);
+  // Pero no por no llevarlas se le perdona la nota o las opiniones.
+  assert.match(motivoDeDescarte({ ...casa, nota: 8.4 }, MINIMOS) ?? "", /nota 8\.4/);
+  assert.match(motivoDeDescarte({ ...casa, opiniones: 40 }, MINIMOS) ?? "", /40 opiniones/);
+  // Y a quien las lleva se le siguen pidiendo.
+  assert.equal(motivoDeDescarte({ ...casa, estrellas: 3 }, MINIMOS), "3 estrellas, menos de 4");
 });

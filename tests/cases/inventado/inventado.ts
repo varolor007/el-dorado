@@ -51,7 +51,7 @@ export const ALOJAMIENTOS: Alojamiento[] = [
   alojamiento("a7", "Hotel Jardín Inventado", 9.0, 260, 5, 10.007),
   alojamiento("b1", "Hostal Nota Baja Inventado", 7.9, 800, 4),
   alojamiento("b2", "Hotel Pocas Opiniones Inventado", 9.5, 12, 4),
-  alojamiento("b3", "Hotel Sin Estrellas Inventado", 9.2, 600, null),
+  alojamiento("b3", "Hotel Tres Estrellas Inventado", 9.2, 600, 3),
 ];
 
 function precio(

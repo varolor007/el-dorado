@@ -238,8 +238,6 @@ export const RADIO_MINIMO = 1000;
 
 /** La dirección de la lista: los mínimos se piden a la fuente, y después los vuelve a comprobar el código. */
 export function direccionDeLista(e: Estancia, m: Minimos): string {
-  const estrellas: number[] = [];
-  for (let n = Math.ceil(m.estrellas); n <= 5; n++) estrellas.push(n);
   const q = new URLSearchParams({
     countryCode: e.pais,
     latitude: String(e.lat),
@@ -249,9 +247,9 @@ export function direccionDeLista(e: Estancia, m: Minimos): string {
     minReviewsCount: String(m.opiniones),
     limit: "5000",
   });
-  // Si no se piden estrellas, no se filtra por ellas: hay alojamientos que no las llevan (una casa, un piso), y un
-  // filtro que las nombra todas los dejaría fuera.
-  if (m.estrellas > 0) q.set("starRating", estrellas.join(","));
+  // A la fuente no se le pide que filtre por estrellas: hay alojamientos que no las llevan (una casa, un piso), y un
+  // filtro por ellas los dejaría fuera antes de que el código pueda juzgarlos por su nota. Las estrellas de quien
+  // las lleva se miran aquí, una a una, con los demás mínimos.
   return `${BASE}/data/hotels?${q}`;
 }
 

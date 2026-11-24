@@ -196,10 +196,8 @@ test("LiteAPI: lo que se pide lleva los mínimos, las fechas y los niños", () =
   const url = new URL(direccionDeLista(ESTANCIA, MINIMOS));
   assert.equal(url.searchParams.get("minRating"), "8.5");
   assert.equal(url.searchParams.get("minReviewsCount"), "200");
-  assert.equal(url.searchParams.get("starRating"), "4,5");
-  // Si no se piden estrellas, no se filtra por ellas: así vuelve también lo que no las lleva.
-  const sinEstrellas = new URL(direccionDeLista(ESTANCIA, { ...MINIMOS, estrellas: 0 }));
-  assert.equal(sinEstrellas.searchParams.has("starRating"), false);
+  // A la fuente no se le pide que filtre por estrellas: dejaría fuera lo que no las lleva antes de poder juzgarlo.
+  assert.equal(url.searchParams.has("starRating"), false);
   assert.equal(url.searchParams.get("radius"), "1500");
   // La fuente no acepta menos de mil metros: se le piden mil, y lo que cae más lejos de lo pedido se quita aquí.
   const corta = { ...ESTANCIA, radio: 500 };

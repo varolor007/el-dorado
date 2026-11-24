@@ -12,9 +12,9 @@ export function motivoDeDescarte(a: Alojamiento, m: Minimos): string | null {
   if (a.nota < m.nota) return `nota ${a.nota}, por debajo de ${m.nota}`;
   if (a.opiniones === null) return "sin número de opiniones";
   if (a.opiniones < m.opiniones) return `${a.opiniones} opiniones, menos de ${m.opiniones}`;
-  // Si no se piden estrellas, no hace falta saberlas: hay alojamientos que no las llevan.
-  if (m.estrellas <= 0) return null;
-  if (a.estrellas === null) return "sin estrellas";
+  // Las estrellas se le piden a quien las lleva. Una casa, un piso o una pensión no las llevan, y no por eso son
+  // peores: se juzgan por su nota y sus opiniones (el PM, 24-nov).
+  if (m.estrellas <= 0 || a.estrellas === null) return null;
   if (a.estrellas < m.estrellas) return `${a.estrellas} estrellas, menos de ${m.estrellas}`;
   return null;
 }
