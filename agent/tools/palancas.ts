@@ -1,7 +1,7 @@
 // Las palancas con precio: lo que el código pide otra vez a las fuentes para saber qué ahorra un cambio. Las mismas
-// noches movidas un día o dos, y una noche más o una menos, para los mismos alojamientos y el mismo grupo. Nunca se
-// mezclan precios de fechas distintas: cada cambio se pide entero, alojamiento y transporte, para sus fechas. Lo que
-// una fuente no contesta queda sin precio, con su motivo; no se supone.
+// noches movidas de uno a tres días, y una noche más o una menos, para los mismos alojamientos y el mismo grupo.
+// Nunca se mezclan precios de fechas distintas: cada cambio se pide entero, alojamiento y transporte, para sus
+// fechas. Lo que una fuente no contesta queda sin precio, con su motivo; no se supone.
 
 import { completo } from "../scripts/finalistas.ts";
 import { paraElGrupo, type Estancia, type FuenteAlojamiento, type Vuelo } from "./fuentes/tipos.ts";

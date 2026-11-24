@@ -73,6 +73,9 @@ function CabeceraDelViaje({ t, idioma, viaje, rotulo }: Comun & { viaje: Viaje; 
 
 export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
   const v = viaje.vistazo;
+  // Sin precio de transporte para las fechas, el de un día de al lado, si lo hay: se ofrece, no se suma.
+  const alLado = viaje.transportes.length === 0 ? viaje.transporteAlLado : undefined;
+  const elDia = (d: string): string => `${diaDeLaSemana(d.slice(0, 10), idioma)} ${diaCorto(d.slice(0, 10), idioma)}`;
   const numero = (n: number): string => new Intl.NumberFormat(idioma).format(n);
   return (
     <>
@@ -100,6 +103,15 @@ export function Vistazo({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
       {v !== null && v.bajados && <p className="aviso">{t.vistazo.bajados}</p>}
       {v !== null && v.ensanchado && <p className="aviso">{t.vistazo.ensanchado}</p>}
       {viaje.transportes.length === 0 && <p className="aviso">{t.vistazo.sinTransporte}</p>}
+      {alLado !== undefined && (
+        <p className="dato">
+          {t.vistazo.alLado(
+            elDia(alLado.sale),
+            elDia(alLado.vuelve ?? ""),
+            dinero(alLado.precio.total, alLado.precio.moneda, idioma),
+          )}
+        </p>
+      )}
     </>
   );
 }

@@ -47,8 +47,16 @@ import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_v
 import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
-import { buscarTransporte, deLasFechas, elTransporte, vuelosMovidos, type Parrilla } from "../scripts/transporte.ts";
+import {
+  buscarTransporte,
+  deAlLado,
+  deLasFechas,
+  elTransporte,
+  vuelosMovidos,
+  type Parrilla,
+} from "../scripts/transporte.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
+import { paraElGrupo } from "../tools/fuentes/tipos.ts";
 import type { Estancia, FuenteAlojamiento, FuenteTransporte, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
@@ -305,6 +313,16 @@ function transporteDe(run: string): Vuelo | null {
   return elTransporte(vuelos, e.moneda, e.entrada, e.salida);
 }
 
+/**
+ * Si las fechas del viaje no tienen precio de transporte, el más barato de los días de al lado que vio la parrilla,
+ * para ofrecerlo: no entra en ningún total.
+ */
+function alLadoDe(run: string): Vuelo | null {
+  const { transporte, busqueda } = leer<DeLaBusqueda>(run, "busqueda.json");
+  const e = busqueda.estancia;
+  return transporte == null ? null : deAlLado(transporte, e.moneda, e.entrada, e.salida);
+}
+
 function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
   const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
   const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
@@ -420,6 +438,13 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
   }
   const notas = PALANCAS.filter((p) => !p.laPideElCodigo).map((p) => `${p.id}: not priced, it waits for ${p.espera}`);
   if (transporte === null) notas.push("transport: no price for these dates, so every total is lodging only");
+  const alLado = transporte === null ? alLadoDe(run) : null;
+  if (alLado !== null)
+    notas.push(
+      `transport: on days next to these there is a saved price, ` +
+        `${paraElGrupo(alLado, 1)} ${alLado.moneda} per traveller, ` +
+        `leaving ${alLado.sale.slice(0, 10)} and back ${(alLado.vuelve ?? "").slice(0, 10)}; it is in no total`,
+    );
   const tabla = montarTabla({
     viaje,
     busqueda,
@@ -492,6 +517,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     cruce,
     explica,
     transporte: transporteDe(run),
+    alLado: alLadoDe(run),
   });
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9

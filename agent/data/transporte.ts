@@ -14,13 +14,17 @@ export const PARES = 6;
  */
 export const KILOMETROS_ALREDEDOR = 150;
 
-/** Cuántos días antes y después se mueven la ida y la vuelta si el viajero puede mover sus fechas. */
-export const DIAS_ALREDEDOR = 2;
+/**
+ * Cuántos días antes y después de la ida y de la vuelta se miran, siempre, también con fechas fijas: lo de al lado
+ * se ofrece, y el transporte del viaje sigue siendo el de sus fechas (el PM, 24-nov). La semana de la fuente los da
+ * en una sola petición por par.
+ */
+export const DIAS_ALREDEDOR = 3;
 
 /** Cuántas escalas por trayecto, como mucho: directo o con una. Lo que lleva más no entra en la parrilla. */
 export const ESCALAS_MAXIMAS = 1;
 
-/** Cuántas peticiones de precios hace un viaje, como mucho: una por par, y otra por par si se mueven las fechas. */
+/** Cuántas peticiones de precios hace un viaje, como mucho: una por par para sus fechas y otra para los de al lado. */
 export const PETICIONES_DE_TRANSPORTE = PARES * 2;
 
 /** El redondeo del punto del que sale el viajero, en decimales de grado: uno es unos once kilómetros. */

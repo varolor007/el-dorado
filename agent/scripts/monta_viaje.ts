@@ -183,6 +183,8 @@ export type Decidido = {
   /** Las maneras. Sin su total, se pone el del alojamiento; con el de la tabla, ese, que lleva el transporte. */
   maneras: (Omit<Manera, "total" | "moneda"> & { total?: number })[];
   transportes?: Transporte[];
+  /** Sin precio de transporte para las fechas, el más barato de los días de al lado: se ofrece, no se suma. */
+  alLado?: Transporte | null;
   /** Lo que el código sabe de cada alojamiento además de su ficha: su zona, lo que se anda, su nota y su descarte. */
   deCadaAlojamiento?: Record<string, Pick<Alojamiento, "zona" | "andando" | "aPie" | "puntos" | "descartado">>;
   palancas: Palanca[];
@@ -228,6 +230,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     porQueFuera: reparto.porQue,
     alojamientos,
     transportes: d.transportes ?? [],
+    ...(d.alLado == null ? {} : { transporteAlLado: d.alLado }),
     maneras,
     palancas: d.palancas,
     // Los dos avisos de siempre los pone aquí la casa, en cualquier viaje que monte: no dependen de quien lo decidió.
@@ -311,7 +314,30 @@ export type Hecho = {
   cruce: EntregaDeCruce;
   explica: EntregaDeExplicar;
   transporte: Vuelo | null;
+  /** Si las fechas no tienen precio de transporte, el más barato de los días de al lado, para decirlo. */
+  alLado?: Vuelo | null;
 };
+
+/** Un vuelo como lo enseña la web. El precio que se enseña es el de todos los que viajan, como el del alojamiento. */
+function transporteDe(id: string, v: Vuelo, viajeros: number): Transporte {
+  return {
+    id,
+    clase: "flight",
+    de: v.origen,
+    a: v.destino,
+    sale: v.sale,
+    vuelve: v.vuelve,
+    escalas: v.escalasIda,
+    precio: {
+      total: paraElGrupo(v, viajeros),
+      moneda: v.moneda,
+      vendedor: v.aerolinea,
+      visto: v.visto,
+      enlace: v.enlace,
+    },
+    guardado: v.guardado,
+  };
+}
 
 /** Junta lo que dejó cada paso de la investigación en la forma que espera la web. No decide nada. */
 export function montarViajeHecho(h: Hecho): Viaje {
@@ -360,30 +386,10 @@ export function montarViajeHecho(h: Hecho): Viaje {
       descartado: c.descarte,
     };
   }
+  const viajeros = h.viaje.travellers.adults + h.viaje.travellers.children.length;
   const v = h.transporte;
-  const transportes: Transporte[] =
-    v === null
-      ? []
-      : [
-          {
-            id: "t1",
-            clase: "flight",
-            de: v.origen,
-            a: v.destino,
-            sale: v.sale,
-            vuelve: v.vuelve,
-            escalas: v.escalasIda,
-            // El precio que se enseña es el de todos los que viajan, como el del alojamiento.
-            precio: {
-              total: paraElGrupo(v, h.viaje.travellers.adults + h.viaje.travellers.children.length),
-              moneda: v.moneda,
-              vendedor: v.aerolinea,
-              visto: v.visto,
-              enlace: v.enlace,
-            },
-            guardado: v.guardado,
-          },
-        ];
+  const transportes: Transporte[] = v === null ? [] : [transporteDe("t1", v, viajeros)];
+  const alLado = v === null && h.alLado != null ? transporteDe("t-al-lado", h.alLado, viajeros) : null;
   return montarViaje(h.busqueda, {
     id: h.id,
     idioma: h.viaje.language,
@@ -393,6 +399,7 @@ export function montarViajeHecho(h: Hecho): Viaje {
     paradas: h.paradas,
     maneras,
     transportes,
+    alLado,
     deCadaAlojamiento,
     palancas,
     avisos: h.explica.unknowns,

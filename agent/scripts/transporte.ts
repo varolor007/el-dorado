@@ -284,9 +284,9 @@ export type AlBuscar = {
 };
 
 /**
- * La parrilla de un viaje: los pares por las fechas del viaje y, si el viajero puede moverlas, por los días de
- * alrededor. Una petición por par para las fechas, y otra por par para los días de alrededor si la fuente sabe
- * darlos de una vez: con el tope de pares, doce como mucho. Lo que falla no para nada: se dice.
+ * La parrilla de un viaje: los pares por las fechas del viaje y por los días de alrededor, se puedan mover las fechas
+ * o no. Una petición por par para las fechas, y otra por par para los días de alrededor si la fuente sabe darlos de
+ * una vez: con el tope de pares, doce como mucho. Lo que falla no para nada: se dice.
  */
 export async function buscarTransporte(
   viaje: Entendido,
@@ -296,13 +296,14 @@ export async function buscarTransporte(
   const ida = viaje.dates.check_in;
   const vuelta = viaje.dates.check_out;
   const { salida, llegada, avisos } = await lugaresDelViaje(viaje, fuente);
-  const flexible = viaje.dates.flexible && fuente.alrededor !== undefined;
+  // Los días de alrededor se miran siempre, se puedan mover las fechas o no: se ofrecen, no se eligen.
+  const alrededor = fuente.alrededor !== undefined;
   const parrilla: Parrilla = {
     fuente: fuente.nombre,
     salida,
     llegada,
     pares: [],
-    dias: flexible ? DIAS_ALREDEDOR : 0,
+    dias: alrededor ? DIAS_ALREDEDOR : 0,
     ida,
     vuelta,
     opciones: [],
@@ -333,7 +334,7 @@ export async function buscarTransporte(
       }
     };
     par.fechas = await pedir((x) => fuente.fechas(x));
-    if (flexible) par.alrededor = await pedir((x) => fuente.alrededor!(x));
+    if (alrededor) par.alrededor = await pedir((x) => fuente.alrededor!(x));
     parrilla.pares.push(par);
   }
   const vistas = new Set<string>();
@@ -382,6 +383,17 @@ export function deLasFechas(p: Pick<Parrilla, "opciones">, ida: string, vuelta: 
 }
 
 /**
+ * Lo que se ofrece cuando las fechas del viaje no tienen precio: el más barato por viajero de los días de al lado
+ * que tiene la parrilla, en la moneda del viaje. No es el transporte del viaje ni se suma a sus noches: se dice.
+ * Si las fechas tienen precio, no hace falta, y no hay.
+ */
+export function deAlLado(p: Pick<Parrilla, "opciones">, moneda: string, ida: string, vuelta: string): Vuelo | null {
+  if (elTransporte(p.opciones, moneda, ida, vuelta) !== null) return null;
+  const otros = p.opciones.filter((v) => !(dia(v.sale) === ida && dia(v.vuelve) === vuelta));
+  return elTransporte(otros, moneda);
+}
+
+/**
  * El transporte del viaje: el más barato por viajero de los que se saben para sus fechas y en su moneda, o ninguno.
  * Es el criterio de partida: las cribas del vuelo, cuando lleguen, podrán preferir otro.
  */
@@ -396,9 +408,9 @@ export function elTransporte(vuelos: Vuelo[], moneda: string, ida?: string, vuel
 }
 
 /**
- * Los vuelos de unas fechas cambiadas, para las palancas: de los mismos aeropuertos que el transporte del viaje,
- * pedidos a la fuente para esas fechas, con lo que ya tenga la parrilla de esos días. Un vuelo de otros aeropuertos
- * es otra palanca, y no entra aquí.
+ * Los vuelos de unas fechas cambiadas, para las palancas: de los mismos aeropuertos que el transporte del viaje.
+ * Si la parrilla ya tiene esos días (los de alrededor se miran siempre), valen esos, sin volver a pedir; si no, se
+ * piden a la fuente para esas fechas. Un vuelo de otros aeropuertos es otra palanca, y no entra aquí.
  */
 export function vuelosMovidos(
   viaje: Entendido,
@@ -409,6 +421,7 @@ export function vuelosMovidos(
   return async (ida, vuelta) => {
     const mismos = (v: Vuelo): boolean => v.origen === elegido.origen && v.destino === elegido.destino;
     const yaVistos = parrilla === null ? [] : deLasFechas(parrilla, ida, vuelta).filter(mismos);
+    if (yaVistos.length > 0) return yaVistos;
     const t: Trayecto = {
       origen: elegido.origen,
       destino: elegido.destino,
@@ -424,6 +437,6 @@ export function vuelosMovidos(
         (v.escalasIda ?? 0) <= ESCALAS_MAXIMAS &&
         (v.escalasVuelta ?? 0) <= ESCALAS_MAXIMAS,
     );
-    return [...yaVistos, ...pedidos];
+    return pedidos;
   };
 }

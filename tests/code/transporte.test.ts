@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { PARES, PETICIONES_DE_TRANSPORTE } from "../../agent/data/transporte.ts";
+import { DIAS_ALREDEDOR, PARES, PETICIONES_DE_TRANSPORTE } from "../../agent/data/transporte.ts";
 import { puertaEntendido } from "../../agent/gates/puerta_entendido.ts";
 import { sigue, type Estado, type Fuentes } from "../../agent/launcher/investigar.ts";
 import { comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
@@ -15,16 +15,19 @@ import {
   alrededorDe,
   buscarTransporte,
   ciudadPorNombre,
+  deAlLado,
   deLaZona,
   deLasFechas,
   elTransporte,
   lugaresDeLlegada,
   lugaresDeSalida,
   paresDe,
+  vuelosMovidos,
   type LugarDeVuelo,
   type Parrilla,
 } from "../../agent/scripts/transporte.ts";
 import { enlaceDeBusqueda, leerLugares, leerSemana } from "../../agent/tools/fuentes/aviasales.ts";
+import type { Vuelo } from "../../agent/tools/fuentes/tipos.ts";
 import { fuentesInventadas, leerJson, runNuevo, trabaja } from "../cases/inventado/asientos.ts";
 import {
   AEROPUERTOS,
@@ -256,54 +259,80 @@ test("los pares: primero los de delante, sin ir de una ciudad a sí misma, y nun
   assert.equal(paresDe(muchos, otros).length, PARES);
 });
 
-test("con fechas fijas: una petición por par, cada opción con su precio, su enlace y su día visto", async () => {
+test("con fechas fijas también se miran tres días a cada lado: dos peticiones por par", async () => {
   const fuente = transporteInventado();
   const p = await buscarTransporte(SIN_AEROPUERTOS, fuente);
+  assert.equal(SIN_AEROPUERTOS.dates.flexible, false);
   assert.deepEqual(codigos(p.salida), ["OOO"]);
   assert.deepEqual(codigos(p.llegada), ["VVV", "XXX"]);
   assert.deepEqual(
     p.pares.map((x) => [x.de, x.a, x.fechas, x.alrededor]),
     [
-      ["OOO", "VVV", "prices", "not_asked"],
-      ["OOO", "XXX", "prices", "not_asked"],
+      ["OOO", "VVV", "prices", "prices"],
+      ["OOO", "XXX", "prices", "prices"],
     ],
   );
-  assert.equal(p.dias, 0);
-  assert.equal(p.peticiones, 2);
-  assert.equal(fuente.pedidos.filter((x) => x.como !== "lugares").length, 2);
+  assert.equal(DIAS_ALREDEDOR, 3);
+  assert.equal(p.dias, 3);
+  assert.equal(p.peticiones, 4);
+  assert.ok(p.peticiones <= PETICIONES_DE_TRANSPORTE);
+  assert.equal(fuente.pedidos.filter((x) => x.como !== "lugares").length, 4);
   // El mercado es el del país de salida, y la moneda, la del viajero.
   assert.deepEqual(
     { mercado: fuente.pedidos[1].t?.mercado, moneda: fuente.pedidos[1].t?.moneda },
     { mercado: "yy", moneda: "EUR" },
   );
-  assert.equal(p.opciones.length, 2);
   for (const v of p.opciones) assert.ok(v.visto !== "" && v.precio > 0 && v.pasajeros === 1);
   assert.deepEqual(p.avisos, []);
-});
-
-test("con fechas que se mueven: los días de alrededor, sin lo que pasa de una escala ni lo que cae fuera", async () => {
-  const fuente = transporteInventado();
-  const p = await buscarTransporte({ ...SIN_AEROPUERTOS, dates: { ...SIN_AEROPUERTOS.dates, flexible: true } }, fuente);
-  assert.equal(p.dias, 2);
-  assert.equal(p.peticiones, 4);
-  assert.ok(p.peticiones <= PETICIONES_DE_TRANSPORTE);
-  // Por par: el de las fechas y el de un día antes; el de dos escalas queda fuera, y el de tres días, también.
-  assert.equal(p.opciones.length, 4);
+  // Por par: el de las fechas, el de un día antes y el de tres días después; el de dos escalas queda fuera, y el de
+  // cuatro días, también.
+  assert.equal(p.opciones.length, 6);
   assert.equal(p.fuera.escalas, 2);
   assert.equal(p.opciones[0].precio, 70);
   assert.equal(p.opciones[0].sale.slice(0, 10), "2027-03-04");
-  // Las de las fechas del viaje son las que eligen su transporte, y el más barato es el criterio de partida.
+  assert.ok(p.opciones.some((v) => v.sale.startsWith("2027-03-08")));
+  assert.ok(!p.opciones.some((v) => v.sale.startsWith("2027-03-09")));
+  // El transporte del viaje sigue siendo el de sus fechas: lo de al lado se ofrece, no se elige.
   const deLasSuyas = deLasFechas(p, "2027-03-05", "2027-03-08");
   assert.equal(deLasSuyas.length, 2);
   assert.equal(elTransporte(p.opciones, "EUR", "2027-03-05", "2027-03-08")?.precio, 160);
   assert.equal(elTransporte(p.opciones, "USD", "2027-03-05", "2027-03-08"), null);
-  // Lo que sale antes del primer día en que se puede viajar no vale.
-  const pronto = await buscarTransporte(
+  // Con precio para sus fechas, no hace falta ofrecer el de al lado.
+  assert.equal(deAlLado(p, "EUR", "2027-03-05", "2027-03-08"), null);
+  // Se puedan mover o no las fechas, la parrilla es la misma.
+  const movibles = await buscarTransporte(
     { ...SIN_AEROPUERTOS, dates: { ...SIN_AEROPUERTOS.dates, flexible: true } },
     transporteInventado(),
-    { desde: "2027-03-05" },
   );
+  assert.deepEqual(movibles.opciones, p.opciones);
+  // Lo que sale antes del primer día en que se puede viajar no vale.
+  const pronto = await buscarTransporte(SIN_AEROPUERTOS, transporteInventado(), { desde: "2027-03-05" });
   assert.equal(pronto.fuera.antes, 2);
+});
+
+test("sin precio para las fechas, se ofrece el más barato de los días de al lado, sin ponerlo como suyo", () => {
+  const vuelo = (sale: string, vuelve: string, precio: number, moneda = "EUR"): Vuelo => ({
+    ...vueloInventado(sale, vuelve),
+    precio,
+    moneda,
+  });
+  const opciones = [
+    vuelo("2027-03-04", "2027-03-07", 90),
+    vuelo("2027-03-06", "2027-03-09", 80),
+    vuelo("2027-03-06", "2027-03-09", 40, "USD"),
+  ];
+  const l = deAlLado({ opciones }, "EUR", "2027-03-05", "2027-03-08");
+  assert.equal(l?.precio, 80);
+  assert.equal(elTransporte(opciones, "EUR", "2027-03-05", "2027-03-08"), null);
+  assert.equal(deAlLado({ opciones: [] }, "EUR", "2027-03-05", "2027-03-08"), null);
+});
+
+test("una fuente sin días de alrededor: una petición por par, y lo de las fechas", async () => {
+  const fuente = transporteInventado({ semana: false });
+  const p = await buscarTransporte(SIN_AEROPUERTOS, fuente);
+  assert.equal(p.dias, 0);
+  assert.equal(p.peticiones, 2);
+  assert.ok(p.pares.every((x) => x.alrededor === "not_asked"));
 });
 
 test("una fuente que no contesta no para nada: se dice, y lo que contestó no se guarda", async () => {
@@ -415,4 +444,49 @@ test("sin fuente de transporte, el viaje se hace igual, sin transporte, y lo dic
 
 test("el vuelo inventado sigue siendo el de las fechas que se le piden", () => {
   assert.equal(vueloInventado("2027-03-04", "2027-03-07").precio, 100);
+});
+
+test("sin precio para las fechas, el viaje dice el de un día de al lado, y no lo suma a nada", async () => {
+  const base = transporteInventado();
+  const fuente = { ...base, fechas: async () => [] };
+  const run = runNuevo(SIN_AEROPUERTOS);
+  try {
+    const estado = await investiga(run, () => ({ ...fuentesInventadas(), transporte: fuente }));
+    assert.equal(estado.hecho, true);
+    const tabla = leerJson(join(run, "tabla-1.json")) as Tabla;
+    assert.ok(tabla.rows.every((r) => r.transport === null));
+    assert.ok(tabla.notes.some((n) => n.startsWith("transport: on days next to these") && n.includes("2027-03-04")));
+    const viaje = leerJson(join(run, "viaje.json")) as Viaje;
+    assert.deepEqual(comprobarViaje(viaje), []);
+    assert.equal(viaje.transportes.length, 0);
+    // El más barato de al lado, un día antes, para los dos que viajan, y guardado.
+    assert.equal(viaje.transporteAlLado?.sale.slice(0, 10), "2027-03-04");
+    assert.equal(viaje.transporteAlLado?.precio.total, 140);
+    assert.ok(viaje.maneras.every((m) => m.transporte === null));
+    // Que no es de sus fechas lo comprueba el código.
+    const mal = {
+      ...viaje,
+      transporteAlLado: { ...viaje.transporteAlLado!, sale: viaje.entrada, vuelve: viaje.salida },
+    };
+    assert.ok(comprobarViaje(mal).some((p) => p.donde === "transporteAlLado"));
+    const lejos = { ...viaje, transporteAlLado: { ...viaje.transporteAlLado!, sale: "2027-03-01" } };
+    assert.ok(comprobarViaje(lejos).some((p) => p.donde === "transporteAlLado"));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("las palancas de los días no vuelven a pedir lo que la parrilla ya tiene de esos días", async () => {
+  const fuente = transporteInventado();
+  const p = await buscarTransporte(SIN_AEROPUERTOS, fuente);
+  const elegido = elTransporte(p.opciones, "EUR", "2027-03-05", "2027-03-08")!;
+  const movidos = vuelosMovidos(SIN_AEROPUERTOS, fuente, elegido, p);
+  const antes = fuente.pedidos.length;
+  // Un día antes ya está en la parrilla: no se pide.
+  assert.equal((await movidos("2027-03-04", "2027-03-07"))[0].precio, 70);
+  assert.equal(fuente.pedidos.length, antes);
+  // Dos días antes no está: se pide, para esas fechas y esos aeropuertos.
+  await movidos("2027-03-03", "2027-03-06");
+  assert.equal(fuente.pedidos.length, antes + 1);
+  assert.deepEqual(fuente.pedidos.at(-1)?.t?.ida, "2027-03-03");
 });

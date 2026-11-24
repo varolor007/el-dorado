@@ -103,6 +103,9 @@ const en = {
         : `Minimums: rating ${EN.cifra(nota)}, ${EN.cuenta(opiniones, "review", "reviews")}. You can change them.`,
     // El viaje no lleva ningún transporte. Por qué (sin origen, en coche, sin precio aún) no lo dice el viaje.
     sinTransporte: "There is no transport price yet: this first look is sleeping only.",
+    // Sin precio de transporte para tus fechas, el de un día de al lado: se ofrece, no está en ningún total.
+    alLado: (ida: string, vuelta: string, precio: string) =>
+      `For a day next to yours there is one: leaving ${ida} and back ${vuelta}, from ${precio} for everyone, a saved price and not today's. It is not in any total.`,
     empezar: "Start the research",
     gasta: "From here the AI does the thinking. Nothing that spends starts without this button.",
   },
@@ -649,6 +652,8 @@ const es: Textos = {
         ? `Mínimos: nota ${ES.cifra(nota)}, ${ES.cuenta(opiniones, "opinión", "opiniones")} y ${ES.cuenta(estrellas, "estrella", "estrellas")}. Los puedes cambiar.`
         : `Mínimos: nota ${ES.cifra(nota)} y ${ES.cuenta(opiniones, "opinión", "opiniones")}. Los puedes cambiar.`,
     sinTransporte: "Todavía no hay ningún precio de transporte: este primer vistazo es solo dormir.",
+    alLado: (ida, vuelta, precio) =>
+      `Para un día de al lado sí lo hay: saliendo el ${ida} y volviendo el ${vuelta}, desde ${precio} para todos, guardado y no de hoy. No está en ningún total.`,
     empezar: "Empezar la investigación",
     gasta: "Desde aquí piensa la IA. Nada que gaste arranca sin este botón.",
   },

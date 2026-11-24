@@ -144,7 +144,7 @@ qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no 
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
 PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de la casa (2.9, primera parte,
 `claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
-primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda (24-nov)**, junta salvo lo último de esta rama: los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
+primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda (24-nov)**, junta entera: los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
 (5.5, `claude/eldorado-5-5-dias-baratos`), que lleva después los tres días a cada lado. Ya junto: el gasto de cada
 viaje (11.4, `claude/eldorado-11-4-gasto`): sale de `agent/launcher/gasto.ts` por `GET /cuenta/gasto`, solo a su
 dueño; lo enseñan la tarjeta de la pestaña de la clave y una pastilla en Tus viajes. Lo siguiente es la media de
@@ -187,9 +187,12 @@ rutas, bajados una vez al día a `<mesa>/fuentes/`) y la semana de alrededor. Lo
 de donde se sale (`origin.centre`, a una décima de grado; la puerta 1 rechaza uno más fino). En `busqueda.json`,
 `transporte` es la parrilla entera y `vuelos`, lo de las fechas del viaje. **Con fechas fijas casi nunca hay precio
 guardado**, y el viaje sale sin transporte. El PM decidió el 24-nov que siempre se ofrezcan tres días a cada lado,
-aunque las fechas sean fijas («puede ser clave»): la búsqueda de transporte los pide siempre y la palanca de mover
-los días pasa a tres; encargado a la sesión de los días baratos, como segundo encargo en su misma rama. De dónde
-sale el precio en vivo (3.7) sigue por decidir. Sin hacer: el tren (la fuente no lo da), las cribas del
+aunque las fechas sean fijas («puede ser clave»), y está hecho y junto: la semana de alrededor se pide siempre
+(`DIAS_ALREDEDOR` es 3; la fuente los da con una petición por par), la palanca de mover los días va de tres antes a
+tres después, y sin precio para las fechas el viaje ofrece el de un día de al lado (`transporteAlLado`), sin
+sumarlo a nada. `dates.flexible` ya no decide nada en el código: se sigue preguntando porque lo usará el del
+calendario (5.3), que propone otras fechas solo a quien puede moverlas. De dónde sale el precio en vivo (3.7) sigue
+por decidir. Sin hacer: el tren (la fuente no lo da), las cribas del
 vuelo, las palancas «otro aeropuerto» y «entrar por un sitio y salir por otro» (la parrilla ya tiene lo que
 necesitan) y la ficha del transporte en la web. Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
 notas.

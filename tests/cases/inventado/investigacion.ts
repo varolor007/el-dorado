@@ -283,11 +283,13 @@ export function transporteInventado(o: { falla?: boolean; vacia?: boolean; seman
       pedidos.push({ como: "alrededor", t });
       if (o.falla) throw new Error("no contesta");
       if (o.vacia) return [];
-      // La semana de alrededor: un día antes, que es más barato, y uno con dos escalas, que no vale.
+      // La semana de alrededor: un día antes, que es más barato, uno con dos escalas, que no vale, uno tres días
+      // después, que vale, y uno a cuatro días, que cae fuera.
       const antes = { ...vuelo(t, mover(t.ida, -1), mover(t.vuelta!, -1)), precio: 70, aerolinea: null, numero: null };
       const escalas = { ...vuelo(t, mover(t.ida, 1), mover(t.vuelta!, 1)), precio: 40, escalasIda: 2 };
-      const lejos = { ...vuelo(t, mover(t.ida, 3), mover(t.vuelta!, 3)), precio: 30 };
-      return [antes, escalas, lejos];
+      const tres = { ...vuelo(t, mover(t.ida, 3), mover(t.vuelta!, 3)), precio: 90 };
+      const lejos = { ...vuelo(t, mover(t.ida, 4), mover(t.vuelta!, 4)), precio: 30 };
+      return [antes, escalas, tres, lejos];
     };
   return fuente;
 }

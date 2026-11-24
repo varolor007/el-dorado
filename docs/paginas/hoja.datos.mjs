@@ -517,7 +517,7 @@ const flujo = [
       k: "cruce",
       x: "casa las fuentes, suma el viaje entero y saca las palancas",
       titulo: "El cruce",
-      d: "Sabe que dos fuentes hablan del mismo alojamiento por lo cerca que están y por lo que se parecen sus nombres, monta el viaje completo y lo suma en una tabla. Y pide las palancas: el precio de las mismas noches movidas un día o dos, el de los otros finalistas y el de otra zona, con lo que anda de más o de menos cada uno hasta lo que vas a ver. Saca el más barato y el mejor por lo que cuesta. Construido para el alojamiento, con el transporte que haya: la tabla, las restas de cada palanca, la más barata y la mejor por lo que cuesta.",
+      d: "Sabe que dos fuentes hablan del mismo alojamiento por lo cerca que están y por lo que se parecen sus nombres, monta el viaje completo y lo suma en una tabla. Y pide las palancas: el precio de las mismas noches movidas de uno a tres días (tu decisión del 24-nov: siempre se ofrecen tres días a cada lado, aunque tus fechas sean fijas), el de los otros finalistas y el de otra zona, con lo que anda de más o de menos cada uno hasta lo que vas a ver. Saca el más barato y el mejor por lo que cuesta. Construido para el alojamiento, con el transporte que haya: la tabla, las restas de cada palanca, la más barata y la mejor por lo que cuesta.",
     },
     {
       tipo: "asiento",
