@@ -7,17 +7,21 @@
  */
 export const DESCARTA = {
   missing_must: "missing something the traveller marked as a must",
-  serious_complaints: "serious complaints repeated in recent reviews",
+  serious_complaints: "a serious complaint that the viewer confirmed in more than one review",
 } as const;
 
-/** Las quejas que descartan si se repiten en las opiniones recientes: cómo las nombra quien las escribe. */
+/**
+ * Las palabras con las que suele escribirse una queja grave. Con ellas el código no descarta a nadie: una palabra no
+ * dice si pasó o si el huésped cuenta que no pasó. Sirven para señalarle al que mira en qué opiniones fijarse, y solo
+ * en los idiomas en que están escritas: en los demás, el que mira las lee igual, sin la señal.
+ */
 export const QUEJAS_GRAVES: Record<string, RegExp> = {
-  bed_bugs: /\b(bed ?bugs?|chinches)\b/i,
-  cockroaches: /\b(cockroach(es)?|roach(es)?|cucarachas?)\b/i,
+  pests: /\b(bed ?bugs?|cockroach(es)?|roach(es)?|mice|rats?|chinches|cucarachas?|ratas?|ratones)\b/i,
   mould: /\b(mould|mold|moho)\b/i,
-  scam: /\b(scam|estafa|fraud)\b/i,
+  theft: /\b(stolen|stole|theft|robbed|robaron|robo|robado)\b/i,
+  scam: /\b(scam|fraud|estafa|estafaron)\b/i,
 };
-/** Cuántas opiniones tienen que decirlo para que cuente como repetido. */
+/** Cuántas opiniones señaladas hacen que, si nadie miró el alojamiento, se diga que queda una queja sin confirmar. */
 export const QUEJA_REPETIDA = 3;
 
 /** Criba 2. Lo que tiene precio y se suma al precio. Lo que la fuente no da, se dice «sin confirmar»; no se supone. */

@@ -138,6 +138,8 @@ export type EntregaDeMirar = {
   review_themes: { theme: string; tone: string; mentions: string; says: string; refs: string[] }[];
   conflicts: { what: string; refs: string[] }[];
   warnings: { what: string; label: string; refs: string[] }[];
+  /** Las quejas graves que confirma leyendo las opiniones. Las entregas de antes del 24-nov no lo llevan. */
+  serious?: { kind: string; mentions: string; refs: string[] }[];
   unknowns: string[];
   summary_good: string;
   summary_bad: string;

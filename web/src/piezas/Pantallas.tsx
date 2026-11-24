@@ -723,7 +723,7 @@ function descarte(t: Textos, d: NonNullable<Alojamiento["descartado"]>): string 
     const campo = COSAS[d.cosa]?.campo;
     return t.dormir.leFalta(t.campos[campo ?? ""] ?? d.cosa, t.niveles[d.detalle] ?? d.detalle);
   }
-  return t.dormir.quejas(t.dormir.queja[d.cosa] ?? d.cosa, d.detalle);
+  return t.dormir.quejas(t.dormir.queja[d.cosa] ?? d.cosa, t.menciones[d.detalle] ?? d.detalle);
 }
 
 type DeFicha = Comun & { a: Alojamiento; nochesDelViaje: number; alVolver: () => void };

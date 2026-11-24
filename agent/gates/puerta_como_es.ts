@@ -11,6 +11,7 @@ import {
   DE_LA_HABITACION,
   ENSENA,
   ETIQUETAS_DE_AVISO,
+  GRAVES,
   INSTALACIONES,
   MENCIONES,
   MUESTRA,
@@ -35,6 +36,7 @@ const LO_QUE_LLEVA = [
   "review_themes",
   "conflicts",
   "warnings",
+  "serious",
   "unknowns",
   "summary_good",
   "summary_bad",
@@ -173,6 +175,23 @@ export function puertaComoEs(entrega: unknown, m: Material): Veredicto {
       dichos.add(par);
     }
     if (!esTexto(cruda.tone) || !TONOS.includes(cruda.tone)) rojo(donde, "el tono no es de su lista");
+    if (!esTexto(cruda.mentions) || !MENCIONES.includes(cruda.mentions))
+      rojo(donde, "cuántas lo dicen no es de su lista: contar es cosa del código");
+    const refs = lista(cruda.refs);
+    if (refs.length === 0) rojo(donde, "no cita ninguna opinión");
+    for (const ref of refs)
+      if (!esTexto(ref) || !m.opiniones.includes(ref)) rojo(donde, `cita la opinión ${String(ref)}, que no recibió`);
+  });
+
+  // Las quejas graves que confirma: cada una, de su lista, una vez, con cuántas y con opiniones que existen.
+  const graves = new Set<string>();
+  if (!Array.isArray(entrega.serious)) rojo("serious", "no es una lista");
+  lista(entrega.serious).forEach((cruda, i) => {
+    const donde = `serious[${i}]`;
+    if (!esObjeto(cruda) || !esTexto(cruda.kind) || !GRAVES.includes(cruda.kind))
+      return rojo(donde, "la queja grave no es de su lista");
+    if (graves.has(cruda.kind)) rojo(donde, "repite una queja grave");
+    graves.add(cruda.kind);
     if (!esTexto(cruda.mentions) || !MENCIONES.includes(cruda.mentions))
       rojo(donde, "cuántas lo dicen no es de su lista: contar es cosa del código");
     const refs = lista(cruda.refs);

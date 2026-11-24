@@ -15,7 +15,7 @@ import {
   ZONA,
 } from "../data/cribas.ts";
 import { COSAS, valorDelNivel } from "../data/gustos.ts";
-import { CAMPOS, INSTALACIONES, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
+import { CAMPOS, GRAVE_REPETIDA, GRAVES, INSTALACIONES, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
 import { medianaAndando, type Punto } from "../tools/distancias.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
 import type { EntregaDeMirar, Gusto } from "./formas.ts";
@@ -58,11 +58,24 @@ export function descarteDe(c: Candidato, ctx: Contexto): Descarte | null {
     if (nivel !== null && !cosa.cumplen.includes(nivel))
       return { clase: "missing_must", cosa: g.thing, detalle: nivel };
   }
-  for (const [queja, patron] of Object.entries(QUEJAS_GRAVES)) {
-    const cuantas = c.ficha.opiniones.filter((o) => patron.test(o.malo)).length;
-    if (cuantas >= QUEJA_REPETIDA) return { clase: "serious_complaints", cosa: queja, detalle: `${cuantas} reviews` };
+  // Una queja grave descarta si la confirma el que mira, leyendo las opiniones, y en más de una. El código no
+  // descarta por palabras: una palabra no dice si pasó, ni cuándo, ni si el huésped cuenta que no pasó.
+  for (const q of c.mirado?.serious ?? []) {
+    if (GRAVES.includes(q.kind) && GRAVE_REPETIDA.includes(q.mentions))
+      return { clase: "serious_complaints", cosa: q.kind, detalle: q.mentions };
   }
   return null;
+}
+
+/**
+ * Las quejas graves que el código señala por palabras en varias opiniones y que nadie ha confirmado, porque el
+ * alojamiento no se miró o se miró antes de que el que mira las confirmara. No descartan: se dicen, sin confirmar.
+ */
+export function quejasSinConfirmar(c: Candidato): string[] {
+  if (c.mirado !== null && c.mirado.serious !== undefined) return [];
+  return Object.entries(QUEJAS_GRAVES)
+    .filter(([, patron]) => c.ficha.opiniones.filter((o) => patron.test(o.malo)).length >= QUEJA_REPETIDA)
+    .map(([queja]) => queja);
 }
 
 /** El motivo de un descarte, en una frase, como lo lee un asiento en la tabla. */

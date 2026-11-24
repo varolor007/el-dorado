@@ -3,7 +3,15 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { CAMPOS, MENCIONES, OTRO_TEMA, SIN_SABER, TEMAS_DE_OPINIONES, TONOS } from "../../agent/data/niveles.ts";
+import {
+  GRAVES,
+  CAMPOS,
+  MENCIONES,
+  OTRO_TEMA,
+  SIN_SABER,
+  TEMAS_DE_OPINIONES,
+  TONOS,
+} from "../../agent/data/niveles.ts";
 import { AVISOS_DE_FICHA, PRUEBAS, type Transporte } from "../../agent/output/viaje.ts";
 import { CLASES_DE_DESTINO } from "../../agent/scripts/formas.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
@@ -31,6 +39,7 @@ for (const idioma of IDIOMAS) {
 
   test(`la web sabe decir cada aviso de la ficha y cada clase de prueba (${idioma})`, () => {
     assert.deepEqual(faltan(AVISOS_DE_FICHA, t.ficha.avisos), []);
+    assert.deepEqual(faltan(GRAVES, t.dormir.queja), []);
     assert.deepEqual(faltan(PRUEBAS, t.ficha.prueba), []);
   });
 }

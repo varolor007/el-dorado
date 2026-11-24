@@ -181,6 +181,7 @@ export function miradoInventado(id: string, niveles: Record<string, string> = {}
     review_themes: [],
     conflicts: [],
     warnings: [],
+    serious: [],
     unknowns: [],
     summary_good: "A room in good condition.",
     summary_bad: "unknown",

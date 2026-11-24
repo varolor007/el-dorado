@@ -285,12 +285,14 @@ const en = {
     puntos: (n: number) => `Our score: ${EN.cifra(n)} out of 10`,
     noVale: "Not for you",
     leFalta: (cosa: string, nivel: string) => `You marked "${cosa}" as a must, and here it is "${nivel}".`,
-    quejas: (queja: string, cuantas: string) =>
-      `Serious complaints that repeat in recent reviews: ${queja} (${cuantas}).`,
-    queja: { bed_bugs: "bed bugs", cockroaches: "cockroaches", mould: "mould", scam: "a scam" } as Record<
-      string,
-      string
-    >,
+    quejas: (queja: string, cuantas: string) => `Guests report something serious, ${cuantas}: ${queja}.`,
+    queja: {
+      pests: "pests in the room",
+      mould: "mould",
+      theft: "something stolen",
+      scam: "a scam",
+      unsafe: "not feeling safe",
+    } as Record<string, string>,
   },
   parada: {
     reservar: "Book ahead",
@@ -608,8 +610,14 @@ const es: Textos = {
     puntos: (n) => `Nuestra nota: ${ES.cifra(n)} de 10`,
     noVale: "No vale para ti",
     leFalta: (cosa, nivel) => `Marcaste «${cosa}» como imprescindible, y aquí es «${nivel}».`,
-    quejas: (queja, cuantas) => `Quejas graves que se repiten en las opiniones recientes: ${queja} (${cuantas}).`,
-    queja: { bed_bugs: "chinches", cockroaches: "cucarachas", mould: "moho", scam: "un engaño" },
+    quejas: (queja, cuantas) => `Los huéspedes cuentan algo grave, ${cuantas}: ${queja}.`,
+    queja: {
+      pests: "bichos en la habitación",
+      mould: "moho",
+      theft: "un robo",
+      scam: "un engaño",
+      unsafe: "que no se sintieron seguros",
+    },
   },
   parada: {
     reservar: "Reserva con tiempo",

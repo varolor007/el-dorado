@@ -6,6 +6,7 @@
 import type { Estancia, Opinion } from "../tools/fuentes/tipos.ts";
 import type { Eleccion } from "../tools/fotos.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
+import { QUEJAS_GRAVES } from "../data/cribas.ts";
 import { ESTACION_CONTRARIA, MESES_DE_LA_ESTACION, SIN_SABER, TROPICO } from "../data/niveles.ts";
 
 export const TOPE_DE_OPINIONES = 30;
@@ -21,7 +22,15 @@ export type HojaDeDatos = {
   photos: { room_given: number; room_total: number; hotel_given: number; hotel_total: number };
 };
 
-export type OpinionParaMirar = { ref: string; date: string; traveller: string; liked: string; disliked: string };
+export type OpinionParaMirar = {
+  ref: string;
+  date: string;
+  traveller: string;
+  liked: string;
+  disliked: string;
+  /** Las quejas graves cuyas palabras aparecen en esta opinión: una señal del código, no un veredicto. */
+  flag: string[];
+};
 
 const corta = (t: string): string => (t.length > TOPE_DE_LETRAS ? t.slice(0, TOPE_DE_LETRAS) + " [cut]" : t);
 
@@ -79,5 +88,9 @@ export function opinionesParaMirar(opiniones: Opinion[], tope: number = TOPE_DE_
       traveller: o.viajero ?? SIN_SABER,
       liked: corta(o.bueno.trim()),
       disliked: corta(o.malo.trim()),
+      // Lo que el código ve por palabras, para que el que mira se fije: no dice que pasara, solo dónde mirar.
+      flag: Object.entries(QUEJAS_GRAVES)
+        .filter(([, patron]) => patron.test(o.malo) || patron.test(o.bueno))
+        .map(([queja]) => queja),
     }));
 }

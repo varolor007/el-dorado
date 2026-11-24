@@ -17,6 +17,7 @@ import {
   DE_LA_HABITACION,
   ESTACION_CONTRARIA,
   ETIQUETAS_DE_AVISO,
+  GRAVES,
   MENCIONES,
   MESES_DE_LA_ESTACION,
   MUESTRA,
@@ -89,6 +90,7 @@ function entregaBuena(): Entrega {
       pool: { level: "bathe", evidence: [foto("hotel-02.jpg", "a pool about three loungers long")], note: "" },
     },
     review_themes: [{ theme: "noise", tone: "bad", mentions: "one", says: "the street is noisy", refs: ["r1"] }],
+    serious: [],
     conflicts: [],
     warnings: [
       { what: "one review says the pool was closed during their stay", label: "seen", refs: ["hotel-02.jpg", "r1"] },
@@ -604,4 +606,57 @@ test("de una búsqueda salen los puestos a ciegas, y lo que entregan se recoge p
   assert.equal(r.alojamientos[1].acuerdo, null);
   assert.equal(r.verde, false);
   assert.ok(readFileSync(join(run, "como_es.json"), "utf8").includes(mirado.nombre));
+});
+
+test("trampa: una queja grave que no es de la lista, repetida, o sin opiniones que la sostengan", () => {
+  const plaga = { kind: "pests", mentions: "a_few", refs: ["r1"] };
+  assert.deepEqual(
+    rojosDe((e) => (e.serious = [plaga])),
+    [],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.serious = [{ ...plaga, kind: "ugly curtains" }])),
+    ["serious[0]: la queja grave no es de su lista"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.serious = [plaga, plaga])),
+    ["serious[1]: repite una queja grave"],
+  );
+  assert.deepEqual(
+    rojosDe((e) => (e.serious = [{ ...plaga, mentions: "3", refs: ["r99"] }])),
+    [
+      "serious[0]: cuántas lo dicen no es de su lista: contar es cosa del código",
+      "serious[0]: cita la opinión r99, que no recibió",
+    ],
+  );
+  assert.deepEqual(
+    rojosDe((e) => delete e.serious),
+    ["serious: falta en la entrega", "serious: no es una lista"],
+  );
+});
+
+test("el contrato nombra las quejas graves que el código acepta, y dice que una señal no es un veredicto", () => {
+  const entrega = leer("DELIVERY.md");
+  for (const clase of GRAVES) assert.ok(entrega.includes("`" + clase + "`"), clase);
+  assert.match(leer("GUIDE.md"), /A flag is a place to look, not a verdict/);
+});
+
+test("al que mira se le señalan las opiniones con palabras de queja grave, sin decirle que pasó", () => {
+  const opinion = (malo: string, bueno = ""): Opinion => ({
+    fecha: "2026-12-01",
+    nota: 5,
+    viajero: null,
+    bueno,
+    malo,
+    de: "x",
+  });
+  const dadas = opinionesParaMirar([
+    opinion("Bed bugs and mould"),
+    opinion("", "No bed bugs at all"),
+    opinion("Small room"),
+  ]);
+  assert.deepEqual(
+    dadas.map((o) => o.flag),
+    [["pests", "mould"], ["pests"], []],
+  );
 });

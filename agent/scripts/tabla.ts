@@ -9,7 +9,8 @@ import { enLineaRecta, mediaAndando, type Punto } from "../tools/distancias.ts";
 import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { PrecioMovido } from "../tools/palancas.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
-import { cribar, imprescindiblesSinSaber, laMasBarata, laMejorPorLoQueCuesta, type Contexto } from "./cribas.ts";
+import { cribar, imprescindiblesSinSaber, laMasBarata, laMejorPorLoQueCuesta, quejasSinConfirmar } from "./cribas.ts";
+import type { Contexto } from "./cribas.ts";
 import { diaDeLaSemana } from "./ruta.ts";
 import {
   SIN_SABER,
@@ -79,7 +80,11 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
     const f: Ficha = c.ficha;
     const cribado = cribados[i];
     const zona = zonaDe({ lat: f.alojamiento.lat, lon: f.alojamiento.lon }, p.zonas);
-    const sinSaber = imprescindiblesSinSaber(c, ctx).map((cosa) => `must:${cosa}`);
+    const sinSaber = [
+      ...imprescindiblesSinSaber(c, ctx).map((cosa) => `must:${cosa}`),
+      // Una queja grave que el código ve por palabras y nadie ha confirmado: se dice, no descarta.
+      ...quejasSinConfirmar(c).map((queja) => `serious:${queja}`),
+    ];
     return {
       id: `r${i + 1}`,
       lodging: f.alojamiento.id,

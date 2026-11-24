@@ -98,6 +98,7 @@ function miradoPara(puesto: string): Objeto {
     review_themes: [{ theme: "cleanliness", tone: "good", mentions: "several", says: "a clean room", refs: ["r1"] }],
     conflicts: [],
     warnings: [],
+    serious: [],
     unknowns: ["No photo shows the bathroom of this room."],
     summary_good: "A room in good condition with a gym in the building.",
     summary_bad: "unknown",

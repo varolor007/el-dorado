@@ -12,6 +12,7 @@ import {
   laMejorPorLoQueCuesta,
   motivoDeDescarte,
   notaDe,
+  quejasSinConfirmar,
   type Candidato,
   type Contexto,
 } from "../../agent/scripts/cribas.ts";
@@ -52,18 +53,39 @@ test("criba 1: lo que solo te gusta no descarta, y lo que no se sabe tampoco: se
   assert.deepEqual(imprescindiblesSinSaber(candidato("a1", { gym: "full" }), CTX), []);
 });
 
-test("criba 1: una queja grave que se repite descarta; una sola, no", () => {
+test("criba 1: una queja grave descarta si la confirma el que mira en más de una opinión; por palabras, no", () => {
   const c = candidato("a2", { gym: "full" });
   const chinche = { fecha: "2026-12-02", nota: 2, viajero: null, bueno: "", malo: "Bed bugs in the room", de: "x" };
-  c.ficha.opiniones = [chinche];
+  const negada = { ...chinche, malo: "", bueno: "No bed bugs, no mould: spotless" };
+  // Tres opiniones con la palabra no descartan: el código no sabe si pasó, ni si el huésped cuenta que no pasó.
+  c.ficha.opiniones = [chinche, chinche, negada];
+  c.mirado!.serious = [];
   assert.equal(motivoDeDescarte(c, CTX), null);
-  c.ficha.opiniones = [chinche, chinche, chinche];
-  assert.equal(motivoDeDescarte(c, CTX), "serious complaints repeated in recent reviews: bed_bugs (3 reviews)");
-  assert.deepEqual(cribar([c], CTX)[0].descarte, {
-    clase: "serious_complaints",
-    cosa: "bed_bugs",
-    detalle: "3 reviews",
-  });
+  // Una sola opinión que lo cuenta, confirmada por el que mira, se dice y no descarta.
+  c.mirado!.serious = [{ kind: "pests", mentions: "one", refs: ["r1"] }];
+  assert.equal(motivoDeDescarte(c, CTX), null);
+  // En más de una, sí.
+  c.mirado!.serious = [{ kind: "pests", mentions: "a_few", refs: ["r1", "r2"] }];
+  assert.deepEqual(cribar([c], CTX)[0].descarte, { clase: "serious_complaints", cosa: "pests", detalle: "a_few" });
+  assert.match(motivoDeDescarte(c, CTX) ?? "", /the viewer confirmed in more than one review: pests \(a_few\)/);
+  // Una clase que no es de la lista no descarta, la escriba quien la escriba.
+  c.mirado!.serious = [{ kind: "ugly curtains", mentions: "several", refs: ["r1"] }];
+  assert.equal(motivoDeDescarte(c, CTX), null);
+});
+
+test("una queja grave que nadie ha confirmado se dice sin confirmar: ni se calla ni descarta", () => {
+  const chinche = { fecha: "2026-12-02", nota: 2, viajero: null, bueno: "", malo: "Bed bugs in the room", de: "x" };
+  const sinMirar: Candidato = { ficha: ficha("a2"), mirado: null };
+  sinMirar.ficha.opiniones = [chinche, chinche, chinche];
+  assert.deepEqual(quejasSinConfirmar(sinMirar), ["pests"]);
+  assert.equal(motivoDeDescarte(sinMirar, CTX), null);
+  // Con menos opiniones señaladas no se dice nada, y si el que mira ya dio su veredicto, manda el suyo.
+  sinMirar.ficha.opiniones = [chinche];
+  assert.deepEqual(quejasSinConfirmar(sinMirar), []);
+  const mirado = candidato("a2", { gym: "full" });
+  mirado.ficha.opiniones = [chinche, chinche, chinche];
+  mirado.mirado!.serious = [];
+  assert.deepEqual(quejasSinConfirmar(mirado), []);
 });
 
 test("criba 2: lo que se compara es el total con lo que se paga aparte", () => {

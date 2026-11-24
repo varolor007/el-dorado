@@ -33,6 +33,12 @@ and any other theme of the list in `contract/DELIVERY.md` that they bring up. Fo
 or several reviews mention it, whether for good or for bad, how recent they are, and the references of the clearest
 ones. Read the complaints with care: what is repeated matters; one isolated complaint does not.
 
+Look for serious complaints: pests, mould, something stolen, a scam, or a guest who did not feel safe. Some reviews
+carry a `flag`: the house found a word there that may be one of them. A flag is a place to look, not a verdict:
+read the review and decide whether the guest reports it as something that happened to them. Read the reviews
+without a flag too, above all those in a language the house may not have recognised. What you confirm goes in
+`serious`.
+
 Note apart anything that exists but may not be there for this stay: something that only runs part of the year, a
 gym or a lift under works, a service paid apart. The season of the stay is `stay.season` in the sheet: the house
 worked it out from where the lodging is, which you do not know. Never deduce a season from the dates: the same

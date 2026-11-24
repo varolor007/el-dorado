@@ -83,6 +83,14 @@ export const TEMAS_DE_OPINIONES = [
   "value",
   OTRO_TEMA,
 ];
+/**
+ * Las quejas graves: lo que, si varios huéspedes lo cuentan como algo que les pasó, hace que un alojamiento no valga.
+ * Las confirma el que mira, leyendo las opiniones: el código solo le señala dónde mirar.
+ */
+export const GRAVES = ["pests", "mould", "theft", "scam", "unsafe"];
+/** Con estas menciones, una queja grave está repetida y descarta; con una sola, se dice y no descarta. */
+export const GRAVE_REPETIDA = ["a_few", "several"];
+
 export const TONOS = ["good", "bad", "mixed"];
 export const MENCIONES = ["one", "a_few", "several"];
 export const CLASES_DE_PRUEBA = ["photo", "review", "sheet"];

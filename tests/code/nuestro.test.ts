@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { GRAVES } from "../../agent/data/niveles.ts";
 import { NOTA_MINIMA, PESOS_DEL_ALOJAMIENTO, PESOS_DEL_VUELO, QUEJAS_GRAVES } from "../../agent/data/cribas.ts";
 import { COSAS, valorDelNivel } from "../../agent/data/gustos.ts";
 import { CAMPOS, SIN_ORDEN } from "../../agent/data/niveles.ts";
@@ -80,8 +81,11 @@ test("un dominio oficial lo es con https y con lo que cuelga de él, y no lo es 
   assert.ok(!esOficial("no es una dirección", "ES"));
 });
 
-test("las quejas graves se cazan como las escribe quien las sufre", () => {
-  assert.ok(QUEJAS_GRAVES.bed_bugs.test("we found bed bugs in the mattress"));
+test("las palabras de una queja grave señalan dónde mirar, y sus clases son de la lista del que mira", () => {
+  assert.ok(QUEJAS_GRAVES.pests.test("we found bed bugs in the mattress"));
+  assert.ok(QUEJAS_GRAVES.pests.test("había cucarachas en el baño"));
   assert.ok(QUEJAS_GRAVES.mould.test("mould on the bathroom ceiling"));
-  assert.ok(!QUEJAS_GRAVES.bed_bugs.test("the bed was comfortable"));
+  assert.ok(QUEJAS_GRAVES.theft.test("my watch was stolen from the room"));
+  assert.ok(!QUEJAS_GRAVES.pests.test("the bed was comfortable"));
+  for (const clase of Object.keys(QUEJAS_GRAVES)) assert.ok(GRAVES.includes(clase), clase);
 });

@@ -12,6 +12,7 @@
 | `review_themes` | What guests say, by theme. May be empty if there are no reviews |
 | `conflicts` | Where photos and reviews disagree. Empty list if nowhere |
 | `warnings` | What exists but may not be there for this stay. Empty list if nothing |
+| `serious` | The serious complaints you confirm by reading the reviews. Empty list if none |
 | `unknowns` | What you could not see or check, in plain sentences. Empty list if nothing |
 | `summary_good` | One sentence: the best of this lodging, with its fact |
 | `summary_bad` | One sentence: the worst of this lodging, with its fact. `"unknown"` if you found nothing bad |
@@ -110,6 +111,20 @@ counts. `refs` are references that exist in `in/reviews.json`.
 
 `{ "what": "the room looks new in its photos; several recent reviews found it dirty", "refs": ["room-02.jpg", "r6",
 "r21"] }`
+
+## An entry of `serious`
+
+`{ "kind": "pests", "mentions": "a_few", "refs": ["r3", "r11"] }`
+
+`kind` is one of: `pests` (bed bugs, cockroaches, mice and the like), `mould`, `theft` (something stolen from the
+room or the lodging), `scam` (charged for what was not agreed, or a lodging that was not what was sold) or `unsafe`
+(a guest felt in danger there, or a door or a lock that does not close). `mentions` is `one`, `a_few` or `several`,
+as in `review_themes`. `refs` are references that exist in `in/reviews.json`. One entry per kind.
+
+An entry is a complaint only if a guest reports it as something that happened in their stay. A review that says
+there was none (`no bed bugs, luckily`), that quotes a rumour or that speaks of another place is not one. With `a_few`
+or `several` the house discards the lodging for this traveller, so be exact: do not raise it on one word, and do not
+leave it out when the reviews say it plainly.
 
 ## An entry of `warnings`
 

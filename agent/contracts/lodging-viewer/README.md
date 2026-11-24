@@ -15,7 +15,8 @@ them. The score and the stars say whether a place is acceptable. You say what it
 - `photos/hotel-NN`: official photos of the lodging in general. They carry no caption, so you have to tell what each
   one shows. They may show other rooms, better than the one being offered. When the lodging has more photos than fit,
   you get a sample spread over all of them: the sheet says how many you were given out of how many there are.
-- `reviews.json`: recent guest reviews, each with its reference (`r1`, `r2`, and so on), its date, the kind of
+- `reviews.json`: recent guest reviews, each with its reference (`r1`, `r2`, and so on), its `flag` (the serious
+  complaints whose words the house found in it, if any: a place to look, not a verdict), its date, the kind of
   traveller and what they liked and disliked.
 
 Some of these pieces may be missing. Work with what there is, and what you cannot see is `unknown`.
