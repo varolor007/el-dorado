@@ -43,6 +43,7 @@ import type {
   Tabla,
   ZonaResuelta,
 } from "../scripts/formas.ts";
+import { pedirCaminos, sinFuenteDeRutas, type DeLosCaminos, type FuenteDeRutas } from "../scripts/caminos.ts";
 import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_viaje.ts";
 import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
@@ -55,6 +56,7 @@ import {
   vuelosMovidos,
   type Parrilla,
 } from "../scripts/transporte.ts";
+import type { TablaDeCaminos } from "../tools/caminos.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
 import { paraElGrupo } from "../tools/fuentes/tipos.ts";
 import type { Estancia, FuenteAlojamiento, FuenteTransporte, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
@@ -81,6 +83,11 @@ export type Fuentes = {
   bajarFotos?: OpcionesDeFotos;
   /** El primer día en que se puede viajar: un cambio de fechas que cae antes no se pide. */
   desde?: string;
+  /**
+   * La fuente de rutas: lo que hay de verdad entre dos puntos, a pie y en coche. Sin ella, o si falla, todo se mide
+   * con la cuenta de la casa, y se dice.
+   */
+  rutas?: FuenteDeRutas;
 };
 
 /** Cuántas veces vuelve un trabajo en rojo a su asiento antes de pararse: dos, como dice la hoja. */
@@ -360,6 +367,45 @@ function miradosDe(run: string): Record<string, EntregaDeMirar | null> {
 
 type DeLosDias = { entrega: EntregaDeSitios; paradas: Parada[] };
 
+/**
+ * La tabla de caminos del viaje: cuando ya se saben los sitios elegidos y dónde se puede dormir, se le pide a la fuente
+ * de rutas lo que hay entre ellos. Sin fuente, o si no contesta, la investigación sigue con la cuenta de la casa.
+ */
+async function pedirLaTablaDeCaminos(
+  run: string,
+  viaje: Entendido,
+  entrega: EntregaDeSitios,
+  f: Fuentes,
+): Promise<string[]> {
+  const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+  const elegidos = new Set(entrega.go.map((x) => x.id));
+  const paradas = sitios.filter((s) => elegidos.has(s.id)).map((s) => s.punto);
+  // Donde se puede dormir: cada finalista y el centro del destino, desde donde se reparten los días de partida.
+  const bases = [
+    ...busqueda.finalistas.map((x) => ({ lat: x.alojamiento.lat, lon: x.alojamiento.lon })),
+    viaje.destination.centre,
+  ];
+  let hecho: DeLosCaminos;
+  if (f.rutas === undefined) hecho = sinFuenteDeRutas("no hay fuente de rutas");
+  else {
+    try {
+      hecho = await pedirCaminos(bases, paradas, f.rutas);
+    } catch {
+      hecho = sinFuenteDeRutas("no contesta");
+    }
+  }
+  guardar(run, "caminos.json", hecho);
+  return hecho.avisos;
+}
+
+/** La tabla de caminos del run, si se pidió y trae algo; un run de antes no la tiene. */
+function caminosDelRun(run: string): TablaDeCaminos | null {
+  if (!hay(run, "caminos.json")) return null;
+  const { tabla } = leer<DeLosCaminos>(run, "caminos.json");
+  return tabla.caminos.length > 0 ? tabla : null;
+}
+
 async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDeSitios, f: Fuentes): Promise<Rojo[]> {
   const { sitios } = leer<DeLosSitios>(run, "sitios.json");
   const elegidos = new Set(entrega.go.map((x) => x.id));
@@ -373,7 +419,8 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
   }
   const paradas = paradasDe(entrega, sitios, fotos);
   const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
-  const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre);
+  const caminos = caminosDelRun(run);
+  const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre, {}, caminos);
   const dados = sitiosParaElegir(sitios, nochesDe(viaje)).map((s) => s.id);
   const puerta = puertaDias({
     paradas,
@@ -381,6 +428,7 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
     fuera: reparto.fuera,
     porQue: reparto.porQue,
     sitios: dados,
+    caminos,
   });
   guardar(run, "dias.json", { entrega, paradas, reparto, puerta, avisos });
   return puerta.rojos;
@@ -451,6 +499,7 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
     zonas,
     mirados: miradosDe(run),
     paradas: paradas.map((p) => p.punto),
+    caminos: caminosDelRun(run),
     transporte,
     movidos: leer<PrecioMovido[]>(run, "movidos.json"),
     pedidos,
@@ -518,6 +567,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     explica,
     transporte: transporteDe(run),
     alLado: alLadoDe(run),
+    caminos: caminosDelRun(run),
   });
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
@@ -529,6 +579,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     fuera: hecho.fuera,
     porQue: hecho.porQueFuera,
     sitios: dados,
+    caminos: hecho.caminos,
   }).rojos;
   // La nota y el descarte de cada alojamiento son los de la tabla con la que cerró el que cruza: si no casan, lo
   // que se enseña no es lo que se decidió.
@@ -663,6 +714,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     const mirado = recogerMirar(run);
     for (const a of mirado.alojamientos)
       if (!a.pasadas.some((p) => p.metodo.verde && p.comoEs.verde)) avisos.push(`${a.nombre}: se queda sin mirar`);
+    if (!hay(run, "caminos.json")) avisos.push(...(await pedirLaTablaDeCaminos(run, viaje, r.entrega, f)));
     const rojos = await repartirLosDias(run, viaje, r.entrega, f);
     if (rojos.length > 0) return para("days", "los días (puerta 9)", rojos);
   }

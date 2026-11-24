@@ -5,6 +5,7 @@
 // movidas o una noche de más o de menos, con lo que cuesta así y lo que ahorra. La misma entrada da la misma tabla.
 
 import { NOTA_MINIMA } from "../data/cribas.ts";
+import type { TablaDeCaminos } from "../tools/caminos.ts";
 import { enLineaRecta, mediaAndando, type Punto } from "../tools/distancias.ts";
 import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { PrecioMovido } from "../tools/palancas.ts";
@@ -30,6 +31,8 @@ export type PiezasDeLaTabla = {
   mirados: Record<string, EntregaDeMirar | null>;
   /** Los sitios a los que se va a ir: las paradas elegidas. */
   paradas: Punto[];
+  /** La tabla de caminos del viaje, si la hay: lo que se tarda de verdad de cada alojamiento a cada sitio. */
+  caminos?: TablaDeCaminos | null;
   /** El transporte del viaje para esas fechas: el más barato que se sabe, o null si no hay. */
   transporte: Vuelo | null;
   /** Lo que contestaron las fuentes a cada cambio de fechas, para todos los finalistas. */
@@ -63,7 +66,7 @@ export function zonaDe(punto: Punto, zonas: ZonaResuelta[]): ZonaResuelta | null
 
 export function montarTabla(p: PiezasDeLaTabla): Tabla {
   const e = p.busqueda.estancia;
-  const ctx: Contexto = { gustos: p.viaje.tastes, paradas: p.paradas };
+  const ctx: Contexto = { gustos: p.viaje.tastes, paradas: p.paradas, caminos: p.caminos };
   const candidatos = p.busqueda.finalistas.map((ficha) => ({ ficha, mirado: p.mirados[ficha.alojamiento.id] ?? null }));
   const cribados = cribar(candidatos, ctx);
   // El transporte, para todos los que viajan: el alojamiento ya es del grupo, y un billete, de uno.

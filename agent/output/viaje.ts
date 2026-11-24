@@ -4,6 +4,7 @@
 
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
 import { avisosDe } from "../data/palabras.ts";
+import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
 import { DIAS_ALREDEDOR } from "../data/transporte.ts";
 
 export type Punto = { lat: number; lon: number };
@@ -38,6 +39,18 @@ export type Parada = {
   /** Verdadero si hay que reservar con tiempo; falso si no; si no se sabe, no se dice. */
   reservar?: boolean;
 };
+
+/** Lo que hay de un punto a otro por una manera de ir, como lo dio la fuente de rutas. */
+export type Tramo = { metros: number; minutos: number };
+
+/** Un camino de la tabla: de dónde, a dónde y lo que dio la fuente a pie y en coche, sin tráfico. */
+export type CaminoGuardado = { de: Punto; a: Punto; aPie?: Tramo; enCoche?: Tramo };
+
+/**
+ * La tabla de caminos de un viaje: lo que la fuente de rutas dijo que hay entre sus puntos, de qué fuente y cuándo.
+ * Lo que no está en ella se mide con la cuenta de la casa, que es aproximada.
+ */
+export type TablaDeCaminos = { fuente: string; visto: string; caminos: CaminoGuardado[] };
 
 /** Un día: sus paradas, en orden, y lo que se anda de cada una a la siguiente. */
 export type Dia = { fecha: string; titulo: string; paradas: string[]; metros: number[] };
@@ -217,6 +230,11 @@ export type Viaje = {
   palancas: Palanca[];
   avisos: string[];
   vistazo: Vistazo | null;
+  /**
+   * La tabla de caminos, si la fuente de rutas contestó: con ella reparte la web los días y dice cada trayecto con los
+   * mismos números que la casa. Un viaje de antes, o sin la fuente, no la trae.
+   */
+  caminos?: TablaDeCaminos;
 };
 
 /** Lo que la casa cuenta en vivo. Solo datos: la frase la monta la web, en el idioma de quien mira. */
@@ -279,6 +297,29 @@ function pegasDelPrecio(p: Precio, donde: string): Pega[] {
     if (u === null || u.protocol !== "https:" || u.username !== "" || u.password !== "")
       pegas.push({ donde, que: "el enlace del precio no es una dirección https sin claves" });
   }
+  return pegas;
+}
+
+/** Lo que se comprueba de una tabla de caminos: su fuente, su fecha, su tamaño y que cada camino sea de verdad. */
+function pegasDeLosCaminos(t: TablaDeCaminos): Pega[] {
+  const pegas: Pega[] = [];
+  const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  if (typeof t.fuente !== "string" || t.fuente.trim() === "" || Number.isNaN(Date.parse(t.visto)))
+    pega("caminos", "no dice de qué fuente sale ni cuándo");
+  if (!Array.isArray(t.caminos)) return [...pegas, { donde: "caminos", que: "no es una lista" }];
+  if (t.caminos.length > CASILLAS_POR_VIAJE) pega("caminos", `trae más de ${CASILLAS_POR_VIAJE} caminos`);
+  const tramo = (x: Tramo | undefined): boolean =>
+    x === undefined || (Number.isFinite(x.metros) && x.metros >= 0 && Number.isFinite(x.minutos) && x.minutos > 0);
+  const vistos = new Set<string>();
+  t.caminos.forEach((c, i) => {
+    const donde = `caminos[${i}]`;
+    if (!enElMapa(c.de) || !enElMapa(c.a)) return pega(donde, "un punto no está en el mapa");
+    const par = `${c.de.lat.toFixed(5)},${c.de.lon.toFixed(5)}>${c.a.lat.toFixed(5)},${c.a.lon.toFixed(5)}`;
+    if (vistos.has(par)) pega(donde, "el camino sale dos veces");
+    vistos.add(par);
+    if (c.aPie === undefined && c.enCoche === undefined) pega(donde, "no dice ni a pie ni en coche");
+    if (!tramo(c.aPie) || !tramo(c.enCoche)) pega(donde, "unos metros o unos minutos no son un número");
+  });
   return pegas;
 }
 
@@ -365,6 +406,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
     if (!cerca(sale, v.entrada) || !cerca(vuelve, v.salida) || (sale === v.entrada && vuelve === v.salida))
       pega("transporteAlLado", "no es de un día de al lado");
   }
+  if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))
     pega("habitaciones", "no dice en cuántas habitaciones duerme el grupo");

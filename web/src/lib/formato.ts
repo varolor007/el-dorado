@@ -2,6 +2,7 @@
 
 import type { Punto } from "../../../agent/output/viaje.ts";
 import type { ManeraDeIr } from "../../../agent/data/moverse.ts";
+import { trayectoEntre, type Caminos } from "../../../agent/tools/caminos.ts";
 import { minutosAndando, trayecto } from "../../../agent/tools/distancias.ts";
 
 export function dinero(total: number, moneda: string, idioma: string): string {
@@ -60,6 +61,23 @@ export function enGoogleMaps(p: Punto, nombre?: string): string {
 export function ir(metros: number, idioma: string): { lejos: string; minutos: number; cogiendo: ManeraDeIr[] } {
   const t = trayecto(metros);
   return { lejos: andar(metros, idioma).lejos, minutos: t.minutos, cogiendo: t.aPie ? [] : t.maneras };
+}
+
+/** Un trayecto dicho: lo que hay, lo que se tarda, lo que hay que coger y de dónde sale el tiempo. */
+export type Ir = { lejos: string; minutos: number; cogiendo: ManeraDeIr[]; segun: "fuente" | "casa" };
+
+/**
+ * Cómo se hace un trayecto de un punto a otro, con la tabla de caminos del viaje si la hay: lo que dijo la fuente de
+ * rutas (a pie, con sus cuestas; en coche, sin tráfico) o, si no está, la cuenta de la casa, que es aproximada.
+ */
+export function irEntre(de: Punto, a: Punto, c: Caminos | undefined, idioma: string): Ir {
+  const t = trayectoEntre(de, a, c);
+  return {
+    lejos: andar(t.metros, idioma).lejos,
+    minutos: t.minutos,
+    cogiendo: t.aPie ? [] : t.maneras,
+    segun: t.segun,
+  };
 }
 
 /**

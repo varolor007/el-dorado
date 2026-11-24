@@ -6,7 +6,8 @@
 import { CABE, CERCA_DE_UN_DIA, DIA_ENTERO, MOTIVOS_DE_FUERA } from "../data/dias.ts";
 import { TRAYECTO_DE_UN_DIA } from "../data/moverse.ts";
 import type { Dia, Parada, Punto, Ritmo } from "../output/viaje.ts";
-import { andando, centroDe, enLineaRecta, trayecto } from "../tools/distancias.ts";
+import { caminosDe, costeEntre, trayectoEntre, type Caminos, type TablaDeCaminos } from "../tools/caminos.ts";
+import { centroDe, enLineaRecta } from "../tools/distancias.ts";
 
 export { CABE } from "../data/dias.ts";
 export { andando, enLineaRecta, RODEO } from "../tools/distancias.ts";
@@ -43,12 +44,15 @@ function ordenes<T>(lista: T[]): T[][] {
   return lista.flatMap((x, i) => ordenes([...lista.slice(0, i), ...lista.slice(i + 1)]).map((resto) => [x, ...resto]));
 }
 
-/** Lo que se recorre saliendo de la base y pasando por las paradas en ese orden, en línea recta. */
-function recorrido(orden: Parada[], base: Punto): number {
+/**
+ * Lo que cuesta salir de la base y pasar por las paradas en ese orden: sin tabla de caminos, en línea recta; con ella,
+ * en minutos, con las cuestas y los rodeos que dijo la fuente.
+ */
+function recorrido(orden: Parada[], base: Punto, c?: Caminos): number {
   let total = 0;
   let desde = base;
   for (const p of orden) {
-    total += enLineaRecta(desde, p.punto);
+    total += costeEntre(desde, p.punto, c);
     desde = p.punto;
   }
   return total;
@@ -58,12 +62,12 @@ function recorrido(orden: Parada[], base: Punto): number {
  * Ordena las paradas de un día para andar lo menos posible saliendo de la base. Con pocas paradas se prueban todos
  * los órdenes; con muchas, se va siempre a la más cercana. A igualdad, gana el orden en que llegaron.
  */
-function enOrden(paradas: Parada[], base: Punto): Parada[] {
+function enOrden(paradas: Parada[], base: Punto, c?: Caminos): Parada[] {
   if (paradas.length <= 7) {
     let mejor = paradas;
     let menos = Infinity;
     for (const orden of ordenes(paradas)) {
-      const metros = recorrido(orden, base);
+      const metros = recorrido(orden, base, c);
       if (metros < menos - 1e-6) {
         menos = metros;
         mejor = orden;
@@ -77,7 +81,7 @@ function enOrden(paradas: Parada[], base: Punto): Parada[] {
   while (quedan.length > 0) {
     let mejor = 0;
     for (let i = 1; i < quedan.length; i++) {
-      if (enLineaRecta(desde, quedan[i].punto) < enLineaRecta(desde, quedan[mejor].punto)) mejor = i;
+      if (costeEntre(desde, quedan[i].punto, c) < costeEntre(desde, quedan[mejor].punto, c)) mejor = i;
     }
     const [siguiente] = quedan.splice(mejor, 1);
     orden.push(siguiente);
@@ -88,12 +92,17 @@ function enOrden(paradas: Parada[], base: Punto): Parada[] {
 
 /**
  * Lo que hay de camino entre las paradas de un día, en su orden, y lo que suma el día con sus visitas. Cada trayecto
- * se cuenta andando si se puede andar; si no, con la manera más rápida de las que tienen sentido.
+ * se cuenta andando si se puede andar; si no, con la manera más rápida de las que tienen sentido. Con la tabla de
+ * caminos, lo que dijo la fuente; lo que no está en ella, con la cuenta de la casa.
  */
-export function medirDia(orden: Parada[]): { metros: number[]; minutos: number } {
-  const metros = orden.slice(1).map((p, i) => andando(orden[i].punto, p.punto));
+export function medirDia(orden: Parada[], c?: Caminos): { metros: number[]; minutos: number; tramos: number[] } {
+  const tramos = orden.slice(1).map((p, i) => trayectoEntre(orden[i].punto, p.punto, c));
   const visitas = orden.reduce((suma, p) => suma + p.minutos, 0);
-  return { metros, minutos: visitas + metros.reduce((suma, m) => suma + trayecto(m).minutos, 0) };
+  return {
+    metros: tramos.map((t) => t.metros),
+    minutos: visitas + tramos.reduce((suma, t) => suma + t.minutos, 0),
+    tramos: tramos.map((t) => t.minutos),
+  };
 }
 
 /**
@@ -101,14 +110,14 @@ export function medirDia(orden: Parada[]): { metros: number[]; minutos: number }
  * de una a otra, caben en un día entero. Es la misma regla que mira la puerta 9: el código no reparte un día que su
  * puerta rechazaría.
  */
-export function cabeElDia(orden: Parada[]): boolean {
-  const { metros, minutos } = medirDia(orden);
-  return metros.every((m) => trayecto(m).minutos <= TRAYECTO_DE_UN_DIA) && minutos <= DIA_ENTERO;
+export function cabeElDia(orden: Parada[], c?: Caminos): boolean {
+  const { tramos, minutos } = medirDia(orden, c);
+  return tramos.every((m) => m <= TRAYECTO_DE_UN_DIA) && minutos <= DIA_ENTERO;
 }
 
 /** Si de donde se duerme a una parada se llega dentro de un día, con la manera que tenga sentido. */
-export function alAlcance(base: Punto, p: Parada): boolean {
-  return trayecto(andando(base, p.punto)).minutos <= TRAYECTO_DE_UN_DIA;
+export function alAlcance(base: Punto, p: Parada, c?: Caminos): boolean {
+  return trayectoEntre(base, p.punto, c).minutos <= TRAYECTO_DE_UN_DIA;
 }
 
 /** Lo que el viajero ha cambiado a mano: lo que quitó, lo que añadió de lo que se quedó fuera y lo que movió de día. */
@@ -119,7 +128,9 @@ export type Cambios = { quitadas?: string[]; anadidas?: string[]; fijadas?: Reco
  * imprescindibles, antes que ninguna. Lo que el viajero cambió a mano manda sobre el ritmo: lo que quitó no vuelve
  * solo, lo que movió a un día se queda en ese día y lo que añadió entra aunque el día ya esté lleno. Lo que reparte
  * el código cabe siempre: una parada que no entra en ningún día sin pasarse de un tope se queda fuera, y se dice por
- * qué, también si es imprescindible. Antes fuera y dicho que un día que no se puede hacer.
+ * qué, también si es imprescindible. Antes fuera y dicho que un día que no se puede hacer. Con la tabla de caminos
+ * del viaje, lo que se tarda de verdad cuenta al ordenar y al medir cada día; sin ella, o donde no llega, la cuenta
+ * de la casa.
  */
 export function repartir(
   paradas: Parada[],
@@ -127,7 +138,9 @@ export function repartir(
   ritmo: Ritmo,
   base: Punto,
   cambios: Cambios = {},
+  tabla?: TablaDeCaminos | null,
 ): Reparto {
+  const c = caminosDe(tabla);
   const cabe = CABE[ritmo];
   const quitadas = [...new Set(cambios.quitadas ?? [])].filter((id) => paradas.some((p) => p.id === id));
   const anadidas = cambios.anadidas ?? [];
@@ -178,7 +191,7 @@ export function repartir(
     if (anadidas.includes(p.id)) continue;
     // Lo que queda a más de un día de donde se duerme no entra en ningún día, se coja lo que se coja: es otro sitio
     // donde dormir.
-    if (!alAlcance(base, p)) {
+    if (!alAlcance(base, p, c)) {
       seQueda(p, "far");
       continue;
     }
@@ -187,7 +200,8 @@ export function repartir(
       .sort((a, b) => a.lejos - b.lejos || a.i - b.i);
     const hayHueco = (d: (typeof dias)[number]): boolean =>
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
-    const cabeEn = (d: (typeof dias)[number]): boolean => hayHueco(d) && cabeElDia(enOrden([...d.paradas, p], base));
+    const cabeEn = (d: (typeof dias)[number]): boolean =>
+      hayHueco(d) && cabeElDia(enOrden([...d.paradas, p], base, c), c);
     let destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
     if (destino < 0) destino = porAbrir.shift() ?? -1;
     if (destino < 0 && p.imprescindible) destino = porCercania.find((x) => cabeEn(x.d))?.i ?? -1;
@@ -206,10 +220,10 @@ export function repartir(
 
   return {
     dias: dias.map((d) => {
-      const orden = enOrden(d.paradas, base);
+      const orden = enOrden(d.paradas, base, c);
       // El día se llama como su parada más importante.
       const titulo = porImportancia.find((p) => d.paradas.includes(p))?.nombre ?? "";
-      return { fecha: d.fecha, titulo, paradas: orden.map((p) => p.id), metros: medirDia(orden).metros };
+      return { fecha: d.fecha, titulo, paradas: orden.map((p) => p.id), metros: medirDia(orden, c).metros };
     }),
     fuera,
     porQue,
