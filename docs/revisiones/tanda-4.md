@@ -3,8 +3,9 @@
 Al acabar la obra de la tanda, el 24-nov-2026, la revisaron tres adversarios que no la hicieron, cada uno en su copia
 del repositorio y sin tocar nada: solo informar. Miraron todo lo que hay desde el cierre de la tanda 3. Cada hallazgo
 se comprobó leyendo el código o con una prueba suelta, y lo que se arregló lleva su prueba en la batería, que pasó de
-662 pruebas a 681. Aquí queda cada hallazgo con lo que se hizo. Lo que toca a la hoja, y por tanto es del PM, va al
-final. Los frenos de la puerta, que son un trozo de obra, los hace una sesión aparte: cuando se junten, se apunta aquí.
+662 pruebas a 706. Aquí queda cada hallazgo con lo que se hizo. Lo que toca a la hoja, y por tanto es del PM, va al
+final. Los frenos de la puerta, que son un trozo de obra, los hizo una sesión aparte, y ya están juntos: con ellos la
+batería quedó en 706.
 
 Ninguno de los tres encontró una clave, un dato de un viajero, lo que devuelve una fuente ni un identificador de modelo
 en el repositorio o en sus commits.
@@ -32,17 +33,17 @@ Sin bloqueantes comprobados.
 
 | Hallazgo | Qué pasaba | Qué se hizo |
 |---|---|---|
-| I1 | El freno de entrar se saltaba escribiendo el correo con letras de otro ancho, y se vaciaba entero con muchos correos fallados | En obra, con los frenos de la puerta |
+| I1 | El freno de entrar se saltaba escribiendo el correo con letras de otro ancho, y se vaciaba entero con muchos correos fallados | Cuenta el correo ya normalizado, la memoria no se vacía de golpe, y hay además un freno por cliente (2.8) |
 | I2 | La llave de la web se escribía en el registro del contenedor en cada arranque, y los correos de la casa también | La llave ya no se escribe al arrancar: la dice `casa.sh vercel` a quien la pide en el servidor. De los correos sin cuenta se dice cuántos, no cuáles (2.9) |
 | I3 | En una casilla dudosa de los papeles podía ir una página de cualquier sitio, y llegaba a la pantalla como un enlace junto a «visado» | Al viaje y a la pantalla solo llegan las fuentes oficiales de nuestra lista (5.4) |
-| I4 | Registrarse no tenía freno, y cada registro cuesta un cálculo caro: se podía retrasar la casa o llenar su disco | En obra, con los frenos de la puerta |
+| I4 | Registrarse no tenía freno, y cada registro cuesta un cálculo caro: se podía retrasar la casa o llenar su disco | Freno de registros y de intentos por cliente y en toda la casa, las contraseñas de pocas en pocas, y topes de cuentas, de sesiones y de viajes (2.8) |
 | I5, sospecha | El lector de webs de Claude Code corre en la máquina de la casa: una página podría pedirle a un asiento que abra direcciones de dentro de su red | La casa corta al asiento que pide abrir algo que no sea una página https de fuera, con su nombre y sin puerto, y el contrato lo dice (3.5). Falta cerrar en el servidor la salida del contenedor a redes privadas: va con la instalación |
 | M1 | El nombre de un aviso de fechas, que llega a la pantalla, podía traer una dirección sin su esquema o un teléfono | Ya no (4.7) |
 | M2 | Solo se reconocían trece terminaciones de dirección en los textos para el viajero | Se reconoce cualquier terminación general o de país (4.7) |
 | M3 | Al dueño se le daba el acta casi entera: nombres de asientos y puestos, el porqué de cada rojo y lo que el conductor escribe para la casa | Solo claves y números (2.5) |
 | M4 | La web no mandaba cabeceras de seguridad: otra página podía meterla en un marco | Las manda (2.9) |
 | M5 | El tope del primer vistazo en toda la casa se agota con cinco direcciones | Los números son del PM: está al final |
-| M6 a M9 | Registrarse dice si un correo ya existe, y cinco fallos dejan fuera a su dueño; los oyentes en vivo, la comprobación de claves y el buscador de lugares no tenían freno propio | En obra, con los frenos de la puerta |
+| M6 a M9 | Registrarse dice si un correo ya existe, y cinco fallos dejan fuera a su dueño; los oyentes en vivo, la comprobación de claves y el buscador de lugares no tenían freno propio | El freno va por correo y sitio: el dueño entra desde el suyo. Los oyentes, las claves y el buscador de lugares llevan su freno (2.8). Que un correo ya existe se sigue diciendo mientras no se confirme el correo, que es del PM |
 
 Visto y sin pegas: la llave se compara en tiempo constante; las sesiones se guardan como huella; la clave de IA va
 cifrada y atada a su cuenta; los identificadores se validan; la web solo deja pasar sus rutas; la imagen corre sin

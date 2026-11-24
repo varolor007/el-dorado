@@ -348,6 +348,20 @@ contarlo) y su pantalla en la web con un run de verdad. En esa investigación el
 casa como nuestra («le damos 6,9 sobre 10 para lo que pedís»), y volvió a caer en «el más barato» a secas, que le
 cuesta una vuelta: su norma EX3 dice ahora que vale cada vez que la nombra.
 
+**Los frenos de la puerta (2.8 y 11.1)** (una sesión de obra, revisada y junta el 24-nov; salen de la revisión de
+seguridad de la tanda 4). Los números, en `agent/data/frenos.ts`, de partida y a firma del PM; las piezas, en
+`agent/launcher/frenos.ts`: contar por ventanas sin vaciar la memoria de golpe, dejar pasar unas pocas
+contraseñas a la vez y recordar desde qué clientes entró bien cada correo. La casa cuenta por cliente (el resumen
+de su dirección que le manda la web, nunca la dirección), por cuenta y en toda la casa. El freno de entrar cuenta
+el correo ya normalizado, el mismo con el que se entra, y va por correo y cliente: quien prueba desde un sitio
+espera, y el dueño, desde el suyo, entra. Registrarse tiene freno y la casa, un tope de cuentas; las sesiones de
+una cuenta, tope (al pasar, se cierra la más vieja); los viajes, tope en toda la casa; los oyentes, por viaje, por
+cuenta y en la casa; y comprobar una clave, por cuenta. El buscador de lugares de la web lleva el suyo
+(`web/src/lib/freno.ts`). Lo que no cubren: viven en memoria (al reiniciar, a cero); los topes de toda la casa los
+puede agotar cualquiera, y entonces nadie entra un rato; registrarse con un correo que ya existe lo sigue
+diciendo, mientras no se confirme el correo; y en Vercel el freno de lugares cuenta por cada copia del servidor.
+Sin ver con la web contra la casa ni en el servidor.
+
 **Volver a intentarlo retoma donde paró (2.5)** (una sesión de obra, revisada y junta el 24-nov; el PM, a la
 propuesta: «si es un asiento, sin problema»). `agent/launcher/reintentar.ts`: `reintentar` apunta la pulsación en
 `reintentos.json` y monta la vuelta siguiente del puesto que paró el run, con el run aún parado (el mismo

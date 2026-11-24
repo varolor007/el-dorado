@@ -152,7 +152,22 @@ test("una sesión caduca, y salir la cierra sin tocar las demás", async () => {
     assert.ok(sesionDe(otra, mesa, cuando) !== null);
     // Caducada, deja de valer y se borra.
     assert.equal(sesionDe(otra, mesa, dias(DIAS_DE_UNA_SESION)), null);
-    assert.deepEqual(readdirSync(join(mesa, "sesiones")), []);
+    assert.deepEqual(
+      readdirSync(join(mesa, "sesiones")).filter((x) => x !== "de"),
+      [],
+    );
+    // Y en la lista de sesiones de la cuenta, tampoco queda.
+    assert.deepEqual(
+      readdirSync(
+        join(
+          mesa,
+          "sesiones",
+          "de",
+          (await entrar({ correo: CORREO, contrasena: BUENA, mesa, cuando: dias(DIAS_DE_UNA_SESION + 1) }))!.cuenta.id,
+        ),
+      ).length,
+      1,
+    );
   });
 });
 

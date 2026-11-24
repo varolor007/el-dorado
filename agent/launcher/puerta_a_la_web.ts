@@ -25,10 +25,11 @@
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
-import { createHash, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { join } from "node:path";
+import { FRENOS_DE_LA_PUERTA, type FrenosDeLaPuerta } from "../data/frenos.ts";
 import { PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Lanzador } from "./asiento.ts";
@@ -37,10 +38,12 @@ import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
 import { confirmar, FalloAlConfirmar, paraConfirmar, turnoDelViajero } from "./escuchar.ts";
 import { paraElViajero, seguirConLosPapeles, turnoDeLosPapeles } from "./papeles.ts";
 import {
+  abrirSesion,
   borrarClave,
   claveDe,
   claveQueVale,
   correoQueVale,
+  cuantasCuentas,
   entrar,
   FalloDeCuenta,
   guardarClave,
@@ -52,12 +55,14 @@ import {
 } from "./cuentas.ts";
 import { gastoDeLaCuenta } from "./gasto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
+import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import { FalloAlReintentar, reintentar } from "./reintentar.ts";
 import {
   abrirViaje,
   apuntar,
   cambiarLoEntendido,
+  cuantosViajes,
   leerVersion,
   leerViaje,
   nuevoRun,
@@ -75,15 +80,19 @@ import { leerVivo } from "./vivo.ts";
 
 /** Lo más que pesa lo que manda la web en una petición, los viajes que puede tener un dueño y los que le escuchan. */
 export const PESO_DE_UNA_PETICION = 64 * 1024;
-export const VIAJES_DE_UN_DUENO = 200;
-export const OYENTES_DE_UN_VIAJE = 8;
+export const VIAJES_DE_UN_DUENO = FRENOS_DE_LA_PUERTA.viajes.deUnDueno;
+export const OYENTES_DE_UN_VIAJE = FRENOS_DE_LA_PUERTA.oyentes.deUnViaje;
 /** La cabecera donde la web pasa la sesión del viajero, que guarda en una cookie que su navegador no deja leer. */
 export const CABECERA_DE_LA_SESION = "x-eldorado-session";
-/** Cuántas veces se puede fallar al entrar con un correo, y en cuánto tiempo, antes de tener que esperar. */
-export const INTENTOS_DE_ENTRAR = { fallos: 5, minutos: 15 };
+/** Cuántas veces se puede fallar al entrar con un correo desde un mismo sitio, y en cuánto tiempo, antes de esperar. */
+export const INTENTOS_DE_ENTRAR = {
+  fallos: FRENOS_DE_LA_PUERTA.fallos.porCorreoYCliente,
+  minutos: FRENOS_DE_LA_PUERTA.fallos.minutos,
+};
 /**
- * La cabecera donde la web dice quién pide un primer vistazo, resumido (no su dirección tal cual), para que el freno
- * lleve la cuenta de cada uno. Sin ella, solo cuenta el tope de toda la casa.
+ * La cabecera donde la web dice quién pide, resumido (no su dirección tal cual), para que cada freno lleve la cuenta
+ * de cada uno: el primer vistazo, registrarse, entrar y comprobar una clave. Sin ella, solo cuentan el freno de cada
+ * cuenta y el de toda la casa.
  */
 export const CABECERA_DEL_CLIENTE = "x-eldorado-client";
 
@@ -111,6 +120,12 @@ export type OpcionesDeLaPuerta = {
   latidoMs?: number;
   /** El freno del primer vistazo, si no es el de `agent/data/vistazo.ts`, y lo que espera a cada fuente. */
   freno?: Partial<Freno>;
+  /** Los frenos de la puerta, si no son los de `agent/data/frenos.ts`: cada grupo, en parte. */
+  frenos?: {
+    [K in keyof FrenosDeLaPuerta]?: FrenosDeLaPuerta[K] extends object
+      ? Partial<FrenosDeLaPuerta[K]>
+      : FrenosDeLaPuerta[K];
+  };
   esperasDelVistazo?: Esperas;
 };
 
@@ -130,8 +145,10 @@ type Peticion = {
   dueno: string;
   cuerpo: unknown;
   cuenta: Cuenta;
+  /** Quien pide, como lo dice la web, resumido; null si no lo dice. */
+  cliente: string | null;
 };
-type Entrada = { metodo: string; partes: string[]; cuerpo: unknown; sesion: unknown };
+type Entrada = { metodo: string; partes: string[]; cuerpo: unknown; sesion: unknown; cliente: string | null };
 type Respuesta = { estado: number; cuerpo: unknown };
 
 class Fallo extends Error {
@@ -242,8 +259,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   const hoy = o.hoy ?? ((): Date => new Date());
   const marchas = new Map<string, Promise<void>>();
   const oyentes = new Map<string, number>();
+  const oyentesDeCuenta = new Map<string, number>();
   const abiertos = new Set<ServerResponse>();
-  const fallos = new Map<string, { n: number; desde: number }>();
   const deLaCasa = new Set((o.correosDeLaCasa ?? []).flatMap((c) => correoQueVale(c) ?? []));
 
   /** Con qué piensa una cuenta: la de la casa, solo si su correo está en la lista; si no, su clave, o nada. */
@@ -257,20 +274,34 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   const deCara = (c: Cuenta): Record<string, unknown> => ({ ...publica(c), thinks_with: conQuePiensa(c) });
   const freno = frenoDelVistazo(o.freno, hoy);
 
-  /** Lo que queda de espera, en segundos, para volver a probar con ese correo; cero si se puede. */
-  const espera = (quien: string): number => {
-    const f = fallos.get(quien);
-    const ventana = INTENTOS_DE_ENTRAR.minutos * 60_000;
-    if (f === undefined || hoy().getTime() - f.desde >= ventana) {
-      fallos.delete(quien);
-      return 0;
-    }
-    return f.n >= INTENTOS_DE_ENTRAR.fallos ? Math.ceil((f.desde + ventana - hoy().getTime()) / 1000) : 0;
+  // Los frenos de registrarse, entrar y comprobar claves. Cada uno cuenta por su clave, en su ventana.
+  const f: FrenosDeLaPuerta = Object.fromEntries(
+    Object.entries(FRENOS_DE_LA_PUERTA).map(([k, v]) => {
+      const dado = (o.frenos as Record<string, unknown> | undefined)?.[k];
+      return [k, typeof v === "object" ? { ...v, ...(dado as object | undefined) } : (dado ?? v)];
+    }),
+  ) as FrenosDeLaPuerta;
+  const ventana = (tope: number, minutos: number) => ventanas(tope, minutos, hoy, f.enMemoria);
+  const frenos = {
+    fallosPorPar: ventana(f.fallos.porCorreoYCliente, f.fallos.minutos),
+    fallosPorCorreo: ventana(f.fallos.porCorreo, f.fallos.minutos),
+    fallosPorCliente: ventana(f.fallos.porCliente, f.fallos.minutos),
+    intentosPorCliente: ventana(f.intentos.porCliente, f.intentos.minutos),
+    intentosEnLaCasa: ventana(f.intentos.enLaCasa, f.intentos.minutos),
+    registrosPorCliente: ventana(f.registros.porCliente, f.registros.minutos),
+    registrosEnLaCasa: ventana(f.registros.enLaCasa, f.registros.minutos),
+    clavesPorCuenta: ventana(f.claves.porCuenta, f.claves.minutos),
+    clavesPorCliente: ventana(f.claves.porCliente, f.claves.minutos),
   };
-  const fallo = (quien: string): void => {
-    if (fallos.size > 10_000) fallos.clear();
-    const f = fallos.get(quien) ?? { n: 0, desde: hoy().getTime() };
-    fallos.set(quien, { n: f.n + 1, desde: f.desde });
+  const yaEntraron = conocidos(5, f.enMemoria);
+  const unaContrasena = turnos(f.contrasenas.aLaVez, f.contrasenas.enCola, f.contrasenas.segundosDeEspera);
+  /** La clave de toda la casa en los frenos que no son de nadie. */
+  const CASA = "casa";
+
+  /** Lo que tiene que esperar un cliente que ya ha gastado lo suyo: 429, por su clave, con los segundos. */
+  const siEspera = (clave: string, ...esperas: number[]): void => {
+    const espera = Math.max(0, ...esperas);
+    if (espera > 0) throw new Fallo(429, clave, { wait: espera });
   };
 
   /** Registrarse, entrar y salir: lo único que se puede pedir sin una sesión abierta. */
@@ -284,21 +315,70 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       return { estado: 200, cuerpo: { ok: true } };
     }
     if (e.metodo !== "POST") throw new Fallo(405, "method");
-    const quien = createHash("sha256").update(String(dado.email).trim().toLowerCase()).digest("hex");
+    const cliente = e.cliente;
+    // El correo se cuenta igual que se entra: normalizado. Uno que no tiene forma de correo no entra en ninguna
+    // cuenta, pero cuesta lo mismo: cuenta para el cliente y para toda la casa.
+    const correo = correoQueVale(dado.email);
+    const par = `${correo ?? "-"}|${cliente ?? "-"}`;
+    if (cliente !== null) siEspera("too_many_attempts", frenos.intentosPorCliente.espera(cliente));
+    const enLaCasa = frenos.intentosEnLaCasa.espera(CASA);
+    if (enLaCasa > 0) throw new Fallo(503, "busy", { wait: enLaCasa });
     if (raiz === "cuentas") {
-      try {
-        await registrar({ correo: dado.email, contrasena: dado.password, mesa: o.mesa, cuando: hoy() });
-      } catch (error) {
-        if (error instanceof FalloDeCuenta) throw new Fallo(error.message === "exists" ? 409 : 400, error.message);
-        throw error;
-      }
-    } else if (espera(quien) > 0) throw new Fallo(429, "too_many_attempts", { wait: espera(quien) });
-    const dentro = await entrar({ correo: dado.email, contrasena: dado.password, mesa: o.mesa, cuando: hoy() });
+      if (cliente !== null) siEspera("too_many_attempts", frenos.registrosPorCliente.espera(cliente));
+      const registros = frenos.registrosEnLaCasa.espera(CASA);
+      if (registros > 0) throw new Fallo(503, "busy", { wait: registros });
+      if (cuantasCuentas(o.mesa) >= f.cuentasDeLaCasa) throw new Fallo(503, "house_full");
+    } else {
+      siEspera(
+        "too_many_attempts",
+        frenos.fallosPorPar.espera(par),
+        cliente === null ? 0 : frenos.fallosPorCliente.espera(cliente),
+        // Lo que se falla con un correo desde muchos sitios no frena a quien entra desde donde ya entró.
+        correo === null || yaEntraron.conoce(correo, cliente) ? 0 : frenos.fallosPorCorreo.espera(correo),
+      );
+    }
+    if (cliente !== null) frenos.intentosPorCliente.apunta(cliente);
+    frenos.intentosEnLaCasa.apunta(CASA);
+
+    let dentro: { sesion: string; cuenta: Cuenta } | null;
+    try {
+      dentro = await unaContrasena(async () => {
+        if (raiz === "sesiones")
+          return entrar({
+            correo: dado.email,
+            contrasena: dado.password,
+            mesa: o.mesa,
+            cuando: hoy(),
+            sesiones: f.sesionesDeUnaCuenta,
+          });
+        try {
+          const cuenta = await registrar({
+            correo: dado.email,
+            contrasena: dado.password,
+            mesa: o.mesa,
+            cuando: hoy(),
+          });
+          return { cuenta, sesion: abrirSesion(cuenta, o.mesa, hoy(), f.sesionesDeUnaCuenta) };
+        } catch (error) {
+          if (error instanceof FalloDeCuenta) throw new Fallo(error.message === "exists" ? 409 : 400, error.message);
+          throw error;
+        }
+      });
+    } catch (error) {
+      if (error instanceof Ocupado) throw new Fallo(503, "busy", { wait: error.espera });
+      throw error;
+    }
     if (dentro === null) {
-      fallo(quien);
+      frenos.fallosPorPar.apunta(par);
+      if (cliente !== null) frenos.fallosPorCliente.apunta(cliente);
+      if (correo !== null) frenos.fallosPorCorreo.apunta(correo);
       throw new Fallo(401, "bad_login");
     }
-    fallos.delete(quien);
+    if (raiz === "cuentas") {
+      if (cliente !== null) frenos.registrosPorCliente.apunta(cliente);
+      frenos.registrosEnLaCasa.apunta(CASA);
+    } else frenos.fallosPorPar.olvida(par);
+    if (correo !== null) yaEntraron.apunta(correo, cliente);
     return {
       estado: raiz === "cuentas" ? 201 : 200,
       cuerpo: { account: deCara(dentro.cuenta), session: dentro.sesion },
@@ -324,6 +404,15 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         // Una clave se comprueba contra la IA antes de guardarla, si la casa tiene con qué. Lo que no tiene forma de
         // clave no llega a salir de aquí.
         if (o.claveQueFunciona !== undefined && claveQueVale(dado)) {
+          // Cada comprobación es una pregunta a la IA: con freno, para que la puerta no sirva para saber qué claves
+          // siguen valiendo.
+          siEspera(
+            "too_many_attempts",
+            frenos.clavesPorCuenta.espera(cuenta.id),
+            p.cliente === null ? 0 : frenos.clavesPorCliente.espera(p.cliente),
+          );
+          frenos.clavesPorCuenta.apunta(cuenta.id);
+          if (p.cliente !== null) frenos.clavesPorCliente.apunta(p.cliente);
           let sirve: boolean;
           try {
             sirve = await o.claveQueFunciona(dado);
@@ -513,7 +602,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (p.metodo === "GET") return { estado: 200, cuerpo: { trips: listar(p.dueno) } };
       if (p.metodo === "POST") {
         if (!objeto(p.cuerpo) || !objeto(p.cuerpo.understood)) throw new Fallo(400, "bad_request");
-        if (viajesDe(p.dueno, o.mesa).length >= VIAJES_DE_UN_DUENO) throw new Fallo(429, "too_many_trips");
+        if (viajesDe(p.dueno, o.mesa).length >= f.viajes.deUnDueno) throw new Fallo(429, "too_many_trips");
+        if (cuantosViajes(o.mesa) >= f.viajes.enLaCasa) throw new Fallo(503, "house_full");
         const v = abrirViaje({ dueno: p.dueno, entendido: p.cuerpo.understood, mesa: o.mesa, cuando: hoy() });
         return { estado: 201, cuerpo: { trip: resumen(v) } };
       }
@@ -578,8 +668,15 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   function escuchar(p: Peticion, req: IncomingMessage, res: ServerResponse): void {
     const v = suViaje(p);
     const id = v.ficha.id;
-    if ((oyentes.get(id) ?? 0) >= OYENTES_DE_UN_VIAJE) throw new Fallo(429, "too_many_listeners");
+    const dueno = p.dueno;
+    if (
+      (oyentes.get(id) ?? 0) >= f.oyentes.deUnViaje ||
+      (oyentesDeCuenta.get(dueno) ?? 0) >= f.oyentes.deUnaCuenta ||
+      abiertos.size >= f.oyentes.enLaCasa
+    )
+      throw new Fallo(429, "too_many_listeners");
     oyentes.set(id, (oyentes.get(id) ?? 0) + 1);
+    oyentesDeCuenta.set(dueno, (oyentesDeCuenta.get(dueno) ?? 0) + 1);
     abiertos.add(res);
     res.writeHead(200, {
       "content-type": "text/event-stream; charset=utf-8",
@@ -611,7 +708,14 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const soltar = (): void => {
       clearInterval(reloj);
       clearInterval(latido);
-      if (abiertos.delete(res)) oyentes.set(id, Math.max(0, (oyentes.get(id) ?? 1) - 1));
+      if (!abiertos.delete(res)) return;
+      // Lo que llega a cero se quita, para que los contadores no crezcan con cada viaje escuchado.
+      const quedan = (oyentes.get(id) ?? 1) - 1;
+      if (quedan > 0) oyentes.set(id, quedan);
+      else oyentes.delete(id);
+      const suyos = (oyentesDeCuenta.get(dueno) ?? 1) - 1;
+      if (suyos > 0) oyentesDeCuenta.set(dueno, suyos);
+      else oyentesDeCuenta.delete(dueno);
     };
     req.on("close", soltar);
     res.on("close", soltar);
@@ -650,14 +754,14 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (!conLlave(req)) throw new Fallo(401, "unauthorized");
         const metodo = req.method ?? "GET";
         const sesion = req.headers[CABECERA_DE_LA_SESION];
+        const dicho = req.headers[CABECERA_DEL_CLIENTE];
+        const cliente = typeof dicho === "string" && /^[A-Za-z0-9_-]{8,128}$/.test(dicho) ? dicho : null;
         if (partes.length === 1 && partes[0] === "vistazo") {
-          const dicho = req.headers[CABECERA_DEL_CLIENTE];
-          const cliente = typeof dicho === "string" && /^[A-Za-z0-9_-]{8,128}$/.test(dicho) ? dicho : null;
           const r = await vistazo(metodo, await cuerpoDe(req), cliente);
           return responder(res, r.estado, r.cuerpo);
         }
         // Registrarse, entrar y salir es lo único que no pide una sesión abierta.
-        const sinSesion = await deLaCuenta({ metodo, partes, cuerpo: null, sesion }, () => cuerpoDe(req));
+        const sinSesion = await deLaCuenta({ metodo, partes, cuerpo: null, sesion, cliente }, () => cuerpoDe(req));
         if (sinSesion !== null) return responder(res, sinSesion.estado, sinSesion.cuerpo);
         const cuenta = sesionDe(sesion, o.mesa, hoy());
         if (cuenta === null) throw new Fallo(401, "no_session");
@@ -668,6 +772,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           dueno: cuenta.id,
           cuerpo: null,
           cuenta,
+          cliente,
         };
         if (partes[0] === "viajes" && partes[2] === "eventos" && partes.length === 3) {
           if (p.metodo !== "GET") throw new Fallo(405, "method");

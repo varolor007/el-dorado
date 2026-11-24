@@ -3,6 +3,7 @@
 //   cuentas/<id>.json            la cuenta: su correo, su contraseña (nunca tal cual) y su clave de IA, cifrada
 //   cuentas/por-correo/<huella>  de un correo a su cuenta; el nombre del archivo es una huella, no el correo
 //   sesiones/<huella>.json       cada sesión abierta; el nombre es la huella de su llave, que no se guarda
+//   sesiones/de/<id>/<huella>    las sesiones de cada cuenta, para llevar su tope
 //
 // La contraseña se guarda pasada por scrypt, con su sal. La llave de una sesión es larga y al azar, y de ella solo se
 // guarda la huella: quien lea la mesa no puede entrar con lo que encuentre. La clave de IA se guarda cifrada con un
@@ -16,8 +17,9 @@ import {
   scrypt as scryptDeNode,
   timingSafeEqual,
 } from "node:crypto";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { FRENOS_DE_LA_PUERTA } from "../data/frenos.ts";
 import { carpetaDeLaMesa, dentroDelRepositorio, guardarJson } from "./mesa.ts";
 
 /** Lo que mide una contraseña, lo que dura una sesión y lo que mide una clave de IA. */
@@ -49,14 +51,21 @@ export class FalloDeCuenta extends Error {}
 const ID = /^u-[0-9a-f]{32}$/;
 const huellaDe = (texto: string): string => createHash("sha256").update(texto).digest("hex");
 
-function carpetas(mesa: string): { cuentas: string; correos: string; sesiones: string } {
+function carpetas(mesa: string): { cuentas: string; correos: string; sesiones: string; deCadaCuenta: string } {
   if (dentroDelRepositorio(mesa)) throw new Error("la mesa no puede estar dentro del repositorio");
   const raiz = resolve(mesa);
   return {
     cuentas: join(raiz, "cuentas"),
     correos: join(raiz, "cuentas", "por-correo"),
     sesiones: join(raiz, "sesiones"),
+    deCadaCuenta: join(raiz, "sesiones", "de"),
   };
+}
+
+/** Cuántas cuentas hay en la casa. */
+export function cuantasCuentas(mesa: string = carpetaDeLaMesa()): number {
+  const donde = carpetas(mesa).correos;
+  return existsSync(donde) ? readdirSync(donde).length : 0;
 }
 
 /** El correo, como se compara: sin espacios alrededor y en minúsculas. Null si no tiene forma de correo. */
@@ -129,6 +138,7 @@ export function publica(c: Cuenta): CuentaPublica {
 }
 
 export type AlRegistrar = { correo: unknown; contrasena: unknown; mesa?: string; cuando?: Date };
+export type AlEntrar = AlRegistrar & { sesiones?: number };
 
 /** Abre una cuenta con un correo y una contraseña. Un correo, una cuenta. */
 export async function registrar(o: AlRegistrar): Promise<Cuenta> {
@@ -161,8 +171,6 @@ export async function registrar(o: AlRegistrar): Promise<Cuenta> {
 /** Una sal de mentira, para que comprobar un correo que no existe tarde lo mismo que uno que sí. */
 const SAL_DE_NADIE = randomBytes(16);
 
-export type AlEntrar = { correo: unknown; contrasena: unknown; mesa?: string; cuando?: Date };
-
 /**
  * Abre una sesión si el correo y la contraseña casan. Si no, null, sea porque no hay tal cuenta o porque la
  * contraseña no es: quien prueba no llega a saber cuál de las dos.
@@ -182,16 +190,60 @@ export async function entrar(o: AlEntrar): Promise<{ sesion: string; cuenta: Cue
   const dada = await pasar(contrasena, Buffer.from(g.sal, "hex"), g);
   const buena = Buffer.from(g.huella, "hex");
   if (cuenta === null || buena.length !== dada.length || !timingSafeEqual(dada, buena)) return null;
-  const cuando = o.cuando ?? new Date();
-  const sesion = randomBytes(32).toString("base64url");
+  return { sesion: abrirSesion(cuenta, mesa, o.cuando ?? new Date(), o.sesiones), cuenta };
+}
+
+/**
+ * Abre una sesión de una cuenta y devuelve su llave. Una cuenta no tiene más de un tope de sesiones: las caducadas
+ * se quitan, y si aún sobran, se cierra la más vieja.
+ */
+export function abrirSesion(
+  cuenta: Cuenta,
+  mesa: string = carpetaDeLaMesa(),
+  cuando: Date = new Date(),
+  tope: number = FRENOS_DE_LA_PUERTA.sesionesDeUnaCuenta,
+): string {
   const donde = carpetas(mesa);
-  mkdirSync(donde.sesiones, { recursive: true, mode: 0o700 });
-  guardarJson(join(donde.sesiones, `${huellaDe(sesion)}.json`), {
+  const suyas = join(donde.deCadaCuenta, cuenta.id);
+  mkdirSync(suyas, { recursive: true, mode: 0o700 });
+  const abiertas: { huella: string; creada: string }[] = [];
+  for (const huella of readdirSync(suyas)) {
+    const principal = join(donde.sesiones, `${huella}.json`);
+    type Abierta = { cuenta?: string; creada?: string; caduca?: string };
+    let s: Abierta | null;
+    try {
+      s = JSON.parse(readFileSync(principal, "utf8")) as Abierta;
+    } catch {
+      s = null;
+    }
+    if (s === null || s.cuenta !== cuenta.id || !(Date.parse(s.caduca ?? "") > cuando.getTime())) {
+      if (s?.cuenta === cuenta.id) rmSync(principal, { force: true });
+      rmSync(join(suyas, huella), { force: true });
+    } else {
+      let orden = "";
+      try {
+        orden = readFileSync(join(suyas, huella), "utf8");
+      } catch {
+        // Sin orden, cuenta como la más vieja.
+      }
+      abiertas.push({ huella, creada: `${s.creada ?? ""}|${orden}` });
+    }
+  }
+  abiertas.sort((a, b) => a.creada.localeCompare(b.creada));
+  for (const vieja of abiertas.slice(0, Math.max(0, abiertas.length - Math.max(1, tope) + 1))) {
+    rmSync(join(donde.sesiones, `${vieja.huella}.json`), { force: true });
+    rmSync(join(suyas, vieja.huella), { force: true });
+  }
+  const sesion = randomBytes(32).toString("base64url");
+  const huella = huellaDe(sesion);
+  guardarJson(join(donde.sesiones, `${huella}.json`), {
     cuenta: cuenta.id,
     creada: cuando.toISOString(),
     caduca: new Date(cuando.getTime() + DIAS_DE_UNA_SESION * 86_400_000).toISOString(),
   });
-  return { sesion, cuenta };
+  // Lo que ordena las sesiones de una cuenta abiertas en el mismo instante: el reloj fino de esta casa.
+  writeFileSync(join(suyas, huella), String(process.hrtime.bigint()).padStart(24, "0"), { mode: 0o600 });
+  return sesion;
 }
 
 /** De quién es una sesión, si existe y no ha caducado. */
@@ -201,7 +253,7 @@ export function sesionDe(sesion: unknown, mesa: string = carpetaDeLaMesa(), cuan
   try {
     const s = JSON.parse(readFileSync(ruta, "utf8")) as { cuenta: string; caduca: string };
     if (!(Date.parse(s.caduca) > cuando.getTime())) {
-      rmSync(ruta, { force: true });
+      salir(sesion, mesa);
       return null;
     }
     return leerCuenta(mesa, s.cuenta);
@@ -213,7 +265,16 @@ export function sesionDe(sesion: unknown, mesa: string = carpetaDeLaMesa(), cuan
 /** Cierra una sesión. Cerrar una que no existe no es un error. */
 export function salir(sesion: unknown, mesa: string = carpetaDeLaMesa()): void {
   if (typeof sesion !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(sesion)) return;
-  rmSync(join(carpetas(mesa).sesiones, `${huellaDe(sesion)}.json`), { force: true });
+  const donde = carpetas(mesa);
+  const huella = huellaDe(sesion);
+  const ruta = join(donde.sesiones, `${huella}.json`);
+  try {
+    const { cuenta } = JSON.parse(readFileSync(ruta, "utf8")) as { cuenta: string };
+    if (ID.test(cuenta)) rmSync(join(donde.deCadaCuenta, cuenta, huella), { force: true });
+  } catch {
+    // No estaba abierta, o no se deja leer: se quita igual.
+  }
+  rmSync(ruta, { force: true });
 }
 
 // La clave de IA del viajero: cifrada con el secreto de la casa. De ella solo se enseña cómo acaba.

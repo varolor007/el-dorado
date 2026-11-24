@@ -586,6 +586,11 @@ Lo que deja la obra del 24-nov, a decisión del PM:
 
 - **Los números del buscador de webs**: 8 búsquedas, 12 páginas y 6 vueltas por asiento, de partida. Y si el lector
   se cierra por dominios en algún asiento (los oficiales, en el de los papeles).
+- **Los números de los frenos de la puerta** (`agent/data/frenos.ts`): cinco fallos por correo y sitio, treinta por
+  correo y veinte por sitio, en un cuarto de hora; treinta intentos por sitio y seiscientos en la casa; cinco
+  registros por sitio y sesenta en la casa, por hora; cinco mil cuentas; cuatro contraseñas a la vez; veinte
+  sesiones por cuenta; y los del primer vistazo, que cinco direcciones agotan (la sesión de obra propone cuatro
+  por sitio y ciento veinte en la casa, y mirar el cupo de verdad de las fuentes).
 - **«Volver a intentarlo»**: tres veces como mucho por investigación, de partida; y qué hace cuando se llegó al
   techo de gasto (hoy empieza otra vez, con todo su gasto; con la web de hoy, sin techo, no pasa).
 - **Hasta dónde llega el conductor**: hoy, una vuelta de más y dentro del techo. Si algún día puede seguir sin una

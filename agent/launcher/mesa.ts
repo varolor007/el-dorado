@@ -194,6 +194,12 @@ export function leerViaje(id: string, dueno: string, mesa: string = carpetaDeLaM
   return { carpeta, ficha };
 }
 
+/** Cuántos viajes hay en toda la casa, de todos los dueños. */
+export function cuantosViajes(mesa: string = carpetaDeLaMesa()): number {
+  const carpeta = carpetaDeViajes(resolve(mesa));
+  return existsSync(carpeta) ? readdirSync(carpeta).length : 0;
+}
+
 /** Los viajes de un dueño, del último que cambió al primero. Los de otros no salen. */
 export function viajesDe(dueno: string, mesa: string = carpetaDeLaMesa()): Ficha[] {
   const carpeta = carpetaDeViajes(resolve(mesa));
