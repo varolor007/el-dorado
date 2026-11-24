@@ -186,11 +186,19 @@ const en = {
     paradas: (n: number) => EN.cuenta(n, "stop", "stops"),
     sinParadas: "A free day.",
     andando: (lejos: string, min: number) => `${lejos} on foot, about ${min} min`,
+    // A pie, medido por la fuente de rutas, con sus cuestas: no es una cuenta.
+    andandoMedido: (lejos: string, min: number) => `${lejos} on foot, ${min} min`,
     // Un trayecto que no se anda: lo que hay y las maneras que tienen sentido, con un tiempo aproximado.
-    cogiendo: (lejos: string, min: number, maneras: string[]) => `${lejos}: ${maneras.join(" or ")}, about ${min} min`,
+    cogiendo: (lejos: string, min: number, maneras: string[]) =>
+      `${lejos}: ${maneras.join(" or ")}, about ${min} min (rough estimate)`,
+    // Lo mismo, con el coche medido por la fuente de rutas: sin tráfico.
+    enCoche: (lejos: string, min: number, maneras: string[]) =>
+      `${lejos}: ${maneras.join(" or ")}; by car, ${min} min without traffic`,
     maneraDeIr: { walk: "on foot", transit: "by public transport", car: "by car" } as Record<string, string>,
     noSeAnda:
       "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet.",
+    noSeAndaSinTrafico:
+      "Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates: what transport there is and what it costs is not known yet.",
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
     comoIr: "See how to get there, in Google Maps",
@@ -772,10 +780,14 @@ const es: Textos = {
     paradas: (n) => ES.cuenta(n, "parada", "paradas"),
     sinParadas: "Un día libre.",
     andando: (lejos, min) => `${lejos} andando, unos ${min} min`,
-    cogiendo: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}, unos ${min} min`,
+    andandoMedido: (lejos, min) => `${lejos} andando, ${min} min`,
+    cogiendo: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}, unos ${min} min (cálculo aproximado)`,
+    enCoche: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}; en coche, ${min} min sin tráfico`,
     maneraDeIr: { walk: "a pie", transit: "en transporte", car: "en coche" },
     noSeAnda:
       "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
+    noSeAndaSinTrafico:
+      "Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
     comoIr: "Ver cómo ir, en Google Maps",

@@ -500,6 +500,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **La cuenta del PM, estrenada** (la sesión). Las dos llamadas de prueba se hicieron en la sesión de siempre, que
   es donde el PM dio su sí, cuando al reiniciarse ya veía su token: la sesión auxiliar no pudo, porque allí nadie lo
   había aprobado, y no se rodeó. Con las dos bien, se lanzó la primera investigación entera.
+- **Cómo quedan los caminos de verdad** (una sesión de obra, revisada por quien orquesta). Se piden de donde se
+  duerme a cada parada elegida y de parada a parada, no entre todos los sitios que se dan a elegir, que no cabrían
+  en ningún cupo. A pie, lo que en línea recta se alcanza andando; en coche, lo que no se anda, hasta 100 km y en un
+  solo sentido. Con tope de 600 casillas por viaje: primero lo que sirve para elegir dónde dormir. Si la fuente
+  falla a medias, lo que llegó se usa y lo demás va con la cuenta de la casa, con su aviso. En la web, lo medido se
+  dice tal cual, el coche dice «sin tráfico», y lo que sale de la cuenta de la casa dice que es aproximado.
 
 ## Pendientes
 

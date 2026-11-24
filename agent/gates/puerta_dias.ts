@@ -8,6 +8,7 @@ import { DIA_ENTERO, IMPRESCINDIBLES_POR_NOCHE, MINUTOS_DE_VISITA, RESERVAR } fr
 import { TRAYECTO_DE_UN_DIA } from "../data/moverse.ts";
 import type { Dia, Parada } from "../output/viaje.ts";
 import { MOMENTOS_DEL_DIA } from "../scripts/formas.ts";
+import { caminosDe, trayectoEntre, type TablaDeCaminos } from "../tools/caminos.ts";
 import { trayecto } from "../tools/distancias.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
@@ -95,6 +96,8 @@ export type Repartido = {
   fuera: string[];
   porQue: Record<string, string>;
   sitios: string[];
+  /** La tabla de caminos con la que se repartieron, si la hay: la puerta mide cada trayecto con ella. */
+  caminos?: TablaDeCaminos | null;
 };
 
 /** Los porqués que valen para dejar fuera algo imprescindible: no los pone el viajero, los mide el código. */
@@ -105,6 +108,7 @@ export function puertaDias(r: Repartido): Veredicto {
   const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
   const dados = new Set(r.sitios);
   const porId = new Map(r.paradas.map((p) => [p.id, p]));
+  const c = caminosDe(r.caminos);
 
   for (const p of r.paradas) {
     const donde = `paradas.${p.id}`;
@@ -125,8 +129,13 @@ export function puertaDias(r: Repartido): Veredicto {
       puestas.push(id);
     }
     dia.metros.forEach((metros, j) => {
-      // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger.
-      const ir = trayecto(metros);
+      // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger. Con
+      // la tabla de caminos, lo que dijo la fuente entre esas dos paradas; sin ella, la cuenta de la casa.
+      const de = porId.get(dia.paradas[j])?.punto;
+      const a = porId.get(dia.paradas[j + 1])?.punto;
+      const ir = c !== undefined && de !== undefined && a !== undefined ? trayectoEntre(de, a, c) : trayecto(metros);
+      if (c !== undefined && ir.metros !== metros)
+        rojo(donde, `de la parada ${j + 1} a la ${j + 2} dice ${metros} m, y el camino tiene ${ir.metros}`);
       minutos += ir.minutos;
       if (!(metros >= 0) || ir.minutos > TRAYECTO_DE_UN_DIA)
         rojo(donde, `de la parada ${j + 1} a la ${j + 2} hay ${metros} m: ese trayecto no cabe dentro de un día`);

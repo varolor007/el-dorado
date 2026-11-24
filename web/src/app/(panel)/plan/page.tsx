@@ -130,7 +130,9 @@ export default function Planear() {
   const reparto = useMemo(() => {
     if (viaje === null) return { dias: [], fuera: [], porQue: {} };
     const fechas = fechasDe(viaje.entrada, viaje.salida);
-    return repartir(viaje.paradas, fechas, ritmo, cama?.punto ?? viaje.destino.punto, { quitadas, anadidas, fijadas });
+    const base = cama?.punto ?? viaje.destino.punto;
+    // Con la tabla de caminos del viaje, si la trae: los mismos números que la casa.
+    return repartir(viaje.paradas, fechas, ritmo, base, { quitadas, anadidas, fijadas }, viaje.caminos);
   }, [viaje, ritmo, cama, quitadas, anadidas, fijadas]);
   const deParada = useMemo(() => new Map((viaje?.paradas ?? []).map((p) => [p.id, p])), [viaje]);
 

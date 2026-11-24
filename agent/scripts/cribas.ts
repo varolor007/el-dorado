@@ -16,13 +16,17 @@ import {
 } from "../data/cribas.ts";
 import { COSAS, valorDelNivel } from "../data/gustos.ts";
 import { CAMPOS, GRAVE_REPETIDA, GRAVES, INSTALACIONES, SIN_ORDEN, SIN_SABER } from "../data/niveles.ts";
-import { medianaAndando, medianaDeCamino, trayecto, type Punto } from "../tools/distancias.ts";
+import { aPieEntre, caminosDe, trayectoEntre, type TablaDeCaminos } from "../tools/caminos.ts";
+import { medianaAndando, medianaDeCamino, minutosEntre, trayecto, type Punto } from "../tools/distancias.ts";
 import type { Ficha } from "./busqueda_alojamiento.ts";
 import type { EntregaDeMirar, Gusto } from "./formas.ts";
 
 export type Candidato = { ficha: Ficha; mirado: EntregaDeMirar | null };
-/** Con qué se criba: los gustos del viajero y los sitios a los que va a ir. */
-export type Contexto = { gustos: Gusto[]; paradas: Punto[] };
+/**
+ * Con qué se criba: los gustos del viajero, los sitios a los que va a ir y, si la hay, la tabla de caminos del viaje,
+ * con lo que se tarda de verdad de cada alojamiento a cada sitio.
+ */
+export type Contexto = { gustos: Gusto[]; paradas: Punto[]; caminos?: TablaDeCaminos | null };
 
 export type Parte = keyof typeof PESOS_DEL_ALOJAMIENTO;
 export type Nota = { nota: number | null; partes: Record<Parte, number | null>; sinConfirmar: string[] };
@@ -167,18 +171,36 @@ export function notaDe(c: Candidato, ctx: Contexto, minutos: number | null): Not
   return { nota: pesos === 0 ? null : redondea(suma / pesos), partes, sinConfirmar };
 }
 
+const mediana = (valores: number[]): number | null => {
+  if (valores.length === 0) return null;
+  const v = [...valores].sort((a, b) => a - b);
+  const medio = Math.floor(v.length / 2);
+  return v.length % 2 === 1 ? v[medio] : Math.round((v[medio - 1] + v[medio]) / 2);
+};
+
 /** Las tres cribas, de una vez, sobre unos candidatos. La misma entrada da siempre lo mismo. */
 export function cribar(candidatos: Candidato[], ctx: Contexto): Cribado[] {
   const puntoDe = (c: Candidato): Punto => ({ lat: c.ficha.alojamiento.lat, lon: c.ficha.alojamiento.lon });
-  const andando = candidatos.map((c) => medianaAndando(puntoDe(c), ctx.paradas));
+  const tabla = caminosDe(ctx.caminos);
+  // Con la tabla de caminos, los minutos a pie son los de la fuente, con sus cuestas, y los de lo que no se anda, los
+  // del coche sin tráfico; lo que no está en ella, con la cuenta de la casa. Sin tabla, como siempre.
+  const andando = candidatos.map((c) =>
+    tabla === undefined
+      ? medianaAndando(puntoDe(c), ctx.paradas)
+      : mediana(ctx.paradas.map((p) => aPieEntre(tabla, puntoDe(c), p)?.minutos ?? minutosEntre(puntoDe(c), p))),
+  );
   // ¿Este viaje se anda? Si desde alguno de los candidatos se llega a pie a la mitad de lo que se va a ver antes de
   // que la zona valga cero, sí: la zona se mide andando, y quien queda lejos, pierde. Si desde ninguno se llega, es
   // un viaje en el que hay que coger algo se duerma donde se duerma: la zona se mide con lo que se tarda con la
   // manera que tenga sentido, que es un tiempo aproximado.
   const aPie = andando.every((m) => m === null) || andando.some((m) => m !== null && m <= ZONA.minutosDeCero);
   return candidatos.map((c, i) => {
-    const camino = medianaDeCamino(puntoDe(c), ctx.paradas);
-    const minutos = aPie || camino === null ? andando[i] : trayecto(camino).minutos;
+    let minutos: number | null;
+    if (aPie) minutos = andando[i];
+    else if (tabla === undefined) {
+      const camino = medianaDeCamino(puntoDe(c), ctx.paradas);
+      minutos = camino === null ? andando[i] : trayecto(camino).minutos;
+    } else minutos = mediana(ctx.paradas.map((p) => trayectoEntre(puntoDe(c), p, tabla).minutos)) ?? andando[i];
     const descarte = descarteDe(c, ctx);
     return {
       id: c.ficha.alojamiento.id,

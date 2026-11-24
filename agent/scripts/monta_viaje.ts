@@ -25,6 +25,7 @@ import { MANERAS, PRUEBAS } from "../output/viaje.ts";
 import { elegirFotos } from "../tools/fotos.ts";
 import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
+import type { TablaDeCaminos } from "../tools/caminos.ts";
 import { cribar } from "./cribas.ts";
 import type { Entendido, EntregaDeCruce, EntregaDeExplicar, EntregaDeMirar, Tabla, ZonaResuelta } from "./formas.ts";
 import { fechasDe, repartir } from "./ritmo.ts";
@@ -191,6 +192,8 @@ export type Decidido = {
   avisos: string[];
   /** Lo que el que mira entregó de cada alojamiento, por su identificador. */
   mirados: Record<string, Mirado>;
+  /** La tabla de caminos del viaje, si la hay: viaja con él, para que la web mida con los mismos números. */
+  caminos?: TablaDeCaminos | null;
 };
 
 export function montarViaje(b: Busqueda, d: Decidido): Viaje {
@@ -206,7 +209,8 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
   const base =
     alojamientos.find((a) => a.id === (maneras.find((m) => m.id === "best_value") ?? maneras[0])?.alojamiento)?.punto ??
     ({ lat: b.estancia.lat, lon: b.estancia.lon } satisfies Punto);
-  const reparto = repartir(d.paradas, fechasDe(b.estancia.entrada, b.estancia.salida), d.ritmo, base);
+  const caminos = d.caminos != null && d.caminos.caminos.length > 0 ? d.caminos : null;
+  const reparto = repartir(d.paradas, fechasDe(b.estancia.entrada, b.estancia.salida), d.ritmo, base, {}, caminos);
   const centro = { lat: b.estancia.lat, lon: b.estancia.lon };
   return {
     id: d.id,
@@ -236,6 +240,8 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     // Los dos avisos de siempre los pone aquí la casa, en cualquier viaje que monte: no dependen de quien lo decidió.
     avisos: [...avisosDeSiempre(d.idioma), ...d.avisos.filter((a) => !avisosDeSiempre(d.idioma).includes(a))],
     vistazo: vistazoDe(b),
+    // Un viaje sin tabla de caminos no la lleva: se mide con la cuenta de la casa, como siempre.
+    ...(caminos === null ? {} : { caminos }),
   };
 }
 
@@ -316,6 +322,8 @@ export type Hecho = {
   transporte: Vuelo | null;
   /** Si las fechas no tienen precio de transporte, el más barato de los días de al lado, para decirlo. */
   alLado?: Vuelo | null;
+  /** La tabla de caminos del viaje, si se pidió: lo que dijo la fuente de rutas. */
+  caminos?: TablaDeCaminos | null;
 };
 
 /** Un vuelo como lo enseña la web. El precio que se enseña es el de todos los que viajan, como el del alojamiento. */
@@ -374,7 +382,11 @@ export function montarViajeHecho(h: Hecho): Viaje {
     ];
   });
   const candidatos = h.busqueda.finalistas.map((ficha) => ({ ficha, mirado: h.mirados[ficha.alojamiento.id] ?? null }));
-  const cribados = cribar(candidatos, { gustos: h.viaje.tastes, paradas: h.paradas.map((p) => p.punto) });
+  const cribados = cribar(candidatos, {
+    gustos: h.viaje.tastes,
+    paradas: h.paradas.map((p) => p.punto),
+    caminos: h.caminos,
+  });
   const deCadaAlojamiento: NonNullable<Decidido["deCadaAlojamiento"]> = {};
   for (const c of cribados) {
     const r = h.tabla.rows.find((x) => x.lodging === c.id);
@@ -404,5 +416,6 @@ export function montarViajeHecho(h: Hecho): Viaje {
     palancas,
     avisos: h.explica.unknowns,
     mirados: h.mirados,
+    caminos: h.caminos,
   });
 }

@@ -91,8 +91,15 @@ la orden. **La prueba (24-nov), en once trayectos de clases distintas**: a pie v
 coche, la distancia bien y el tiempo sin tráfico; en transporte público se queda corta (horarios de verdad solo en
 algunas ciudades, nada del tren entre ciudades, y lo aproximado no es de fiar). Sus conclusiones, en
 [fuentes.md](fuentes.md); lo que devolvió, fuera del repositorio. El PM decidió ese día: de momento, lo que se
-pueda (Geoapify para andar y para el coche, y el enlace de cada trayecto; Google en vivo no se contrata). **Falta**
-que la casa use Geoapify, para andar y para el coche, en las cribas, en el ritmo y en la tabla.
+pueda (Geoapify para andar y para el coche, y el enlace de cada trayecto; Google en vivo no se contrata). **Hecho
+(3.14, una sesión de obra, revisada y junta el 24-nov)**: la tabla de caminos de cada viaje
+(`agent/scripts/caminos.ts`, que deja `caminos.json` en el run; la cuenta de un trayecto con ella, en
+`agent/tools/caminos.ts`, sin nada de Node). Viaja en `viaje.caminos`, y la usan las cribas, el ritmo y su puerta,
+la puerta 9 y la web. Su tope es de 600 casillas por viaje (`CASILLAS_POR_VIAJE`, en `agent/data/moverse.ts`), que
+da para unos cinco a nueve viajes al día con el plan gratuito; no se lleva la cuenta del cupo del día entre viajes:
+si se acaba, la fuente falla y se sigue con la cuenta de la casa. `Fuentes.rutas` se enchufa en
+`fuentes_de_verdad.ts` si la fuente está encendida y `GEOAPIFY_KEY` está en el entorno. Falta verlo en un viaje
+entero de verdad.
 
 **Las preguntas de empezar (5.1), por el lado del código.** `agent/scripts/empezar.ts`, sin nada de Node para que lo
 use también la web: `respuestasDe` (lo que ha dicho quien solo eligió dónde y cuándo) y `entendidoDe(respuestas)`,
@@ -164,7 +171,7 @@ que mirar al instalar (que la imagen se construye, que Claude Code piensa con el
 saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
 Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de
 certificados con todo el que la usa: con un subdominio del PM no pasa. **La tercera tanda (24-nov)**, con su
-diseño escrito en el encargo; el que escucha ya está junto, y siguen en marcha: los caminos de verdad en la casa (3.14,
+diseño escrito en el encargo; el que escucha y los caminos ya están juntos, y sigue en marcha el buscador. Fueron: los caminos de verdad en la casa (3.14,
 `claude/eldorado-3-14-caminos`: una tabla de caminos por viaje, a pie y en coche, con tope de casillas, que usan las
 cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la fuente falta) y el que escucha (5.2,
 `claude/eldorado-5-2-el-que-escucha`: las palabras del viajero aparte, su contrato, la mitad de IA de la puerta 1 y

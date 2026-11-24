@@ -25,3 +25,21 @@ export const TRAMO_DE_CERCA = 10_000;
 
 /** El trayecto más largo que cabe dentro de un día, de ida, en minutos. Más allá es otro sitio donde dormir. */
 export const TRAYECTO_DE_UN_DIA = 90;
+
+/**
+ * Lo más que se le pide a la fuente de rutas para un viaje, en casillas (un camino de un punto a otro, por una
+ * manera). Su plan gratuito da 3.000 al día: así caben unos cinco viajes. Es de partida.
+ */
+export const CASILLAS_POR_VIAJE = 600;
+
+/**
+ * Hasta dónde se le pide el coche, en línea recta y en metros: más allá, nada cabe en un día, vaya como vaya. Es
+ * holgado a propósito: por autopista se llega más lejos que con la cuenta de la casa.
+ */
+export const EN_COCHE_HASTA = 100_000;
+
+/**
+ * Cuánto de más se puede pedir al juntar pares en una matriz, sobre lo que hace falta: una matriz pide todos sus
+ * cruces, y alguno no se necesita. Un cuarto.
+ */
+export const HOLGURA_DE_UNA_MATRIZ = 0.25;
