@@ -66,8 +66,10 @@ verdad; `sucesos.json` sigue siendo la versión comprimida para volver a verla).
 techo de gasto) ni por encima de ese techo. Quién piensa en el asiento es el `Lanzador` que se le pasa: en las
 pruebas, uno de mentira (`tests/cases/inventado/asientos.ts`). Y la puerta de la casa a la web, por el lado de la casa (2.8:
 `agent/launcher/puerta_a_la_web.ts`, `puertaALaWeb(opciones)`): un servidor sin dependencias, con la llave de la
-web (`Authorization: Bearer`), el dueño de cada petición en la cabecera `x-eldorado-owner` y lo que pasa en vivo
-por sucesos del servidor (`/viajes/<id>/eventos`). Aún no tiene orden de arranque: se arranca con su lanzador de la
+web (`Authorization: Bearer`), la sesión del viajero en la cabecera `x-eldorado-session` y lo que pasa en vivo
+por sucesos del servidor (`/viajes/<id>/eventos`). Y las cuentas, por el lado de la casa (11.1 y 11.2:
+`agent/launcher/cuentas.ts`): registro con correo y contraseña, sesión y la clave de IA de cada cuenta, cifrada con
+el secreto de la casa, que se le pasa a la puerta (`secreto`, 32 bytes; en el entorno, `ELDORADO_SECRETO`). Aún no tiene orden de arranque: se arranca con su lanzador de la
 IA de verdad, que es el 2.7. Lo siguiente, cuando el PM decida: el lanzador de la IA de verdad (2.7), el lado de la
 web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). **Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada
 directa por asiento («lo de la llamada directa me parece bien»); uno se registra bien, con su cuenta, sin llave de

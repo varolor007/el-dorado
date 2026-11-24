@@ -1,20 +1,26 @@
-// La puerta de la casa a la web: lo único que la web puede pedir. La web entra con su llave y dice de quién es cada
-// petición; la casa solo da cada viaje a su dueño, y cuenta en vivo lo que pasa mientras se investiga.
+// La puerta de la casa a la web: lo único que la web puede pedir. La web entra con su llave; el viajero, con su
+// cuenta: la casa sabe de quién es cada petición por su sesión, y solo da cada viaje a su dueño. Mientras se
+// investiga, cuenta en vivo lo que pasa.
 //
 // Lo que sale por aquí lo lee un viajero: van claves y números, nunca el porqué de un rojo, ni el nombre de un
-// asiento, ni una ruta del disco. La clave de IA del viajero entra con su botón y vive solo en la memoria de esta
-// casa mientras investiga: no se escribe en ningún sitio.
+// asiento, ni una ruta del disco, ni una contraseña, ni una clave de IA. La clave de IA se guarda cifrada en su
+// cuenta y solo se descifra para lanzar su investigación.
 //
-//   GET  /salud                      sin llave: que la casa está
-//   GET  /viajes                     los viajes del dueño
-//   POST /viajes                     abre un viaje con lo entendido hasta ahora
-//   GET  /viajes/<id>                cómo está, y por dónde va su investigación
-//   PUT  /viajes/<id>/entendido      cambia lo entendido, mientras no esté confirmado
-//   POST /viajes/<id>/empezar        el botón: confirma, da el adelante con su techo y lanza la investigación
-//   GET  /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
-//   GET  /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
+//   GET    /salud                      sin llave: que la casa está
+//   POST   /cuentas                    registrarse, con correo y contraseña; deja la sesión abierta
+//   POST   /sesiones                   entrar
+//   DELETE /sesiones                   salir
+//   GET    /cuenta                     quién soy, y si tengo puesta mi clave de IA
+//   PUT    /cuenta/clave               pone mi clave de IA        DELETE la borra
+//   GET    /viajes                     mis viajes
+//   POST   /viajes                     abre un viaje con lo entendido hasta ahora
+//   GET    /viajes/<id>                cómo está, y por dónde va su investigación
+//   PUT    /viajes/<id>/entendido      cambia lo entendido, mientras no esté confirmado
+//   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante con su techo y lanza la investigación
+//   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
+//   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { join } from "node:path";
@@ -22,6 +28,18 @@ import { PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Lanzador } from "./asiento.ts";
 import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
+import {
+  borrarClave,
+  claveDe,
+  entrar,
+  FalloDeCuenta,
+  guardarClave,
+  publica,
+  registrar,
+  salir,
+  sesionDe,
+  type Cuenta,
+} from "./cuentas.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import {
   abrirViaje,
@@ -43,13 +61,17 @@ import { leerVivo } from "./vivo.ts";
 export const PESO_DE_UNA_PETICION = 64 * 1024;
 export const VIAJES_DE_UN_DUENO = 200;
 export const OYENTES_DE_UN_VIAJE = 8;
-/** La cabecera donde la web dice de quién es la petición. */
-export const CABECERA_DEL_DUENO = "x-eldorado-owner";
+/** La cabecera donde la web pasa la sesión del viajero, que guarda en una cookie que su navegador no deja leer. */
+export const CABECERA_DE_LA_SESION = "x-eldorado-session";
+/** Cuántas veces se puede fallar al entrar con un correo, y en cuánto tiempo, antes de tener que esperar. */
+export const INTENTOS_DE_ENTRAR = { fallos: 5, minutos: 15 };
 
 export type OpcionesDeLaPuerta = {
   mesa: string;
   /** La llave con la que entra la web. Larga: no es una contraseña de persona. */
   llave: string;
+  /** El secreto con el que se cifra la clave de IA de cada cuenta: 32 bytes, del entorno de la casa. */
+  secreto: Buffer;
   fuentes: () => Fuentes;
   /** Quien piensa en los asientos, para la clave de IA de un viajero. Sin él, el botón dice que no hay IA. */
   lanzador?: (clave: string) => Lanzador;
@@ -70,6 +92,7 @@ export type Puerta = {
 };
 
 type Peticion = { metodo: string; partes: string[]; consulta: URLSearchParams; dueno: string; cuerpo: unknown };
+type Entrada = { metodo: string; partes: string[]; cuerpo: unknown; sesion: unknown };
 type Respuesta = { estado: number; cuerpo: unknown };
 
 class Fallo extends Error {
@@ -152,11 +175,83 @@ function contado(run: string, desde: number): unknown[] {
 
 export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   if (o.llave.length < 24) throw new Error("la llave de la web es demasiado corta");
+  if (o.secreto.length !== 32) throw new Error("el secreto de la casa tiene que ser de 32 bytes");
   const llave = Buffer.from(o.llave);
   const hoy = o.hoy ?? ((): Date => new Date());
   const marchas = new Map<string, Promise<void>>();
   const oyentes = new Map<string, number>();
   const abiertos = new Set<ServerResponse>();
+  const fallos = new Map<string, { n: number; desde: number }>();
+
+  /** Lo que queda de espera, en segundos, para volver a probar con ese correo; cero si se puede. */
+  const espera = (quien: string): number => {
+    const f = fallos.get(quien);
+    const ventana = INTENTOS_DE_ENTRAR.minutos * 60_000;
+    if (f === undefined || hoy().getTime() - f.desde >= ventana) {
+      fallos.delete(quien);
+      return 0;
+    }
+    return f.n >= INTENTOS_DE_ENTRAR.fallos ? Math.ceil((f.desde + ventana - hoy().getTime()) / 1000) : 0;
+  };
+  const fallo = (quien: string): void => {
+    if (fallos.size > 10_000) fallos.clear();
+    const f = fallos.get(quien) ?? { n: 0, desde: hoy().getTime() };
+    fallos.set(quien, { n: f.n + 1, desde: f.desde });
+  };
+
+  /** Registrarse, entrar y salir: lo único que se puede pedir sin una sesión abierta. */
+  async function deLaCuenta(e: Entrada, cuerpo: () => Promise<unknown>): Promise<Respuesta | null> {
+    const [raiz, mas] = e.partes;
+    if (mas !== undefined || (raiz !== "cuentas" && raiz !== "sesiones")) return null;
+    const leido = await cuerpo();
+    const dado = objeto(leido) ? leido : {};
+    if (raiz === "sesiones" && e.metodo === "DELETE") {
+      salir(e.sesion, o.mesa);
+      return { estado: 200, cuerpo: { ok: true } };
+    }
+    if (e.metodo !== "POST") throw new Fallo(405, "method");
+    const quien = createHash("sha256").update(String(dado.email).trim().toLowerCase()).digest("hex");
+    if (raiz === "cuentas") {
+      try {
+        await registrar({ correo: dado.email, contrasena: dado.password, mesa: o.mesa, cuando: hoy() });
+      } catch (error) {
+        if (error instanceof FalloDeCuenta) throw new Fallo(error.message === "exists" ? 409 : 400, error.message);
+        throw error;
+      }
+    } else if (espera(quien) > 0) throw new Fallo(429, "too_many_attempts", { wait: espera(quien) });
+    const dentro = await entrar({ correo: dado.email, contrasena: dado.password, mesa: o.mesa, cuando: hoy() });
+    if (dentro === null) {
+      fallo(quien);
+      throw new Fallo(401, "bad_login");
+    }
+    fallos.delete(quien);
+    return {
+      estado: raiz === "cuentas" ? 201 : 200,
+      cuerpo: { account: publica(dentro.cuenta), session: dentro.sesion },
+    };
+  }
+
+  /** Mi cuenta y mi clave de IA: de la clave solo sale cómo acaba. */
+  function miCuenta(p: Peticion, cuenta: Cuenta): Respuesta | null {
+    const [raiz, que, mas] = p.partes;
+    if (raiz !== "cuenta" || mas !== undefined) return null;
+    if (que === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      return { estado: 200, cuerpo: { account: publica(cuenta) } };
+    }
+    if (que !== "clave") throw NO_HAY();
+    try {
+      if (p.metodo === "PUT") {
+        const dado = objeto(p.cuerpo) ? p.cuerpo.key : undefined;
+        return { estado: 200, cuerpo: { account: publica(guardarClave(cuenta.id, dado, o.secreto, o.mesa, hoy())) } };
+      }
+      if (p.metodo === "DELETE") return { estado: 200, cuerpo: { account: publica(borrarClave(cuenta.id, o.mesa)) } };
+    } catch (error) {
+      if (error instanceof FalloDeCuenta) throw new Fallo(400, error.message);
+      throw error;
+    }
+    throw new Fallo(405, "method");
+  }
 
   const conLlave = (req: IncomingMessage): boolean => {
     const dada = Buffer.from(/^Bearer (.+)$/.exec(req.headers.authorization ?? "")?.[1] ?? "");
@@ -179,10 +274,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
     const techo = pedido.ceiling;
-    const clave = pedido.key;
     if (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0) throw new Fallo(400, "bad_ceiling");
-    if (typeof clave !== "string" || clave.length < 8 || clave.length > 400 || /\s/.test(clave))
-      throw new Fallo(400, "bad_key");
+    // La clave de IA es la de su cuenta: se descifra aquí, para esta investigación, y no se escribe en ningún sitio.
+    const clave = claveDe(p.dueno, o.secreto, o.mesa);
+    if (clave === null) throw new Fallo(409, "no_key");
     // Lo entendido se mira antes de confirmar nada: dice qué campo no está claro, no con qué palabras.
     const claro = puertaEntendido(leerJson(join(v.carpeta, "entendido.json")), {
       hoy: hoy().toISOString().slice(0, 10),
@@ -335,21 +430,20 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (partes.length === 1 && partes[0] === "salud" && req.method === "GET")
           return responder(res, 200, { ok: true });
         if (!conLlave(req)) throw new Fallo(401, "unauthorized");
-        const dueno = req.headers[CABECERA_DEL_DUENO];
-        if (typeof dueno !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/.test(dueno)) throw new Fallo(400, "no_owner");
-        const p: Peticion = {
-          metodo: req.method ?? "GET",
-          partes,
-          consulta: direccion.searchParams,
-          dueno,
-          cuerpo: null,
-        };
+        const metodo = req.method ?? "GET";
+        const sesion = req.headers[CABECERA_DE_LA_SESION];
+        // Registrarse, entrar y salir es lo único que no pide una sesión abierta.
+        const sinSesion = await deLaCuenta({ metodo, partes, cuerpo: null, sesion }, () => cuerpoDe(req));
+        if (sinSesion !== null) return responder(res, sinSesion.estado, sinSesion.cuerpo);
+        const cuenta = sesionDe(sesion, o.mesa, hoy());
+        if (cuenta === null) throw new Fallo(401, "no_session");
+        const p: Peticion = { metodo, partes, consulta: direccion.searchParams, dueno: cuenta.id, cuerpo: null };
         if (partes[0] === "viajes" && partes[2] === "eventos" && partes.length === 3) {
           if (p.metodo !== "GET") throw new Fallo(405, "method");
           return escuchar(p, req, res);
         }
         p.cuerpo = await cuerpoDe(req);
-        const r = atender(p);
+        const r = miCuenta(p, cuenta) ?? atender(p);
         responder(res, r.estado, r.cuerpo);
       } catch (e) {
         // Lo que falla por dentro no se cuenta fuera: a la web le llega una clave, y nada más.

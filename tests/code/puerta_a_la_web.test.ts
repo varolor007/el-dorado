@@ -9,7 +9,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import {
-  CABECERA_DEL_DUENO,
+  CABECERA_DE_LA_SESION,
+  INTENTOS_DE_ENTRAR,
   OYENTES_DE_UN_VIAJE,
   PESO_DE_UNA_PETICION,
   puertaALaWeb,
@@ -22,6 +23,9 @@ import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
 
 const LLAVE = "una-llave-larga-e-inventada-para-la-web";
 const CLAVE = "clave-de-ia-inventada-0001";
+const SECRETO = Buffer.alloc(32, 7);
+const CONTRASENA = "una contraseña larga";
+const correoDe = (nombre: string): string => `${nombre}@inventado.example`;
 const HOY = (): Date => new Date("2027-01-01T00:00:00Z");
 
 type Casa = {
@@ -31,17 +35,19 @@ type Casa = {
   pide: (
     metodo: string,
     ruta: string,
-    o?: { dueno?: string | null; llave?: string | null; cuerpo?: unknown },
+    o?: { dueno?: string | null; sesion?: string; llave?: string | null; cuerpo?: unknown },
   ) => Promise<{
     estado: number;
     cuerpo: Objeto;
   }>;
+  /** La sesión de un viajero inventado: la primera vez se registra y pone su clave de IA. */
+  sesion: (nombre: string) => Promise<string>;
   url: string;
 };
 
 async function conCasa(
   prueba: (casa: Casa) => Promise<void>,
-  o: { asientos?: DeMentira; sinIA?: boolean; conLanzador?: Lanzador } = {},
+  o: { asientos?: DeMentira; sinIA?: boolean; sinClave?: boolean; conLanzador?: Lanzador } = {},
 ): Promise<void> {
   const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
   const claves: string[] = [];
@@ -52,6 +58,7 @@ async function conCasa(
   const puerta = puertaALaWeb({
     mesa,
     llave: LLAVE,
+    secreto: SECRETO,
     fuentes: fuentesInventadas,
     hoy: HOY,
     cadaMs: 15,
@@ -59,10 +66,32 @@ async function conCasa(
   });
   await new Promise<void>((r) => puerta.servidor.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${(puerta.servidor.address() as AddressInfo).port}`;
+  const sesiones = new Map<string, string>();
+  const manda = (
+    metodo: string,
+    ruta: string,
+    cabeceras: Record<string, string>,
+    cuerpo?: unknown,
+  ): Promise<Response> =>
+    fetch(url + ruta, {
+      method: metodo,
+      headers: { authorization: `Bearer ${LLAVE}`, ...cabeceras },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+  const sesion: Casa["sesion"] = async (nombre) => {
+    const ya = sesiones.get(nombre);
+    if (ya !== undefined) return ya;
+    const r = await manda("POST", "/cuentas", {}, { email: correoDe(nombre), password: CONTRASENA });
+    const abierta = ((await r.json()) as Objeto).session as string;
+    sesiones.set(nombre, abierta);
+    if (!o.sinClave) await manda("PUT", "/cuenta/clave", { [CABECERA_DE_LA_SESION]: abierta }, { key: CLAVE });
+    return abierta;
+  };
   const pide: Casa["pide"] = async (metodo, ruta, p = {}) => {
     const cabeceras: Record<string, string> = {};
     if (p.llave !== null) cabeceras.authorization = `Bearer ${p.llave ?? LLAVE}`;
-    if (p.dueno !== null) cabeceras[CABECERA_DEL_DUENO] = p.dueno ?? "ana";
+    if (p.sesion !== undefined) cabeceras[CABECERA_DE_LA_SESION] = p.sesion;
+    else if (p.dueno !== null) cabeceras[CABECERA_DE_LA_SESION] = await sesion(p.dueno ?? "ana");
     const cuerpo =
       p.cuerpo === undefined || metodo === "GET"
         ? undefined
@@ -73,7 +102,7 @@ async function conCasa(
     return { estado: r.status, cuerpo: (await r.json().catch(() => ({}))) as Objeto };
   };
   try {
-    await prueba({ puerta, mesa, claves, pide, url });
+    await prueba({ puerta, mesa, claves, pide, sesion, url });
   } finally {
     await puerta.esperar();
     await puerta.cerrar();
@@ -101,7 +130,7 @@ function todoLoEscrito(carpeta: string): string {
   return todo;
 }
 
-test("sin la llave de la web no se entra, y sin decir de quién es la petición, tampoco", async () => {
+test("sin la llave de la web no se entra, y sin una sesión abierta no se pide nada de nadie", async () => {
   await conCasa(async (casa) => {
     assert.deepEqual(await casa.pide("GET", "/salud", { llave: null, dueno: null }), {
       estado: 200,
@@ -112,11 +141,18 @@ test("sin la llave de la web no se entra, y sin decir de quién es la petición,
         estado: 401,
         cuerpo: { error: "unauthorized" },
       });
-    for (const dueno of [null, "", "ana maría", "../ana", "a".repeat(129)])
-      assert.deepEqual(await casa.pide("GET", "/viajes", { dueno }), { estado: 400, cuerpo: { error: "no_owner" } });
+    // Ni registrarse se puede sin la llave de la web.
+    assert.equal((await casa.pide("POST", "/cuentas", { llave: null, dueno: null, cuerpo: {} })).estado, 401);
+    const sinSesion = { estado: 401, cuerpo: { error: "no_session" } };
+    assert.deepEqual(await casa.pide("GET", "/viajes", { dueno: null }), sinSesion);
+    for (const sesion of ["", "ana", "../ana", "a".repeat(43), "u-" + "0".repeat(32)])
+      for (const ruta of ["/viajes", "/cuenta", "/viajes/uno/eventos"])
+        assert.deepEqual(await casa.pide("GET", ruta, { sesion }), sinSesion, `${ruta} con ${sesion}`);
     assert.deepEqual(await casa.pide("GET", "/viajes"), { estado: 200, cuerpo: { trips: [] } });
   });
-  assert.throws(() => puertaALaWeb({ mesa: tmpdir(), llave: "corta", fuentes: fuentesInventadas }), /demasiado corta/);
+  const base = { mesa: tmpdir(), fuentes: fuentesInventadas };
+  assert.throws(() => puertaALaWeb({ ...base, llave: "corta", secreto: SECRETO }), /demasiado corta/);
+  assert.throws(() => puertaALaWeb({ ...base, llave: LLAVE, secreto: Buffer.alloc(16) }), /32 bytes/);
 });
 
 test("cada viaje, solo para su dueño: otro no lo ve, ni llega a saber que existe", async () => {
@@ -136,7 +172,7 @@ test("cada viaje, solo para su dueño: otro no lo ve, ni llega a saber que exist
       noHay,
     );
     assert.deepEqual(
-      await casa.pide("POST", `/viajes/${id}/empezar`, { dueno: "luis", cuerpo: { ceiling: 5, key: CLAVE } }),
+      await casa.pide("POST", `/viajes/${id}/empezar`, { dueno: "luis", cuerpo: { ceiling: 5 } }),
       noHay,
     );
     // Lo mismo que para un viaje que no existe, o un identificador que quiere salirse de la mesa.
@@ -154,7 +190,7 @@ test("el botón confirma, da el adelante con su techo y lleva la investigación 
     assert.deepEqual([antes.cuerpo.trip.state, antes.cuerpo.research], ["started", null]);
     assert.deepEqual(await casa.pide("GET", `/viajes/${id}/version`), { estado: 404, cuerpo: { error: "not_found" } });
 
-    const boton = await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } });
+    const boton = await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } });
     assert.deepEqual(boton, { estado: 202, cuerpo: { run: 1 } });
     await casa.puerta.esperar();
     assert.deepEqual(casa.puerta.enMarcha(), []);
@@ -196,7 +232,7 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
   await conCasa(
     async (casa) => {
       const id = await abre(casa);
-      await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } });
+      await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } });
       await casa.puerta.esperar();
       const { cuerpo } = await casa.pide("GET", `/viajes/${id}`);
       assert.equal(cuerpo.trip.state, "researching");
@@ -216,7 +252,7 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
         assert.ok(!dicho.includes(callado), callado);
       // Y lo que se cuenta en vivo, igual.
       const r = await fetch(`${casa.url}/viajes/${id}/eventos`, {
-        headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DEL_DUENO]: "ana" },
+        headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DE_LA_SESION]: await casa.sesion("ana") },
       });
       const lector = r.body!.getReader();
       const primero = new TextDecoder().decode((await lector.read()).value);
@@ -234,7 +270,7 @@ test("sin IA enchufada, o con un techo, una clave o un viaje que no valen, el bo
   await conCasa(
     async (casa) => {
       const id = await abre(casa);
-      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } }), {
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } }), {
         estado: 503,
         cuerpo: { error: "no_ai" },
       });
@@ -245,18 +281,13 @@ test("sin IA enchufada, o con un techo, una clave o un viaje que no valen, el bo
   await conCasa(async (casa) => {
     const id = await abre(casa);
     for (const ceiling of [undefined, 0, -3, "5", null])
-      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling, key: CLAVE } }), {
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling } }), {
         estado: 400,
         cuerpo: { error: "bad_ceiling" },
       });
-    for (const key of [undefined, "", "corta", "con espacios dentro", "a".repeat(401), 12345678])
-      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key } }), {
-        estado: 400,
-        cuerpo: { error: "bad_key" },
-      });
     // Lo entendido mal escrito: se dice qué campo no está claro, y el viaje sigue sin confirmar.
     const mal = await abre(casa, "ana", { ...ENTENDIDO, currency: "euros" });
-    assert.deepEqual(await casa.pide("POST", `/viajes/${mal}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } }), {
+    assert.deepEqual(await casa.pide("POST", `/viajes/${mal}/empezar`, { cuerpo: { ceiling: 5 } }), {
       estado: 422,
       cuerpo: { error: "unclear", fields: ["currency"] },
     });
@@ -283,13 +314,10 @@ test("lo entendido se cambia hasta que se confirma, y mientras se investiga no s
         cuerpo: { understood: { ...ENTENDIDO, pace: "calm" } },
       });
       assert.equal(cambiado.estado, 200);
-      assert.equal(
-        (await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } })).estado,
-        202,
-      );
+      assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } })).estado, 202);
       assert.deepEqual(casa.puerta.enMarcha(), [id]);
       // Con la investigación en marcha: ni otra vez el botón, ni cambiar lo entendido sin más.
-      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } }), {
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } }), {
         estado: 409,
         cuerpo: { error: "already_running" },
       });
@@ -310,7 +338,7 @@ test("quien escucha recibe en vivo el estado y lo contado, en su orden y sin rep
   await conCasa(async (casa) => {
     const id = await abre(casa);
     const r = await fetch(`${casa.url}/viajes/${id}/eventos`, {
-      headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DEL_DUENO]: "ana" },
+      headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DE_LA_SESION]: await casa.sesion("ana") },
     });
     assert.equal(r.status, 200);
     assert.match(r.headers.get("content-type") ?? "", /^text\/event-stream/);
@@ -334,7 +362,7 @@ test("quien escucha recibe en vivo el estado y lo contado, en su orden y sin rep
     await leeHasta(() => recibidos.length > 0);
     assert.deepEqual([recibidos[0].trip.state, recibidos[0].research, recibidos[0].events], ["started", null, []]);
 
-    await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5, key: CLAVE } });
+    await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } });
     await leeHasta(() => recibidos.at(-1)?.trip.state === "on_map");
     await lector.cancel();
     const ultimo = recibidos.at(-1)!;
@@ -354,7 +382,7 @@ test("quien escucha recibe en vivo el estado y lo contado, en su orden y sin rep
     assert.ok(contados.every((x) => !("cuando" in x)));
     // Quien llega tarde pide desde donde iba, y recibe solo lo que le falta.
     const tarde = await fetch(`${casa.url}/viajes/${id}/eventos?desde=${contados.length - 2}`, {
-      headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DEL_DUENO]: "ana" },
+      headers: { authorization: `Bearer ${LLAVE}`, [CABECERA_DE_LA_SESION]: await casa.sesion("ana") },
     });
     const otro = tarde.body!.getReader();
     const trozo = descifra.decode((await otro.read()).value);
@@ -367,7 +395,7 @@ test("quien escucha recibe en vivo el estado y lo contado, en su orden y sin rep
 test("a un viaje no le escuchan más oyentes de los que caben, y al irse uno cabe otro", async () => {
   await conCasa(async (casa) => {
     const id = await abre(casa);
-    const cabeceras = { authorization: `Bearer ${LLAVE}`, [CABECERA_DEL_DUENO]: "ana" };
+    const cabeceras = { authorization: `Bearer ${LLAVE}`, [CABECERA_DE_LA_SESION]: await casa.sesion("ana") };
     const abiertos = [];
     for (let i = 0; i < OYENTES_DE_UN_VIAJE; i++) {
       const r = await fetch(`${casa.url}/viajes/${id}/eventos`, { headers: cabeceras });
@@ -432,4 +460,129 @@ test("lo que no es de la puerta se rechaza: otra ruta, otro método, lo que no e
     assert.equal(gordo.estado, 413);
     assert.equal((await casa.pide("GET", "/viajes")).cuerpo.trips.length, 1);
   });
+});
+
+test("registrarse deja la sesión abierta; un correo, una cuenta; y lo que no vale no abre ninguna", async () => {
+  await conCasa(async (casa) => {
+    const alta = await casa.pide("POST", "/cuentas", {
+      dueno: null,
+      cuerpo: { email: "  Ana@Inventado.Example ", password: CONTRASENA },
+    });
+    assert.equal(alta.estado, 201);
+    assert.deepEqual(Object.keys(alta.cuerpo).sort(), ["account", "session"]);
+    assert.deepEqual(Object.keys(alta.cuerpo.account).sort(), ["email", "id", "key"]);
+    assert.deepEqual([alta.cuerpo.account.email, alta.cuerpo.account.key], ["ana@inventado.example", null]);
+    // Con esa sesión ya es ella, y nadie más.
+    const quien = await casa.pide("GET", "/cuenta", { sesion: alta.cuerpo.session });
+    assert.deepEqual(quien, { estado: 200, cuerpo: { account: alta.cuerpo.account } });
+    // El mismo correo, se escriba como se escriba, no abre otra cuenta.
+    for (const email of ["ana@inventado.example", "ANA@INVENTADO.EXAMPLE"])
+      assert.deepEqual(await casa.pide("POST", "/cuentas", { dueno: null, cuerpo: { email, password: CONTRASENA } }), {
+        estado: 409,
+        cuerpo: { error: "exists" },
+      });
+    for (const email of [undefined, "", "sin arroba", "a@b", "a b@c.d", "@c.d", "a@c.", 7, `${"a".repeat(250)}@c.d`])
+      assert.deepEqual(await casa.pide("POST", "/cuentas", { dueno: null, cuerpo: { email, password: CONTRASENA } }), {
+        estado: 400,
+        cuerpo: { error: "bad_email" },
+      });
+    for (const password of [undefined, "", "corta", "a".repeat(201), 1234567890, "luis@inventado.example"])
+      assert.deepEqual(
+        await casa.pide("POST", "/cuentas", { dueno: null, cuerpo: { email: "luis@inventado.example", password } }),
+        { estado: 400, cuerpo: { error: "bad_password" } },
+        String(password),
+      );
+    // Ni la contraseña ni nada sacado de ella sale por la puerta, ni queda escrita tal cual en la mesa.
+    assert.ok(!JSON.stringify([alta.cuerpo, quien.cuerpo]).includes(CONTRASENA));
+    const escrito = todoLoEscrito(casa.mesa);
+    assert.ok(!escrito.includes(CONTRASENA) && !escrito.includes(alta.cuerpo.session));
+  });
+});
+
+test("entrar pide el correo y su contraseña; fallar no dice cuál de los dos; salir cierra la sesión", async () => {
+  await conCasa(async (casa) => {
+    const primera = await casa.sesion("ana");
+    const entra = (email: unknown, password: unknown): ReturnType<Casa["pide"]> =>
+      casa.pide("POST", "/sesiones", { dueno: null, cuerpo: { email, password } });
+    const bien = await entra(correoDe("ana"), CONTRASENA);
+    assert.equal(bien.estado, 200);
+    assert.equal(bien.cuerpo.account.email, correoDe("ana"));
+    assert.notEqual(bien.cuerpo.session, primera);
+    // Una contraseña mala y un correo que no existe contestan lo mismo.
+    const mal = { estado: 401, cuerpo: { error: "bad_login" } };
+    assert.deepEqual(await entra(correoDe("ana"), "otra contraseña larga"), mal);
+    assert.deepEqual(await entra(correoDe("nadie"), CONTRASENA), mal);
+    assert.deepEqual(await entra(undefined, undefined), mal);
+    // Las dos sesiones valen a la vez; al salir de una, esa deja de valer y la otra sigue.
+    assert.equal((await casa.pide("GET", "/cuenta", { sesion: bien.cuerpo.session })).estado, 200);
+    assert.deepEqual(await casa.pide("DELETE", "/sesiones", { sesion: bien.cuerpo.session }), {
+      estado: 200,
+      cuerpo: { ok: true },
+    });
+    assert.equal((await casa.pide("GET", "/cuenta", { sesion: bien.cuerpo.session })).estado, 401);
+    assert.equal((await casa.pide("GET", "/cuenta", { sesion: primera })).estado, 200);
+    assert.equal((await casa.pide("DELETE", "/sesiones", { dueno: null })).estado, 200);
+    assert.equal((await casa.pide("GET", "/sesiones", { dueno: null })).estado, 405);
+  });
+});
+
+test("quien falla muchas veces al entrar con un correo tiene que esperar, aunque después acierte", async () => {
+  await conCasa(async (casa) => {
+    await casa.sesion("ana");
+    await casa.sesion("luis");
+    const entra = (nombre: string, password: string): ReturnType<Casa["pide"]> =>
+      casa.pide("POST", "/sesiones", { dueno: null, cuerpo: { email: correoDe(nombre), password } });
+    for (let i = 0; i < INTENTOS_DE_ENTRAR.fallos; i++)
+      assert.equal((await entra("ana", `una contraseña mala ${i}`)).estado, 401);
+    const frenado = await entra("ana", CONTRASENA);
+    assert.equal(frenado.estado, 429);
+    assert.equal(frenado.cuerpo.error, "too_many_attempts");
+    assert.ok(frenado.cuerpo.wait > 0 && frenado.cuerpo.wait <= INTENTOS_DE_ENTRAR.minutos * 60);
+    // El freno es de ese correo: otro entra sin esperar.
+    assert.equal((await entra("luis", CONTRASENA)).estado, 200);
+  });
+});
+
+test("tu clave de IA se guarda cifrada, solo se enseña cómo acaba, y se borra cuando quieras", async () => {
+  await conCasa(
+    async (casa) => {
+      const id = await abre(casa);
+      // Sin clave puesta, el botón lo dice y no abre ninguna investigación.
+      assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } }), {
+        estado: 409,
+        cuerpo: { error: "no_key" },
+      });
+      for (const key of [
+        undefined,
+        "",
+        "corta",
+        "con espacios dentro de la clave",
+        "a".repeat(401),
+        12345678901234567890,
+      ])
+        assert.deepEqual(await casa.pide("PUT", "/cuenta/clave", { cuerpo: { key } }), {
+          estado: 400,
+          cuerpo: { error: "bad_key" },
+        });
+      const puesta = await casa.pide("PUT", "/cuenta/clave", { cuerpo: { key: CLAVE } });
+      assert.equal(puesta.estado, 200);
+      assert.equal(puesta.cuerpo.account.key.hint, CLAVE.slice(-4));
+      const quien = await casa.pide("GET", "/cuenta");
+      assert.deepEqual(quien.cuerpo.account.key, puesta.cuerpo.account.key);
+      // La clave entera no sale por la puerta ni está escrita en la mesa: solo cifrada.
+      assert.ok(!JSON.stringify([puesta.cuerpo, quien.cuerpo]).includes(CLAVE));
+      assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
+      // Con ella, el botón lanza, y a quien piensa en los asientos le llega la clave de verdad.
+      assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } })).estado, 202);
+      await casa.puerta.esperar();
+      assert.deepEqual(casa.claves, [CLAVE]);
+      assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
+      // Borrada, ya no hay clave; y la de otro viajero no es la suya.
+      assert.deepEqual((await casa.pide("DELETE", "/cuenta/clave")).cuerpo.account.key, null);
+      assert.equal((await casa.pide("GET", "/cuenta", { dueno: "luis" })).cuerpo.account.key, null);
+      assert.equal((await casa.pide("POST", "/cuenta/clave", { cuerpo: { key: CLAVE } })).estado, 405);
+      assert.equal((await casa.pide("GET", "/cuenta/otra")).estado, 404);
+    },
+    { sinClave: true },
+  );
 });

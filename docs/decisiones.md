@@ -355,6 +355,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   correo y contraseña, guardado por la casa en la mesa, sin servicios de fuera: no pide darse de alta en nada ni
   cuesta nada. Recuperar la contraseña y confirmar el correo piden mandar correos, que es un servicio nuevo: quedan
   apuntados.
+- **Cómo se guardan las cuentas** (la sesión, con el encargo del PM de arriba): la contraseña, pasada por scrypt
+  con su sal; de la sesión se guarda la huella de su llave, no la llave; la clave de IA, cifrada con un secreto que
+  vive en el entorno de la casa y atada a su cuenta. Entrar mal no dice si falla el correo o la contraseña, y a los
+  cinco fallos con un correo se espera un cuarto de hora. Una cosa queda dicha: al registrarse, la casa contesta
+  que ese correo ya tiene cuenta; para no decirlo haría falta confirmar por correo. La hoja decía «clave cifrada»,
+  y así queda: ya no vive solo en la memoria.
 - **El motor, a un servidor, al final** (el PM: «luego ya subiremos todo el motor a un servidor y se acabó; pero eso
   ya al final, una vez estén las pruebas hechas»).
 - **La fuente de rutas sigue sin elegir** (el PM preguntó qué otras hay; se le contestó con la lista de
