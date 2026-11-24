@@ -8,7 +8,6 @@ import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { empezarLaInvestigacion, type EnLaCasa } from "../lib/viajeVivo.ts";
-import { TECHO_PROPUESTO } from "./Empezar.tsx";
 import { fraseDeSuceso } from "./Pantallas.tsx";
 
 type Props = { t: Textos; idioma: string; estado: EnLaCasa; sucesos: Suceso[]; deNoches: number };
@@ -35,7 +34,7 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
   const otraVez = async (): Promise<void> => {
     setOcupado(true);
     setFallo(null);
-    const mal = await empezarLaInvestigacion(estado.trip.id, i?.ceiling ?? TECHO_PROPUESTO);
+    const mal = await empezarLaInvestigacion(estado.trip.id);
     setOcupado(false);
     if (mal !== null)
       setFallo(

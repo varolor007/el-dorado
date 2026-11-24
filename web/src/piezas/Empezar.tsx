@@ -1,8 +1,9 @@
 "use client";
 
 // Empezar un viaje de verdad: el botón, las preguntas de unos toques y lo que he entendido, con lo supuesto a la
-// vista para que lo confirmes o lo corrijas. Lo entendido lo hace el código de la casa (`agent/scripts/empezar.ts`)
-// y, en cuanto está completo, el viaje se abre en la casa y se va guardando: lo retomas donde lo dejaste.
+// vista para que lo confirmes o lo corrijas. No pregunta por un techo de gasto: eso lo limita cada uno en su cuenta
+// de Claude. Lo entendido lo hace el código de la casa (`agent/scripts/empezar.ts`) y, en cuanto está completo, el
+// viaje se abre en la casa y se va guardando: lo retomas donde lo dejaste.
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,15 +14,19 @@ import { CUANTO_MOVERSE, GASTOS, type Entendido } from "../../../agent/scripts/f
 import type { EstadoDeLaCuenta } from "../lib/cuenta.ts";
 import { diaCorto, noches } from "../lib/formato.ts";
 import type { Lugar, Origen } from "../lib/lugares.ts";
-import type { Textos } from "../lib/textos.ts";
+import { TEXTOS, type Textos } from "../lib/textos.ts";
 import { abrirViaje, cambiarLoEntendido, empezarLaInvestigacion, type FalloDeViaje } from "../lib/viajeVivo.ts";
 import { Hoja } from "./Hoja.tsx";
 import { Contador } from "./Pantallas.tsx";
 
-/** El techo de gasto que se propone, en dólares. De partida, hasta medir lo que cuesta una investigación. */
-export const TECHO_PROPUESTO = 5;
-
 type Opcion<T> = { valor: T; texto: string };
+
+/**
+ * Cada cosa que se busca, con su toque dicho en todos los idiomas de la web: lo que se tocó en uno sigue tocado si el
+ * viaje se retoma en otro, y no se confunde con lo que el viajero escribió con sus palabras.
+ */
+export const toquesDeBuscar = (i: number): string[] => Object.values(TEXTOS).map((x) => x.preguntas.buscasOpciones[i]);
+export const TODOS_LOS_TOQUES_DE_BUSCAR: string[] = Object.values(TEXTOS).flatMap((x) => x.preguntas.buscasOpciones);
 
 /** Una pregunta con sus respuestas, de las que se marca una. Sin marcar, el viajero aún no lo ha dicho. */
 function Una<T extends string | boolean>(x: {
@@ -167,7 +172,6 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
   const [r, setR] = useState<Respuestas>(inicial);
   const [dentro, setDentro] = useState(viaje !== null);
   const [distintos, setDistintos] = useState(new Set(inicial.pasaportes ?? []).size > 1);
-  const [techo, setTecho] = useState(String(TECHO_PROPUESTO));
   const [fallo, setFallo] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const id = useRef<string | null>(viaje);
@@ -216,14 +220,11 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
 
   const confirma = async (): Promise<void> => {
     if (e.entendido === null || ocupado) return;
-    const tope = Number(techo.replace(",", "."));
-    if (!(Number.isFinite(tope) && tope > 0)) return setFallo(x.fallo("bad_ceiling", []));
     setOcupado(true);
     setFallo(null);
     let mal: FalloDeViaje | null;
     try {
-      mal =
-        (await guarda(e.entendido)) ?? (id.current === null ? null : await empezarLaInvestigacion(id.current, tope));
+      mal = (await guarda(e.entendido)) ?? (id.current === null ? null : await empezarLaInvestigacion(id.current));
     } catch {
       mal = { clave: "other", campos: [] };
     }
@@ -440,19 +441,22 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
           <div className="toques" role="group" aria-label={p.buscas}>
             <span className="rotulo">{p.buscas}</span>
             <div className="cabecera__linea">
-              {p.buscasOpciones.map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  className="toque"
-                  aria-pressed={r.buscas.includes(o)}
-                  onClick={() =>
-                    pon({ buscas: r.buscas.includes(o) ? r.buscas.filter((b) => b !== o) : [...r.buscas, o] })
-                  }
-                >
-                  {o}
-                </button>
-              ))}
+              {p.buscasOpciones.map((o, i) => {
+                const suyos = toquesDeBuscar(i);
+                const tocado = r.buscas.some((b) => suyos.includes(b));
+                const sinEl = r.buscas.filter((b) => !suyos.includes(b));
+                return (
+                  <button
+                    key={o}
+                    type="button"
+                    className="toque"
+                    aria-pressed={tocado}
+                    onClick={() => pon({ buscas: tocado ? sinEl : [...sinEl, o] })}
+                  >
+                    {o}
+                  </button>
+                );
+              })}
             </div>
           </div>
           {r.destino.clase !== "city" && (
@@ -542,17 +546,6 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
               </div>
             )}
           </div>
-          <label className="toques">
-            <span className="rotulo">{x.techo}</span>
-            <input
-              className="campo"
-              id="techo"
-              inputMode="decimal"
-              value={techo}
-              onChange={(ev) => setTecho(ev.target.value)}
-            />
-            <span className="dato">{x.techoTexto}</span>
-          </label>
         </div>
       )}
     </Hoja>

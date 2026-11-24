@@ -90,9 +90,9 @@ veía, y corrió la prueba desde una sesión auxiliar abierta para eso, que sí 
 la orden. **La prueba (24-nov), en once trayectos de clases distintas**: a pie va bien y cuenta con las cuestas; en
 coche, la distancia bien y el tiempo sin tráfico; en transporte público se queda corta (horarios de verdad solo en
 algunas ciudades, nada del tren entre ciudades, y lo aproximado no es de fiar). Sus conclusiones, en
-[fuentes.md](fuentes.md); lo que devolvió, fuera del repositorio. **Falta**: la decisión del PM para el transporte
-público (Google en vivo y con un script, que pide tarjeta, o de momento solo el enlace de cada trayecto, que ya está
-en la web); y que la casa use Geoapify, para andar y para el coche, en las cribas, en el ritmo y en la tabla.
+[fuentes.md](fuentes.md); lo que devolvió, fuera del repositorio. El PM decidió ese día: de momento, lo que se
+pueda (Geoapify para andar y para el coche, y el enlace de cada trayecto; Google en vivo no se contrata). **Falta**
+que la casa use Geoapify, para andar y para el coche, en las cribas, en el ritmo y en la tabla.
 
 **Las preguntas de empezar (5.1), por el lado del código.** `agent/scripts/empezar.ts`, sin nada de Node para que lo
 use también la web: `respuestasDe` (lo que ha dicho quien solo eligió dónde y cuándo) y `entendidoDe(respuestas)`,
@@ -101,8 +101,8 @@ puede suponer y hay que pedir (`falta`: la moneda, la edad de un niño, de qué 
 país (`agent/data/monedas.ts`). Lo de moverse por un país o una región va en lo entendido (`moving`), lo mira la
 puerta 1 y lo lee el que hace la ruta. La caja libre va tal cual a `looking_for` hasta que llegue el que escucha
 (5.2). **Y la web (24-nov)**: con la casa conectada, buscar un sitio empieza un viaje de verdad
-(`web/src/piezas/Empezar.tsx`: el botón, las preguntas, lo que he entendido y el techo de gasto, que se propone en
-5 dólares). El viaje se abre en la casa en cuanto lo entendido está completo y se va guardando; su dirección pasa a
+(`web/src/piezas/Empezar.tsx`: el botón, las preguntas y lo que he entendido; sin techo de gasto, que el PM quitó el
+24-nov: cada uno limita su gasto en su cuenta de Claude). El viaje se abre en la casa en cuanto lo entendido está completo y se va guardando; su dirección pasa a
 ser `/plan?trip=<id>`, y al volver a ella se retoma (la puerta devuelve lo entendido a su dueño). Al confirmar, la
 web va a esa dirección y escucha a la casa en vivo (`web/src/lib/viajeVivo.ts` y `web/src/piezas/EnCasa.tsx`): por
 dónde va, lo que se cuenta, lo gastado y, si se para, por qué paso, con su botón de reintentar. El buscador trae el
@@ -132,7 +132,25 @@ que pide dos cosas del PM: la clave de Claude en el entorno, como `ELDORADO_CLAV
 formulario seguro: la red de la sesión no pone claves en los pedidos a Anthropic), y su adelante, que dijo que da
 cuando meta la clave de Geoapify. Se propuso un techo de 5 dólares.
 
-**Cómo se lanza la primera investigación de verdad**, cuando el PM dé su adelante: con la orden
+**El PM no va a meter su clave: quiere usar su cuenta de Claude, con el túnel (24-nov, 2.9, por construir).** Como
+el ensamblador (`aurora-web/ensamblador/arranque/`: su `README.md`, `Dockerfile` y `compose.yaml` son la guía): la
+casa en Docker, en su ordenador o en su servidor, con Claude Code y el token de su suscripción
+(`CLAUDE_CODE_OAUTH_TOKEN`, de `claude setup-token`) en un `.env` que no sale de su máquina; el túnel, otro servicio
+con la misma imagen y la red de la casa (`ngrok http 127.0.0.1:4320 --url <su dirección fija>`); y en Vercel,
+`ELDORADO_CASA_URL` con esa dirección y `ELDORADO_LLAVE`. Lo que falta construir: (1) quien piensa con Claude Code:
+otro `Pensar` al lado de `pensarConClaude`, que lanza `claude -p` de una vuelta y sin herramientas (`--tools ""`,
+`--max-turns 1`, `--system-prompt` con el contrato, `--output-format json` o `stream-json`, `--model`, `--effort`,
+`--safe-mode`, `--strict-mcp-config`, `--restricted`; las fotos piden la entrada en `stream-json`) y lee su
+respuesta, cómo acabó y lo que dice que costó; el ensamblador lo lanza en `ensamblador/herramientas/conexion.ts`,
+con herramientas de archivos, y aquí no hacen falta. (2) Que la puerta sepa con qué cuenta piensa cada viaje: la de
+la casa, solo para los correos que diga su entorno, o la clave del viajero; y que la web no pida clave a quien usa
+la de la casa. (3) `agent/arranque/` o parecido: la imagen, los dos servicios, el `.env` de ejemplo y la guía paso a
+paso para el PM. (4) En la pasarela de la web, la cabecera que salta el aviso de ngrok y el tiempo largo del
+directo en Vercel. Del PM: Docker, una cuenta gratuita de ngrok con su dirección fija, y su token. **El PM preguntó
+también si lo que queda lo puede hacer ya un modelo más barato, o si esta sesión reparte el trabajo entre sesiones
+de ese modelo**: se le contestó, y está por decidir.
+
+**Cómo se lanza una investigación de verdad con una clave**, si alguna vez hace falta: con la orden
 `agent/launcher/de_verdad.ts <entendido.json> <techo>`, que lleva el run de una vez con la llamada directa, cuenta lo
 que pasa y acaba diciendo lo que tardó y lo que gastó cada asiento. Delante van `ELDORADO_CLAVE_DE_CLAUDE`,
 `ELDORADO_MODELO`, `ELDORADO_PRECIO_ENTRADA`, `ELDORADO_PRECIO_SALIDA`, `ELDORADO_MESA` y `NODE_USE_ENV_PROXY=1`. El

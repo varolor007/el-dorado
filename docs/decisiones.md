@@ -410,6 +410,23 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   techo se propone en 5 dólares, de partida, hasta medir lo que cuesta una investigación de verdad. El viaje se
   abre en la casa en cuanto está completo, para que aparezca en sus viajes y se pueda retomar. «Donde estoy ahora»
   no manda fuera el punto exacto de nadie: se redondea a dos decimales, que basta para saber la ciudad.
+- **La web no pregunta por un techo de gasto** (el PM, al ver que se proponía en 5 dólares: «¿esto para qué? De
+  momento funcionará con mi cuenta, y luego, cuando la gente meta sus API, eso ya es problema de que ellos limiten
+  en el propio Claude su techo de gasto»). Quitado de las preguntas. La casa conserva el techo como algo que se le
+  puede dar (lo usa la orden de la terminal), pero el botón de la web lanza sin él.
+- **El transporte público, de momento, lo que se pueda** (el PM: «de momento lo que se pueda»). Geoapify para andar
+  y para el coche, su transporte público solo donde lo sepa con horarios de verdad y dicho como tal, y el enlace a
+  Google Maps de cada trayecto. Google en vivo no se contrata ahora.
+- **Las pruebas del PM van con su cuenta de Claude, no con una clave** (el PM: «no vamos a meter mi API, quiero usar
+  mi cuenta, ya que es para mí y no comercial; estamos testeando, así como hicimos para DaVi y el ensamblador;
+  conectemos el túnel»). La casa pensará con Claude Code y su suscripción, en Docker, con un túnel de ngrok hasta la
+  web de Vercel, como el ensamblador (`aurora-web/ensamblador/arranque/`). La llamada directa con la clave de cada
+  viajero se queda hecha, para cuando lo usen otros.
+  Cómo lo piensa la sesión, por construir (2.9): cada asiento, una llamada a Claude Code de una vuelta y sin
+  herramientas, con la misma respuesta de seis pasos que la llamada directa, para no volver a los diez minutos por
+  asiento de la tanda 3. Y un cuidado: con el registro abierto, la suscripción del PM no puede servir a quien se
+  registre. Solo la usan las cuentas cuyo correo esté dicho en el entorno de la casa; como el correo no se confirma,
+  el PM se registra antes de dar la dirección a nadie. A los demás, su clave o nada.
 
 ## Pendientes
 

@@ -13,7 +13,7 @@ import type { Entendido } from "../../../../../agent/scripts/formas.ts";
 import { fechasDe, repartir } from "../../../../../agent/scripts/ritmo.ts";
 import { Buscador, type Busqueda } from "../../../piezas/Buscador.tsx";
 import { Cargando } from "../../../piezas/Cargando.tsx";
-import { Empezar } from "../../../piezas/Empezar.tsx";
+import { Empezar, TODOS_LOS_TOQUES_DE_BUSCAR } from "../../../piezas/Empezar.tsx";
 import { EnCasa } from "../../../piezas/EnCasa.tsx";
 import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
@@ -111,12 +111,11 @@ export default function Planear() {
   useEffect(() => {
     if (!comoEsta) return;
     if (comoEsta === "started") {
-      if (entendido !== null)
-        setNuevo((ya) => ya ?? respuestasDeLoEntendido(entendido, TEXTOS[idioma].preguntas.buscasOpciones));
+      if (entendido !== null) setNuevo((ya) => ya ?? respuestasDeLoEntendido(entendido, TODOS_LOS_TOQUES_DE_BUSCAR));
       setEtapa("preguntas");
     } else if (!enElMapa) setEtapa("casa");
     else setEtapa((antes) => (antes === "casa" || antes === "preguntas" ? "viaje" : antes));
-  }, [comoEsta, enElMapa, entendido, idioma]);
+  }, [comoEsta, enElMapa, entendido]);
 
   const viaje = grabado?.viaje ?? null;
   // El ritmo de partida es el del viaje, no uno puesto aquí: si quien mira lo mueve, manda el suyo.

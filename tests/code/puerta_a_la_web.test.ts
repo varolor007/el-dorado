@@ -287,7 +287,7 @@ test("sin IA enchufada, o con un techo, una clave o un viaje que no valen, el bo
   );
   await conCasa(async (casa) => {
     const id = await abre(casa);
-    for (const ceiling of [undefined, 0, -3, "5", null])
+    for (const ceiling of [0, -3, "5", {}])
       assert.deepEqual(await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling } }), {
         estado: 400,
         cuerpo: { error: "bad_ceiling" },
@@ -303,6 +303,18 @@ test("sin IA enchufada, o con un techo, una clave o un viaje que no valen, el bo
       assert.deepEqual([cuerpo.trip.state, cuerpo.research], ["started", null]);
     }
     assert.deepEqual(casa.claves, []);
+  });
+});
+
+test("el techo de gasto no es obligado: sin él, el botón lanza igual y la casa no para por gasto", async () => {
+  await conCasa(async (casa) => {
+    for (const cuerpo of [{}, { ceiling: null }]) {
+      const id = await abre(casa);
+      assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo })).estado, 202);
+      await casa.puerta.esperar();
+      const { cuerpo: dicho } = await casa.pide("GET", `/viajes/${id}`);
+      assert.deepEqual([dicho.trip.state, dicho.research.ceiling, dicho.research.stopped], ["on_map", null, null]);
+    }
   });
 });
 

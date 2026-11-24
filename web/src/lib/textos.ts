@@ -412,8 +412,6 @@ const en = {
       destination: "the destination",
       origin: "where you leave from",
     } as Record<string, string>,
-    techo: "Spend from your AI key, at most (US dollars)",
-    techoTexto: "The research stops if it reaches this. You see what it spent when it ends.",
     confirmar: "Confirm and research",
     fallo: (clave: string, campos: string[]): string => {
       const frases: Record<string, string> = {
@@ -886,8 +884,6 @@ const es: Textos = {
       destination: "el destino",
       origin: "de dónde sales",
     },
-    techo: "Gasto de tu clave de IA, como mucho (dólares)",
-    techoTexto: "La investigación se para si llega a esto. Al acabar ves lo que ha gastado.",
     confirmar: "Confirmar e investigar",
     fallo: (clave, campos) => {
       const frases: Record<string, string> = {

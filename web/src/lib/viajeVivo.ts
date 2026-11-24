@@ -38,9 +38,9 @@ export async function cambiarLoEntendido(id: string, understood: unknown): Promi
   return r.estado === 200 ? null : falloDe(r.cuerpo);
 }
 
-/** El botón: confirma lo entendido y da el adelante, con el techo de gasto de tu clave. */
-export async function empezarLaInvestigacion(id: string, ceiling: number): Promise<FalloDeViaje | null> {
-  const r = await pideALaCasa("POST", `viajes/${id}/empezar`, { ceiling });
+/** El botón: confirma lo entendido y da el adelante. Lo que se gasta lo limita cada uno en su cuenta de Claude. */
+export async function empezarLaInvestigacion(id: string): Promise<FalloDeViaje | null> {
+  const r = await pideALaCasa("POST", `viajes/${id}/empezar`, {});
   return r.estado === 202 ? null : falloDe(r.cuerpo);
 }
 

@@ -16,7 +16,7 @@
 //   POST   /viajes                     abre un viaje con lo entendido hasta ahora
 //   GET    /viajes/<id>                cómo está, y por dónde va su investigación
 //   PUT    /viajes/<id>/entendido      cambia lo entendido, mientras no esté confirmado
-//   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante con su techo y lanza la investigación
+//   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante (con su techo, si se da) y lanza
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
@@ -287,8 +287,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (marchas.has(id)) throw new Fallo(409, "already_running");
     if (o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
-    const techo = pedido.ceiling;
-    if (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0) throw new Fallo(400, "bad_ceiling");
+    // El techo de gasto es de quien lo quiera poner: la web no lo pregunta (el PM, 24-nov: cada uno limita su gasto
+    // en su cuenta de Claude). Sin techo, la casa no para por gasto; con uno, tiene que ser un importe de verdad.
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
     // La clave de IA es la de su cuenta: se descifra aquí, para esta investigación, y no se escribe en ningún sitio.
     const clave = claveDe(p.dueno, o.secreto, o.mesa);
     if (clave === null) throw new Fallo(409, "no_key");
