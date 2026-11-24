@@ -1,9 +1,11 @@
 "use client";
 
-// Tu panel: tus viajes, cada uno donde lo dejaste, y la puerta para empezar otro. En seco solo hay uno: el grabado.
+// Tu panel: tus viajes, cada uno donde lo dejaste, y la puerta para empezar otro. Con tu cuenta, los tuyos, traídos de
+// la casa; el grabado se queda como ejemplo.
 
 import Link from "next/link";
 import type { Punto, Viaje } from "../../../../../agent/output/viaje.ts";
+import { useMisViajes, useViajeDeLaCasa, type ResumenDeViaje } from "../../../lib/cuenta.ts";
 import { diaCorto, dinero, noches } from "../../../lib/formato.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { useGrabado, useIdioma } from "../../../lib/usar.ts";
@@ -35,10 +37,53 @@ function Dibujo({ viaje }: { viaje: Viaje }) {
   );
 }
 
+/** Un viaje de tu cuenta. Si ya está en el mapa, se dibuja y se abre; si no, dice cómo está. */
+function Tuyo({ resumen }: { resumen: ResumenDeViaje }) {
+  const idioma = useIdioma();
+  const t = TEXTOS[idioma];
+  const enElMapa = resumen.state === "on_map" || resumen.state === "closed";
+  const viaje = useViajeDeLaCasa(enElMapa ? resumen.id : null)?.viaje ?? null;
+  const medio = viaje?.maneras.find((m) => m.id === "best_value") ?? viaje?.maneras[0] ?? null;
+  const dentro = (
+    <>
+      {viaje !== null && <Dibujo viaje={viaje} />}
+      <span className="viaje__texto">
+        <span className="rotulo">{t.panel.estados[resumen.state]}</span>
+        <b className="viaje__lugar">{resumen.destination ?? t.panel.sinNombre}</b>
+        <span className="cabecera__linea">
+          {resumen.check_in !== null && resumen.check_out !== null && (
+            <>
+              <span className="pastilla">
+                {diaCorto(resumen.check_in, idioma)} → {diaCorto(resumen.check_out, idioma)}
+              </span>
+              <span className="pastilla">{t.vistazo.noches(noches(resumen.check_in, resumen.check_out))}</span>
+            </>
+          )}
+          {viaje !== null && (
+            <span className="pastilla">{t.viaje.paradas(viaje.dias.reduce((s, d) => s + d.paradas.length, 0))}</span>
+          )}
+          {medio !== null && (
+            <span className="pastilla pastilla--oro">{dinero(medio.total, medio.moneda, idioma)}</span>
+          )}
+        </span>
+        {enElMapa ? <span className="enlace">{t.panel.abrir} →</span> : <span className="suave">{t.panel.aun}</span>}
+      </span>
+    </>
+  );
+  return enElMapa ? (
+    <Link className="viaje" href={`/plan?trip=${resumen.id}&at=trip`}>
+      {dentro}
+    </Link>
+  ) : (
+    <div className="viaje viaje--quieto">{dentro}</div>
+  );
+}
+
 export default function Viajes() {
   const idioma = useIdioma();
   const t = TEXTOS[idioma];
   const grabado = useGrabado();
+  const mios = useMisViajes();
   const viaje = grabado?.viaje ?? null;
   const medio = viaje?.maneras.find((m) => m.id === "best_value") ?? viaje?.maneras[0] ?? null;
   return (
@@ -48,11 +93,14 @@ export default function Viajes() {
         <p className="suave">{t.panel.sub}</p>
       </header>
       <div className="viajes">
+        {(mios ?? []).map((resumen) => (
+          <Tuyo key={resumen.id} resumen={resumen} />
+        ))}
         {viaje !== null && (
           <Link className="viaje" href="/plan?at=trip">
             <Dibujo viaje={viaje} />
             <span className="viaje__texto">
-              <span className="rotulo">{t.panel.estado}</span>
+              <span className="rotulo">{mios === undefined ? t.panel.estado : t.panel.ejemplo}</span>
               <b className="viaje__lugar">{viaje.destino.nombre}</b>
               <span className="cabecera__linea">
                 <span className="pastilla">

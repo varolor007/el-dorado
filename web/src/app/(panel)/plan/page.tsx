@@ -2,7 +2,7 @@
 
 // El mapa es la pieza central del panel. Aquí vive lo que se decide: en qué etapa estás (el mundo, el primer vistazo,
 // la investigación o tu viaje), qué día miras, a qué ritmo, de qué manera, y lo que has quitado, añadido o movido.
-// En seco, todo sale del viaje grabado.
+// Lo que se enseña es un viaje tuyo, traído de la casa, si la dirección lo pide (?trip=<id>); si no, el grabado.
 
 import { useEffect, useMemo, useState } from "react";
 import type { Manera, Punto, Ritmo, Suceso } from "../../../../../agent/output/viaje.ts";
@@ -13,6 +13,7 @@ import { Cargando } from "../../../piezas/Cargando.tsx";
 import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
+import { useViajeDeLaCasa } from "../../../lib/cuenta.ts";
 import { dinero, noches } from "../../../lib/formato.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { foto, useAlto, useGrabado, useIdioma, useMovil, useReproductor, useTema } from "../../../lib/usar.ts";
@@ -45,7 +46,12 @@ export default function Planear() {
   const tema = useTema();
   const movil = useMovil();
   const alto = useAlto();
-  const grabado = useGrabado();
+  const [pedido, setPedido] = useState<string | null | undefined>(undefined);
+  useEffect(() => setPedido(new URLSearchParams(window.location.search).get("trip")), []);
+  const elGrabado = useGrabado();
+  const elDeLaCasa = useViajeDeLaCasa(pedido ?? null);
+  // Mientras no se sabe qué se pide, no se enseña ninguno: ni un instante el grabado en lugar del tuyo.
+  const grabado = pedido === undefined ? undefined : pedido === null ? elGrabado : elDeLaCasa;
   const [pintado, setPintado] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("mundo");
   const [lejos, setLejos] = useState<Camara | null>(null);
@@ -266,7 +272,12 @@ export default function Planear() {
 
       {etapa === "mundo" && (
         <Hoja corta etiqueta={t.mundo.saludo}>
-          <Mundo {...comun} grabado={viaje?.destino.nombre ?? null} alProbar={() => setEtapa("vistazo")} />
+          <Mundo
+            {...comun}
+            grabado={viaje?.destino.nombre ?? null}
+            alProbar={() => setEtapa("vistazo")}
+            noEsTuyo={typeof pedido === "string" && grabado === null}
+          />
         </Hoja>
       )}
       {etapa === "vistazo" && viaje !== null && (

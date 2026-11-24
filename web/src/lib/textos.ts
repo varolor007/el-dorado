@@ -76,6 +76,7 @@ const en = {
       grabado === null
         ? "Dry run: no trip is recorded yet. Any place flies the map."
         : `Dry run: only ${grabado} is recorded. Any place flies the map; only ${grabado} has data.`,
+    noEsTuyo: "That trip is not here. If it is yours, sign in to see it.",
   },
   vistazo: {
     rotulo: "First look",
@@ -365,6 +366,17 @@ const en = {
     nuevo: "Start a trip",
     nuevoTexto: "Where and when. The rest is asked while it already searches.",
     estado: "On the map",
+    ejemplo: "An example, already on the map",
+    // Cómo está cada viaje tuyo, por su estado en la casa.
+    estados: {
+      started: "Not confirmed yet",
+      confirmed: "Ready to research",
+      researching: "Being researched",
+      on_map: "On the map",
+      closed: "Closed",
+    },
+    aun: "It will open here when it is on the map.",
+    sinNombre: "A trip without a place yet",
     espera: "Waiting for you: choose how to sleep and close the trip.",
     abrir: "Open the trip",
     vacio: "No trips yet. The first one starts on the map.",
@@ -463,6 +475,7 @@ const es: Textos = {
       grabado === null
         ? "En seco: aún no hay ningún viaje grabado. Cualquier sitio mueve el mapa."
         : `En seco: solo hay grabado un viaje a ${grabado}. Cualquier sitio mueve el mapa; solo ${grabado} tiene datos.`,
+    noEsTuyo: "Ese viaje no está aquí. Si es tuyo, entra con tu cuenta para verlo.",
   },
   vistazo: {
     rotulo: "Primer vistazo",
@@ -736,6 +749,16 @@ const es: Textos = {
     nuevo: "Empezar un viaje",
     nuevoTexto: "Dónde y cuándo. Lo demás se pregunta mientras ya busca.",
     estado: "En el mapa",
+    ejemplo: "Un ejemplo, ya en el mapa",
+    estados: {
+      started: "Sin confirmar todavía",
+      confirmed: "Listo para investigar",
+      researching: "Investigándose",
+      on_map: "En el mapa",
+      closed: "Cerrado",
+    },
+    aun: "Se abrirá aquí cuando esté en el mapa.",
+    sinNombre: "Un viaje sin sitio todavía",
     espera: "Te espera: elegir cómo dormir y cerrar el viaje.",
     abrir: "Abrir el viaje",
     vacio: "Aún no tienes viajes. El primero empieza en el mapa.",

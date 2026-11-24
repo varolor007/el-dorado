@@ -17,7 +17,9 @@ import { foto, type Reproductor } from "../lib/usar.ts";
 type Comun = { t: Textos; idioma: string };
 
 /** El mundo: `grabado` es el nombre del destino del viaje grabado, si hay alguno. */
-export function Mundo({ t, grabado, alProbar }: Comun & { grabado: string | null; alProbar: () => void }) {
+type DelMundo = Comun & { grabado: string | null; alProbar: () => void; noEsTuyo?: boolean };
+
+export function Mundo({ t, grabado, alProbar, noEsTuyo }: DelMundo) {
   return (
     <>
       <div className="cabecera">
@@ -29,7 +31,7 @@ export function Mundo({ t, grabado, alProbar }: Comun & { grabado: string | null
           {t.mundo.ejemplo}
         </button>
       )}
-      <p className="dato">{t.mundo.seco(grabado)}</p>
+      {noEsTuyo ? <p className="aviso">{t.mundo.noEsTuyo}</p> : <p className="dato">{t.mundo.seco(grabado)}</p>}
     </>
   );
 }

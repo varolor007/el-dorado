@@ -3,7 +3,9 @@
 // Tu cuenta, vista desde el navegador: quién eres, y registrarte, entrar, salir y poner tu clave de IA. Todo pasa
 // por la web hasta la casa; aquí no se guarda nada, y la sesión va en una cookie que este código no puede leer.
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { grabadoQueVale } from "./grabado.ts";
+import type { Grabado } from "./usar.ts";
 
 export type Cuenta = { id: string; email: string; key: { hint: string; since: string } | null };
 /** `undefined` mientras se mira; `null` sin sesión; "no_house" si esta web no tiene casa a la que preguntar. */
@@ -79,4 +81,55 @@ export function useCuenta(): EstadoDeLaCuenta {
     void mira();
   }, []);
   return cuenta;
+}
+
+/** Lo que la casa dice de un viaje en una lista: quién es, cómo está y a dónde va. */
+export type ResumenDeViaje = {
+  id: string;
+  state: "started" | "confirmed" | "researching" | "on_map" | "closed";
+  version: number | null;
+  destination: string | null;
+  check_in: string | null;
+  check_out: string | null;
+};
+
+/** Tus viajes, los de tu cuenta. `undefined` mientras llegan o si no has entrado. */
+export function useMisViajes(): ResumenDeViaje[] | undefined {
+  const cuenta = useCuenta();
+  const quien = typeof cuenta === "object" && cuenta !== null ? cuenta.id : null;
+  const [viajes, setViajes] = useState<ResumenDeViaje[] | undefined>(undefined);
+  useEffect(() => {
+    setViajes(undefined);
+    if (quien === null) return;
+    let vivo = true;
+    void pideALaCasa("GET", "viajes").then((r) => {
+      if (vivo)
+        setViajes(r.estado === 200 && Array.isArray(r.cuerpo.trips) ? (r.cuerpo.trips as ResumenDeViaje[]) : []);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [quien]);
+  return viajes;
+}
+
+/**
+ * Un viaje tuyo que ya está en el mapa, traído de la casa, con la misma forma que el grabado: las pantallas no
+ * distinguen uno de otro. `undefined` mientras llega; `null` si no lo hay, no es tuyo o no tiene la forma de hoy.
+ */
+export function useViajeDeLaCasa(id: string | null): Grabado | null | undefined {
+  const [viaje, setViaje] = useState<Grabado | null | undefined>(undefined);
+  useEffect(() => {
+    setViaje(undefined);
+    if (id === null) return;
+    if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) return setViaje(null);
+    let vivo = true;
+    void pideALaCasa("GET", `viajes/${id}/version`).then((r) => {
+      if (vivo) setViaje(r.estado === 200 ? grabadoQueVale({ viaje: r.cuerpo.trip, sucesos: r.cuerpo.events }) : null);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [id]);
+  return viaje;
 }

@@ -1616,6 +1616,11 @@ img {
   transform: translateY(-3px);
   box-shadow: var(--sombra);
 }
+/* Un viaje que todavía no se puede abrir: se ve, pero no se pulsa ni se levanta. */
+.viaje--quieto:hover {
+  transform: none;
+  box-shadow: var(--sombra-corta);
+}
 .dibujo {
   display: block;
   width: 100%;

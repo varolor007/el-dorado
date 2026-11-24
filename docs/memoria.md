@@ -73,8 +73,10 @@ el secreto de la casa, que se le pasa a la puerta (`secreto`, 32 bytes; en el en
 casa se arranca con `agent/launcher/arrancar.ts` (`ELDORADO_LLAVE`, `ELDORADO_SECRETO`, `ELDORADO_PUERTO`). En la
 web: la pasarela `web/src/app/api/house/` (lo que admite, en `web/src/lib/casa.ts`; pide `ELDORADO_CASA_URL` y la
 misma `ELDORADO_LLAVE`), la pantalla de la cuenta (`/account`) y la de la clave (`/key`), ya enchufadas. Sin casa,
-la web lo dice y sigue enseñando el viaje grabado. **Falta en la web**: que el mapa abra el viaje en la casa, pulse
-el botón y escuche en vivo, y que tus viajes salgan de tu cuenta.
+la web lo dice y sigue enseñando el viaje grabado. Tus viajes (`/trips`) salen ya de tu cuenta, y el mapa abre uno
+tuyo ya hecho con `/plan?trip=<id>`. **Falta en la web**: que el mapa empiece el viaje en la casa (lo entendido sale
+de las preguntas de empezar, bloque 5), pulse el botón y escuche en vivo. Para mirar pantallas con un viaje en la
+casa local hay un guion en el borrador de la sesión que copia el de prueba a una cuenta inventada.
 
 **La llamada directa (2.7), a medias.** Hecho, sin llamar a nadie: `agent/launcher/ia.ts` monta lo que se le manda a
 un asiento (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con
