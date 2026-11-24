@@ -202,8 +202,21 @@ a caer en la otra. **Arreglado de forma general (2.4)**: la puerta lee la nota e
 (`notasDe` en `agent/gates/puerta_metodo.ts`), y cada renglón de dentro que lleve su propia fuente se mira igual;
 el contrato común lo dice más claro y pide el archivo con su extensión; y lo devuelto lleva la línea de cada rojo
 (`conSuLinea` en `agent/launcher/investigar.ts`). Con la puerta nueva, de los diez puestos de ese run solo queda
-en rojo el que lo estaba de verdad (citaba un archivo sin su extensión). El run se retoma donde paró, con el código
-de ahora.
+en rojo el que lo estaba de verdad (citaba un archivo sin su extensión). **Se retomó donde paró, con el código de
+ahora, y acabó con su viaje** (`de_verdad.ts sigue <run>`, tras quitar `parado.json`): 4 minutos y 41 segundos más,
+con los caminos de verdad de Geoapify (298 casillas en 13 pedidos), dos rondas del que cruza, a la primera, y el
+que explica, a la segunda (la puerta 7 le devolvió un «el más barato» a secas). **En total: 14 llamadas, unos 15
+minutos y el equivalente a 6,86 dólares**; sin las tres vueltas que sobraban, unos 5,5 y unos 10 minutos. Más de
+la mitad del gasto son los cinco que miran alojamientos (unos 0,75 cada uno). El viaje: cuatro días y quince
+paradas, cinco alojamientos mirados (dos descartados por quejas de moho confirmadas), tres maneras entre 257 y
+264 euros por las tres noches, tres palancas con su ahorro y ocho avisos. **Sin vuelos**: Aviasales no tiene
+precios guardados para esas fechas, y el viaje dice que el precio es solo del alojamiento (3.7, del PM). **Lo que
+enseñó además**: el que explica llamaba «puntuación» a la nota de la casa, y se leía como la de los huéspedes
+(arreglado en su contrato, 4.7); y de ningún alojamiento se pudo confirmar si la habitación encaja con el grupo.
+Un run empezado con el código de antes se retomó sin problema con el de ahora. La mesa de esa investigación está
+en el borrador de la sesión, fuera del repositorio, y la web la enseña en seco con `ELDORADO_MESA` apuntando a
+ella (su `grabado/` lleva el `viaje.json` y el `sucesos.json` del run); las capturas, en
+`revision/capturas-11` del borrador.
 
 **El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
 asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`

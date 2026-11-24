@@ -526,6 +526,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   que explica escribió «su puntuación es 5,7» de un alojamiento al que sus huéspedes dan un 8,7: era la nota de la
   casa, y se leía como la de los huéspedes. Su contrato lo dice ahora (EX4) y el código le da sobre cuánto va. A
   propuesta de la sesión, y por decidir por el PM: darle también la nota de los huéspedes, para que diga las dos.
+- **La primera investigación de verdad, entera** (la sesión, con el sí del PM a las pruebas con su cuenta). Madrid
+  a Lisboa, del 12 al 15 de febrero de 2027, dos adultos, con un gimnasio de verdad como imprescindible. 14
+  llamadas, unos 15 minutos y el equivalente a 6,86 dólares de su suscripción. Para seguir tras la parada se quitó
+  a mano la marca de parado y se retomó con el código arreglado: lo decide quien lleva el run, y queda dicho aquí.
+  El modelo se dio solo en la orden de la terminal.
 
 ## Pendientes
 
