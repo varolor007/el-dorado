@@ -1464,6 +1464,37 @@ img {
   gap: 8px;
   width: 100%;
 }
+/* De dónde sales: el campo y, al lado, el toque de «donde estoy ahora»; debajo, lo que propone el buscador. */
+.origen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.origen .campo {
+  flex: 1 1 180px;
+  width: auto;
+}
+.origen__lista {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: var(--radio-chico);
+  background: var(--velo);
+  max-height: 220px;
+  overflow: auto;
+}
+/* Un toque que es una lista para elegir: un país, una moneda o una edad. */
+select.toque {
+  max-width: 100%;
+}
+.toque--ancho {
+  align-self: flex-start;
+}
+.aviso__lista {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
 
 /* ---------- Dormir y las cuentas */
 

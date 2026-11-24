@@ -27,7 +27,7 @@ import {
 } from "../../web/src/lib/casa.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { monedaDelNavegador, paisDelNavegador, sitioDe } from "../../web/src/lib/empezar.ts";
-import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
+import { cajaDe, claseDeLugar, lugarDe, origenDe } from "../../web/src/lib/lugares.ts";
 import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
 import { ir, trayectoEnGoogleMaps } from "../../web/src/lib/formato.ts";
 import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
@@ -667,4 +667,21 @@ test("un sitio del buscador, como lo entiende la casa; y lo que se propone por e
   assert.deepEqual([paisDelNavegador("ja"), monedaDelNavegador("ja")], ["JP", "JPY"]);
   assert.deepEqual([paisDelNavegador("es-419"), monedaDelNavegador("es-419")], [null, null]);
   assert.deepEqual([paisDelNavegador("esto no es un idioma"), monedaDelNavegador("")], [null, null]);
+});
+
+test("de dónde sales, por lo que hay en un punto: la ciudad o lo más parecido, y su país", () => {
+  const en = (properties: Record<string, unknown>): unknown => ({ properties });
+  assert.deepEqual(origenDe(en({ name: "Plaza Inventada", city: "Villa Inventada", countrycode: "zz" })), {
+    nombre: "Villa Inventada",
+    pais: "ZZ",
+  });
+  // Sin ciudad, la comarca; sin nada de eso, el nombre de lo que haya. Sin país, se pregunta después.
+  assert.deepEqual(origenDe(en({ name: "Un cruce", county: "Comarca Inventada" })), {
+    nombre: "Comarca Inventada",
+    pais: null,
+  });
+  assert.equal(origenDe(en({ name: "  Aldea Inventada ", countrycode: "ZZZ" }))?.nombre, "Aldea Inventada");
+  assert.equal(origenDe(en({ name: "x".repeat(200) }))?.nombre.length, 80);
+  for (const nada of [null, undefined, {}, en({}), en({ city: "  ", name: 7 }), "un texto"])
+    assert.equal(origenDe(nada), null);
 });

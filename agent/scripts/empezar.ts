@@ -207,3 +207,41 @@ export function entendidoDe(r: Respuestas): LoEntendido {
     };
   return { entendido: falta.length === 0 ? entendido : null, supuesto, falta };
 }
+
+/**
+ * Las respuestas de un viaje que ya tiene lo entendido guardado, para retomar las preguntas donde se dejaron. Todo
+ * lo que hay se da por dicho. De lo que busca, lo que está entre los toques que se ofrecen vuelve a sus toques, y lo
+ * demás, a lo que escribió.
+ */
+export function respuestasDeLoEntendido(e: Entendido, toques: readonly string[]): Respuestas {
+  const tocadas = e.looking_for.filter((f) => toques.includes(f));
+  return {
+    idioma: e.language,
+    moneda: e.currency,
+    destino: {
+      nombre: e.destination.name,
+      pais: e.destination.country,
+      clase: e.destination.kind,
+      centro: e.destination.centre,
+      caja: e.destination.box,
+    },
+    origen: e.origin === null ? null : { nombre: e.origin.name, pais: e.origin.country },
+    entrada: e.dates.check_in,
+    salida: e.dates.check_out,
+    fechasMovibles: e.dates.flexible,
+    adultos: e.travellers.adults,
+    ninos: [...e.travellers.children],
+    habitaciones: e.travellers.rooms,
+    pasaportes: e.travellers.passports.length > 0 ? [...e.travellers.passports] : null,
+    gasto: e.budget,
+    ritmo: e.pace,
+    buscas: tocadas,
+    moverse: {
+      variosSitios: e.moving?.several_places ?? null,
+      salirDelPais: e.moving?.leave_country ?? null,
+      cuanto: e.moving?.how_much ?? null,
+    },
+    reservado: e.booked.join(". "),
+    libre: e.looking_for.filter((f) => !tocadas.includes(f)).join(". "),
+  };
+}

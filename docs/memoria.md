@@ -100,8 +100,20 @@ que da lo entendido, lo que se supuso con lo más probable (`supuesto`, para ens
 puede suponer y hay que pedir (`falta`: la moneda, la edad de un niño, de qué país es). La moneda se propone por el
 país (`agent/data/monedas.ts`). Lo de moverse por un país o una región va en lo entendido (`moving`), lo mira la
 puerta 1 y lo lee el que hace la ruta. La caja libre va tal cual a `looking_for` hasta que llegue el que escucha
-(5.2). **Falta la web**: que la hoja de preguntas cambie lo entendido, que el buscador traiga el país del sitio, y
-que el mapa abra el viaje en la casa, pulse el botón con su techo y escuche en vivo.
+(5.2). **Y la web (24-nov)**: con la casa conectada, buscar un sitio empieza un viaje de verdad
+(`web/src/piezas/Empezar.tsx`: el botón, las preguntas, lo que he entendido y el techo de gasto, que se propone en
+5 dólares). El viaje se abre en la casa en cuanto lo entendido está completo y se va guardando; su dirección pasa a
+ser `/plan?trip=<id>`, y al volver a ella se retoma (la puerta devuelve lo entendido a su dueño). Al confirmar, la
+web va a esa dirección y escucha a la casa en vivo (`web/src/lib/viajeVivo.ts` y `web/src/piezas/EnCasa.tsx`): por
+dónde va, lo que se cuenta, lo gastado y, si se para, por qué paso, con su botón de reintentar. El buscador trae el
+país del sitio, y «donde estoy ahora» pregunta al buscador abierto con el punto redondeado a dos decimales. **Falta**:
+verlo con una investigación de verdad (la casa local no tiene IA y contesta que no la hay); que el código busque
+mientras se contesta (5.5); y el visto bueno del PM a las preguntas.
+
+**Para mirar la web en una sesión**: la casa local se arranca de fondo, y la web, solo mientras dura un repaso (un
+guion del borrador la levanta, corre las capturas y la cierra). El buscador abierto de lugares falla a ratos: la web
+lo intenta dos veces. Y un arreglo del mapa (24-nov): el hueco de la hoja se le da al vuelo como desplazamiento y no
+como margen, porque el margen se quedaba puesto y, en el móvil, un país entero ya no cabía y el mapa no se movía.
 
 **La llamada directa (2.7), hecha y sin estrenar.** `agent/launcher/ia.ts` monta lo que se le manda a un asiento
 (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con el precio

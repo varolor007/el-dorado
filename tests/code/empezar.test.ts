@@ -13,6 +13,7 @@ import {
   enUnaLinea,
   LO_MAS_PROBABLE,
   respuestasDe,
+  respuestasDeLoEntendido,
   type Respuestas,
   type SitioElegido,
 } from "../../agent/scripts/empezar.ts";
@@ -218,4 +219,34 @@ test("la moneda que se propone de cada país es una moneda de verdad, y de un pa
   assert.equal(monedaDe("jp"), "JPY");
   assert.equal(monedaDe("ZZ"), null);
   assert.equal(monedaDe(null), null);
+});
+
+test("un viaje con lo entendido guardado se retoma donde se dejó: lo que sale es lo mismo que entró", () => {
+  const toques = ["Comer bien", "Naturaleza", "Playa"];
+  const r = respuestas(
+    (x) => {
+      x.adultos = 2;
+      x.ninos = [7];
+      x.habitaciones = 1;
+      x.pasaportes = ["YY", "XX", "YY"];
+      x.fechasMovibles = true;
+      x.gasto = "comfortable";
+      x.ritmo = "full";
+      x.buscas = ["Comer bien", "Playa"];
+      x.libre = "quiero vistas al mar";
+      x.reservado = "el vuelo de ida";
+      x.moverse = { variosSitios: true, salirDelPais: null, cuanto: "little" };
+    },
+    { ...VILLA, clase: "region" },
+  );
+  const e = entendidoDe(r).entendido!;
+  const vuelta = respuestasDeLoEntendido(e, toques);
+  // Lo tocado vuelve a sus toques y lo escrito, a su caja: nada se pierde ni cambia de sitio.
+  assert.deepEqual([vuelta.buscas, vuelta.libre, vuelta.reservado], [["Comer bien", "Playa"], r.libre, r.reservado]);
+  const otra = entendidoDe(vuelta);
+  assert.deepEqual([otra.entendido, otra.supuesto, otra.falta], [e, [], []]);
+  // Sin pasaportes dichos pero con origen, se vuelven a proponer por el país del que sale.
+  const sinPasaportes = respuestasDeLoEntendido({ ...e, travellers: { ...e.travellers, passports: [] } }, toques);
+  assert.equal(sinPasaportes.pasaportes, null);
+  assert.deepEqual(entendidoDe(sinPasaportes).entendido?.travellers.passports, ["YY", "YY", "YY"]);
 });

@@ -141,3 +141,18 @@ export function lugarDe(resultado: unknown): Lugar | null {
   const pais = typeof p.countrycode === "string" && /^[A-Za-z]{2}$/.test(p.countrycode) ? p.countrycode : null;
   return { nombre: p.name, donde, pais: pais?.toUpperCase() ?? null, clase, lat, lon, caja: cajaDe(p.extent) };
 }
+
+/** De dónde sale alguien: el nombre de un sitio y su país, si se sabe. */
+export type Origen = { nombre: string; pais: string | null };
+
+/**
+ * De dónde sale alguien, por lo que el buscador dice que hay en un punto: su ciudad o, si no la dice, lo más parecido
+ * (su comarca, su región, o el nombre de lo que haya), y su país. Nada si no hay ni un nombre.
+ */
+export function origenDe(resultado: unknown): Origen | null {
+  const p = ((resultado ?? {}) as { properties?: Record<string, unknown> }).properties ?? {};
+  const nombre = [p.city, p.county, p.state, p.name].find((x) => typeof x === "string" && x.trim() !== "");
+  if (typeof nombre !== "string") return null;
+  const pais = typeof p.countrycode === "string" && /^[A-Za-z]{2}$/.test(p.countrycode) ? p.countrycode : null;
+  return { nombre: nombre.trim().slice(0, 80), pais: pais?.toUpperCase() ?? null };
+}

@@ -405,6 +405,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   entra en lo entendido como un campo nuevo, y el contrato del que hace la ruta dice cómo leerlo: es un cambio
   pequeño en un contrato ya firmado, y va con la tanda. Lo que escribe en la caja libre va tal cual a lo que busca
   hasta que exista el que escucha.
+- **Las preguntas de empezar, en la web** (la sesión). El botón de empezar pide cuenta y clave y abre las preguntas;
+  lo que gasta no arranca hasta que el viajero confirma lo que he entendido, con el techo de gasto de su clave. El
+  techo se propone en 5 dólares, de partida, hasta medir lo que cuesta una investigación de verdad. El viaje se
+  abre en la casa en cuanto está completo, para que aparezca en sus viajes y se pueda retomar. «Donde estoy ahora»
+  no manda fuera el punto exacto de nadie: se redondea a dos decimales, que basta para saber la ciudad.
 
 ## Pendientes
 

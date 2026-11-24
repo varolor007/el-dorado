@@ -249,10 +249,12 @@ export function Mapa({ tema, alPintar, camara, hueco, tenues, vivos, zona, ruta,
         { padding, duration: quieto ? 0 : 2200, maxZoom: camara.cerca ?? 15.5, essential: true },
       );
     } else {
+      // El hueco se da aquí como un desplazamiento y no como un margen: un margen se le queda puesto al mapa, se suma
+      // al del encuadre siguiente y, en una pantalla pequeña, ya no cabe nada y el mapa no se mueve.
       m.flyTo({
         center: [camara.centro.lon, camara.centro.lat],
         zoom: camara.cerca,
-        padding,
+        offset: [(padding.left - padding.right) / 2, (padding.top - padding.bottom) / 2],
         duration: quieto ? 0 : 1600,
       });
     }

@@ -85,3 +85,13 @@ export function trayectoEnGoogleMaps(de: Punto, a: Punto, aPie: boolean): string
   const modo = aPie ? "&travelmode=walking" : "";
   return `https://www.google.com/maps/dir/?api=1${modo}&origin=${de.lat},${de.lon}&destination=${a.lat},${a.lon}`;
 }
+
+/** Lo que se ha gastado de una clave de IA, en dólares y con sus céntimos: aquí unos céntimos sí cuentan. */
+export function gastoDeIA(usd: number, idioma: string): string {
+  return new Intl.NumberFormat(idioma, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(usd);
+}

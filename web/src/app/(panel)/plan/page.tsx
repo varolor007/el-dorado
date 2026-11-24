@@ -7,18 +7,27 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Manera, Punto, Ritmo, Suceso } from "../../../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../../../agent/output/viaje.ts";
+import { puertaEntendido } from "../../../../../agent/gates/puerta_entendido.ts";
+import { respuestasDe, respuestasDeLoEntendido, type Respuestas } from "../../../../../agent/scripts/empezar.ts";
+import type { Entendido } from "../../../../../agent/scripts/formas.ts";
 import { fechasDe, repartir } from "../../../../../agent/scripts/ritmo.ts";
 import { Buscador, type Busqueda } from "../../../piezas/Buscador.tsx";
 import { Cargando } from "../../../piezas/Cargando.tsx";
+import { Empezar } from "../../../piezas/Empezar.tsx";
+import { EnCasa } from "../../../piezas/EnCasa.tsx";
 import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
-import { useViajeDeLaCasa } from "../../../lib/cuenta.ts";
+import { useCuenta, useViajeDeLaCasa } from "../../../lib/cuenta.ts";
+import { monedaDelNavegador, sitioDe } from "../../../lib/empezar.ts";
 import { dinero, noches } from "../../../lib/formato.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { foto, useAlto, useGrabado, useIdioma, useMovil, useReproductor, useTema } from "../../../lib/usar.ts";
+import { useViajeVivo } from "../../../lib/viajeVivo.ts";
 
-type Etapa = "mundo" | "vistazo" | "vivo" | "viaje";
+// Las cuatro primeras son las de un viaje que ya está hecho, el grabado o uno tuyo. Las dos últimas, las de un viaje
+// tuyo que aún no está en el mapa: las preguntas de empezar y su investigación, contada por la casa.
+type Etapa = "mundo" | "vistazo" | "vivo" | "viaje" | "preguntas" | "casa";
 
 const encuadreDe = (puntos: Punto[], margen = 0.12) => {
   const lats = puntos.map((p) => p.lat);
@@ -49,9 +58,29 @@ export default function Planear() {
   const [pedido, setPedido] = useState<string | null | undefined>(undefined);
   useEffect(() => setPedido(new URLSearchParams(window.location.search).get("trip")), []);
   const elGrabado = useGrabado();
-  const elDeLaCasa = useViajeDeLaCasa(pedido ?? null);
+  const cuenta = useCuenta();
+  // Un viaje tuyo se escucha en la casa mientras no está en el mapa; cuando llega, se pide su versión y se pinta.
+  const vivo = useViajeVivo(pedido ?? null);
+  const comoEsta = vivo.estado?.trip.state;
+  const enElMapa = comoEsta === "on_map" || comoEsta === "closed";
+  const elDeLaCasa = useViajeDeLaCasa(enElMapa ? (pedido ?? null) : null);
   // Mientras no se sabe qué se pide, no se enseña ninguno: ni un instante el grabado en lugar del tuyo.
-  const grabado = pedido === undefined ? undefined : pedido === null ? elGrabado : elDeLaCasa;
+  const grabado =
+    pedido === undefined
+      ? undefined
+      : pedido === null
+        ? elGrabado
+        : vivo.estado === undefined
+          ? undefined
+          : vivo.estado === null || !enElMapa
+            ? null
+            : elDeLaCasa;
+  // Lo que he entendido de un viaje tuyo, si la casa lo guarda con la forma de hoy.
+  const entendido = useMemo(
+    () => (puertaEntendido(vivo.entendido).verde ? (vivo.entendido as Entendido) : null),
+    [vivo.entendido],
+  );
+  const [nuevo, setNuevo] = useState<Respuestas | null>(null);
   const [pintado, setPintado] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("mundo");
   const [lejos, setLejos] = useState<Camara | null>(null);
@@ -77,6 +106,18 @@ export default function Planear() {
     if (pedido.get("stay") !== null) setFicha(grabado.viaje.alojamientos[Number(pedido.get("stay")) - 1]?.id ?? null);
   }, [grabado]);
 
+  // Un viaje tuyo que aún no está en el mapa va a su sitio: a las preguntas si no está confirmado, y a su
+  // investigación si ya lo está. Cuando llega al mapa, se enseña.
+  useEffect(() => {
+    if (!comoEsta) return;
+    if (comoEsta === "started") {
+      if (entendido !== null)
+        setNuevo((ya) => ya ?? respuestasDeLoEntendido(entendido, TEXTOS[idioma].preguntas.buscasOpciones));
+      setEtapa("preguntas");
+    } else if (!enElMapa) setEtapa("casa");
+    else setEtapa((antes) => (antes === "casa" || antes === "preguntas" ? "viaje" : antes));
+  }, [comoEsta, enElMapa, entendido, idioma]);
+
   const viaje = grabado?.viaje ?? null;
   // El ritmo de partida es el del viaje, no uno puesto aquí: si quien mira lo mueve, manda el suyo.
   const ritmo: Ritmo = ritmoPedido ?? RITMOS.find((x) => x === viaje?.ritmo) ?? "normal";
@@ -93,6 +134,14 @@ export default function Planear() {
   const deParada = useMemo(() => new Map((viaje?.paradas ?? []).map((p) => [p.id, p])), [viaje]);
 
   const alBuscar = (b: Busqueda): void => {
+    // Con la casa conectada, buscar un sitio es empezar un viaje de verdad. Sin ella, la web enseña el grabado.
+    if (cuenta !== undefined && cuenta !== "no_house") {
+      const moneda = monedaDelNavegador(navigator.language);
+      setNuevo(respuestasDe(sitioDe(b.lugar), { entrada: b.entrada, salida: b.salida }, { idioma, moneda }));
+      setLejos(null);
+      setEtapa("preguntas");
+      return;
+    }
     const nombre = viaje?.destino.nombre.toLowerCase().slice(0, 5) ?? null;
     if (nombre !== null && b.lugar.nombre.toLowerCase().startsWith(nombre)) {
       setLejos(null);
@@ -179,6 +228,42 @@ export default function Planear() {
     });
   };
 
+  // El sitio de un viaje que aún no está en el mapa: el que se acaba de buscar, o el de lo entendido.
+  const sitio =
+    etapa === "preguntas"
+      ? (nuevo?.destino ?? null)
+      : etapa === "casa" && entendido !== null
+        ? {
+            centro: entendido.destination.centre,
+            caja: entendido.destination.box,
+          }
+        : null;
+  if (sitio !== null) {
+    const c = sitio.caja;
+    // Una caja que cruza el meridiano 180 no se encuadra: se va a su centro.
+    camara =
+      c !== null && c.west < c.east
+        ? { encuadre: { oeste: c.west, sur: c.south, este: c.east, norte: c.north }, cerca: 12 }
+        : { centro: sitio.centro, cerca: 9 };
+  }
+  if (etapa === "casa") {
+    // Lo que la casa va contando se pinta donde pasa: la zona que se busca, lo encontrado y lo que se mira.
+    const ha = (clase: Suceso["clase"]): Suceso[] => vivo.sucesos.filter((s) => s.clase === clase);
+    const z = ha("zone").at(-1);
+    if (z?.punto && z.radio && ha("lodgings_priced").length === 0) {
+      zona = { punto: z.punto, radio: z.radio };
+      camara = { encuadre: encuadreDelCirculo(z.punto, z.radio), cerca: 14.5 };
+      marcas.push({ id: "pulso-zona", punto: z.punto, encima: 2, pieza: <div className="pulso" /> });
+    }
+    tenues = ha("lodgings_found").flatMap((s) => s.puntos ?? []);
+    vivos = ha("lodgings_pass").flatMap((s) => s.puntos ?? []);
+    const mirando = [...vivo.sucesos].reverse().find((s) => s.clase === "looking" || s.clase === "looked");
+    if (mirando?.clase === "looking" && mirando.punto) {
+      camara = { centro: mirando.punto, cerca: 15.2 };
+      marcas.push({ id: "pulso-mira", punto: mirando.punto, encima: 2, pieza: <div className="pulso" /> });
+    }
+  }
+
   if (viaje !== null && etapa === "vistazo") {
     vivos = (viaje.vistazo?.puntos ?? []).map((p) => p.punto);
     camara = { encuadre: encuadreDe(vivos.length > 0 ? vivos : [viaje.destino.punto]), cerca: 14.5 };
@@ -262,11 +347,23 @@ export default function Planear() {
         t={t}
         idioma={idioma}
         recogido={movil && etapa !== "mundo"}
-        inicial={{
-          texto: etapa === "mundo" ? "" : (viaje?.destino.nombre ?? ""),
-          entrada: viaje?.entrada ?? "",
-          salida: viaje?.salida ?? "",
-        }}
+        inicial={
+          etapa === "preguntas" && nuevo !== null
+            ? { texto: nuevo.destino.nombre, entrada: nuevo.entrada, salida: nuevo.salida }
+            : etapa === "casa" && entendido !== null
+              ? {
+                  texto: entendido.destination.name,
+                  entrada: entendido.dates.check_in,
+                  salida: entendido.dates.check_out,
+                }
+              : {
+                  texto: etapa === "mundo" ? "" : (viaje?.destino.nombre ?? ""),
+                  // En el mundo, las fechas del ejemplo solo se proponen si la web va en seco: con la casa, las
+                  // de un viaje nuevo las dice quien lo empieza.
+                  entrada: etapa === "mundo" && cuenta !== "no_house" ? "" : (viaje?.entrada ?? ""),
+                  salida: etapa === "mundo" && cuenta !== "no_house" ? "" : (viaje?.salida ?? ""),
+                }
+        }
         alBuscar={alBuscar}
       />
 
@@ -276,7 +373,34 @@ export default function Planear() {
             {...comun}
             grabado={viaje?.destino.nombre ?? null}
             alProbar={() => setEtapa("vistazo")}
-            noEsTuyo={typeof pedido === "string" && grabado === null}
+            noEsTuyo={typeof pedido === "string" && vivo.estado === null}
+            conCasa={cuenta !== undefined && cuenta !== "no_house"}
+          />
+        </Hoja>
+      )}
+      {etapa === "preguntas" && nuevo !== null && (
+        <Empezar
+          key={`${nuevo.destino.nombre}|${nuevo.entrada}|${nuevo.salida}`}
+          {...comun}
+          inicial={nuevo}
+          viaje={comoEsta === "started" ? (pedido ?? null) : null}
+          cuenta={cuenta}
+          alEmpezar={(id) => {
+            // La investigación ya corre en la casa: se va a la dirección del viaje, que la escucha en vivo.
+            const direccion = new URL(window.location.href);
+            direccion.searchParams.set("trip", id);
+            direccion.searchParams.delete("at");
+            window.location.assign(direccion);
+          }}
+        />
+      )}
+      {etapa === "casa" && vivo.estado && (
+        <Hoja etiqueta={t.casa.titulo}>
+          <EnCasa
+            {...comun}
+            estado={vivo.estado}
+            sucesos={vivo.sucesos}
+            deNoches={entendido === null ? 0 : noches(entendido.dates.check_in, entendido.dates.check_out)}
           />
         </Hoja>
       )}

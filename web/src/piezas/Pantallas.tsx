@@ -18,9 +18,9 @@ import { foto, type Reproductor } from "../lib/usar.ts";
 type Comun = { t: Textos; idioma: string };
 
 /** El mundo: `grabado` es el nombre del destino del viaje grabado, si hay alguno. */
-type DelMundo = Comun & { grabado: string | null; alProbar: () => void; noEsTuyo?: boolean };
+type DelMundo = Comun & { grabado: string | null; alProbar: () => void; noEsTuyo?: boolean; conCasa?: boolean };
 
-export function Mundo({ t, grabado, alProbar, noEsTuyo }: DelMundo) {
+export function Mundo({ t, grabado, alProbar, noEsTuyo, conCasa }: DelMundo) {
   return (
     <>
       <div className="cabecera">
@@ -32,7 +32,11 @@ export function Mundo({ t, grabado, alProbar, noEsTuyo }: DelMundo) {
           {t.mundo.ejemplo}
         </button>
       )}
-      {noEsTuyo ? <p className="aviso">{t.mundo.noEsTuyo}</p> : <p className="dato">{t.mundo.seco(grabado)}</p>}
+      {noEsTuyo ? (
+        <p className="aviso">{t.mundo.noEsTuyo}</p>
+      ) : (
+        <p className="dato">{conCasa ? t.mundo.conCasa : t.mundo.seco(grabado)}</p>
+      )}
     </>
   );
 }
@@ -106,7 +110,7 @@ type Linea = { n: string | null; texto: string };
  * Las líneas de lo que va pasando: los recuentos, con su número delante; lo demás, en una frase. Lo que sigue a un
  * número concuerda con él, y lo que nombra las noches, con las del viaje.
  */
-function frase(s: Suceso, t: Textos, idioma: string, deNoches: number): Linea | null {
+export function fraseDeSuceso(s: Suceso, t: Textos, idioma: string, deNoches: number): Linea | null {
   const n = s.n === undefined ? null : new Intl.NumberFormat(idioma).format(s.n);
   const nombre = s.nombre ?? "";
   switch (s.clase) {
@@ -164,7 +168,7 @@ function Toques({ titulo, opciones, varias }: { titulo: string; opciones: string
 }
 
 /** Un contador de un toque: uno menos, cuántos hay y uno más. Para lo que no cabe en una lista corta de respuestas. */
-function Contador(x: {
+export function Contador(x: {
   texto: string;
   n: number;
   minimo: number;
@@ -304,7 +308,7 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
   const mirados = new Set(r.vistos.filter((s) => s.clase === "looked").map((s) => s.ref));
   const deNoches = noches(viaje.entrada, viaje.salida);
   const lineas = r.vistos
-    .map((s, i) => ({ s, i, f: frase(s, t, idioma, deNoches) }))
+    .map((s, i) => ({ s, i, f: fraseDeSuceso(s, t, idioma, deNoches) }))
     .filter((x) => x.f !== null && !(x.s.clase === "looking" && mirados.has(x.s.ref)))
     .reverse()
     .slice(0, 6);
