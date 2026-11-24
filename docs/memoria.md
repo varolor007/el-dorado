@@ -171,7 +171,7 @@ que mirar al instalar (que la imagen se construye, que Claude Code piensa con el
 saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
 Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de
 certificados con todo el que la usa: con un subdominio del PM no pasa. **La tercera tanda (24-nov)**, con su
-diseño escrito en el encargo; el que escucha y los caminos ya están juntos, y sigue en marcha el buscador. Fueron: los caminos de verdad en la casa (3.14,
+diseño escrito en el encargo, junta entera. Fueron: los caminos de verdad en la casa (3.14,
 `claude/eldorado-3-14-caminos`: una tabla de caminos por viaje, a pie y en coche, con tope de casillas, que usan las
 cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la fuente falta) y el que escucha (5.2,
 `claude/eldorado-5-2-el-que-escucha`: las palabras del viajero aparte, su contrato, la mitad de IA de la puerta 1 y
@@ -179,8 +179,8 @@ la investigación esperando su confirmación). Y el buscador y el lector de webs
 `claude/eldorado-3-5-buscador`): un asiento dice en su contrato si sale a internet; busca y lee con las herramientas
 de la propia IA (las de la API en la llamada directa; WebSearch y WebFetch en Claude Code); la casa guarda la
 memoria de lo que se buscó y se abrió, y la puerta de todos da rojo a lo que cite una página que no se abrió. **Lo
-que queda por repartir**: cuando esté el 3.5, el del calendario (5.3) y el de los papeles (5.4); y cuando esté el
-5.2, que toca lo mismo, el conductor (2.5): la idea es que el acta del run la escriba el código y que el asiento
+que queda por repartir**: el del calendario (5.3) y el de los papeles (5.4), que ya tienen su buscador; y el
+conductor (2.5): la idea es que el acta del run la escriba el código y que el asiento
 solo coja un rojo que su dueño ya intentó dos veces, para decirle al viajero en claro qué pasó y qué puede hacer.
 
 **La cuenta del PM, estrenada (24-nov).** Su token está en el entorno de las sesiones. Una sesión auxiliar no pudo
@@ -192,6 +192,24 @@ en una sola llamada sin herramientas, que la casa lee bien su respuesta y que fu
 primera investigación entera con su cuenta** se lanzó ese día con `de_verdad.ts`, el viaje de Madrid a Lisboa del
 12 al 15 de febrero y una guarda de 25 dólares, desde una copia limpia del código (`git worktree`) y con su mesa
 fuera del repositorio; lo que salga, en el punto de situación.
+
+**El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
+asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`
+(W1 a W7), sus topes (`agent/data/internet.ts`: 8 búsquedas y 12 páginas de partida, que se pueden cambiar asiento
+a asiento) y las dos herramientas de la propia IA: en la llamada directa, el buscador y el lector de la API con su
+tope por llamada, siguiendo tras cada pausa hasta 6 vueltas; con Claude Code, WebSearch y WebFetch, y la casa
+cuenta lo que pide según llega y lo corta al pasar de su tope. Lo que buscó y lo que abrió lo saca la casa de lo
+que devuelve quien piensa y lo guarda en `consultado/<puesto>.json` del run, sin lo que decían las páginas
+(`agent/launcher/consultado.ts`). La puerta de todos da rojo a la nota que cite una página que no se abrió, y al
+dato de la entrega que lleve una dirección que ni se abrió ni venía en su material; un resultado del buscador no
+es una fuente. Un asiento sin internet que sale, o uno que pasa de sus topes, no entrega. A un asiento con internet
+no se le manda un material con un correo o una clave; que no salga un nombre propio depende de su material, y lo
+tiene que mirar el adversario. Las búsquedas cuentan en el gasto (0,01 dólares cada una en la llamada directa).
+Estrenado con la cuenta del PM (una búsqueda y una página, 23 segundos, unos 5 céntimos de equivalente): lo que
+devuelve Claude Code tiene la forma que se esperaba. Sin comprobar: la llamada directa con internet; que el corte
+llegue antes de que se haga lo que pasa del tope (es una carrera); y, si se corta, lo gastado no se sabe. Con
+Claude Code, el lector no devuelve la página entera sino lo que otro modelo saca de ella, y abre cualquier
+dirección; se puede cerrar por dominios si el PM quiere. Los números los firma el PM.
 
 **El que escucha (5.2), junto** (una sesión de obra, revisada el 24-nov). Lo que escribe el viajero va en `said` de
 lo entendido; `agent/launcher/escuchar.ts` lleva el primer paso: sin palabras no se lanza; con ellas, el que escucha

@@ -5,6 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { puertaMetodo, type VeredictoDelMetodo } from "../gates/puerta_metodo.ts";
+import { abiertas, leerConsultado } from "./consultado.ts";
 import { leerSello, type Puesto } from "./puesto.ts";
 
 const ORDEN = resolve(import.meta.dirname, "..", "contracts", "common", "LAUNCH.md");
@@ -51,9 +52,12 @@ export function ordenDeApertura(): string {
   return texto.slice(corte + 5).trim();
 }
 
-/** Recoge un asiento que ya trabajó: pasa la puerta de todos sobre su puesto. */
+/**
+ * Recoge un asiento que ya trabajó: pasa la puerta de todos sobre su puesto, con las páginas que abrió de verdad,
+ * de la memoria de lo consultado que guardó la casa en el run.
+ */
 export function recogerAsiento(p: Puesto): VeredictoDelMetodo {
-  return puertaMetodo(p.carpeta, leerSello(p));
+  return puertaMetodo(p.carpeta, leerSello(p), abiertas(leerConsultado(p)));
 }
 
 export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): Promise<Resultado> {

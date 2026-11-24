@@ -506,8 +506,23 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   solo sentido. Con tope de 600 casillas por viaje: primero lo que sirve para elegir dónde dormir. Si la fuente
   falla a medias, lo que llegó se usa y lo demás va con la cuenta de la casa, con su aviso. En la web, lo medido se
   dice tal cual, el coche dice «sin tráfico», y lo que sale de la cuenta de la casa dice que es aproximado.
+- **Cómo quedan el buscador y el lector de webs** (una sesión de obra, revisada por quien orquesta). Que un asiento
+  sale a internet lo dice un archivo de su contrato, `INTERNET.md`, y no un campo: así lee lo que tiene que buscar
+  y queda sellado con lo demás. Los topes los pone la casa, no el contrato. Un resultado del buscador no es una
+  fuente: solo cuenta una página abierta. Dos direcciones son la misma página aunque cambien el esquema, las
+  mayúsculas del sitio, el fragmento, la barra del final o el puerto de siempre; las mayúsculas del camino sí
+  cuentan. Una página que falló cuenta para el tope. Ningún asiento puede entregar una dirección que ni abrió ni
+  venía en su material. Lo que puede salir en una búsqueda: el destino, las fechas, el país del viajero y lo que
+  se busca; nunca quién es. Los números de partida (8 búsquedas, 12 páginas, 6 vueltas) los confirma el PM.
+- **El buscador, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): una llamada
+  mínima por Claude Code, con una búsqueda y una página.
 
 ## Pendientes
+
+Lo que deja la obra del 24-nov, a decisión del PM:
+
+- **Los números del buscador de webs**: 8 búsquedas, 12 páginas y 6 vueltas por asiento, de partida. Y si el lector
+  se cierra por dominios en algún asiento (los oficiales, en el de los papeles).
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
 
