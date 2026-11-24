@@ -12,6 +12,7 @@ import {
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
 import { DUDAS, ESTADOS_DE_PAPEL, LADOS, PREGUNTAS, type EstadoDePapel } from "../data/papeles.ts";
 import { avisosDe } from "../data/palabras.ts";
+import { pegasDelTexto } from "../gates/textos.ts";
 import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
 import { DIAS_ALREDEDOR } from "../data/transporte.ts";
 
@@ -207,7 +208,7 @@ export type DiasParaVolar = {
 /**
  * Un aviso de las fechas, como lo enseña la web: su clase y su tema por su clave, el nombre propio que da su fuente
  * (una fiesta, un evento) si lo tiene, sus días y los del viaje que toca, y la página de donde sale con la fecha que
- * da. La frase la pone la web: aquí no viaja ninguna del asiento.
+ * da. Ninguna frase del del calendario: la única que viaja es la del que explica, que pasó la puerta 7.
  */
 export type AvisoDeFechas = {
   clase: ClaseDeAviso;
@@ -222,6 +223,11 @@ export type AvisoDeFechas = {
   precio: { importe: number; moneda: string } | null;
   fuente: string;
   visto: string | null;
+  /**
+   * Lo que es y lo que le cambia el viaje esos días, en el idioma del viajero: lo escribe el que explica y pasa la
+   * puerta 7. Un viaje de antes, o uno cuyo explicador no lo contó, no la trae.
+   */
+  frase?: string;
 };
 
 /**
@@ -237,6 +243,8 @@ export type VentanaDeFechas = {
   alcanza: number[];
   pierde: number[];
   entra: number[];
+  /** Lo que gana y lo que pierde, en el idioma del viajero: del que explica, como la de cada aviso. */
+  frase?: string;
 };
 
 /** Por qué faltan los avisos de las fechas: el asiento falló o no llegó, o lo que entregó no pasó su puerta. */
@@ -438,6 +446,11 @@ function enlaceQueVale(texto: unknown): boolean {
 export function pegasDelCalendario(c: DelCalendario, entrada: string, salida: string): Pega[] {
   const pegas: Pega[] = [];
   const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  /** Una frase del que explica: un texto para el viajero, corto, en una línea y sin enlaces ni promesas. */
+  const pegasDeLaFrase = (frase: unknown, donde: string): void => {
+    if (typeof frase !== "string" || frase.trim() === "") return pega(donde, "su frase no es un texto");
+    for (const que of pegasDelTexto(frase, { sinNumerosLargos: true })) pega(donde, `su frase ${que}`);
+  };
   if (c.falta !== null && !FALTAS_DEL_CALENDARIO.includes(c.falta)) pega("calendario", "no dice por qué falta");
   if (!Array.isArray(c.avisos) || !Array.isArray(c.ventanas))
     return [...pegas, { donde: "calendario", que: "no es una lista" }];
@@ -463,6 +476,7 @@ export function pegasDelCalendario(c: DelCalendario, entrada: string, salida: st
     if (!a.dias.every((d) => fecha(d) && d >= entrada && d <= salida)) pega(donde, "toca días que no son del viaje");
     if (a.precio !== null && !(a.precio.importe > 0 && /^[A-Z]{3}$/.test(a.precio.moneda)))
       pega(donde, "su precio no es un importe con su moneda");
+    if (a.frase !== undefined) pegasDeLaFrase(a.frase, donde);
   });
   const hay = (xs: number[]): boolean => xs.every((n) => Number.isInteger(n) && n >= 0 && n < c.avisos.length);
   c.ventanas.forEach((v, i) => {
@@ -471,7 +485,13 @@ export function pegasDelCalendario(c: DelCalendario, entrada: string, salida: st
     if (!Number.isInteger(v.seMueve) || v.seMueve === 0) pega(donde, "no dice cuántos días se mueve");
     if (![v.porQue, v.evita, v.alcanza, v.pierde, v.entra].every(hay)) pega(donde, "cita un aviso que no existe");
     if (v.evita.length === 0 && v.alcanza.length === 0) pega(donde, "una ventana que no mejora nada no se enseña");
+    if (v.frase !== undefined) pegasDeLaFrase(v.frase, donde);
   });
+  // Las frases van todas o ninguna: las escribió el que explica, una por aviso y una por ventana.
+  const conFrase = [...c.avisos, ...c.ventanas].filter((x) => x.frase !== undefined).length;
+  if (conFrase > 0 && conFrase !== c.avisos.length + c.ventanas.length)
+    pega("calendario", "unos avisos llevan su frase y otros no");
+  if (conFrase > 0 && c.falta !== null) pega("calendario", "faltan los avisos, y aun así lleva frases");
   return pegas;
 }
 

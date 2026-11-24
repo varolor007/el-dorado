@@ -1,11 +1,13 @@
 // La puerta 7: ¿sin promesas y con su aviso? Lo que el código comprueba, desde fuera, de lo que escribe el asiento
 // que explica. Mide de dónde sale cada cosa: que cada número del texto está en lo que se le dio, que ninguna palabra
 // es de la lista prohibida (las promesas y las de dentro), que cada manera tiene su línea de lo que gana y de lo que
-// pierde, que lo que no se sabe está dicho, y que lo que se entrega lleva el aviso de IA y el de los precios. No
-// mide si el texto engaña sin números: eso lo cubre un revisor que no lo escribió.
+// pierde, que lo que no se sabe está dicho, y que lo que se entrega lleva el aviso de IA y el de los precios. Y, si
+// se le dieron los avisos de las fechas, que cuenta cada uno y cada ventana con una frase, con los números y el nombre
+// de su dato, y sin abaratar nada que no tenga precio. No mide si el texto engaña sin números: eso lo cubre un revisor
+// que no lo escribió.
 
-import { avisosDe } from "../data/palabras.ts";
-import type { ParaExplicar } from "../scripts/explica.ts";
+import { avisosDe, DE_ABARATAR } from "../data/palabras.ts";
+import type { FechasParaExplicar, HallazgoParaExplicar, ParaExplicar } from "../scripts/explica.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { numerosEn } from "./puerta_cruce.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -15,6 +17,8 @@ import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 export type MaterialDeExplicar = { viaje: Entendido; dado: ParaExplicar; avisos: string[] };
 
 const LO_QUE_LLEVA = ["seat", "language", "ways", "levers", "unknowns"];
+/** Lo que lleva además, solo si se le dieron los avisos de las fechas. */
+const DE_LAS_FECHAS = "dates";
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -67,7 +71,8 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
   if (!esObjeto(entrega)) return { verde: false, rojos: [{ donde: "delivery", que: "la entrega no es un objeto" }] };
 
   for (const campo of LO_QUE_LLEVA) if (!(campo in entrega)) rojo(campo, "falta en la entrega");
-  for (const campo of Object.keys(entrega)) if (!LO_QUE_LLEVA.includes(campo)) rojo(campo, "no es de la entrega");
+  for (const campo of Object.keys(entrega))
+    if (!LO_QUE_LLEVA.includes(campo) && campo !== DE_LAS_FECHAS) rojo(campo, "no es de la entrega");
   if (entrega.seat !== "trip-explainer") rojo("seat", "la entrega no es del asiento que explica");
   if (entrega.language !== m.viaje.language)
     rojo("language", `no escribe en el idioma del viajero: ${m.viaje.language}`);
@@ -116,10 +121,167 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
   if (hayAlgoSinSaber(m.dado) && lista(entrega.unknowns).length === 0)
     rojo("unknowns", "hay cosas sin confirmar y no se le dicen al viajero");
 
+  // Los avisos de las fechas, uno a uno, si se le dieron.
+  for (const [donde, que] of pegasDeLasFechas(entrega[DE_LAS_FECHAS], m)) rojo(donde, que);
+
   // Los avisos de siempre, que pone la casa.
   // En el idioma del viajero si están escritos en él; si no, en inglés: nunca sin ellos.
   const deSiempre = avisosDe(m.viaje.language);
   if (!m.avisos.includes(deSiempre.ia)) rojo("avisos", "falta el aviso de que está hecho con IA");
   if (!m.avisos.includes(deSiempre.precios)) rojo("avisos", "falta el aviso de que los precios son orientativos");
   return { verde: rojos.length === 0, rojos };
+}
+
+/** Los números de una fecha o de varias: el año, el mes y el día de cada una. */
+const deFechas = (...fechas: string[]): number[] =>
+  fechas.filter((f) => ES_FECHA.test(f)).flatMap((f) => numerosDe(f.slice(0, 10)));
+
+/** Los números de un hallazgo: los de sus fechas y sus días, los de su nombre, y su precio si lo tiene. */
+function numerosDelHallazgo(h: HallazgoParaExplicar): number[] {
+  const n = [...deFechas(h.from, h.to, ...h.trip_days), h.trip_days_count];
+  if (h.name !== "unknown") n.push(...numerosDe(h.name));
+  if (h.days_needed !== undefined)
+    n.push(h.days_needed.asks, h.days_needed.trip_has, Math.abs(h.days_needed.asks - h.days_needed.trip_has));
+  if (h.price !== "unknown") n.push(h.price.amount);
+  return n;
+}
+
+/** Las palabras de un texto, tal como van escritas. */
+const palabrasDe = (texto: string): string[] => texto.match(/\p{L}[\p{L}\p{M}'’-]*/gu) ?? [];
+
+/**
+ * Los nombres propios de una frase del calendario: las palabras con mayúscula que no abren una frase. El `what` del
+ * asiento puede traer los que no son el nombre de su dato, y por ahí no se cuelan.
+ */
+function nombresEn(texto: string): string[] {
+  const nombres: string[] = [];
+  for (const frase of texto.split(/(?<=[.!?:;])\s+/)) {
+    const palabras = palabrasDe(frase);
+    palabras.forEach((p, i) => {
+      if (i > 0 && /^\p{Lu}/u.test(p)) nombres.push(p);
+    });
+  }
+  return nombres;
+}
+
+/** Los nombres de siempre, que puede decir cualquier frase: los meses y los días de la semana, el destino y su país. */
+function nombresDeSiempre(m: MaterialDeExplicar): Set<string> {
+  const dichos = new Set<string>();
+  const idiomas = [...new Set(["en", m.viaje.language])];
+  const suma = (texto: string | undefined): void => {
+    for (const p of palabrasDe(texto ?? "")) dichos.add(p.toLowerCase());
+  };
+  for (const idioma of idiomas) {
+    let regiones: Intl.DisplayNames | null = null;
+    try {
+      regiones = new Intl.DisplayNames([idioma], { type: "region" });
+    } catch {
+      regiones = null;
+    }
+    for (const pais of [m.viaje.destination.country, m.viaje.origin?.country])
+      if (pais !== undefined && /^[A-Z]{2}$/.test(pais)) suma(regiones?.of(pais));
+    for (let mes = 0; mes < 12; mes++)
+      for (const forma of ["long", "short"] as const)
+        suma(new Intl.DateTimeFormat(idioma, { month: forma, timeZone: "UTC" }).format(Date.UTC(2031, mes, 1)));
+    for (let dia = 0; dia < 7; dia++)
+      for (const forma of ["long", "short"] as const)
+        suma(new Intl.DateTimeFormat(idioma, { weekday: forma, timeZone: "UTC" }).format(Date.UTC(2031, 0, 5 + dia)));
+  }
+  suma(m.viaje.destination.name);
+  suma(m.viaje.origin?.name);
+  return dichos;
+}
+
+/** Lo que va entre comillas en un texto: si es un nombre, es el de su dato. */
+const ENTRE_COMILLAS = /[«“"]([^»”"]+)[»”"]/gu;
+
+/**
+ * Las pegas de los avisos de las fechas contados al viajero: una frase por hallazgo y una por ventana, ni más ni
+ * menos, cada una como cualquier texto suyo, con los números de su dato y de las fechas del viaje, sin otro nombre
+ * propio que el de su dato y sin abaratar lo que no trae precio. Si no se le dieron, no se dicen.
+ */
+function pegasDeLasFechas(crudo: unknown, m: MaterialDeExplicar): [string, string][] {
+  const pegas: [string, string][] = [];
+  const pega = (donde: string, que: string): void => void pegas.push([donde, que]);
+  const dadas: FechasParaExplicar | undefined = m.dado.dates;
+  if (dadas === undefined) {
+    // Sin avisos de las fechas no hay nada que contar: como mucho, dos listas vacías.
+    if (crudo === undefined) return pegas;
+    const vacio = esObjeto(crudo) && lista(crudo.findings).length === 0 && lista(crudo.windows).length === 0;
+    if (!vacio) pega(DE_LAS_FECHAS, "no se le dieron avisos de las fechas: no hay nada que contar");
+    return pegas;
+  }
+  if (!esObjeto(crudo)) return [[DE_LAS_FECHAS, "falta, o no es un objeto con findings y windows"]];
+  for (const campo of Object.keys(crudo))
+    if (campo !== "findings" && campo !== "windows") pega(`${DE_LAS_FECHAS}.${campo}`, "no es de la entrega");
+  for (const campo of ["findings", "windows"])
+    if (!Array.isArray(crudo[campo])) pega(`${DE_LAS_FECHAS}.${campo}`, "falta, o no es una lista");
+
+  const { trip } = dadas;
+  const delViaje = [...deFechas(trip.check_in, trip.check_out), trip.days, trip.nights];
+  const deSiempre = nombresDeSiempre(m);
+  const nombre = (h: HallazgoParaExplicar | undefined): string | null =>
+    h === undefined || h.name === "unknown" ? null : h.name;
+
+  /** Una frase de las fechas: un texto del viajero, con sus números, sus nombres y sin abaratar sin precio. */
+  const frase = (donde: string, v: unknown, de: HallazgoParaExplicar[], extra: number[], abarata: boolean): void => {
+    if (!esTexto(v)) return pega(donde, "está en blanco");
+    for (const p of pegasDelTexto(v, { sinNumerosLargos: true })) pega(donde, p);
+    const numeros = new Set<number>([...delViaje, ...extra, ...de.flatMap(numerosDelHallazgo)]);
+    for (const n of numerosDeMas(v, numeros)) pega(donde, `dice ${n}, que no está en los datos de este aviso`);
+    if (!abarata && DE_ABARATAR.test(v)) pega(donde, "habla de más barato o de ahorrar, y sus datos no traen precio");
+    const suyos = de.map(nombre).filter((x): x is string => x !== null);
+    const permitidas = new Set([...deSiempre, ...suyos.flatMap(palabrasDe).map((p) => p.toLowerCase())]);
+    // Un nombre del `what` que no es el del dato no pasa: el nombre propio que se dice es el que viene en el dato.
+    const enLaFrase = new Set(palabrasDe(v));
+    for (const otro of new Set(de.flatMap((h) => nombresEn(h.what))))
+      if (enLaFrase.has(otro) && !permitidas.has(otro.toLowerCase()))
+        pega(donde, `nombra «${otro}», que no es el nombre que viene en su dato`);
+    for (const [, citado] of v.matchAll(ENTRE_COMILLAS))
+      if (!suyos.some((s) => s.toLowerCase().includes(citado.trim().toLowerCase())))
+        pega(donde, `pone entre comillas «${citado.trim()}», que no es el nombre que viene en su dato`);
+    // El nombre de otro aviso no va en esta frase: cada una cuenta lo suyo.
+    for (const h of dadas.findings) {
+      const n = nombre(h);
+      if (
+        n !== null &&
+        !de.includes(h) &&
+        !suyos.some((s) => s.includes(n)) &&
+        v.toLowerCase().includes(n.toLowerCase())
+      )
+        pega(donde, `nombra «${n}», que es de otro aviso`);
+    }
+  };
+
+  // Una frase por hallazgo, una vez cada uno.
+  const contados = new Set<number>();
+  lista(crudo.findings).forEach((c, i) => {
+    const donde = `${DE_LAS_FECHAS}.findings[${i}]`;
+    if (!esObjeto(c) || !Number.isInteger(c.finding)) return pega(donde, "no dice de qué aviso habla");
+    const h = dadas.findings.find((x) => x.finding === c.finding);
+    if (h === undefined) return pega(donde, `el aviso ${c.finding} no es de los que se le dieron`);
+    if (contados.has(h.finding)) return pega(donde, `el aviso ${h.finding} sale dos veces: una frase por aviso`);
+    contados.add(h.finding);
+    frase(`${donde}.says`, c.says, [h], [], h.price !== "unknown");
+  });
+  for (const h of dadas.findings)
+    if (!contados.has(h.finding)) pega(`${DE_LAS_FECHAS}.findings`, `falta la frase del aviso ${h.finding}`);
+
+  // Una frase por ventana: lo que gana y lo que pierde. Una ventana no trae precio: no abarata nada.
+  const contadas = new Set<number>();
+  lista(crudo.windows).forEach((c, i) => {
+    const donde = `${DE_LAS_FECHAS}.windows[${i}]`;
+    if (!esObjeto(c) || !Number.isInteger(c.window)) return pega(donde, "no dice de qué ventana habla");
+    const w = dadas.windows.find((x) => x.window === c.window);
+    if (w === undefined) return pega(donde, `la ventana ${c.window} no es de las que se le dieron`);
+    if (contadas.has(w.window)) return pega(donde, `la ventana ${w.window} sale dos veces: una frase por ventana`);
+    contadas.add(w.window);
+    const citados = [...new Set([...w.avoids, ...w.reaches, ...w.loses, ...w.enters])];
+    const de = dadas.findings.filter((h) => citados.includes(h.finding));
+    const suyos = [...deFechas(w.check_in, w.check_out), Math.abs(w.shift_days)];
+    frase(`${donde}.says`, c.says, de, suyos, false);
+  });
+  for (const w of dadas.windows)
+    if (!contadas.has(w.window)) pega(`${DE_LAS_FECHAS}.windows`, `falta la frase de la ventana ${w.window}`);
+  return pegas;
 }

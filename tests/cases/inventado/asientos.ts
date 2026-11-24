@@ -1,7 +1,7 @@
 // Los asientos de mentira y las fuentes inventadas con que se prueba una investigación entera: lo que entregaría
 // cada asiento si trabajara bien, escrito en su puesto como lo dejaría uno de verdad. Sin internet y sin gastar.
 
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
@@ -207,16 +207,20 @@ export function entregaCon(asiento: string, dado: (nombre: string) => any): Obje
   if (asiento === "sights-picker") return entregaDeSitios();
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
   if (asiento === "conductor") return entregaDelConductor(dado("stop.json"));
+  const fechas = dado("dates.json");
   const paraExplicar: ParaExplicar = {
     ways: dado("ways.json"),
     levers: dado("levers.json"),
     checks: dado("checks.json"),
+    ...(fechas == null ? {} : { dates: fechas }),
   };
   return entregaDeExplicar(paraExplicar);
 }
 
 function entregaDe(asiento: string, puesto: string): Objeto {
-  return entregaCon(asiento, (nombre) => leerJson(join(puesto, "in", nombre)));
+  return entregaCon(asiento, (nombre) =>
+    existsSync(join(puesto, "in", nombre)) ? leerJson(join(puesto, "in", nombre)) : null,
+  );
 }
 
 /** Los seis textos de un asiento aplicado, por el nombre de su archivo, con la entrega que se le diga. */

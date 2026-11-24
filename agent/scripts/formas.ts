@@ -345,4 +345,9 @@ export type EntregaDeExplicar = {
   levers: { lever_row: string; what: string; in_exchange: string }[];
   /** Lo que no se sabe o está sin confirmar, dicho al viajero. */
   unknowns: string[];
+  /**
+   * Los avisos de las fechas, contados al viajero: una frase por hallazgo y una por ventana, por su posición. Solo si
+   * se le dieron; una entrega de antes no los trae.
+   */
+  dates?: { findings: { finding: number; says: string }[]; windows: { window: number; says: string }[] };
 };

@@ -10,6 +10,7 @@ language given in `language` of `in/trip.json`.
 | `ways` | One entry per way of `in/ways.json`, all of them, once |
 | `levers` | One entry per entry of `in/levers.json`, all of them, once. Empty list if there are none |
 | `unknowns` | What is not known or not confirmed, for the traveller. Empty list if nothing |
+| `dates` | Only if there is `in/dates.json`: `findings`, one entry per finding, and `windows`, one entry per window, all of them, once. Leave the field out if there is no `in/dates.json` |
 
 The examples in this file show the form only. A text for the traveller is a placeholder between `<` and `>`,
 because yours goes in the language of `in/trip.json`, whichever it is. The examples in English are invented, two
@@ -49,3 +50,13 @@ Every number in every text is a number of `in/ways.json`, `in/levers.json` or `i
 difference, a count of minutes, a day of the month. Written as a number, not as a word, so that the house can check
 it, and written the way the traveller's language writes numbers: the house reads both `263.87` and `263,87` as the
 same number.
+
+## The entries of `dates`
+
+`{ "findings": [{ "finding": 0, "says": "<one sentence in the traveller's language: what it is and what it changes
+in their trip on those days>" }], "windows": [{ "window": 0, "says": "<one sentence in the traveller's language:
+what they gain and what they lose with these other dates>" }] }`
+
+- `finding` and `window`: the position, as in `in/dates.json`.
+- `says`: for the traveller, in one line and at most 500 characters. None is empty. Its numbers are those of its
+  finding or its window and of the dates of the trip (EX8).

@@ -422,5 +422,36 @@ export function entregaDeExplicar(dado: ParaExplicar): EntregaDeExplicar {
       in_exchange: "Cambian tus fechas.",
     })),
     unknowns: ["No se sabe a qué hora llega tu vuelo, y no se ha podido comprobar con la entrada al alojamiento."],
+    ...(dado.dates === undefined ? {} : { dates: fechasContadas(dado.dates) }),
+  };
+}
+
+/**
+ * Lo que contaría el que explica de los avisos de las fechas: una frase por hallazgo, con sus días, y una por ventana.
+ * Nunca copia el `what` del calendario: lo cuenta con los datos.
+ */
+export function fechasContadas(f: NonNullable<ParaExplicar["dates"]>): NonNullable<EntregaDeExplicar["dates"]> {
+  const queEs: Record<string, string> = {
+    blocks: "impide el viaje",
+    raises: "encarece el viaje",
+    bothers: "te molestará",
+    favours: "juega a tu favor",
+  };
+  return {
+    findings: f.findings.map((h) => {
+      const quien = h.name === "unknown" ? "Esto" : h.name;
+      const dias = `toca ${h.trip_days_count} de tus ${f.trip.days} días`;
+      return {
+        finding: h.finding,
+        says:
+          h.days_needed === undefined
+            ? `${quien} ${queEs[h.kind]}: ${dias}.`
+            : `Se recomiendan ${h.days_needed.asks} días, y tu viaje tiene ${h.days_needed.trip_has}.`,
+      };
+    }),
+    windows: f.windows.map((w) => ({
+      window: w.window,
+      says: `Si te mueves ${Math.abs(w.shift_days)} días, cambias lo que tocan tus fechas y mantienes tus noches.`,
+    })),
   };
 }

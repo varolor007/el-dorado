@@ -29,8 +29,9 @@ you copy neither: they show the form only, and everything you write comes from t
 - `from` and `to` are the first and the last day the page gives, `YYYY-MM-DD`. Only `days_needed` has them
   `unknown`, and only it has `days`: the number of days the page says the destination asks for.
 - `price` is `unknown`, or `{ "amount": 120, "currency": "EUR" }` as the page gives it (RC5).
-- `what` says in plain English, in one line of 200 characters at most, what the finding is. The traveller does not
-  read it: the house shows the finding from its fields.
+- `what` says in plain English, in one line of 200 characters at most, what the finding is, for someone who has
+  never heard of it (a named event: what kind of event it is). The traveller does not read it: another seat reads
+  it as a fact, with the other fields, and writes the sentence the traveller reads.
 - `source` is the full address of the page you opened; `seen` is the date that page gives for it, or `unknown`.
 
 ## An entry of `windows`
