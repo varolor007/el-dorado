@@ -486,6 +486,8 @@ const en = {
     sinClave: "Without a key you can look around and open the first look. Research needs it.",
     gasto: "What each trip has spent",
     sinGasto: "Nothing yet: no trip has been researched with your key.",
+    deLaCasa:
+      "Your account thinks with this site's own Claude account: you don't need a key to research. If you save one, it stays in your account, encrypted, for later.",
   },
   cuenta: {
     titulo: "Your account",
@@ -956,6 +958,8 @@ const es: Textos = {
     sinClave: "Sin clave puedes mirar y abrir el primer vistazo. Para investigar hace falta.",
     gasto: "Lo que ha gastado cada viaje",
     sinGasto: "Nada todavía: ningún viaje se ha investigado con tu clave.",
+    deLaCasa:
+      "Tu cuenta piensa con la cuenta de Claude de esta web: no te hace falta clave para investigar. Si guardas una, se queda en tu cuenta, cifrada, para más adelante.",
   },
   cuenta: {
     titulo: "Tu cuenta",

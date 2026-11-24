@@ -77,6 +77,17 @@ millón (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`); cuánto se esfue
 `ELDORADO_ESFUERZO`. La clave de la IA la pone cada viajero en su cuenta. Sin modelo, la casa arranca sin IA: las
 cuentas y los viajes funcionan, y el botón de investigar dice que no hay con qué.
 
+La casa puede pensar también con su propia cuenta de Claude, por Claude Code (gasta de esa suscripción: lanzarlo es
+decisión del PM). Solo la usan las cuentas cuyo correo esté en `ELDORADO_CORREOS_DE_LA_CASA`, separados por comas;
+las demás, con su clave o con nada. Hace falta Claude Code en la máquina (o su ruta en `ELDORADO_CLAUDE`) y el token
+de la suscripción, de `claude setup-token`. Sin precio, la casa no admite claves de viajeros. Al arrancar avisa de los
+correos de la lista que aún no tienen cuenta: como el correo no se confirma, se registran antes de dar la dirección.
+
+```bash
+ELDORADO_CORREOS_DE_LA_CASA=<correo,correo> CLAUDE_CODE_OAUTH_TOKEN=<el token> ELDORADO_MODELO=<el modelo> \
+  ELDORADO_LLAVE=<la llave> ELDORADO_SECRETO=<32 bytes> node agent/launcher/arrancar.ts
+```
+
 Para lanzar una investigación entera con la IA de verdad desde la terminal (gasta de la clave: es decisión del PM):
 
 ```bash

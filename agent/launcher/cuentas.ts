@@ -100,6 +100,30 @@ function porCorreo(mesa: string, correo: string): Cuenta | null {
   }
 }
 
+/** Si un correo ya tiene cuenta, comparado como se guarda. */
+export function hayCuentaDe(correo: unknown, mesa: string = carpetaDeLaMesa()): boolean {
+  const limpio = correoQueVale(correo);
+  return limpio !== null && porCorreo(mesa, limpio) !== null;
+}
+
+/**
+ * La lista de correos que piensan con la cuenta de la casa, leída de su entorno: separados por comas, y cada uno
+ * comparado como se guarda. Uno que no tiene forma de correo no se salta: la casa no arranca, para que nadie crea
+ * que está en la lista sin estarlo.
+ */
+export function correosDeLaCasa(escrito: string | undefined): string[] {
+  const dichos = (escrito ?? "").split(",").filter((x) => x.trim() !== "");
+  return [
+    ...new Set(
+      dichos.map((dicho) => {
+        const correo = correoQueVale(dicho);
+        if (correo === null) throw new Error("en la lista de correos de la casa hay uno que no tiene forma de correo");
+        return correo;
+      }),
+    ),
+  ];
+}
+
 export function publica(c: Cuenta): CuentaPublica {
   return { id: c.id, email: c.correo, key: c.clave === null ? null : { hint: c.clave.pista, since: c.clave.cuando } };
 }

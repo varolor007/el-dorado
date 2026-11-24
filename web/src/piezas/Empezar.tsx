@@ -181,7 +181,8 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
   const e = useMemo(() => entendidoDe(r), [r]);
   const supuesto = (campo: string): string => (e.supuesto.includes(campo) ? ` (${x.supuesto})` : "");
   const conSesion = typeof cuenta === "object" && cuenta !== null;
-  const conClave = conSesion && cuenta.key !== null;
+  // Quien piensa con la cuenta de la casa no necesita clave para empezar.
+  const conClave = conSesion && (cuenta.thinks_with === "house" || cuenta.key !== null);
 
   // Los países y las monedas, con su nombre en el idioma de quien mira.
   const paises = useMemo(() => {

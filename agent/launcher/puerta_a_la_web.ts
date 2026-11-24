@@ -10,7 +10,7 @@
 //   POST   /cuentas                    registrarse, con correo y contraseña; deja la sesión abierta
 //   POST   /sesiones                   entrar
 //   DELETE /sesiones                   salir
-//   GET    /cuenta                     quién soy, y si tengo puesta mi clave de IA
+//   GET    /cuenta                     quién soy, si tengo puesta mi clave de IA y con qué pienso
 //   PUT    /cuenta/clave               pone mi clave de IA        DELETE la borra
 //   GET    /viajes                     mis viajes
 //   POST   /viajes                     abre un viaje con lo entendido hasta ahora
@@ -32,6 +32,7 @@ import {
   borrarClave,
   claveDe,
   claveQueVale,
+  correoQueVale,
   entrar,
   FalloDeCuenta,
   guardarClave,
@@ -78,6 +79,12 @@ export type OpcionesDeLaPuerta = {
   lanzador?: (clave: string) => Lanzador;
   /** Si una clave de IA sirve, preguntado a la IA. Sin ello, la clave se guarda sin comprobar. */
   claveQueFunciona?: (clave: string) => Promise<boolean>;
+  /**
+   * Quien piensa con la cuenta de la casa, y los correos que la usan. Solo esos: cualquier otra cuenta piensa con
+   * su clave o con nada, aunque la casa tenga la suya.
+   */
+  lanzadorDeLaCasa?: Lanzador;
+  correosDeLaCasa?: string[];
   hoy?: () => Date;
   alLlevar?: AlLlevar;
   /** Cada cuánto mira la casa si hay algo nuevo que contar a quien escucha, y cada cuánto le da señal de vida. */
@@ -94,7 +101,14 @@ export type Puerta = {
   cerrar: () => Promise<void>;
 };
 
-type Peticion = { metodo: string; partes: string[]; consulta: URLSearchParams; dueno: string; cuerpo: unknown };
+type Peticion = {
+  metodo: string;
+  partes: string[];
+  consulta: URLSearchParams;
+  dueno: string;
+  cuerpo: unknown;
+  cuenta: Cuenta;
+};
 type Entrada = { metodo: string; partes: string[]; cuerpo: unknown; sesion: unknown };
 type Respuesta = { estado: number; cuerpo: unknown };
 
@@ -185,6 +199,17 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   const oyentes = new Map<string, number>();
   const abiertos = new Set<ServerResponse>();
   const fallos = new Map<string, { n: number; desde: number }>();
+  const deLaCasa = new Set((o.correosDeLaCasa ?? []).flatMap((c) => correoQueVale(c) ?? []));
+
+  /** Con qué piensa una cuenta: la de la casa, solo si su correo está en la lista; si no, su clave, o nada. */
+  const conQuePiensa = (c: Cuenta): "house" | "key" | null => {
+    const correo = correoQueVale(c.correo);
+    if (o.lanzadorDeLaCasa !== undefined && correo !== null && correo === c.correo && deLaCasa.has(correo))
+      return "house";
+    return o.lanzador !== undefined && c.clave !== null ? "key" : null;
+  };
+  /** Lo que se dice de una cuenta a la web: lo público suyo y con qué piensa, y nada de la casa. */
+  const deCara = (c: Cuenta): Record<string, unknown> => ({ ...publica(c), thinks_with: conQuePiensa(c) });
 
   /** Lo que queda de espera, en segundos, para volver a probar con ese correo; cero si se puede. */
   const espera = (quien: string): number => {
@@ -230,7 +255,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     fallos.delete(quien);
     return {
       estado: raiz === "cuentas" ? 201 : 200,
-      cuerpo: { account: publica(dentro.cuenta), session: dentro.sesion },
+      cuerpo: { account: deCara(dentro.cuenta), session: dentro.sesion },
     };
   }
 
@@ -240,7 +265,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (raiz !== "cuenta" || mas !== undefined) return null;
     if (que === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
-      return { estado: 200, cuerpo: { account: publica(cuenta) } };
+      return { estado: 200, cuerpo: { account: deCara(cuenta) } };
     }
     if (que !== "clave") throw NO_HAY();
     try {
@@ -257,9 +282,9 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           }
           if (!sirve) throw new Fallo(400, "key_rejected");
         }
-        return { estado: 200, cuerpo: { account: publica(guardarClave(cuenta.id, dado, o.secreto, o.mesa, hoy())) } };
+        return { estado: 200, cuerpo: { account: deCara(guardarClave(cuenta.id, dado, o.secreto, o.mesa, hoy())) } };
       }
-      if (p.metodo === "DELETE") return { estado: 200, cuerpo: { account: publica(borrarClave(cuenta.id, o.mesa)) } };
+      if (p.metodo === "DELETE") return { estado: 200, cuerpo: { account: deCara(borrarClave(cuenta.id, o.mesa)) } };
     } catch (error) {
       if (error instanceof FalloDeCuenta) throw new Fallo(400, error.message);
       throw error;
@@ -285,16 +310,18 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const v = suViaje(p);
     const id = v.ficha.id;
     if (marchas.has(id)) throw new Fallo(409, "already_running");
-    if (o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
     // El techo de gasto es de quien lo quiera poner: la web no lo pregunta (el PM, 24-nov: cada uno limita su gasto
     // en su cuenta de Claude). Sin techo, la casa no para por gasto; con uno, tiene que ser un importe de verdad.
     const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
     if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
       throw new Fallo(400, "bad_ceiling");
-    // La clave de IA es la de su cuenta: se descifra aquí, para esta investigación, y no se escribe en ningún sitio.
-    const clave = claveDe(p.dueno, o.secreto, o.mesa);
-    if (clave === null) throw new Fallo(409, "no_key");
+    // Con la cuenta de la casa no hace falta clave. Si no, la clave de IA es la de su cuenta: se descifra aquí, para
+    // esta investigación, y no se escribe en ningún sitio.
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
     // Lo entendido se mira antes de confirmar nada: dice qué campo no está claro, no con qué palabras.
     const claro = puertaEntendido(leerJson(join(v.carpeta, "entendido.json")), {
       hoy: hoy().toISOString().slice(0, 10),
@@ -309,7 +336,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     }
     darElAdelante(run, techo, hoy());
     apuntar(v, "button", { boton: "start", techo }, hoy());
-    const marcha = llevar(run, o.fuentes(), o.lanzador(clave), o.alLlevar)
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    const marcha = llevar(run, o.fuentes(), lanzador, o.alLlevar)
       .then(() => undefined)
       .catch(() => {
         // Si la casa se rompe a medias, el run no se queda colgado: queda parado, y se cuenta.
@@ -457,7 +488,14 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (sinSesion !== null) return responder(res, sinSesion.estado, sinSesion.cuerpo);
         const cuenta = sesionDe(sesion, o.mesa, hoy());
         if (cuenta === null) throw new Fallo(401, "no_session");
-        const p: Peticion = { metodo, partes, consulta: direccion.searchParams, dueno: cuenta.id, cuerpo: null };
+        const p: Peticion = {
+          metodo,
+          partes,
+          consulta: direccion.searchParams,
+          dueno: cuenta.id,
+          cuerpo: null,
+          cuenta,
+        };
         if (partes[0] === "viajes" && partes[2] === "eventos" && partes.length === 3) {
           if (p.metodo !== "GET") throw new Fallo(405, "method");
           return escuchar(p, req, res);

@@ -15,6 +15,7 @@ export default function Clave() {
   const [fallo, setFallo] = useState<Fallo>(null);
   const [ocupada, setOcupada] = useState(false);
   const dentro = typeof cuenta === "object" && cuenta !== null ? cuenta : null;
+  const deLaCasa = dentro?.thinks_with === "house";
 
   const guarda = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -29,7 +30,7 @@ export default function Clave() {
     <main className="pagina pagina--estrecha">
       <header className="pagina__cab">
         <h1 className="lugar">{t.clave.titulo}</h1>
-        <p className="suave">{t.clave.cuerpo}</p>
+        <p className="suave">{deLaCasa ? t.clave.deLaCasa : t.clave.cuerpo}</p>
       </header>
       <form className="tarjeta" onSubmit={(e) => void guarda(e)}>
         {dentro?.key != null && (
@@ -81,7 +82,7 @@ export default function Clave() {
             </span>
           </p>
         )}
-        {dentro?.key == null && <p className="dato">{t.clave.sinClave}</p>}
+        {dentro?.key == null && !deLaCasa && <p className="dato">{t.clave.sinClave}</p>}
       </form>
       <section className="tarjeta">
         <h2 className="titulo">{t.clave.gasto}</h2>

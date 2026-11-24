@@ -25,6 +25,8 @@ export type Respuesta = {
   /** Lo que leyó y lo que escribió la IA, en sus unidades de cobro. */
   entrada: number;
   salida: number;
+  /** Lo que costó, en dólares, si quien piensa lo dice (Claude Code lo dice): entonces no hace falta precio. */
+  usd?: number;
 };
 
 /** Quien llama a la IA de verdad. Si no llega a contestar, lanza un error. */
@@ -145,13 +147,18 @@ export function escribirSalida(puesto: Puesto, texto: string): string[] {
   return escritos;
 }
 
-/** Lo que costó una respuesta, con el precio de la IA con la que se pensó. */
-export function gastoDe(r: { entrada: number; salida: number }, precio: Precio): Gasto {
+/**
+ * Lo que costó una respuesta: lo que diga quien pensó, si lo dice; si no, con el precio de la IA con la que se
+ * pensó. Sin ninguna de las dos cosas no se sabe, y no se inventa: se lanza.
+ */
+export function gastoDe(r: { entrada: number; salida: number; usd?: number }, precio: Precio | null): Gasto {
+  const dicho = typeof r.usd === "number" && Number.isFinite(r.usd) && r.usd >= 0 ? r.usd : null;
+  if (dicho === null && precio === null) throw new Error("no se sabe lo que costó: ni lo dijo la IA ni hay precio");
   return {
     turnos: 1,
     entrada: r.entrada,
     salida: r.salida,
-    usd: (r.entrada * precio.entrada + r.salida * precio.salida) / 1e6,
+    usd: dicho ?? (r.entrada * (precio as Precio).entrada + r.salida * (precio as Precio).salida) / 1e6,
   };
 }
 
@@ -167,9 +174,9 @@ export function precioDe(entorno: Record<string, string | undefined>): Precio {
 /**
  * El lanzador de la casa para la IA de verdad: una llamada por asiento. Lo que contesta queda escrito en su puesto,
  * y lo que dijo tal cual, guardado en el run, fuera del puesto, para quien lo lleva. Dice lo que gastó también
- * cuando la respuesta no vale.
+ * cuando la respuesta no vale. Sin precio, lo que gastó lo tiene que decir quien piensa.
  */
-export function lanzadorDirecto(pensar: Pensar, precio: Precio): Lanzador {
+export function lanzadorDirecto(pensar: Pensar, precio: Precio | null): Lanzador {
   return async (_orden, puesto, corte) => {
     const r = await pensar(peticionDe(puesto), corte);
     const gasto = gastoDe(r, precio);
