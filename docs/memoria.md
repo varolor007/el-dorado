@@ -243,7 +243,11 @@ fechas y el enlace), sin la frase del asiento, y un evento que el viajero no con
 los tres minutos de los papeles la pantalla en vivo está casi vacía. «Lo que ha gastado aún no se sabe» sale
 mientras trabaja un asiento. En los papeles, lo dudoso va arriba aunque no importe (un español a Portugal). Un
 viaje ya en el mapa, abierto sin `at=trip` en su dirección, enseña el mapa del mundo (el enlace de «Tus viajes» sí
-lo lleva). La casa y la web locales quedaron paradas al acabar.
+lo lleva). La casa y la web locales quedaron paradas al acabar. **Lo que siguió (24-nov)**: tres adversarios
+revisan la tanda, cada uno en su copia y sin tocar nada (la mecánica, la seguridad y las biblias); su informe irá a
+`docs/revisiones/tanda-4.md`. Y con lo que contestó el PM, dos sesiones de obra más: que «Volver a intentarlo»
+repita solo el asiento que falló (`claude/eldorado-2-5-reintentar`) y que los avisos de las fechas los cuente el
+que explica, con una frase que pasa la puerta 7 (`claude/eldorado-5-3-avisos-contados`).
 
 **Los avisos de las fechas y los papeles (5.3 y 5.4), juntos** (una sesión de obra, revisada el 24-nov). Son los
 dos primeros asientos con `INTERNET.md`: `agent/contracts/calendar/` y `agent/contracts/papers/`, con sus números

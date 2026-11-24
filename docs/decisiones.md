@@ -558,6 +558,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   dice qué arreglar cuesta una vuelta entera. Y los contratos dicen lo que mide la puerta.
 - **El del calendario y el de los papeles, estrenados solos con la cuenta del PM** (la sesión, con su sí a las
   pruebas con su cuenta): unos 1,13 dólares de equivalente entre los dos.
+- **«Volver a intentarlo» repite solo el asiento que falló** (el PM, a la propuesta de la sesión: «si es un asiento
+  sin problema»; la sesión lo lee como un sí y se lo dice así, por si no lo era). Encargado a una sesión de obra.
+- **Los avisos de las fechas los cuenta el que explica** (el PM, a las dos maneras: «lo que consideres»; elige la
+  sesión). Una frase por aviso y por ventana, en el idioma del viajero, que pasa la puerta 7: así la regla de la
+  pantalla no cambia. Encargado a una sesión de obra.
 - **El ensayo entero desde la web, con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): unos
   7,19 dólares de equivalente. Cuando el filtro de seguridad del modelo marcó el mensaje de un asiento, la sesión
   lo repitió una sola vez y sin cambiar nada, ni el mensaje ni el modelo, y dejó dicho al PM que, si volvía a
@@ -581,11 +586,11 @@ Lo que deja la obra del 24-nov, a decisión del PM:
   viaje y pregunte al viajero, y el paso de elegir otras fechas («Tú, las fechas»), que aún no está.
 - **Qué hace la casa cuando el filtro de seguridad del modelo marca el mensaje de un asiento** (pasó una vez en el
   ensayo, con una lista de sitios normal): hoy para y lo cuenta el conductor, como «un fallo técnico». Por decidir:
-  si se le dice al viajero lo que fue; si «Volver a intentarlo» repite solo ese asiento (hoy lo empieza todo de
-  cero); y si algún asiento debe tener un segundo modelo para cuando el primero no contesta, que se diría en el
-  entorno. La sesión no rodea el filtro ni cambia de modelo por su cuenta.
-- **Cómo se enseñan los avisos de las fechas**: hoy, solo datos; un evento que el viajero no conoce se queda sin
-  explicar. O los cuenta el que explica, o su frase pasa una puerta de palabras, como la del conductor.
+  si se le dice al viajero lo que fue, y si algún asiento debe tener un segundo modelo para cuando el primero no
+  contesta, que se diría en el entorno. La sesión no rodea el filtro ni cambia de modelo por su cuenta.
+- **Los papeles, antes de buscar o a la vez**: la hoja pide mirarlos antes de gastar en buscar, y son unos tres
+  minutos con la pantalla en vivo casi vacía. La sesión propone buscar a la vez y no lanzar a los que miran
+  alojamientos, que es lo caro, hasta que pasen los papeles. Toca la hoja: decide el PM.
 - **Qué es un dominio oficial en cualquier país**: sigue pendiente. Hoy, de un país que no está en la lista nada
   sale «en regla». Hay una propuesta de la sesión de obra, sin construir.
 
