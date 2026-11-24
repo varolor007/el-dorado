@@ -748,7 +748,83 @@ function Cuentas(x: DeViaje) {
   );
 }
 
-function Avisos({ t, viaje, manera, reparto }: DeViaje) {
+/**
+ * Lo que hay en tus fechas (5.3): cada aviso por su clase y su tema, con el nombre que da su fuente, sus días y los
+ * tuyos que toca, y el enlace a la página de donde sale. Y, si puedes moverlas, otras fechas con lo que cambia.
+ */
+function TusFechas({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
+  const c = viaje.calendario;
+  if (c === undefined) return null;
+  const f = t.fechas;
+  const dia = (x: string): string => diaCorto(x, idioma);
+  // La fecha de una página va con su año: puede ser de otro.
+  const conAno = (x: string): string =>
+    new Intl.DateTimeFormat(idioma, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(
+      new Date(`${x}T00:00:00Z`),
+    );
+  const total = noches(viaje.entrada, viaje.salida) + 1;
+  const deAviso = (n: number): string => {
+    const a = c.avisos[n];
+    return a === undefined ? "" : (a.nombre ?? f.tema[a.tema] ?? a.tema);
+  };
+  return (
+    <div className="grupo fechas">
+      <h2 className="titulo">{f.titulo}</h2>
+      {c.falta !== null && <p className="aviso">{f.faltan[c.falta]}</p>}
+      {c.falta === null && c.avisos.length === 0 && <p className="aviso">{f.nada}</p>}
+      {c.avisos.length > 0 && (
+        <ul className="fechas__lista">
+          {c.avisos.map((a, i) => (
+            <li key={i} className={`fecha fecha--${a.clase}`}>
+              <span className="fecha__clase">{f.clase[a.clase] ?? a.clase}</span>
+              <b>{a.nombre ?? f.tema[a.tema] ?? a.tema}</b>
+              {a.nombre !== null && <span className="fecha__tema">{f.tema[a.tema] ?? a.tema}</span>}
+              {a.desde !== null && a.hasta !== null && (
+                <span className="dato">
+                  {f.deA(dia(a.desde), dia(a.hasta))}. {f.tuyos(a.dias.length, total)}
+                </span>
+              )}
+              {a.pide !== undefined && <span className="dato">{f.pide(a.pide.dias, a.pide.dias + a.pide.deMas)}</span>}
+              {a.precio !== null && (
+                <span className="dato">{f.precio(dinero(a.precio.importe, a.precio.moneda, idioma))}</span>
+              )}
+              <a className="enlace" href={a.fuente} target="_blank" rel="noopener noreferrer nofollow">
+                {f.fuente(a.visto === null ? null : conAno(a.visto))}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {c.ventanas.length > 0 && (
+        <>
+          <h3 className="fechas__sub">{f.ventanas}</h3>
+          {c.ventanas.map((v) => (
+            <div key={v.entrada} className="fecha fecha--ventana">
+              <b>{f.ventana(dia(v.entrada), dia(v.salida), v.seMueve)}</b>
+              {(
+                [
+                  ["evita", v.evita],
+                  ["alcanza", v.alcanza],
+                  ["pierde", v.pierde],
+                  ["entra", v.entra],
+                ] as const
+              )
+                .filter(([, ns]) => ns.length > 0)
+                .map(([clave, ns]) => (
+                  <span key={clave} className="dato">
+                    {f[clave]}: {ns.map(deAviso).join(", ")}
+                  </span>
+                ))}
+            </div>
+          ))}
+        </>
+      )}
+      {c.avisos.length > 0 && <p className="credito">{f.nota}</p>}
+    </div>
+  );
+}
+
+function Avisos({ t, idioma, viaje, manera, reparto }: DeViaje) {
   const c = caminosDe(viaje.caminos);
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
   // También cuenta lo de donde duermes a la primera parada de cada día.
@@ -777,6 +853,7 @@ function Avisos({ t, viaje, manera, reparto }: DeViaje) {
           </p>
         ))}
       </div>
+      <TusFechas t={t} idioma={idioma} viaje={viaje} />
       <p className="credito">
         {viaje.muestra ? `${t.viaje.muestra} ` : ""}
         {t.ia}

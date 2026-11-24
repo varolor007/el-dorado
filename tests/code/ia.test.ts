@@ -209,8 +209,10 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     assert.deepEqual(r.parado, null);
     assert.equal(r.hecho, true);
     assert.deepEqual(comprobarViaje(leerJson(join(run, "viaje.json")) as Viaje), []);
-    // Nueve llamadas, una por asiento: la ruta, los cinco que miran, el que elige, el que cruza y el que explica.
+    // Diez llamadas, una por asiento: el del calendario, la ruta, los cinco que miran, el que elige, el que cruza y
+    // el que explica.
     assert.deepEqual(pensar.llamadas.map((l) => l.asiento).sort(), [
+      "calendar",
       ...Array(5).fill("lodging-viewer"),
       "route-planner",
       "sights-picker",
@@ -225,9 +227,9 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     }
     // Cada trabajo, con lo que gastó; y lo que contestó cada asiento, guardado en el run y fuera de su puesto.
     const trabajos = trabajosDe(run);
-    assert.equal(trabajos.length, 9);
+    assert.equal(trabajos.length, 10);
     assert.ok(trabajos.every((t) => t.estado === "done" && t.gasto?.usd === 0.108 && t.gasto.turnos === 1));
-    assert.ok(Math.abs(r.gasto.usd - 9 * 0.108) < 1e-9);
+    assert.ok(Math.abs(r.gasto.usd - 10 * 0.108) < 1e-9);
     assert.deepEqual(readdirSync(join(run, "respuestas")).sort(), trabajos.map((t) => `${t.puesto}.txt`).sort());
     assert.ok(readFileSync(join(run, "respuestas", "ruta-v1.txt"), "utf8").startsWith("=== 1-acknowledgement.md ==="));
     assert.deepEqual(readdirSync(join(run, "puestos", "ruta-v1", "out")).sort(), [...PASOS, ENTREGA].sort());
@@ -243,7 +245,7 @@ test("si la IA no quiere contestar, o su respuesta se corta, el trabajo falla y 
       darElAdelante(run, 5);
       const r = await llevar(run, fuentesInventadas(), lanzadorDirecto(pensarDeMentira({ fin }), PRECIO));
       assert.equal(r.parado?.en, "route");
-      const [trabajo] = trabajosDe(run);
+      const trabajo = trabajosDe(run).find((t) => t.puesto === "ruta-v1")!;
       assert.equal(trabajo.estado, "failed");
       assert.equal(trabajo.gasto?.usd, 0.108);
       assert.equal(trabajo.fallo, fin === "refusal" ? "la IA no quiso contestar" : "la respuesta se cortó por larga");
@@ -271,7 +273,7 @@ test("una respuesta mal partida vuelve a su asiento como un rojo más, con otra 
     });
     const r = await llevar(run, fuentesInventadas(), lanzadorDirecto(pensar, PRECIO));
     assert.equal(r.hecho, true);
-    assert.deepEqual(r.lanzados.slice(0, 2), ["ruta-v1", "ruta-v2"]);
+    assert.deepEqual(r.lanzados.filter((id) => id.startsWith("ruta")).slice(0, 2), ["ruta-v1", "ruta-v2"]);
     const devuelto = leerJson(join(run, "puestos", "ruta-v2", "in", "returned.json"));
     assert.ok(devuelto.what_was_wrong.some((x: { donde: string }) => x.donde === "out/3-notes.md"));
     assert.equal(pensar.llamadas.filter((l) => l.asiento === "route-planner").length, 2);

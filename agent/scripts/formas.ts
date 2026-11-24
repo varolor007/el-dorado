@@ -3,6 +3,7 @@
 // hay cuentas: solo la forma, para que cada paso sepa qué recibe y qué deja. La de la búsqueda de alojamiento está en
 // `busqueda_alojamiento.ts`, y la del viaje para la web, en `output/viaje.ts`.
 
+import { CLASES_DE_AVISO, type TemaDelCalendario } from "../data/calendario.ts";
 import type { Punto, Ritmo } from "../output/viaje.ts";
 
 export const SIN_SABER = "unknown";
@@ -96,14 +97,33 @@ export type EntregaDeEscucha = {
 
 // 2. Los avisos de las fechas y la tabla de los papeles. Sus asientos llegan con el bloque 5; aquí, su forma.
 
-export const CLASES_DE_AVISO = ["blocks", "raises", "bothers", "favours"] as const;
+export { CLASES_DE_AVISO };
+/**
+ * Un hallazgo del del calendario: su clase, de qué trata, su nombre propio si lo tiene (una fiesta, un evento), sus
+ * días, la página abierta de donde sale y la fecha que da esa página. Un precio, solo si la página lo da.
+ */
 export type Aviso = {
   kind: (typeof CLASES_DE_AVISO)[number];
-  what: string;
+  topic: TemaDelCalendario;
+  name: string;
   from: string;
   to: string;
+  /** Los días que pide el destino, si es de eso: lo compara con el viaje el código. */
+  days?: number;
+  price: { amount: number; currency: string } | typeof SIN_SABER;
+  what: string;
   source: string;
   seen: string;
+};
+
+/** Otra ventana, para quien puede mover sus fechas: el día en que entraría y los hallazgos que la mueven. */
+export type Ventana = { check_in: string; because: number[] };
+
+export type EntregaDelCalendario = {
+  seat: "calendar";
+  findings: Aviso[];
+  windows: Ventana[];
+  unknowns: string[];
 };
 
 export const ESTADOS_DE_PAPEL = ["in_order", "to_do", "warning", "blocks", "doubtful"] as const;

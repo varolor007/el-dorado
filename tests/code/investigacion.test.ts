@@ -55,17 +55,21 @@ async function investiga(
   run: string,
   estropea?: (asiento: string, entrega: Objeto, puesto: string) => void,
   fuentes: () => Fuentes = fuentesInventadas,
-): Promise<{ estado: Estado; lanzados: string[] }> {
+): Promise<{ estado: Estado; lanzados: string[]; deDetras: string[] }> {
   const lanzados: string[] = [];
+  const deDetras: string[] = [];
   let estado = await sigue(run, fuentes());
-  for (let i = 0; i < 30 && estado.esperan.length > 0; i++) {
-    for (const id of estado.esperan) {
-      trabaja(run, id, (asiento, entrega) => estropea?.(asiento, entrega, id));
-      lanzados.push(id);
-    }
+  for (let i = 0; i < 30 && estado.esperan.length + (estado.porDetras ?? []).length > 0; i++) {
+    // Lo que corre por detrás se lanza a la vez que lo que espera, y una sola vez, como hace la casa.
+    const atras = (estado.porDetras ?? []).filter((id) => !deDetras.includes(id));
+    const nuevos = estado.esperan.filter((id) => !deDetras.includes(id));
+    if (nuevos.length + atras.length === 0) break;
+    for (const id of [...nuevos, ...atras]) trabaja(run, id, (asiento, entrega) => estropea?.(asiento, entrega, id));
+    lanzados.push(...nuevos);
+    deDetras.push(...atras);
     estado = await sigue(run, fuentes());
   }
-  return { estado, lanzados };
+  return { estado, lanzados, deDetras };
 }
 
 test("la estancia que se busca sale de lo que he entendido", () => {
@@ -201,13 +205,15 @@ test("si en la zona no hay con qué elegir, se busca más ancho, y se dice hasta
 test("la investigación inventada, entera: de lo entendido al viaje, por cada asiento y cada puerta", async () => {
   const run = runNuevo();
   try {
-    const { estado, lanzados } = await investiga(run);
+    const { estado, lanzados, deDetras } = await investiga(run);
     assert.deepEqual(estado.parado, null);
     assert.equal(estado.hecho, true);
     // Los asientos, en su orden: la ruta; a la vez, mirar los cinco finalistas y elegir los sitios; cruzar; explicar.
     assert.equal(lanzados[0], "ruta-v1");
     assert.deepEqual(lanzados.slice(1, 7).sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
     assert.deepEqual(lanzados.slice(7), ["cruce-1-v1", "explica-v1"]);
+    // El del calendario, por detrás, desde el principio, a la vez que la ruta.
+    assert.deepEqual(deDetras, ["calendario-v1"]);
 
     const viaje = leerJson(join(run, "viaje.json")) as Viaje;
     const sucesos = leerJson(join(run, "sucesos.json")) as unknown as Suceso[];
@@ -251,6 +257,19 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     assert.equal(viaje.paradas.length, 7);
     assert.equal(viaje.paradas[0].foto?.autor, "Ana");
     assert.equal(viaje.dias.length, 4);
+
+    // Los avisos de las fechas, como datos y con las cuentas del código: la lluvia toca los cinco días del viaje.
+    assert.equal(viaje.calendario?.falta, null);
+    assert.equal(viaje.calendario?.avisos.length, 1);
+    const lluvia = viaje.calendario!.avisos[0];
+    assert.deepEqual([lluvia.clase, lluvia.tema, lluvia.nombre], ["bothers", "weather", null]);
+    assert.deepEqual(
+      lluvia.dias,
+      viaje.dias.map((d) => d.fecha),
+    );
+    assert.equal(lluvia.fuente, "https://tiempo.inventado.example/clima/villa");
+    assert.deepEqual(viaje.calendario?.ventanas, []);
+    assert.ok(!JSON.stringify(viaje.calendario).includes("it rains"));
 
     // Lo que se entrega lleva sus dos avisos, y lo que no se sabe.
     assert.ok(viaje.avisos.includes(AVISOS.es.ia) && viaje.avisos.includes(AVISOS.es.precios));

@@ -4,9 +4,13 @@
 //
 // Dos cosas no pasan nunca: ningún asiento se lanza sin el adelante del viajero, que es su botón; y ninguno se lanza
 // cuando lo gastado ya llegó al techo que aceptó con él.
+//
+// Lo que corre por detrás (el del calendario) se lanza sin esperarlo: la casa sigue con lo demás, y cuando acaba,
+// da los pasos que pueda con lo que dejó. Solo se le espera cuando hace falta lo suyo. Mientras trabaja, su puesto
+// está en marcha en esta casa, y nadie lo vuelve a lanzar ni lo da por cortado.
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { ASIENTOS_A_LA_VEZ, TOPE_DE_UN_ASIENTO, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { lanzarAsiento, type Gasto, type Lanzador, type Tope } from "./asiento.ts";
@@ -17,6 +21,33 @@ import { puestosDe } from "./puesto.ts";
 import { acaboSinEntregar, apuntarTrabajo, gastoDe, trabajosDe } from "./trabajos.ts";
 
 export const ADELANTE = "adelante.json";
+
+/** Los asientos que trabajan por detrás en esta casa, por su run y su puesto. */
+const deFondo = new Map<string, Promise<void>>();
+const claveDe = (run: string, puesto: string): string => `${resolve(run)}|${puesto}`;
+
+/** Los pasos de un run se dan de uno en uno: dos a la vez sobre la misma carpeta se pisarían. */
+const turnos = new Map<string, Promise<unknown>>();
+function enSuTurno<T>(run: string, hacer: () => Promise<T>): Promise<T> {
+  const clave = resolve(run);
+  const ahora = (turnos.get(clave) ?? Promise.resolve()).then(hacer, hacer);
+  const hecho = ahora.catch(() => undefined);
+  turnos.set(clave, hecho);
+  void hecho.then(() => {
+    if (turnos.get(clave) === hecho) turnos.delete(clave);
+  });
+  return ahora;
+}
+
+/** Espera a todo lo que trabaja por detrás en un run, y a lo que lancen al acabar: para cerrarlo, o para probarlo. */
+export async function esperarLoDeDetras(run: string): Promise<void> {
+  const suyo = `${resolve(run)}|`;
+  for (;;) {
+    const vivos = [...deFondo].filter(([clave]) => clave.startsWith(suyo)).map(([, p]) => p);
+    if (vivos.length === 0) return;
+    await Promise.all(vivos);
+  }
+}
 
 /** El adelante del viajero a una investigación: cuándo lo dio y hasta cuánto aceptó gastar de su clave, en dólares. */
 export type Adelante = { cuando: string; techo: number | null };
@@ -72,6 +103,8 @@ function cerrarLosCortados(run: string, ahora: () => Date): void {
   const puestos = puestosDe(run);
   for (const t of trabajosDe(run)) {
     if (t.estado !== "queued" && t.estado !== "working") continue;
+    // Lo que trabaja por detrás en esta casa no está cortado: sigue.
+    if (deFondo.has(claveDe(run, t.puesto))) continue;
     const puesto = puestos.find((p) => p.id === t.puesto);
     const entregado = puesto !== undefined && existsSync(join(puesto.carpeta, "out", "delivery.json"));
     apuntarTrabajo(run, {
@@ -107,8 +140,41 @@ export async function llevar(run: string, f: Fuentes, lanzador: Lanzador, o: AlL
     apuntarTrabajo(run, { ...base, estado, hasta: ahora().toISOString(), gasto: r.gasto, fallo });
   };
 
+  /** Si se puede gastar: con el adelante del viajero y sin pasar de su techo, ni seguir a ciegas. */
+  const sePuedeGastar = (): boolean => {
+    const adelante = adelanteDe(run);
+    if (adelante === null) return false;
+    const gastado = gastoDe(run);
+    return adelante.techo === null || (gastado.sabido && gastado.usd < adelante.techo);
+  };
+
+  /**
+   * Lanza sin esperarlo lo que corre por detrás, si se puede gastar y nadie lo ha lanzado ya. Al acabar, se dan los
+   * pasos que se puedan con lo que dejó, y se lanza lo que haya salido de ello por detrás (otra vuelta, si volvió).
+   */
+  const lanzarPorDetras = (ids: string[]): void => {
+    for (const id of ids) {
+      const clave = claveDe(run, id);
+      if (deFondo.has(clave) || trabajosDe(run).some((t) => t.puesto === id) || !sePuedeGastar()) continue;
+      lanzados.push(id);
+      const alAcabar = async (): Promise<void> => {
+        try {
+          const despues = await enSuTurno(run, () => sigue(run, f));
+          if (despues.parado === null) lanzarPorDetras(despues.porDetras ?? []);
+        } catch {
+          // Si un paso se rompe aquí, se romperá igual en la próxima vuelta de la casa, que lo dice y para.
+        }
+      };
+      const marcha = lanzarUno(id)
+        .catch(() => undefined)
+        .then(alAcabar)
+        .finally(() => deFondo.delete(clave));
+      deFondo.set(clave, marcha);
+    }
+  };
+
   for (let vuelta = 0; vuelta < VUELTAS_DE_LA_CASA; vuelta++) {
-    const estado = await sigue(run, f);
+    const estado = await enSuTurno(run, () => sigue(run, f));
     for (const aviso of estado.avisos) if (!avisos.includes(aviso)) avisos.push(aviso);
     const con = (mas: Partial<Llevado> = {}): Llevado => ({
       ...estado,
@@ -118,7 +184,12 @@ export async function llevar(run: string, f: Fuentes, lanzador: Lanzador, o: AlL
       lanzados,
       ...mas,
     });
-    if (estado.hecho || estado.parado !== null || estado.esperan.length === 0) return con();
+    if (estado.hecho || estado.parado !== null) return con();
+    // Sin nadie a quien esperar (es el turno del viajero), lo de detrás sigue trabajando mientras tanto.
+    if (estado.esperan.length === 0) {
+      lanzarPorDetras(estado.porDetras ?? []);
+      return con();
+    }
     const para = (paso: string, rojos: Rojo[]): Llevado =>
       con({ esperan: [], parado: pararRun(run, pasoDe(run, estado.esperan[0]), paso, rojos) });
 
@@ -151,10 +222,17 @@ export async function llevar(run: string, f: Fuentes, lanzador: Lanzador, o: AlL
         },
       ]);
 
-    await porTandas(estado.esperan, o.aLaVez ?? ASIENTOS_A_LA_VEZ, lanzarUno);
-    lanzados.push(...estado.esperan);
+    lanzarPorDetras(estado.porDetras ?? []);
+    // Lo que ya trabaja por detrás no se vuelve a lanzar: ahora que hace falta, se le espera.
+    const nuevos = estado.esperan.filter((id) => !deFondo.has(claveDe(run, id)));
+    await porTandas(
+      estado.esperan,
+      o.aLaVez ?? ASIENTOS_A_LA_VEZ,
+      (id) => deFondo.get(claveDe(run, id)) ?? lanzarUno(id),
+    );
+    lanzados.push(...nuevos);
   }
-  const estado = await sigue(run, f);
+  const estado = await enSuTurno(run, () => sigue(run, f));
   for (const aviso of estado.avisos) if (!avisos.includes(aviso)) avisos.push(aviso);
   if (estado.hecho || estado.parado !== null)
     return { ...estado, avisos, sinAdelante: false, gasto: gastoDe(run), lanzados };

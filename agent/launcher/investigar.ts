@@ -26,6 +26,7 @@ import { COSAS } from "../data/gustos.ts";
 import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
 import { puertaBusqueda, type Rojo } from "../gates/puerta_busqueda.ts";
+import { puertaCalendario } from "../gates/puerta_calendario.ts";
 import { puertaCruce } from "../gates/puerta_cruce.ts";
 import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
@@ -37,6 +38,7 @@ import { paraExplicar } from "../scripts/explica.ts";
 import type {
   Entendido,
   EntregaDeCruce,
+  EntregaDelCalendario,
   EntregaDeEscucha,
   EntregaDeExplicar,
   EntregaDeMirar,
@@ -65,6 +67,13 @@ import type { Estancia, FuenteAlojamiento, FuenteTransporte, OfertaDeZona, Vuelo
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
+import {
+  CALENDARIO,
+  paraEnsenar,
+  piezasDelCalendario,
+  sinCalendario,
+  type DelCalendarioGuardado,
+} from "./calendario.ts";
 import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun, pasar, viajeDelRun } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { puertaEscucha } from "../gates/puerta_escucha.ts";
@@ -126,6 +135,11 @@ export type Estado = {
   avisos: string[];
   /** Es el turno del viajero: el que escucha ya entregó, y espera su confirmación. No es un fallo ni una parada. */
   alViajero?: boolean;
+  /**
+   * Los puestos que esperan a su asiento y no frenan la investigación: la casa los lanza sin esperarlos, y sigue.
+   * Cuando hagan falta, vuelven en `esperan`.
+   */
+  porDetras?: string[];
 };
 
 type Guardado<T> = { entrega: T; rojos: Rojo[] };
@@ -615,6 +629,9 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     transporte: transporteDe(run),
     alLado: alLadoDe(run),
     caminos: caminosDelRun(run),
+    calendario: ((c) => (c === null ? null : { avisos: c.avisos, ventanas: c.ventanas, falta: c.falta }))(
+      calendarioDelRun(run),
+    ),
   });
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
@@ -649,6 +666,47 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
 export function pararRun(run: string, en: string, paso: string, rojos: Rojo[]): Parado {
   guardar(run, PARADO, { en, paso, rojos });
   return { en, paso, rojos };
+}
+
+/** El día de hoy, en la casa: el primer día en que se puede viajar, si las fuentes no dicen otro. */
+const hoyEnLaCasa = (): string => new Date().toISOString().slice(0, 10);
+
+/**
+ * El del calendario, por detrás: se le monta su puesto desde el principio, con lo entendido de base, y se recoge en
+ * cuanto entrega. Devuelve el puesto que espera, si espera; si ya está, o falta, nada. Si falló, o lo que entregó no
+ * pasó su puerta tras sus vueltas, se guarda que falta: el viaje se hace igual, y lo dice.
+ */
+function delCalendario(run: string, base: Entendido, f: Fuentes): string | null {
+  if (hay(run, CALENDARIO)) return null;
+  const viaje = sinPalabras(base);
+  const desde = f.desde ?? hoyEnLaCasa();
+  const puesto = puestoDe(run, "calendario");
+  if (puesto !== null && !entregado(puesto) && acaboSinEntregar(run, puesto.id)) {
+    guardar(run, CALENDARIO, sinCalendario("failed", new Date()));
+    return null;
+  }
+  const r = recoger<EntregaDelCalendario>(
+    run,
+    "calendario",
+    "calendar",
+    piezasDelCalendario(viaje, hoyEnLaCasa()),
+    (e) => puertaCalendario(e, { viaje, desde }).rojos,
+  );
+  if ("espera" in r) return r.espera;
+  if ("parado" in r) guardar(run, CALENDARIO, sinCalendario("rejected", new Date()));
+  else
+    guardar(run, CALENDARIO, {
+      ...paraEnsenar(r.entrega, viaje),
+      entrega: r.entrega,
+      cuando: new Date().toISOString(),
+    } satisfies DelCalendarioGuardado);
+  return null;
+}
+
+/** Los avisos de las fechas del run, como los enseña la web: sin lo que entregó el asiento. */
+function calendarioDelRun(run: string): DelCalendarioGuardado | null {
+  if (!hay(run, CALENDARIO)) return null;
+  return leer<DelCalendarioGuardado>(run, CALENDARIO);
 }
 
 /**
@@ -719,7 +777,16 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   // es una decisión de quien lo lleva, que quita `parado.json` cuando ha arreglado la causa.
   if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };
   const base = leer<Entendido>(run, "entendido.json");
-  const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
+  // Lo que corre por detrás y no frena: va con cada espera, para que la casa lo lance sin esperarlo.
+  const porDetras: string[] = [];
+  const conLoDeDetras = (esperan: string[]): string[] => porDetras.filter((id) => !esperan.includes(id));
+  const espera = (...puestos: string[]): Estado => ({
+    esperan: puestos,
+    hecho: false,
+    parado: null,
+    avisos,
+    porDetras: conLoDeDetras(puestos),
+  });
   const para = (en: string, paso: string, rojos: Rojo[]): Estado => {
     return { esperan: [], hecho: false, parado: pararRun(run, en, paso, rojos), avisos };
   };
@@ -727,11 +794,18 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   const claro = puertaEntendido(base);
   if (!claro.verde) return para("understood", "lo entendido (puerta 1)", claro.rojos);
 
+  // El del calendario, desde el principio y por detrás: no frena nada hasta que se monta el viaje.
+  const calendario = delCalendario(run, base, f);
+  if (calendario !== null) porDetras.push(calendario);
+
   // 0. El que escucha y tu confirmación. Lo que sigue lo hace lo entendido ya confirmado, y sin tus palabras: a los
   // demás asientos les llegan tus gustos y tus límites, cada uno con su cita, y no lo que escribiste entero.
   if (!hay(run, ESCUCHADO)) {
     const escuchado = escucharAlViajero(run, base);
-    if ("estado" in escuchado) return { ...escuchado.estado, avisos };
+    if ("estado" in escuchado) {
+      const e = escuchado.estado;
+      return { ...e, avisos, porDetras: e.parado === null ? conLoDeDetras(e.esperan) : [] };
+    }
   }
   const viaje = sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido);
 
@@ -874,8 +948,10 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     if (leer<DelCruce>(run, `cruce-${ronda}.json`).entrega.requests.length === 0) break;
   }
 
-  // 6. El que explica y, con lo suyo, el viaje para la web.
+  // 6. El que explica y, con lo suyo, el viaje para la web. Los avisos de las fechas tienen que estar para montarlo:
+  // si el del calendario aún trabaja, ahora sí se le espera.
   if (!hay(run, "viaje.json") && hay(run, "explica.json")) {
+    if (calendario !== null) return espera(calendario);
     // Lo que explicó y ya pasó su puerta no se vuelve a juzgar: se lee, y con ello se monta el viaje.
     const pegas = montarElViaje(run, viaje, leer<Guardado<EntregaDeExplicar>>(run, "explica.json").entrega);
     if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
@@ -895,9 +971,10 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       piezas,
       (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).rojos,
     );
-    if ("espera" in r) return espera(r.espera);
+    if ("espera" in r) return espera(r.espera, ...(calendario === null ? [] : [calendario]));
     if ("parado" in r) return para("explain", "la explicación (puerta 7)", r.parado);
     guardar(run, "explica.json", { entrega: r.entrega, rojos: [] });
+    if (calendario !== null) return espera(calendario);
     const pegas = montarElViaje(run, viaje, r.entrega);
     if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
   }

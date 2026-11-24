@@ -26,6 +26,8 @@ export const PASOS: Paso[] = [
   { id: "table", quien: CODIGO, puerta: null, deja: ["tabla-1.json"] },
   { id: "cross", quien: "trip-crosser", puerta: 6, deja: ["cruce-1.json"] },
   { id: "explain", quien: "trip-explainer", puerta: 7, deja: ["explica.json"] },
+  // El del calendario corre por detrás desde el principio: hace falta cuando se monta el viaje, no antes.
+  { id: "calendar", quien: "calendar", puerta: null, deja: ["calendario.json"] },
   { id: "trip", quien: CODIGO, puerta: null, deja: ["viaje.json", "sucesos.json"] },
 ];
 

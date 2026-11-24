@@ -2,6 +2,13 @@
 // las dos. La web se construye contra él y el agente tiene que producirlo. Aquí no hay cuentas ni búsquedas: solo la
 // forma, y lo que el código puede comprobar de ella antes de enseñarla.
 
+import {
+  CLASES_DE_AVISO,
+  LETRAS_DE_UN_NOMBRE_DE_FUERA,
+  TEMAS_DEL_CALENDARIO,
+  type ClaseDeAviso,
+  type TemaDelCalendario,
+} from "../data/calendario.ts";
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
 import { avisosDe } from "../data/palabras.ts";
 import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
@@ -196,6 +203,51 @@ export type DiasParaVolar = {
   dias: { dia: string; precio: number }[];
 };
 
+/**
+ * Un aviso de las fechas, como lo enseña la web: su clase y su tema por su clave, el nombre propio que da su fuente
+ * (una fiesta, un evento) si lo tiene, sus días y los del viaje que toca, y la página de donde sale con la fecha que
+ * da. La frase la pone la web: aquí no viaja ninguna del asiento.
+ */
+export type AvisoDeFechas = {
+  clase: ClaseDeAviso;
+  tema: TemaDelCalendario;
+  nombre: string | null;
+  desde: string | null;
+  hasta: string | null;
+  /** Los días del viaje que toca, de la entrada a la salida, en orden: los cuenta el código. */
+  dias: string[];
+  /** Los días que pide el destino, y cuántos de más (o de menos, si es negativo) tiene el viaje. */
+  pide?: { dias: number; deMas: number };
+  precio: { importe: number; moneda: string } | null;
+  fuente: string;
+  visto: string | null;
+};
+
+/**
+ * Otras fechas, para quien puede moverlas: las mismas noches, movidas tantos días (negativo, antes). Lo que evita,
+ * alcanza, pierde y en lo que entra son posiciones en los avisos, y lo cuenta el código con sus días.
+ */
+export type VentanaDeFechas = {
+  entrada: string;
+  salida: string;
+  seMueve: number;
+  porQue: number[];
+  evita: number[];
+  alcanza: number[];
+  pierde: number[];
+  entra: number[];
+};
+
+/** Por qué faltan los avisos de las fechas: el asiento falló o no llegó, o lo que entregó no pasó su puerta. */
+export const FALTAS_DEL_CALENDARIO = ["failed", "rejected"] as const;
+
+/** Los avisos de las fechas de un viaje: lo que encontró el del calendario, o por qué falta. */
+export type DelCalendario = {
+  avisos: AvisoDeFechas[];
+  ventanas: VentanaDeFechas[];
+  falta: (typeof FALTAS_DEL_CALENDARIO)[number] | null;
+};
+
 export const RITMOS = ["calm", "normal", "full"] as const;
 export type Ritmo = (typeof RITMOS)[number];
 
@@ -235,6 +287,8 @@ export type Viaje = {
    * mismos números que la casa. Un viaje de antes, o sin la fuente, no la trae.
    */
   caminos?: TablaDeCaminos;
+  /** Los avisos de las fechas, del del calendario, o por qué faltan. Un viaje de antes no los trae. */
+  calendario?: DelCalendario;
 };
 
 /** Lo que la casa cuenta en vivo. Solo datos: la frase la monta la web, en el idioma de quien mira. */
@@ -323,6 +377,58 @@ function pegasDeLosCaminos(t: TablaDeCaminos): Pega[] {
   return pegas;
 }
 
+/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro. */
+function enlaceQueVale(texto: unknown): boolean {
+  if (typeof texto !== "string") return false;
+  try {
+    const u = new URL(texto);
+    return u.protocol === "https:" && u.username === "" && u.password === "";
+  } catch {
+    return false;
+  }
+}
+
+/** Lo que se comprueba de los avisos de las fechas: cada uno por sus claves, con su fuente, y cada ventana bien. */
+export function pegasDelCalendario(c: DelCalendario, entrada: string, salida: string): Pega[] {
+  const pegas: Pega[] = [];
+  const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  if (c.falta !== null && !FALTAS_DEL_CALENDARIO.includes(c.falta)) pega("calendario", "no dice por qué falta");
+  if (!Array.isArray(c.avisos) || !Array.isArray(c.ventanas))
+    return [...pegas, { donde: "calendario", que: "no es una lista" }];
+  c.avisos.forEach((a, i) => {
+    const donde = `calendario.avisos[${i}]`;
+    if (!CLASES_DE_AVISO.includes(a.clase) || !TEMAS_DEL_CALENDARIO.includes(a.tema))
+      pega(donde, "su clase o su tema no son de su lista");
+    if (
+      a.nombre !== null &&
+      (typeof a.nombre !== "string" ||
+        a.nombre.trim() === "" ||
+        a.nombre.length > LETRAS_DE_UN_NOMBRE_DE_FUERA ||
+        /[\u0000-\u001f<>]|https?:/i.test(a.nombre))
+    )
+      pega(donde, "su nombre no es un nombre corto");
+    if (!enlaceQueVale(a.fuente)) pega(donde, "su fuente no es una dirección https sin claves");
+    if (a.visto !== null && !fecha(a.visto)) pega(donde, "la fecha de su fuente no es una fecha");
+    if (
+      (a.desde === null) !== (a.hasta === null) ||
+      (a.desde !== null && !(fecha(a.desde) && fecha(a.hasta!) && a.desde <= a.hasta!))
+    )
+      pega(donde, "sus días no van de una fecha a otra");
+    if (!a.dias.every((d) => fecha(d) && d >= entrada && d <= salida)) pega(donde, "toca días que no son del viaje");
+    if (a.precio !== null && !(a.precio.importe > 0 && /^[A-Z]{3}$/.test(a.precio.moneda)))
+      pega(donde, "su precio no es un importe con su moneda");
+  });
+  const hay = (xs: number[]): boolean => xs.every((n) => Number.isInteger(n) && n >= 0 && n < c.avisos.length);
+  c.ventanas.forEach((v, i) => {
+    const donde = `calendario.ventanas[${i}]`;
+    if (!fecha(v.entrada) || !fecha(v.salida) || v.salida <= v.entrada) pega(donde, "sus fechas no van en orden");
+    if (!Number.isInteger(v.seMueve) || v.seMueve === 0) pega(donde, "no dice cuántos días se mueve");
+    if (![v.porQue, v.evita, v.alcanza, v.pierde, v.entra].every(hay)) pega(donde, "cita un aviso que no existe");
+    if (v.evita.length === 0 && v.alcanza.length === 0) pega(donde, "una ventana que no mejora nada no se enseña");
+  });
+  return pegas;
+}
+
 /** Lo que el código puede comprobar de un viaje antes de dárselo a la web. No mira si el viaje es bueno. */
 export function comprobarViaje(v: Viaje): Pega[] {
   const pegas: Pega[] = [];
@@ -407,6 +513,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
       pega("transporteAlLado", "no es de un día de al lado");
   }
   if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
+  if (v.calendario !== undefined) pegas.push(...pegasDelCalendario(v.calendario, v.entrada, v.salida));
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))
     pega("habitaciones", "no dice en cuántas habitaciones duerme el grupo");

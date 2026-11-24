@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { PREGUNTAS_DE_MAS } from "../../agent/data/viaje.ts";
 import { puertaEntendido } from "../../agent/gates/puerta_entendido.ts";
 import { puertaEscucha, type ParaEscuchar } from "../../agent/gates/puerta_escucha.ts";
-import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
+import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
   confirmar,
   CONFIRMADO,
@@ -191,12 +191,19 @@ test("si escribió, se lanza el que escucha y, cuando pasa su puerta, espera tu 
     assert.deepEqual([estado.esperan, estado.parado, estado.hecho, estado.alViajero], [[], null, false, true]);
     assert.equal(estadoDe(run, "understood"), "yours");
     assert.ok(turnoDelViajero(run));
-    // La casa no lanza nada más mientras espera.
+    // Mientras espera, la casa solo lanza lo que corre por detrás, el del calendario, y no lo espera.
+    assert.deepEqual(estado.porDetras, ["calendario-v1"]);
     darElAdelante(run, null);
     const lanzador = lanzadorDeMentira();
     const llevado = await llevar(run, fuentesInventadas(), lanzador);
-    assert.deepEqual([llevado.lanzados, llevado.alViajero, llevado.parado], [[], true, null]);
+    assert.deepEqual([llevado.lanzados, llevado.alViajero, llevado.parado], [["calendario-v1"], true, null]);
+    await esperarLoDeDetras(run);
     assert.ok(!existsSync(join(run, "sitios.json")));
+    // Sus avisos quedan guardados mientras el viajero confirma. Y no ve sus palabras.
+    assert.equal(leerJson(join(run, "calendario.json")).avisos.length, 1);
+    const delCalendario = puestosDe(run).find((p) => p.id === "calendario-v1")!;
+    const suyo = JSON.stringify(leerJson(join(delCalendario.carpeta, "in", "trip.json")));
+    assert.ok(!suyo.includes(DICHO.wants) && !suyo.includes("passports") && !suyo.includes("said"));
 
     // Lo que se le enseña: sus palabras y las claves.
     const visto = paraConfirmar(run)!;
