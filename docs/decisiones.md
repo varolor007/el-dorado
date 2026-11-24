@@ -458,6 +458,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   hace nada no pasa sin que se note. Un correo de la lista que también tiene clave piensa con la cuenta de la casa.
   Las claves de otros solo se admiten si el entorno dice el precio. Y si la cuenta de la casa agota su límite, el
   viaje para y lo dice: no cambia sola a una clave.
+- **Cómo queda la búsqueda de transporte** (una sesión de obra, revisada por quien orquesta). Un sitio con vuelos
+  es una ciudad de la fuente con sus aeropuertos, y su tamaño, a cuántos sitios vuela sin escala: sale de los datos
+  de la fuente, no de una lista nuestra. Se sale de dos sitios como mucho y se llega a dos o tres; seis pares como
+  tope, y dos días a cada lado si las fechas se mueven. Directo o con una escala. El punto del que se sale se guarda
+  redondeado a una décima de grado, que basta para los aeropuertos y no dice dónde vive nadie. Lo que deja para el
+  PM: con fechas fijas casi nunca hay precio guardado y el viaje sale sin transporte; se puede pedir también la
+  semana de alrededor, o esperar al precio en vivo (3.7).
 
 ## Pendientes
 

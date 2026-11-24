@@ -142,6 +142,44 @@ export type Vuelo = Origen & {
 
 export type DiaBarato = Origen & { dia: string; precio: number; moneda: string };
 
+/** Lo que se le pide a una fuente de vuelos: de dónde a dónde (por el código de la fuente), cuándo y cómo se ve. */
+export type Trayecto = {
+  origen: string;
+  destino: string;
+  ida: string;
+  vuelta: string | null;
+  moneda: string;
+  mercado: string;
+};
+
+/** Un aeropuerto con vuelos, de los datos de la fuente. `rutas` es a cuántos sitios vuela sin escala: su tamaño. */
+export type Aeropuerto = {
+  codigo: string;
+  /** El código de su ciudad: con él se piden los precios de todos los aeropuertos de esa ciudad a la vez. */
+  ciudad: string;
+  nombre: string;
+  pais: string;
+  lat: number;
+  lon: number;
+  rutas: number;
+};
+
+/** Una ciudad de los datos de la fuente, tenga o no aeropuerto: sirve para saber dónde está un sitio por su nombre. */
+export type Ciudad = { codigo: string; nombre: string; pais: string; lat: number; lon: number };
+
+/** Lo que sabe una fuente de vuelos de los sitios: sus aeropuertos con vuelos y sus ciudades. */
+export type LugaresDeVuelo = { aeropuertos: Aeropuerto[]; ciudades: Ciudad[] };
+
+/** Lo que tiene que saber hacer una fuente de transporte para enchufarse. */
+export type FuenteTransporte = {
+  nombre: string;
+  lugares(): Promise<LugaresDeVuelo>;
+  /** Los vuelos de un sitio a otro para unas fechas exactas. Si no tiene ninguno, una lista vacía. */
+  fechas(t: Trayecto): Promise<Vuelo[]>;
+  /** Los vuelos en los días de alrededor de unas fechas, con una sola petición. Si no lo sabe, no lo tiene. */
+  alrededor?(t: Trayecto): Promise<Vuelo[]>;
+};
+
 /**
  * Lo que cuesta un transporte para todos los que viajan. El alojamiento se pide ya para el grupo entero; un billete,
  * casi nunca: sumar uno solo a la habitación de todos da un total que no es de nadie. No sabe de tarifas de niño: se

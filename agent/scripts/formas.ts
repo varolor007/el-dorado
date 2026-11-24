@@ -37,8 +37,11 @@ export type Entendido = {
     /** El aeropuerto por el que se llega, si se sabe. */
     airport: string | null;
   };
-  /** De dónde sale. Sin él no hay transporte que buscar. */
-  origin: { name: string; country: string; airport: string | null } | null;
+  /**
+   * De dónde sale. Sin él no hay transporte que buscar. Su punto, si se sabe, redondeado a una décima de grado:
+   * basta para saber sus aeropuertos, y no dice dónde vive nadie. Sin punto, se busca su ciudad por el nombre.
+   */
+  origin: { name: string; country: string; airport: string | null; centre?: Punto } | null;
   dates: { check_in: string; check_out: string; flexible: boolean };
   /** Los que viajan, y en cuántas habitaciones duermen: lo dice el viajero, y no se supone. */
   travellers: { adults: number; children: number[]; rooms: number; passports: string[] };

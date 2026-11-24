@@ -142,9 +142,20 @@ lo hecho, lo decidido, lo que falta, lo probado y lo que no, lo que pide una dec
 para el plan y la memoria. Quien orquesta: escribe el encargo (dónde está dicho en la hoja y el plan, qué hay ya,
 qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no lo hizo, lo junta
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
-PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`)
-y la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`). Ya junta: la cuenta de la casa (2.9, primera
-parte, `claude/eldorado-2-9-cuenta-de-la-casa`). Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
+PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`).
+Ya juntas: la cuenta de la casa (2.9, primera parte, `claude/eldorado-2-9-cuenta-de-la-casa`) y la búsqueda de
+transporte (4.4, `claude/eldorado-4-4-transporte`).
+
+**La búsqueda de transporte (4.4), hecha** (una sesión de obra, revisada y junta el 24-nov):
+`agent/scripts/transporte.ts` y la fuente `aviasales(carpeta)`, que trae también sus lugares (aeropuertos, ciudades y
+rutas, bajados una vez al día a `<mesa>/fuentes/`) y la semana de alrededor. Los topes, en
+`agent/data/transporte.ts`. `Fuentes.vuelos` pasó a `Fuentes.transporte`. Lo entendido lleva, si se sabe, el punto
+de donde se sale (`origin.centre`, a una décima de grado; la puerta 1 rechaza uno más fino). En `busqueda.json`,
+`transporte` es la parrilla entera y `vuelos`, lo de las fechas del viaje. **Con fechas fijas casi nunca hay precio
+guardado**, y el viaje sale sin transporte: pendiente de que el PM decida si se pide también la semana de alrededor
+con fechas fijas, y de dónde sale el precio en vivo (3.7). Sin hacer: el tren (la fuente no lo da), las cribas del
+vuelo, las palancas «otro aeropuerto» y «entrar por un sitio y salir por otro» (la parrilla ya tiene lo que
+necesitan) y la ficha del transporte en la web. Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
 notas.
 
 **La cuenta de la casa (2.9, primera parte), hecha y sin estrenar** (una sesión de obra, revisada y junta el

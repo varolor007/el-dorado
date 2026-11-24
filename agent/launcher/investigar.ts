@@ -47,9 +47,9 @@ import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_v
 import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
+import { buscarTransporte, deLasFechas, elTransporte, vuelosMovidos, type Parrilla } from "../scripts/transporte.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
-import { paraElGrupo } from "../tools/fuentes/tipos.ts";
-import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
+import type { Estancia, FuenteAlojamiento, FuenteTransporte, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
@@ -66,8 +66,8 @@ export type Fuentes = {
   sitios: (viaje: Entendido) => Promise<Sitio[]>;
   resumenes: (sitios: Sitio[]) => Promise<Map<string, string>>;
   fotos: (archivos: string[]) => Promise<Map<string, Foto>>;
-  /** El transporte para unas fechas. Sin él, el viaje va sin transporte, y se dice. */
-  vuelos?: (viaje: Entendido, ida: string, vuelta: string) => Promise<Vuelo[]>;
+  /** La fuente de transporte: sus aeropuertos y sus precios. Sin ella, el viaje va sin transporte, y se dice. */
+  transporte?: FuenteTransporte;
   /** Lo que piden otros vendedores en una zona dicha con palabras. */
   ofertas?: (lugar: string, e: Estancia) => Promise<OfertaDeZona[]>;
   bajarFotos?: OpcionesDeFotos;
@@ -262,18 +262,22 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
       }
     }
   }
+  // La parrilla de aeropuertos y de días (4.4). Lo que va en `vuelos` es lo de las fechas del viaje: con eso se elige
+  // su transporte; lo de los días de alrededor queda en la parrilla, para las palancas y para después.
   let vuelos: Vuelo[] = [];
-  if (f.vuelos !== undefined && viaje.origin?.airport && viaje.destination.airport) {
+  let transporte: Parrilla | null = null;
+  if (f.transporte !== undefined) {
     try {
-      vuelos = await f.vuelos(viaje, e.entrada, e.salida);
-      if (vuelos.length === 0) avisos.push("transporte: no hay ningún precio guardado para esas fechas");
+      transporte = await buscarTransporte(viaje, f.transporte, { desde: f.desde });
+      vuelos = deLasFechas(transporte, e.entrada, e.salida);
+      avisos.push(...transporte.avisos);
     } catch (error) {
       void error;
       avisos.push("sin transporte: la fuente no contesta");
     }
-  } else avisos.push("transporte: no se busca, porque no se sabe de dónde se sale o a dónde se llega");
+  } else avisos.push("transporte: no se busca, porque no hay fuente de transporte");
   const puerta = puertaBusqueda(busqueda, FINALISTAS);
-  guardar(run, "busqueda.json", { busqueda, vuelos, puerta, avisos });
+  guardar(run, "busqueda.json", { busqueda, vuelos, transporte, puerta, avisos });
   return puerta.rojos;
 }
 
@@ -289,12 +293,16 @@ function sinAlojamiento(b: Busqueda): string {
   );
 }
 
-/** El transporte del viaje: el más barato por viajero que se sabe para sus fechas y en su moneda, o ninguno. */
+type DeLaBusqueda = { vuelos: Vuelo[]; transporte?: Parrilla | null; busqueda: Busqueda };
+
+/**
+ * El transporte del viaje: el más barato por viajero que se sabe para sus fechas y en su moneda, o ninguno. Un
+ * precio en otra moneda no se puede sumar al del alojamiento, ni uno de otros días a sus noches: no cuentan.
+ */
 function transporteDe(run: string): Vuelo | null {
-  const { vuelos, busqueda } = leer<{ vuelos: Vuelo[]; busqueda: Busqueda }>(run, "busqueda.json");
-  // Un precio en otra moneda no se puede sumar al del alojamiento: no cuenta.
-  const suyos = vuelos.filter((v) => v.moneda === busqueda.estancia.moneda);
-  return suyos.sort((a, b) => paraElGrupo(a, 1) - paraElGrupo(b, 1))[0] ?? null;
+  const { vuelos, busqueda } = leer<DeLaBusqueda>(run, "busqueda.json");
+  const e = busqueda.estancia;
+  return elTransporte(vuelos, e.moneda, e.entrada, e.salida);
 }
 
 function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
@@ -385,10 +393,11 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
   const { paradas } = leer<DeLosDias>(run, "dias.json");
   const transporte = transporteDe(run);
   const e = estanciaDe(viaje);
+  const parrilla = leer<DeLaBusqueda>(run, "busqueda.json").transporte ?? null;
   const vuelos =
-    transporte === null || f.vuelos === undefined
+    transporte === null || f.transporte === undefined
       ? undefined
-      : (ida: string, vuelta: string): Promise<Vuelo[]> => f.vuelos!(viaje, ida, vuelta);
+      : vuelosMovidos(viaje, f.transporte, transporte, parrilla);
   const ids = busqueda.finalistas.map((x) => x.alojamiento.id);
   if (!hay(run, "movidos.json")) {
     const cambios = cambiosDePartida(DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN);

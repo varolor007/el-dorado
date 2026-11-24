@@ -10,6 +10,7 @@
 // Sin nada de Node: lo usa también la web.
 
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
+import { DECIMALES_DEL_ORIGEN } from "../data/transporte.ts";
 import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO } from "../data/viaje.ts";
 import type { Punto, Ritmo } from "../output/viaje.ts";
 import type { Caja, CUANTO_MOVERSE, Entendido, GASTOS } from "./formas.ts";
@@ -33,8 +34,8 @@ export type Respuestas = {
   idioma: string;
   moneda: string | null;
   destino: SitioElegido;
-  /** De dónde sale. Sin ello no hay transporte que buscar. */
-  origen: { nombre: string; pais: string | null } | null;
+  /** De dónde sale, y su punto si el buscador lo dio. Sin ello no hay transporte que buscar. */
+  origen: { nombre: string; pais: string | null; centro?: Punto | null } | null;
   entrada: string;
   salida: string;
   fechasMovibles: boolean | null;
@@ -134,6 +135,28 @@ export type LoEntendido = {
   falta: string[];
 };
 
+/** Un número, redondeado a los decimales que se guardan del punto de salida. */
+const redondo = (x: number): number => {
+  const veces = 10 ** DECIMALES_DEL_ORIGEN;
+  return Math.round(x * veces) / veces;
+};
+
+/**
+ * De dónde sale, como lo guarda la casa. Su punto, si lo trae, va redondeado: para saber sus aeropuertos basta, y no
+ * dice dónde vive nadie. Un punto que no está en el mapa no va.
+ */
+function origenDe(o: NonNullable<Respuestas["origen"]>, pais: string | null): NonNullable<Entendido["origin"]> {
+  const origen: NonNullable<Entendido["origin"]> = {
+    name: enUnaLinea(o.nombre, LETRAS_DE_UN_NOMBRE),
+    country: pais ?? "",
+    airport: null,
+  };
+  const c = o.centro;
+  if (c != null && Number.isFinite(c.lat) && Number.isFinite(c.lon) && Math.abs(c.lat) <= 90 && Math.abs(c.lon) <= 180)
+    origen.centre = { lat: redondo(c.lat), lon: redondo(c.lon) };
+  return origen;
+}
+
 /**
  * Lo que he entendido de un viaje, de las respuestas del viajero. No juzga si los datos valen (una fecha pasada, más
  * habitaciones que adultos): eso lo dice la puerta 1, que mira lo que sale de aquí.
@@ -181,10 +204,7 @@ export function entendidoDe(r: Respuestas): LoEntendido {
       box: r.destino.caja ?? cajaAlrededor(r.destino.centro, CAJA_DE_PARTIDA[r.destino.clase]),
       airport: null,
     },
-    origin:
-      r.origen === null
-        ? null
-        : { name: enUnaLinea(r.origen.nombre, LETRAS_DE_UN_NOMBRE), country: paisDeSalida ?? "", airport: null },
+    origin: r.origen === null ? null : origenDe(r.origen, paisDeSalida),
     dates: {
       check_in: r.entrada,
       check_out: r.salida,
@@ -225,7 +245,8 @@ export function respuestasDeLoEntendido(e: Entendido, toques: readonly string[])
       centro: e.destination.centre,
       caja: e.destination.box,
     },
-    origen: e.origin === null ? null : { nombre: e.origin.name, pais: e.origin.country },
+    origen:
+      e.origin === null ? null : { nombre: e.origin.name, pais: e.origin.country, centro: e.origin.centre ?? null },
     entrada: e.dates.check_in,
     salida: e.dates.check_out,
     fechasMovibles: e.dates.flexible,

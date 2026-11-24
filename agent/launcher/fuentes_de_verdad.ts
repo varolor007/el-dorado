@@ -2,13 +2,15 @@
 // datos abiertos de sitios y de fotos. Cada una se apaga con ELDORADO_APAGAR sin tocar lo demás: sin transporte o sin
 // otras ofertas, la investigación sigue y lo dice; sin alojamiento o sin sitios, no hay viaje.
 
+import { join } from "node:path";
 import { ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN } from "../data/dias.ts";
-import { vuelosPorFechas } from "../tools/fuentes/aviasales.ts";
+import { aviasales } from "../tools/fuentes/aviasales.ts";
 import { encendida } from "../tools/fuentes/enchufes.ts";
 import { liteapi } from "../tools/fuentes/liteapi.ts";
 import { ofertasDeZona } from "../tools/fuentes/parallel.ts";
 import { conMargen, fotosDe, resumenesDe, sitiosConEscalera } from "../tools/sitios.ts";
 import type { Fuentes } from "./investigar.ts";
+import { carpetaDeLaMesa } from "./mesa.ts";
 
 /** El margen que se le da a la caja del destino al pedir sus sitios: un kilómetro, más o menos. */
 const MARGEN = 0.01;
@@ -33,20 +35,8 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     fotos: (archivos) => fotosDe(archivos),
     desde: manana,
   };
-  if (encendida("aviasales"))
-    fuentes.vuelos = async (viaje, ida, vuelta) => {
-      // Sin saber de dónde se sale y a dónde se llega no hay vuelo que buscar; el mercado es el del país de salida.
-      const origen = viaje.origin;
-      if (origen === null || origen.airport === null || viaje.destination.airport === null) return [];
-      return vuelosPorFechas({
-        origen: origen.airport,
-        destino: viaje.destination.airport,
-        ida,
-        vuelta,
-        moneda: viaje.currency.toUpperCase(),
-        mercado: origen.country.toLowerCase(),
-      });
-    };
+  // Los aeropuertos de la fuente se guardan un día en la mesa, fuera del repositorio: son tres archivos grandes.
+  if (encendida("aviasales")) fuentes.transporte = aviasales(join(carpetaDeLaMesa(), "fuentes"));
   if (encendida("parallel")) fuentes.ofertas = (lugar, e) => ofertasDeZona(lugar, e);
   return fuentes;
 }

@@ -674,12 +674,19 @@ test("de dónde sales, por lo que hay en un punto: la ciudad o lo más parecido,
   assert.deepEqual(origenDe(en({ name: "Plaza Inventada", city: "Villa Inventada", countrycode: "zz" })), {
     nombre: "Villa Inventada",
     pais: "ZZ",
+    centro: null,
   });
   // Sin ciudad, la comarca; sin nada de eso, el nombre de lo que haya. Sin país, se pregunta después.
   assert.deepEqual(origenDe(en({ name: "Un cruce", county: "Comarca Inventada" })), {
     nombre: "Comarca Inventada",
     pais: null,
+    centro: null,
   });
+  // Su punto, con una décima de grado: basta para sus aeropuertos y no dice dónde está nadie.
+  const conPunto = { properties: { city: "Villa Inventada" }, geometry: { coordinates: [20.0471, 10.0349] } };
+  assert.deepEqual(origenDe(conPunto)?.centro, { lat: 10, lon: 20 });
+  const fuera = { properties: { city: "Villa Inventada" }, geometry: { coordinates: [500, 10] } };
+  assert.equal(origenDe(fuera)?.centro, null);
   assert.equal(origenDe(en({ name: "  Aldea Inventada ", countrycode: "ZZZ" }))?.nombre, "Aldea Inventada");
   assert.equal(origenDe(en({ name: "x".repeat(200) }))?.nombre.length, 80);
   for (const nada of [null, undefined, {}, en({}), en({ city: "  ", name: 7 }), "un texto"])

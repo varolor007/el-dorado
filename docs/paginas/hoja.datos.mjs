@@ -440,7 +440,7 @@ const flujo = [
       k: "busqueda_transporte",
       x: "la parrilla de aeropuertos y de días",
       titulo: "La búsqueda de transporte",
-      d: "Sin IA. Los aeropuertos de salida y de llegada, los días de alrededor si puedes moverlos, y el tipo: directo, con una escala o tren. Cada opción, con su precio, su enlace y el día en que se vio. Hoy solo hay precios guardados de hace días (Aviasales), y para unas fechas exactas a veces no hay ninguno.",
+      d: "Sin IA. Los aeropuertos de salida y de llegada, los días de alrededor si puedes moverlos, y el tipo: directo, con una escala o tren. Cada opción, con su precio, su enlace y el día en que se vio. Hecha para los vuelos: los aeropuertos salen solos de donde sales y a donde vas, y se miran pocos pares, tus fechas y dos días a cada lado si las puedes mover. El tren no lo da la fuente. Hoy solo hay precios guardados de hace días (Aviasales), y para unas fechas exactas casi nunca hay ninguno: entonces el viaje sale sin transporte, y lo dice.",
       n: "Por decidir: de dónde sale el precio en vivo de un vuelo. La fuente que hay da precios guardados.",
     },
     {
@@ -984,7 +984,7 @@ const secciones = [
           ["La foto de cada sitio", "Wikimedia Commons, con su autor y su licencia al pie. Una foto sin autor o sin licencia no se enseña", "hecho"],
           ["El mapa y el buscador de lugares", "Mapas abiertos, sin clave y sin coste: el mapa, con MapLibre y OpenFreeMap; el buscador, Photon. No garantizan el servicio", "hecho"],
           ["Lo que hay entre dos paradas, y cómo se va", "El código: la distancia, en línea recta y con un margen, y las maneras de ir que tienen sentido (a pie lo que se anda; en transporte o en coche lo que no), con un tiempo aproximado. La ruta exacta, un enlace a Google Maps: el del día entero y el de cada trayecto que no se anda, también el de donde duermes a la primera parada. El tiempo de verdad, si esa manera existe allí y lo que cuesta, de una fuente de rutas: se prueba Geoapify primero", "parte"],
-          ["Las palancas: el precio de otros días, otro hotel u otra zona", "Las mismas fuentes, pedidas otra vez por código: las mismas noches movidas y una noche más o menos. Otro aeropuerto y el tren esperan a la búsqueda de transporte", "parte"],
+          ["Las palancas: el precio de otros días, otro hotel u otra zona", "Las mismas fuentes, pedidas otra vez por código: las mismas noches movidas y una noche más o menos. Otro aeropuerto ya tiene de dónde salir, con la búsqueda de transporte, y está por enchufar; el tren no lo da la fuente", "parte"],
           { c: ["Dónde se reserva cada precio", "El enlace de donde se encontró; el de LiteAPI no tiene página pública", "decidir"], n: true },
         ],
         nota: "Es un MVP sin uso comercial. Lo que dicen las condiciones de cada fuente (la IA sobre sus fotos, cruzar sus datos, guardar resultados) está en `docs/condiciones.md` y se cierra con el abogado antes de vender. Con la clave de pruebas, los precios pueden no ser los de verdad.",
