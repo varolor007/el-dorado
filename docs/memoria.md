@@ -1,6 +1,6 @@
 # Memoria de El Dorado
 
-Al día el 23-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
+Al día el 24-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: la tanda 3, hecha y revisada, al visto bueno del PM** (el estado, punto a punto, en
@@ -20,18 +20,31 @@ dice dónde y por qué, y el run sigue parado hasta que se quita ese archivo.
 La página de la revisión, con sus capturas: https://claude.ai/artifact/MUuPbQ6TDhxMkibR8NeViZ.
 
 Al cerrarla, la revisaron tres adversarios que no la hicieron: su informe, hallazgo a hallazgo y con lo que se hizo,
-en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394. Lo que hay que saber de
+en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394, y con lo del 24-nov, a más de 400. Lo que hay que saber de
 cómo quedó:
 
 - **Lo que lee el viajero lo dice la web por claves, o lo escribe el que explica y pasa la puerta 7.** Ninguna frase
   de otro asiento llega a la pantalla: ni la ficha de un alojamiento, ni un aviso de la casa.
 - **Un run que se retoma no vuelve a juzgar lo que ya juzgó**: lee del disco lo que recogió, con su veredicto.
-- **Tres viajes no los sabe hacer todavía, y para y lo dice**: el de varias bases, el que no se anda y el del grupo
-  que no cabe en una habitación. Los tres tocan la hoja: son del PM.
+- **Un viaje no lo sabe hacer todavía, y para y lo dice**: el que pide dormir en más de un sitio (varias bases, o
+  sitios a más de un día de donde se duerme).
 - **La web desplegada** enseña el viaje grabado que se le dé; uno con una forma de antes no lo enseña (dice que no
   hay viaje). Tras cada cambio de la forma del viaje hay que darle al PM el archivo nuevo.
 
-**Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo y tu cuenta**, la primera que gasta de una
+**Lo que contestó el PM el 24-nov**, y ya está hecho (cada cosa, con sus palabras, en el registro):
+
+- **Cómo se mueve el viajero**: no lo dice él de antemano. De cada trayecto se dicen la distancia y las maneras de
+  ir que tienen sentido (`agent/data/moverse.ts`): a pie lo que se anda, y en transporte o en coche lo que no, con
+  un tiempo aproximado. Un viaje que no se anda se hace igual. Lo que cuesta cada manera y si la hay pide una fuente
+  de rutas, que está por decidir (3.14).
+- **Las habitaciones las dice el viajero** (`travellers.rooms` en lo entendido): se pide una ocupación por
+  habitación y el precio es el de todas.
+- **Lo que no lleva estrellas** se juzga por su nota y sus opiniones.
+- **Las quejas graves** las señala el código en las opiniones y las confirma el que mira (`serious` en su entrega).
+- **Las fotos se encogen** antes de mirarlas, con `sharp`: la única pieza de fuera que lleva el agente.
+- **El 3.5**, el buscador y el lector de webs, va en la tanda 4.
+
+No dio todavía el visto bueno de la tanda 3. **Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo y tu cuenta**, la primera que gasta de una
 clave. Antes de lanzar un asiento con una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el
 asiento, confinado a su salida.
 
