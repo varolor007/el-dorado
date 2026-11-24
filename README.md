@@ -80,11 +80,13 @@ cuentas y los viajes funcionan, y el botón de investigar dice que no hay con qu
 La casa puede pensar también con su propia cuenta de Claude, por Claude Code (gasta de esa suscripción: lanzarlo es
 decisión del PM). Solo la usan las cuentas cuyo correo esté en `ELDORADO_CORREOS_DE_LA_CASA`, separados por comas;
 las demás, con su clave o con nada. Hace falta Claude Code en la máquina (o su ruta en `ELDORADO_CLAUDE`) y el token
-de la suscripción, de `claude setup-token`. Sin precio, la casa no admite claves de viajeros. Al arrancar avisa de los
-correos de la lista que aún no tienen cuenta: como el correo no se confirma, se registran antes de dar la dirección.
+de la suscripción, de `claude setup-token`, en `ELDORADO_TOKEN_DE_CLAUDE`: la casa se lo pasa a Claude Code, y con ese
+nombre no lo lee ningún otro Claude Code de la máquina. Sin precio, la casa no admite claves de viajeros. Al arrancar
+avisa de los correos de la lista que aún no tienen cuenta: como el correo no se confirma, se registran antes de dar la
+dirección.
 
 ```bash
-ELDORADO_CORREOS_DE_LA_CASA=<correo,correo> CLAUDE_CODE_OAUTH_TOKEN=<el token> ELDORADO_MODELO=<el modelo> \
+ELDORADO_CORREOS_DE_LA_CASA=<correo,correo> ELDORADO_TOKEN_DE_CLAUDE=<el token> ELDORADO_MODELO=<el modelo> \
   ELDORADO_LLAVE=<la llave> ELDORADO_SECRETO=<32 bytes> node agent/launcher/arrancar.ts
 ```
 

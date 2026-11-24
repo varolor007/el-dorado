@@ -4,10 +4,12 @@
 //
 // El contrato va como instrucciones de sistema, en un archivo; la orden y el material, con las fotos en su orden, en
 // un solo mensaje por la entrada (en `stream-json`, que es la forma que admite fotos). Claude Code corre en una
-// carpeta vacía, con su propia carpeta de configuración también vacía, sin herramientas, sin lo que haya instalado
-// en la máquina (ni CLAUDE.md, ni plugins, ni servidores MCP) y sin guardar la sesión. Su entorno es el de la máquina
-// sin las llaves de la casa (ELDORADO_*) ni ninguna otra clave: solo el token de la suscripción
-// (CLAUDE_CODE_OAUTH_TOKEN, de `claude setup-token`), para que gaste de la cuenta de la casa y de nada más.
+// carpeta vacía, con su propia carpeta de usuario también vacía, sin herramientas, sin lo que haya instalado en la
+// máquina (ni CLAUDE.md, ni plugins, ni servidores MCP) y sin guardar la sesión. De su entorno se dice lo que pasa, y
+// nada más: la ruta de los programas, lo que hace falta para salir por un proxy y fiarse de sus certificados, y el
+// token de la suscripción (de `claude setup-token`), que la casa recibe como ELDORADO_TOKEN_DE_CLAUDE y le pasa como
+// CLAUDE_CODE_OAUTH_TOKEN. Así gasta de la cuenta de la casa y de nada más: ni de una clave de API, ni de la sesión de
+// Claude Code de la máquina en la que corra la casa, cuyas variables (CLAUDE_*, ANTHROPIC_*) no le llegan.
 //
 // Con qué modelo se piensa lo dice el entorno de la casa (ELDORADO_MODELO), nunca este repositorio.
 
@@ -18,8 +20,20 @@ import { join } from "node:path";
 import type { Pensar, Respuesta } from "./ia.ts";
 import { mensajesDe, type ConQue } from "./ia_de_verdad.ts";
 
-/** El token de la suscripción: lo único del entorno con lo que Claude Code puede pensar. */
+/** Cómo le llega a la casa el token de la suscripción, y cómo se lo pasa a Claude Code. */
+export const TOKEN_DE_LA_CASA = "ELDORADO_TOKEN_DE_CLAUDE";
 export const TOKEN_DE_LA_CUENTA = "CLAUDE_CODE_OAUTH_TOKEN";
+/** Lo único del entorno de la máquina que pasa: para salir por un proxy y fiarse de sus certificados. */
+const DE_LA_RED = new Set([
+  "HTTPS_PROXY",
+  "HTTP_PROXY",
+  "NO_PROXY",
+  "ALL_PROXY",
+  "NODE_EXTRA_CA_CERTS",
+  "NODE_USE_ENV_PROXY",
+  "SSL_CERT_FILE",
+  "SSL_CERT_DIR",
+]);
 /** Lo que puede tardar una vuelta, si no se dice otra cosa, y lo que se le deja para acabar cuando se le corta. */
 export const TOPE_DE_UNA_VUELTA_MS = 20 * 60_000;
 const GRACIA_AL_CORTAR_MS = 5_000;
@@ -28,35 +42,34 @@ const LO_MAS_QUE_SE_LEE = 32 * 1024 * 1024;
 
 export type OpcionesDeClaudeCode = {
   con: ConQue;
+  /** El token de la suscripción de la casa. */
+  token: string;
   /** El programa de Claude Code: `claude` si no se dice otro. En las pruebas, uno de mentira. */
   binario?: string;
-  /** El entorno de la máquina, del que se quita lo que no debe llegarle. */
+  /** El entorno de la máquina, del que solo pasa la ruta de los programas y lo de la red. */
   entorno?: Record<string, string | undefined>;
   topeMs?: number;
 };
 
 /**
- * Lo que no le llega a Claude Code del entorno de la máquina: las llaves de la casa, cualquier cosa de la API de
- * Anthropic (una clave le haría gastar de ella y no de la suscripción; una dirección, hablar con otro sitio), las
- * nubes por las que podría pensar en vez de la cuenta, y todo lo que tenga nombre de clave, de token o de secreto.
+ * El entorno de Claude Code, por lista de lo que pasa: la ruta de los programas, una carpeta de usuario propia y
+ * vacía (para que no lea ajustes ni credenciales de nadie), lo de la red y el token de la suscripción. Nada más.
  */
-export function entornoDeClaudeCode(entorno: Record<string, string | undefined>): Record<string, string> {
-  const fuera = (nombre: string): boolean =>
-    nombre !== TOKEN_DE_LA_CUENTA &&
-    (/^ELDORADO_/i.test(nombre) ||
-      /^ANTHROPIC_/i.test(nombre) ||
-      /^CLAUDE_CODE_USE_/i.test(nombre) ||
-      /^CLAUDE_CODE_OAUTH_/i.test(nombre) ||
-      /^CLAUDE_CONFIG_DIR$/i.test(nombre) ||
-      /^(AWS|GOOGLE|GCLOUD|AZURE|VERTEX|BEDROCK)_/i.test(nombre) ||
-      /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH/i.test(nombre));
+export function entornoDeClaudeCode(
+  entorno: Record<string, string | undefined>,
+  token: string,
+  casa: string,
+): Record<string, string> {
   const limpio: Record<string, string> = {};
   for (const [nombre, valor] of Object.entries(entorno))
-    if (valor !== undefined && !fuera(nombre)) limpio[nombre] = valor;
-  return limpio;
+    if (valor !== undefined && DE_LA_RED.has(nombre.toUpperCase())) limpio[nombre] = valor;
+  return { ...limpio, PATH: entorno.PATH ?? "/usr/local/bin:/usr/bin:/bin", HOME: casa, [TOKEN_DE_LA_CUENTA]: token };
 }
 
-/** Las opciones con las que se lanza: una vuelta, sin herramientas y sin nada de lo instalado en la máquina. */
+/**
+ * Las opciones con las que se lanza: sin herramientas (y sin ellas no hay más que una vuelta) y sin nada de lo
+ * instalado en la máquina. No se usa `--max-turns`: la versión instalada no la lista en su ayuda.
+ */
 export function opcionesDe(con: ConQue, instrucciones: string): string[] {
   return [
     "-p",
@@ -71,8 +84,6 @@ export function opcionesDe(con: ConQue, instrucciones: string): string[] {
     "--model",
     con.modelo,
     ...(con.esfuerzo === null ? [] : ["--effort", con.esfuerzo]),
-    "--max-turns",
-    "1",
     "--tools",
     "",
     "--no-session-persistence",
@@ -172,7 +183,8 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
   const topeMs = o.topeMs ?? TOPE_DE_UNA_VUELTA_MS;
   return async (p, corte) => {
     const entorno = o.entorno ?? process.env;
-    const token = entorno[TOKEN_DE_LA_CUENTA];
+    const token = o.token;
+    if (token.trim() === "") throw new Error("falta el token de la cuenta de Claude de la casa");
     // Lo que se le manda se monta antes de lanzar nada: una foto que no se sabe mandar no gasta una vuelta.
     const mensaje = JSON.stringify({
       type: "user",
@@ -183,12 +195,12 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
     const raiz = mkdtempSync(join(tmpdir(), "eldorado-claude-"));
     try {
       const vacia = join(raiz, "aqui");
-      const configuracion = join(raiz, "config");
+      const casa = join(raiz, "casa");
       mkdirSync(vacia, { mode: 0o700 });
-      mkdirSync(configuracion, { mode: 0o700 });
+      mkdirSync(casa, { mode: 0o700 });
       const instrucciones = join(raiz, "contrato.md");
       writeFileSync(instrucciones, p.contrato, { mode: 0o600 });
-      const env = { ...entornoDeClaudeCode(entorno), CLAUDE_CONFIG_DIR: configuracion };
+      const env = entornoDeClaudeCode(entorno, token, casa);
       return await new Promise<Respuesta>((resuelve, falla) => {
         let acabado = false;
         let porQueSeCorto: string | null = null;

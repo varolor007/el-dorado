@@ -11,8 +11,9 @@
 // esfuerza (ELDORADO_ESFUERZO). Hay dos maneras, y la casa puede tener las dos, una o ninguna:
 //
 //   - La cuenta de Claude de la casa, por Claude Code: con ELDORADO_CORREOS_DE_LA_CASA (los correos que la usan,
-//     separados por comas) y el token de la suscripción en CLAUDE_CODE_OAUTH_TOKEN (de `claude setup-token`). Solo
-//     esas cuentas piensan con ella. Claude Code se busca como `claude`, o donde diga ELDORADO_CLAUDE.
+//     separados por comas) y el token de la suscripción en ELDORADO_TOKEN_DE_CLAUDE (de `claude setup-token`; con
+//     ese nombre y no con el de Claude Code, para que no lo lea otro Claude Code de la máquina). Solo esas cuentas
+//     piensan con ella. Claude Code se busca como `claude`, o donde diga ELDORADO_CLAUDE.
 //   - La clave de cada viajero, con una llamada directa: con lo que cuesta el modelo, en dólares por millón
 //     (ELDORADO_PRECIO_ENTRADA y ELDORADO_PRECIO_SALIDA). Sin precio, la casa no admite claves.
 //
@@ -22,7 +23,7 @@
 import { correosDeLaCasa, hayCuentaDe, secretoDe } from "./cuentas.ts";
 import { fuentesDeVerdad } from "./fuentes_de_verdad.ts";
 import { lanzadorDirecto, precioDe } from "./ia.ts";
-import { pensarConClaudeCode, TOKEN_DE_LA_CUENTA } from "./ia_de_claude_code.ts";
+import { pensarConClaudeCode, TOKEN_DE_LA_CASA } from "./ia_de_claude_code.ts";
 import { claveQueFunciona, conQueDe, pensarConClaude } from "./ia_de_verdad.ts";
 import { carpetaDeLaMesa } from "./mesa.ts";
 import { puertaALaWeb, type OpcionesDeLaPuerta } from "./puerta_a_la_web.ts";
@@ -50,10 +51,11 @@ export function iaDe(entorno: Record<string, string | undefined>): IaDeLaCasa {
   );
   const ia: IaDeLaCasa = {};
   if (correos.length > 0) {
-    if ((entorno[TOKEN_DE_LA_CUENTA] ?? "").trim() === "")
-      throw new Error(`la lista de correos de la casa pide el token de su cuenta de Claude (${TOKEN_DE_LA_CUENTA})`);
+    const token = (entorno[TOKEN_DE_LA_CASA] ?? "").trim();
+    if (token === "")
+      throw new Error(`la lista de correos de la casa pide el token de su cuenta de Claude (${TOKEN_DE_LA_CASA})`);
     const binario = (entorno.ELDORADO_CLAUDE ?? "").trim() || "claude";
-    ia.lanzadorDeLaCasa = lanzadorDirecto(pensarConClaudeCode({ con, binario, entorno }), null);
+    ia.lanzadorDeLaCasa = lanzadorDirecto(pensarConClaudeCode({ con, token, binario, entorno }), null);
     ia.correosDeLaCasa = correos;
   }
   if (conPrecio || correos.length === 0) {

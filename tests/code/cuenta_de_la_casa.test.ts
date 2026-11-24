@@ -206,7 +206,7 @@ test("la casa avisa de los correos de su lista que aún no tienen cuenta", async
 test("al arrancar, la casa enchufa lo que diga su entorno: su cuenta, las claves, las dos o ninguna", () => {
   const modelo = { ELDORADO_MODELO: "modelo-inventado" };
   const precio = { ELDORADO_PRECIO_ENTRADA: "4", ELDORADO_PRECIO_SALIDA: "20" };
-  const casa = { ELDORADO_CORREOS_DE_LA_CASA: "PM@inventado.example", CLAUDE_CODE_OAUTH_TOKEN: "token-inventado" };
+  const casa = { ELDORADO_CORREOS_DE_LA_CASA: "PM@inventado.example", ELDORADO_TOKEN_DE_CLAUDE: "token-inventado" };
   const enchufado = (ia: ReturnType<typeof iaDe>): string[] => Object.keys(ia).sort();
   // Sin modelo, nada; tampoco con la lista y el token.
   assert.deepEqual(iaDe({}), {});
@@ -228,9 +228,19 @@ test("al arrancar, la casa enchufa lo que diga su entorno: su cuenta, las claves
   // Lo que está a medias no arranca: la lista sin token, un precio con una cifra, o un correo que no es correo.
   assert.throws(
     () => iaDe({ ...modelo, ELDORADO_CORREOS_DE_LA_CASA: "pm@inventado.example" }),
-    /CLAUDE_CODE_OAUTH_TOKEN/,
+    /ELDORADO_TOKEN_DE_CLAUDE/,
   );
-  assert.throws(() => iaDe({ ...modelo, ...casa, CLAUDE_CODE_OAUTH_TOKEN: "  " }), /CLAUDE_CODE_OAUTH_TOKEN/);
+  assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_TOKEN_DE_CLAUDE: "  " }), /ELDORADO_TOKEN_DE_CLAUDE/);
+  // El token de la sesión de Claude Code de la máquina no es el de la casa: con él solo, no hay cuenta de la casa.
+  assert.throws(
+    () =>
+      iaDe({
+        ...modelo,
+        ELDORADO_CORREOS_DE_LA_CASA: "pm@inventado.example",
+        CLAUDE_CODE_OAUTH_TOKEN: "el-de-la-maquina",
+      }),
+    /ELDORADO_TOKEN_DE_CLAUDE/,
+  );
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_PRECIO_ENTRADA: "4" }), /falta el precio de la IA/);
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_CORREOS_DE_LA_CASA: "pm" }), /no tiene forma de correo/);
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_ESFUERZO: "muchísimo" }), /esfuerzo/);

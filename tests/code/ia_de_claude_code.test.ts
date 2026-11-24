@@ -37,16 +37,16 @@ const PETICION: Peticion = {
  */
 const GUION = `
 const fs = require("node:fs");
-const modo = process.env.MENTIRA_MODO ?? "bien";
+const modo = MODO;
 const args = process.argv.slice(2);
 let entrada = "";
 process.stdin.on("data", (t) => (entrada += t));
 process.stdin.on("end", () => {
   const instrucciones = args[args.indexOf("--system-prompt-file") + 1];
-  fs.writeFileSync(process.env.MENTIRA_APUNTE, JSON.stringify({
+  fs.writeFileSync(APUNTE, JSON.stringify({
     args, cwd: process.cwd(), enLaCarpeta: fs.readdirSync(process.cwd()),
     entorno: Object.keys(process.env), token: process.env.${TOKEN_DE_LA_CUENTA} ?? null,
-    configuracion: process.env.CLAUDE_CONFIG_DIR ?? null,
+    casa: process.env.HOME ?? null, enSuCasa: fs.readdirSync(process.env.HOME),
     instrucciones: fs.readFileSync(instrucciones, "utf8"), entrada,
   }));
   const di = (x) => process.stdout.write(JSON.stringify(x) + "\\n");
@@ -88,30 +88,42 @@ type Apunte = {
   enLaCarpeta: string[];
   entorno: string[];
   token: string | null;
-  configuracion: string | null;
+  casa: string | null;
+  enSuCasa: string[];
   instrucciones: string;
   entrada: string;
 };
 
-function conMentira(): { binario: string; apunte: string; borra: () => void } {
+/** Un `claude` de mentira, con su modo y dónde apunta escritos dentro: del entorno no le llega nada para eso. */
+function conMentira(modo: string): { binario: string; apunte: string; borra: () => void } {
   const carpeta = mkdtempSync(join(tmpdir(), "el-dorado-claude-de-mentira-"));
   const binario = join(carpeta, "claude");
-  writeFileSync(binario, `#!${process.execPath}\n${GUION}`);
+  const apunte = join(carpeta, "apunte.json");
+  const datos = `const MODO = ${JSON.stringify(modo)};\nconst APUNTE = ${JSON.stringify(apunte)};\n`;
+  writeFileSync(binario, `#!${process.execPath}\n${datos}${GUION}`);
   chmodSync(binario, 0o755);
   return {
     binario,
-    apunte: join(carpeta, "apunte.json"),
+    apunte,
     borra: () => rmSync(carpeta, { recursive: true, force: true }),
   };
 }
 
-function entornoDe(apunte: string, modo: string): Record<string, string> {
+/** El entorno de una máquina, como el de una sesión en la nube: con su Claude Code, sus claves y su proxy. */
+function entornoDeLaMaquina(): Record<string, string> {
   return {
     PATH: process.env.PATH ?? "",
-    HOME: tmpdir(),
-    MENTIRA_MODO: modo,
-    MENTIRA_APUNTE: apunte,
-    [TOKEN_DE_LA_CUENTA]: TOKEN,
+    HOME: "/home/alguien",
+    HTTPS_PROXY: "http://proxy.inventado.example:8080",
+    no_proxy: "localhost",
+    NODE_EXTRA_CA_CERTS: "/etc/certificados-inventados.pem",
+    LANG: "es_ES.UTF-8",
+    [TOKEN_DE_LA_CUENTA]: "el-token-de-la-sesion-de-la-maquina",
+    ELDORADO_TOKEN_DE_CLAUDE: TOKEN,
+    CLAUDE_CODE_ENTRYPOINT: "remote",
+    CLAUDE_CODE_SESSION_ID: "sesion-inventada",
+    CLAUDE_CONFIG_DIR: "/home/alguien/.claude",
+    CLAUDECODE: "1",
     ANTHROPIC_API_KEY: "una clave que no debe llegar",
     ANTHROPIC_AUTH_TOKEN: "otra-que-no-debe-llegar",
     ANTHROPIC_BASE_URL: "https://otro-sitio.example",
@@ -125,12 +137,13 @@ function entornoDe(apunte: string, modo: string): Record<string, string> {
 }
 
 async function piensa(modo: string, mas: { topeMs?: number; corte?: AbortSignal } = {}) {
-  const m = conMentira();
+  const m = conMentira(modo);
   try {
     const pensar = pensarConClaudeCode({
       con: CON,
+      token: TOKEN,
       binario: m.binario,
-      entorno: entornoDe(m.apunte, modo),
+      entorno: entornoDeLaMaquina(),
       topeMs: mas.topeMs,
     });
     const r = await pensar(PETICION, mas.corte).then(
@@ -153,7 +166,7 @@ test("Claude Code va de una vuelta, sin herramientas ni nada de lo instalado, co
   assert.equal(valor("--system-prompt-file"), "/tmp/x/contrato.md");
   assert.equal(valor("--model"), "modelo-inventado");
   assert.equal(valor("--effort"), "high");
-  assert.equal(valor("--max-turns"), "1");
+  assert.ok(!o.includes("--max-turns"));
   assert.equal(valor("--tools"), "");
   assert.equal(valor("--permission-prompts"), "none");
   for (const opcion of ["--verbose", "--no-session-persistence", "--safe-mode", "--strict-mcp-config", "--restricted"])
@@ -163,13 +176,21 @@ test("Claude Code va de una vuelta, sin herramientas ni nada de lo instalado, co
   assert.ok(!o.some((x) => /dangerously|bypass|allowedTools|add-dir|^--mcp-config$/.test(x)));
 });
 
-test("a Claude Code no le llegan las llaves de la casa ni ninguna clave: solo el token de la suscripción", () => {
-  const limpio = entornoDeClaudeCode({ ...entornoDe("a", "b"), CLAUDE_CONFIG_DIR: "/home/otro/.claude" });
-  assert.deepEqual(
-    Object.keys(limpio).sort(),
-    ["HOME", "MENTIRA_APUNTE", "MENTIRA_MODO", "PATH", TOKEN_DE_LA_CUENTA].sort(),
-  );
+test("a Claude Code solo le llega lo de su lista: la ruta, su carpeta, lo de la red y el token de la casa", () => {
+  const limpio = entornoDeClaudeCode(entornoDeLaMaquina(), TOKEN, "/tmp/su-casa");
+  assert.deepEqual(Object.keys(limpio).sort(), [
+    TOKEN_DE_LA_CUENTA,
+    "HOME",
+    "HTTPS_PROXY",
+    "NODE_EXTRA_CA_CERTS",
+    "PATH",
+    "no_proxy",
+  ]);
+  // El token es el de la casa, no el de la sesión de la máquina; y la carpeta de usuario es la suya.
   assert.equal(limpio[TOKEN_DE_LA_CUENTA], TOKEN);
+  assert.equal(limpio.HOME, "/tmp/su-casa");
+  for (const nombre of Object.keys(limpio))
+    assert.ok(nombre === TOKEN_DE_LA_CUENTA || !/^(CLAUDE|ANTHROPIC_|ELDORADO_)/.test(nombre), nombre);
 });
 
 test("con un claude de mentira: el contrato, de instrucciones, y el material, en un mensaje con su foto", async () => {
@@ -184,12 +205,16 @@ test("con un claude de mentira: el contrato, de instrucciones, y el material, en
   });
   assert.ok(apunte !== null);
   assert.equal(apunte.instrucciones, PETICION.contrato);
-  // Corre en una carpeta vacía, con su configuración aparte, y del entorno solo le llega lo que debe.
+  // Corre en una carpeta vacía, con su carpeta de usuario aparte y vacía, y del entorno solo le llega lo que debe.
   assert.deepEqual(apunte.enLaCarpeta, []);
-  assert.ok(apunte.configuracion !== null && !apunte.configuracion.startsWith(apunte.cwd));
+  assert.deepEqual(apunte.enSuCasa, []);
+  assert.ok(apunte.casa !== null && apunte.casa !== "/home/alguien" && !apunte.casa.startsWith(apunte.cwd));
   assert.equal(apunte.token, TOKEN);
   for (const nombre of apunte.entorno)
-    assert.ok(!/^ELDORADO_|^ANTHROPIC_|^AWS_|KEY|SECRET|BEDROCK/.test(nombre), `le llegó ${nombre}`);
+    assert.ok(
+      nombre === TOKEN_DE_LA_CUENTA || !/^(CLAUDE|ANTHROPIC_|ELDORADO_|AWS_)|KEY|SECRET|BEDROCK/.test(nombre),
+      `le llegó ${nombre}`,
+    );
   const lineas = apunte.entrada.trim().split("\n");
   assert.equal(lineas.length, 1);
   assert.deepEqual(JSON.parse(lineas[0]), {
@@ -212,10 +237,10 @@ test("cómo acabó: cortada por larga, o una negativa; y el lanzador lo cuenta c
   assert.equal((await piensa("larga")).respuesta?.fin, "max_tokens");
   assert.equal((await piensa("negativa")).respuesta?.fin, "refusal");
   // Con la cuenta de la casa no hay precio: el gasto es lo que dice Claude Code.
-  const m = conMentira();
+  const m = conMentira("negativa");
   try {
     const lanzador = lanzadorDirecto(
-      pensarConClaudeCode({ con: CON, binario: m.binario, entorno: entornoDe(m.apunte, "negativa") }),
+      pensarConClaudeCode({ con: CON, token: TOKEN, binario: m.binario, entorno: entornoDeLaMaquina() }),
       null,
     );
     const carpeta = mkdtempSync(join(tmpdir(), "el-dorado-puesto-"));
@@ -273,7 +298,13 @@ test("si tarda más de su tope, o la casa lo corta, se le para y se dice", async
 });
 
 test("sin Claude Code en la máquina se dice; y lo que no se entiende de su salida no es respuesta", async () => {
-  const pensar = pensarConClaudeCode({ con: CON, binario: join(tmpdir(), "no-hay-tal-claude"), entorno: {} });
+  const pensar = pensarConClaudeCode({
+    con: CON,
+    token: TOKEN,
+    binario: join(tmpdir(), "no-hay-tal-claude"),
+    entorno: {},
+  });
+  await assert.rejects(pensarConClaudeCode({ con: CON, token: " " })(PETICION), /falta el token/);
   await assert.rejects(pensar(PETICION), /no se encuentra Claude Code/);
   assert.throws(() => leerSalida(""), /no dio su resultado/);
   assert.throws(() => leerSalida('{"type":"assistant"}\n'), /no dio su resultado/);
