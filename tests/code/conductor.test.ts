@@ -247,7 +247,8 @@ test("el conductor que cuenta la parada: la web la dice por claves, y su frase s
       });
       const r = await llevar(run, fuentesInventadas(), lanzadorConGuion({ ruta: () => "rojo", conductor }));
       assert.equal(r.parado?.en, "route");
-      assert.deepEqual(paradaDeCara(run), {
+      // Cuando se enseñe (lo firma el PM), solo la que pasa su puerta de palabras.
+      assert.deepEqual(paradaDeCara(run, true), {
         at: "route",
         kind: "nothing_found",
         options: ["change_request"],
@@ -255,6 +256,9 @@ test("el conductor que cuenta la parada: la web la dice por claves, y su frase s
         said: enseña ? { text: message, lang: leerJson(join(run, "entendido.json")).language } : null,
         looking: false,
       });
+      // Mientras no lo firme, no se enseña ninguna: la web lo dice por claves.
+      assert.equal(paradaDeCara(run)?.said, null);
+      assert.equal(paradaDeCara(run)?.kind, "nothing_found");
       assert.equal(actaDe(run).conductor?.estado, "told");
       assert.ok(leerVivo(run).some((s) => s.clase === "conductor" && s.ref === "told"));
     });

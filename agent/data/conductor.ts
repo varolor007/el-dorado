@@ -64,6 +64,13 @@ export const CONDUCTORES_POR_RUN = 1;
 export const LARGO_DE_LA_INDICACION = 400;
 export const LARGO_DEL_PORQUE = 600;
 
+/**
+ * Si la frase que el conductor escribe para el viajero se le enseña. Es lo único de un asiento, con la pregunta del
+ * que escucha, que llegaría a la pantalla sin pasar por el que explica: aunque pase su puerta de palabras, espera la
+ * firma del PM. Mientras tanto, la web dice lo que pasó con sus propias palabras, por claves.
+ */
+export const SE_ENSENA_LA_FRASE_DEL_CONDUCTOR = false;
+
 /** Lo que deja el conductor en el run: a qué parada se le llamó, lo que entregó, si pasó su puerta y lo que se hizo. */
 export const CONDUCTOR = "conductor.json";
 /** El acta del run, que se rehace leyendo el disco. */

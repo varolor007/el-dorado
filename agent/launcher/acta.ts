@@ -11,6 +11,7 @@ import {
   ACTA,
   CONDUCTOR,
   SALIDAS_DE_CADA_CLASE,
+  SE_ENSENA_LA_FRASE_DEL_CONDUCTOR,
   type ClaseDeParada,
   type Decision,
   type SalidaDelViajero,
@@ -326,7 +327,7 @@ export type ParadaDeCara = {
   looking: boolean;
 };
 
-export function paradaDeCara(run: string): ParadaDeCara | null {
+export function paradaDeCara(run: string, conSuFrase: boolean = SE_ENSENA_LA_FRASE_DEL_CONDUCTOR): ParadaDeCara | null {
   const causa = causaDe(run);
   if (causa === null) return null;
   const c = delConductor(run);
@@ -336,7 +337,8 @@ export function paradaDeCara(run: string): ParadaDeCara | null {
     at: causa.en,
     kind: suya?.kind ?? causa.clase,
     options: suya !== null && suya.options.length > 0 ? suya.options : SALIDAS_DE_CADA_CLASE[causa.clase],
-    said: suya?.message ?? null,
+    // Su frase, solo si pasó su puerta de palabras y si se enseña: eso lo firma el PM.
+    said: conSuFrase ? (suya?.message ?? null) : null,
     looking: c !== null && c.para.puesto === causa.puesto && c.estado === "working",
   };
 }
