@@ -238,7 +238,9 @@ del destino; la escala no se pregunta hasta que haya transporte, y lo de menores
 comunes de la Unión valen solo para sus países. **Al juntarlo se añadió**: a quien viaja por el país de su propio
 pasaporte no se le pregunta nada (`esSuPais`), y si son todos, la tabla queda vacía y no se lanza a nadie. Los
 dos chocaban con el conductor en `casa.ts` y en cuatro archivos de pruebas, y se resolvió a mano: el conductor se
-llama antes de mirar lo de detrás, y las pruebas del conductor dejan fuera a los dos asientos de detrás. Un fallo
+llama antes de mirar lo de detrás, y las pruebas del conductor dejan fuera a los dos asientos de detrás. Y la
+orden de la terminal (`de_verdad.ts`) espera a lo de detrás antes de acabar: si no, al salir cortaba al que aún
+trabajaba y se perdía lo que había gastado. Un fallo
 del calendario o de los papeles no para el run ni llama al conductor. Sin hacer: elegir otras fechas (el paso 14,
 «Tú, las fechas»), enseñar los avisos de las fechas mientras se confirma, que el que explica lea los papeles, la
 puerta 2 en el transporte y en los cambios, y cerrar el lector por dominios. Sin comprobar: nada con una IA ni

@@ -16,14 +16,14 @@ import { join, resolve } from "node:path";
 import { ACTA } from "../data/conductor.ts";
 import type { Suceso } from "../output/viaje.ts";
 import type { Lanzador } from "./asiento.ts";
-import { actaDe } from "./acta.ts";
-import { darElAdelante, llevar, type Llevado } from "./casa.ts";
+import { actaDe, escribirActa } from "./acta.ts";
+import { darElAdelante, esperarLoDeDetras, llevar, type Llevado } from "./casa.ts";
 import { claveQueVale } from "./cuentas.ts";
 import { lanzadorDirecto, precioDe } from "./ia.ts";
 import { pensarConClaudeCode, TOKEN_DE_LA_CASA } from "./ia_de_claude_code.ts";
 import { claveQueFunciona, conQueDe, pensarConClaude } from "./ia_de_verdad.ts";
 import { empezar, type Fuentes } from "./investigar.ts";
-import { trabajosDe } from "./trabajos.ts";
+import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
 
 export type DeVerdad = { run: string; llevado: Llevado; segundos: number };
@@ -58,7 +58,12 @@ export async function investigarDeVerdad(o: {
   const reloj = setInterval(cuenta, o.cadaMs ?? 2000);
   try {
     const llevado = await llevar(run, o.fuentes, o.lanzador, { ahora });
-    return { run, llevado, segundos: Math.round((Date.now() - empieza) / 1000) };
+    // Lo que trabaja por detrás (el calendario, los papeles) no se corta al volver: esta orden acaba cuando acaba
+    // todo lo que lanzó, y entonces cuenta lo que gastó de verdad y deja el acta al día.
+    await esperarLoDeDetras(run);
+    escribirActa(run);
+    const alFinal: Llevado = { ...llevado, gasto: gastoDe(run) };
+    return { run, llevado: alFinal, segundos: Math.round((Date.now() - empieza) / 1000) };
   } finally {
     clearInterval(reloj);
     cuenta();
