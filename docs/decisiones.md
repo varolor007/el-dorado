@@ -376,7 +376,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   realmente es más problemas que beneficios, buscamos la otra alternativa»). La sesión le contesta que sí como
   ventana y no como fuente: de cada trayecto que no se anda hay ya un enlace a Google Maps, que no pide clave ni
   permiso; traerse sus números al viaje no lo dejan sus condiciones, con permiso del viajero o sin él. Para los
-  números propios recomienda Geoapify, y TripGo después. Espera su respuesta.
+  números propios recomienda Geoapify, y TripGo después. El PM contesta que, si el problema es la IA, no se
+  cuenta: «ponemos los datos en bruto y un script saca las mejores combinaciones». La sesión le da la razón en eso
+  (quita el reparo de la IA) y le dice lo que no quita: guardar, la tabla que leen los asientos, las líneas junto
+  al mapa y que la cuenta es nuestra. Queda como segunda opción, en [fuentes.md](fuentes.md). Espera su respuesta.
 
 ## Pendientes
 

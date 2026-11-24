@@ -362,6 +362,24 @@ en las páginas de Google:
   página de Google Maps, que el PM descartó el 22-nov, solo valdría en Chrome de escritorio, se rompe cada vez que
   Google cambia su página, y las condiciones de uso de Google Maps no dejan copiar su contenido.
 
+**Google en vivo, con un script y sin IA** (lo que contestó el PM ese mismo día: «pues no lo contamos, ponemos los
+datos en bruto y un script saca las mejores combinaciones»). Quita el reparo de la IA, que era el menos firme de
+los tres: sus condiciones no dan permiso expreso para pasar su contenido por una IA, y si la IA no lo ve, no hay
+caso; y usar sus tiempos para ordenar opciones es para lo que está su API. Lo que no quita:
+
+- **Guardar.** Sus tiempos, distancias y tarifas no se pueden guardar con el viaje: habría que pedírselos cada vez
+  que se abre. Lo que el script eligiera con ellos (dónde dormir, el orden de los días) sí quedaría guardado, y si
+  eso cuenta como contenido hecho a partir del suyo no está claro: habría que preguntárselo por escrito.
+- **La tabla que leen los asientos.** Hoy lo que se tarda entra en la tabla que leen el que cruza y el que explica,
+  que son IA. Habría que partirla: lo que ve la IA y lo que solo ve el código. El que explica no podría decir lo
+  que se tarda.
+- **Las líneas y las paradas** no se pueden enseñar junto a un mapa: solo el tiempo, la distancia y la tarifa.
+- **La cuenta es nuestra** aunque corra en el navegador del viajero: con tarjeta, 10.000 consultas gratis al mes y
+  después 5 USD por 1.000.
+
+Se puede hacer, con esos límites. Queda como segunda opción si la fuente abierta se queda corta en transporte
+público.
+
 Así que Google sirve para que el viajero vea, y no para que El Dorado sepa. Los números que El Dorado necesita
 suyos (para elegir dónde dormir por lo que se tarda de verdad, ordenar los días y decirlo) tienen que salir de
 otra fuente.
