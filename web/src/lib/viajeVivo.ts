@@ -15,7 +15,28 @@ export type Investigacion = {
   ceiling: number | null;
   stopped: { at: string | null } | null;
   told: number;
+  /** Es tu turno: confirmar lo que he entendido, o contestar lo que te pregunto. */
+  waiting_for_you?: boolean;
+  heard?: LoEscuchado | null;
 };
+
+/**
+ * Lo que he entendido de lo que escribiste, para que lo confirmes: tus palabras y claves. Un gusto lleva su cosa si
+ * es de las que la casa sabe cruzar, y si no, null: entonces se dice con tus palabras.
+ */
+export type LoEscuchado = {
+  round: number;
+  can_answer: boolean;
+  tastes: { thing: string | null; weight: "must" | "like" | "indifferent"; quote: string }[];
+  limits: { quote: string }[];
+  booked: { quote: string }[];
+  clashes: { with: string; quote: string; other_quote: string }[];
+  questions: { ask: string; quote: string }[];
+};
+
+/** Lo que mandas al confirmar: los gustos que se quedan, con su peso, y los límites que se quedan; o tus respuestas. */
+export type TuConfirmacion =
+  { tastes: { i: number; weight: string }[]; limits: number[] } | { answers: { i: number; answer: string }[] };
 export type EnLaCasa = { trip: ResumenDeViaje; research: Investigacion | null };
 
 /** Lo que falló, por su clave; y, si lo entendido no está claro, qué campos. */
@@ -41,6 +62,12 @@ export async function cambiarLoEntendido(id: string, understood: unknown): Promi
 /** El botón: confirma lo entendido y da el adelante. Lo que se gasta lo limita cada uno en su cuenta de Claude. */
 export async function empezarLaInvestigacion(id: string): Promise<FalloDeViaje | null> {
   const r = await pideALaCasa("POST", `viajes/${id}/empezar`, {});
+  return r.estado === 202 ? null : falloDe(r.cuerpo);
+}
+
+/** Tu confirmación, o tus respuestas: la investigación sigue sola. */
+export async function confirmarLoEntendido(id: string, cuerpo: TuConfirmacion): Promise<FalloDeViaje | null> {
+  const r = await pideALaCasa("POST", `viajes/${id}/confirmar`, cuerpo);
   return r.estado === 202 ? null : falloDe(r.cuerpo);
 }
 

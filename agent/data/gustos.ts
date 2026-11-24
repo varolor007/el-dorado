@@ -16,6 +16,20 @@ export const COSAS: Record<string, Cosa> = {
   new: { campo: "look", cumplen: ["new_or_renovated"] },
 };
 
+/**
+ * Qué es cada cosa, dicho para el que escucha: cuando un gusto del viajero es una de estas, su `thing` lleva este
+ * nombre, y así la casa lo puede cruzar.
+ */
+export const QUE_ES: Record<keyof typeof COSAS, string> = {
+  views: "an open view from the room or the lodging",
+  gym: "a gym in the lodging",
+  pool: "a pool in the lodging, to swim or to bathe",
+  space: "a roomy room",
+  light: "a bright room",
+  bathroom: "a modern bathroom",
+  new: "a new or renovated lodging",
+};
+
 /** Lo que vale cada nivel de un campo con orden, de 0 a 10: el mejor, 10; el peor, 0; los de en medio, repartidos. */
 export function valorDelNivel(campo: string, nivel: string): number | null {
   const niveles = CAMPOS[campo];

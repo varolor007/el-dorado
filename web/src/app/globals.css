@@ -1970,3 +1970,76 @@ select.toque {
   opacity: 0.55;
   transition: opacity 0.2s var(--suave);
 }
+
+/* ---------- Tu confirmación de lo que he entendido (5.2) */
+
+.confirmar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radio);
+  background: var(--papel-2);
+  animation: entra 0.4s var(--suave) both;
+}
+.confirmar__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.confirmar__cosa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--papel);
+}
+.confirmar__cosa > p {
+  flex: 1 1 100%;
+  font-size: 0.92rem;
+  line-height: 1.42;
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+}
+.confirmar__cosa .cabecera__linea {
+  flex-wrap: wrap;
+}
+.confirmar__cosa--fuera > p:first-child {
+  color: var(--tinta-tenue);
+  text-decoration: line-through;
+}
+.confirmar__cosa--choca {
+  background: var(--ojo-tinte);
+}
+.confirmar__quitar {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  color: var(--tinta-suave);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.confirmar__quitar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.confirmar__pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.92rem;
+  line-height: 1.42;
+  color: var(--tinta);
+}
+.confirmar__cosa > p.dato {
+  font-size: 0.78rem;
+  color: var(--tinta-tenue);
+}

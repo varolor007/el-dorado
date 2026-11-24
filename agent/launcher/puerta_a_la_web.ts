@@ -19,6 +19,7 @@
 //   GET    /viajes/<id>                cómo está, y por dónde va su investigación
 //   PUT    /viajes/<id>/entendido      cambia lo entendido, mientras no esté confirmado
 //   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante (con su techo, si se da) y lanza
+//   POST   /viajes/<id>/confirmar      tu confirmación de lo que he entendido, o tus respuestas: y sigue
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
@@ -30,6 +31,7 @@ import { PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Lanzador } from "./asiento.ts";
 import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
+import { confirmar, FalloAlConfirmar, paraConfirmar, turnoDelViajero } from "./escuchar.ts";
 import {
   borrarClave,
   claveDe,
@@ -193,6 +195,9 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
         ? { at: (leerJson(join(run, PARADO))?.en as string | undefined) ?? null }
         : null,
       told: leerVivo(run).length,
+      // Su turno: lo que he entendido, para que lo confirme. Solo lo lee su dueño, como todo lo de este viaje.
+      waiting_for_you: turnoDelViajero(run),
+      heard: paraConfirmar(run),
     },
   };
 }
@@ -409,6 +414,42 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       conQue === "house"
         ? (o.lanzadorDeLaCasa as Lanzador)
         : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, run, lanzador);
+    return { estado: 202, cuerpo: { run: v.ficha.runs.length } };
+  }
+
+  /**
+   * Tu confirmación de lo que he entendido, o tus respuestas a sus preguntas: solo en tu turno, y la investigación
+   * sigue sola, con la misma clave y el mismo adelante que diste con el botón.
+   */
+  function confirmarLoEntendido(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id)) throw new Fallo(409, "already_running");
+    const run = ultimoRun(v);
+    if (run === null || !turnoDelViajero(run)) throw new Fallo(409, "not_now");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: "answered" | "confirmed";
+    try {
+      hecho = confirmar(run, p.cuerpo, hoy());
+    } catch (error) {
+      if (error instanceof FalloAlConfirmar) throw new Fallo(error.message === "not_now" ? 409 : 400, error.message);
+      throw error;
+    }
+    apuntar(v, "confirmation", { hecho }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, run, lanzador);
+    return { estado: 202, cuerpo: { done: hecho } };
+  }
+
+  /** La casa lleva la investigación de un run, de fondo: si se rompe a medias, queda parada, y se cuenta. */
+  function marchar(id: string, run: string, lanzador: Lanzador): void {
     const marcha = llevar(run, o.fuentes(), lanzador, o.alLlevar)
       .then(() => undefined)
       .catch(() => {
@@ -419,7 +460,6 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       })
       .finally(() => marchas.delete(id));
     marchas.set(id, marcha);
-    return { estado: 202, cuerpo: { run: v.ficha.runs.length } };
   }
 
   function atender(p: Peticion): Respuesta {
@@ -454,6 +494,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === "empezar" && cual === undefined) {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       return empezar(p);
+    }
+    if (que === "confirmar" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return confirmarLoEntendido(p);
     }
     if (que === "version") {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

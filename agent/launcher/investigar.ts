@@ -5,6 +5,7 @@
 //
 //   node agent/launcher/investigar.ts empezar <entendido.json>
 //   node agent/launcher/investigar.ts sigue <carpeta del run>
+//   node agent/launcher/investigar.ts confirma <carpeta del run>     lo que he entendido, tal cual, como el viajero
 //
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. Es la versión de mano de lo que lanza los pasos: la casa de
 // verdad, que los lanza sola y lo cuenta en vivo, llega con su tanda.
@@ -36,6 +37,7 @@ import { paraExplicar } from "../scripts/explica.ts";
 import type {
   Entendido,
   EntregaDeCruce,
+  EntregaDeEscucha,
   EntregaDeExplicar,
   EntregaDeMirar,
   EntregaDeRuta,
@@ -63,6 +65,23 @@ import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
 import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun, pasar, viajeDelRun } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
+import { puertaEscucha } from "../gates/puerta_escucha.ts";
+import {
+  confirmar,
+  CONFIRMADO,
+  dichoDe,
+  ESCUCHADO,
+  escuchaDe,
+  hayQueEscuchar,
+  loConfirmado,
+  piezasDeEscucha,
+  preguntasDe,
+  rondaDe,
+  sinPalabras,
+  type Confirmado,
+  type Escucha,
+  type Escuchado,
+} from "./escuchar.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { acaboSinEntregar } from "./trabajos.ts";
@@ -97,6 +116,8 @@ export type Estado = {
   /** Si una puerta paró la investigación y ya no quedan vueltas, cuál y por qué. */
   parado: Parado | null;
   avisos: string[];
+  /** Es el turno del viajero: el que escucha ya entregó, y espera su confirmación. No es un fallo ni una parada. */
+  alViajero?: boolean;
 };
 
 type Guardado<T> = { entrega: T; rojos: Rojo[] };
@@ -554,6 +575,55 @@ export function pararRun(run: string, en: string, paso: string, rojos: Rojo[]): 
 }
 
 /**
+ * El primer paso: si el viajero escribió algo, el que escucha lo separa y, cuando pasa la puerta 1, se espera al
+ * viajero. Con su confirmación, lo entendido de verdad queda en `escuchado.json`, y también en la carpeta de su viaje:
+ * una investigación que se vuelva a lanzar no le pregunta otra vez. Si no escribió nada, no se lanza nada.
+ */
+function escucharAlViajero(run: string, base: Entendido): { estado: Estado } | { hecho: true } {
+  const sinNada = (estado: Partial<Estado>): { estado: Estado } => ({
+    estado: { esperan: [], hecho: false, parado: null, avisos: [], ...estado },
+  });
+  if (!hayQueEscuchar(base)) {
+    guardar(run, ESCUCHADO, { entendido: base, escuchado: false } satisfies Escuchado);
+    return { hecho: true };
+  }
+  const ronda = rondaDe(run);
+  const dicho = dichoDe(run, base);
+  if (!hay(run, escuchaDe(ronda))) {
+    const previa = ronda === 2 ? (leer<Escucha>(run, escuchaDe(1)).entrega as EntregaDeEscucha) : null;
+    const r = recoger<EntregaDeEscucha>(
+      run,
+      `escucha-${ronda}`,
+      "listener",
+      piezasDeEscucha(base, dicho, ronda, previa),
+      (e) => puertaEscucha(e, { base: sinPalabras(base), dicho, preguntas: preguntasDe(ronda) }).rojos,
+    );
+    if ("espera" in r) return sinNada({ esperan: [r.espera] });
+    if ("parado" in r)
+      return sinNada({ parado: pararRun(run, "understood", "lo que he entendido (puerta 1)", r.parado) });
+    guardar(run, escuchaDe(ronda), { ronda, entrega: r.entrega } satisfies Escucha);
+  }
+  // Su turno: mientras no confirme, no se gasta nada más.
+  if (!hay(run, CONFIRMADO)) return sinNada({ alViajero: true });
+  const c = leer<Confirmado>(run, CONFIRMADO);
+  const escucha = leer<Escucha>(run, escuchaDe(ronda));
+  const rojos: Rojo[] =
+    c.ronda === ronda
+      ? []
+      : [{ donde: "confirmation", que: "lo confirmado no es de la última vuelta del que escucha" }];
+  const final = loConfirmado(base, escucha.entrega, dicho, c);
+  rojos.push(...puertaEntendido(final).rojos);
+  if (rojos.length > 0) return sinNada({ parado: pararRun(run, "understood", "tu confirmación (puerta 1)", rojos) });
+  guardar(run, ESCUCHADO, { entendido: final, escuchado: true } satisfies Escuchado);
+  // Lo entendido del run y el de su viaje pasan a ser lo confirmado: es lo que guarda su versión, y lo que lee una
+  // investigación que se vuelva a lanzar. Lo de antes de escuchar sigue en el puesto del que escucha.
+  guardarJson(join(run, "entendido.json"), final);
+  const suyo = viajeDelRun(run);
+  if (suyo !== null) guardarJson(join(suyo.viaje.carpeta, "entendido.json"), final);
+  return { hecho: true };
+}
+
+/**
  * Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. Al
  * volver, lo que haya pasado queda contado, pase lo que pase: también si un paso se rompe a medias.
  */
@@ -571,14 +641,22 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   // Un run parado sigue parado: quien lo retome lee por qué, y no pasa por encima de una puerta en rojo. Reabrirlo
   // es una decisión de quien lo lleva, que quita `parado.json` cuando ha arreglado la causa.
   if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };
-  const viaje = leer<Entendido>(run, "entendido.json");
+  const base = leer<Entendido>(run, "entendido.json");
   const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
   const para = (en: string, paso: string, rojos: Rojo[]): Estado => {
     return { esperan: [], hecho: false, parado: pararRun(run, en, paso, rojos), avisos };
   };
   // Lo entendido se mira antes de gastar nada: un dato mal escrito no llega ni a una fuente ni a un asiento.
-  const claro = puertaEntendido(viaje);
+  const claro = puertaEntendido(base);
   if (!claro.verde) return para("understood", "lo entendido (puerta 1)", claro.rojos);
+
+  // 0. El que escucha y tu confirmación. Lo que sigue lo hace lo entendido ya confirmado, y sin tus palabras: a los
+  // demás asientos les llegan tus gustos y tus límites, cada uno con su cita, y no lo que escribiste entero.
+  if (!hay(run, ESCUCHADO)) {
+    const escuchado = escucharAlViajero(run, base);
+    if ("estado" in escuchado) return { ...escuchado.estado, avisos };
+  }
+  const viaje = sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido);
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
@@ -790,11 +868,19 @@ async function principal(): Promise<number> {
       console.log(`Hecho. El viaje, en ${join(run, "viaje.json")}`);
       return 0;
     }
+    if (estado.alViajero) {
+      console.log(`Espera al viajero: lo que he entendido, en ${join(run, escuchaDe(rondaDe(run)))}`);
+      return 0;
+    }
     console.log(`Esperan a su asiento: ${estado.esperan.join(", ")}`);
     console.log(`La orden que abre cada uno, en ${join(run, "ordenes")}`);
     return 0;
   }
-  console.error("Uso: investigar.ts empezar <entendido.json>  o  investigar.ts sigue <carpeta del run>");
+  if (orden === "confirma" && donde !== undefined) {
+    console.log(`Confirmado: ${confirmar(resolve(donde), {})}`);
+    return 0;
+  }
+  console.error("Uso: investigar.ts empezar <entendido.json>, sigue <carpeta del run> o confirma <carpeta del run>");
   return 2;
 }
 

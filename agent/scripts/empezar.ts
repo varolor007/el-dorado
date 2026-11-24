@@ -4,8 +4,8 @@
 // Lo que el viajero no ha dicho se pone con lo más probable, para que el código pueda ir buscando mientras contesta,
 // y se apunta como supuesto: es lo que se le enseña para que lo confirme o lo corrija. Lo que no se puede suponer
 // (en qué moneda ve los precios, la edad de un niño, de qué país es) se apunta como falta, y sin ello no hay nada
-// que guardar. Lo que escribe con sus palabras va tal cual, en una línea: quien lo separa en gustos y en límites es
-// el que escucha, que es un asiento.
+// que guardar. Lo que escribe con sus palabras (la caja libre y lo que ya tiene reservado) va aparte, tal cual, en una
+// línea (`said`): quien lo separa en gustos, límites y lo reservado es el que escucha, que es un asiento.
 //
 // Sin nada de Node: lo usa también la web.
 
@@ -212,12 +212,13 @@ export function entendidoDe(r: Respuestas): LoEntendido {
     },
     travellers: { adults: adultos, children: edades, rooms: habitaciones, passports: pasaportes },
     budget: dicho(r.gasto, "budget", LO_MAS_PROBABLE.gasto),
-    // Lo que tocó y, detrás, lo que escribió: hasta que lo lea el que escucha, sus palabras van aquí, tal cual.
-    looking_for: frases([...r.buscas, r.libre]),
+    // Lo que tocó. Lo que escribió no es algo que se busca: va aparte, con sus palabras, para el que escucha.
+    looking_for: frases(r.buscas),
     pace: dicho(r.ritmo, "pace", LO_MAS_PROBABLE.ritmo),
     tastes: [],
     limits: [],
-    booked: frases([r.reservado]),
+    booked: [],
+    said: { wants: enUnaLinea(r.libre), booked: enUnaLinea(r.reservado), heard: false, answers: [] },
   };
   if (r.destino.clase !== "city")
     entendido.moving = {
@@ -230,8 +231,8 @@ export function entendidoDe(r: Respuestas): LoEntendido {
 
 /**
  * Las respuestas de un viaje que ya tiene lo entendido guardado, para retomar las preguntas donde se dejaron. Todo
- * lo que hay se da por dicho. De lo que busca, lo que está entre los toques que se ofrecen vuelve a sus toques, y lo
- * demás, a lo que escribió.
+ * lo que hay se da por dicho. De lo que busca, lo que está entre los toques que se ofrecen vuelve a sus toques; y lo
+ * que escribió, a sus cajas.
  */
 export function respuestasDeLoEntendido(e: Entendido, toques: readonly string[]): Respuestas {
   const tocadas = e.looking_for.filter((f) => toques.includes(f));
@@ -262,7 +263,8 @@ export function respuestasDeLoEntendido(e: Entendido, toques: readonly string[])
       salirDelPais: e.moving?.leave_country ?? null,
       cuanto: e.moving?.how_much ?? null,
     },
-    reservado: e.booked.join(". "),
-    libre: e.looking_for.filter((f) => !tocadas.includes(f)).join(". "),
+    // Sus palabras, tal cual las escribió; un viaje de antes de que fueran aparte las llevaba con lo que busca.
+    reservado: e.said?.booked ?? e.booked.join(". "),
+    libre: e.said?.wants ?? e.looking_for.filter((f) => !tocadas.includes(f)).join(". "),
   };
 }

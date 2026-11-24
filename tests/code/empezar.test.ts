@@ -76,6 +76,7 @@ test("con dónde, cuándo y de dónde sales ya hay un viaje que pasa la puerta 1
     tastes: [],
     limits: [],
     booked: [],
+    said: { wants: "", booked: "", heard: false, answers: [] },
   });
   assert.deepEqual(rojosDe(respuestas()), []);
 });
@@ -102,9 +103,16 @@ test("lo que el viajero dice manda sobre lo más probable, y deja de ser supuest
     passports: ["YY", "YY", "XX", "YY", "YY"],
   });
   assert.deepEqual([e.entendido?.dates.flexible, e.entendido?.budget, e.entendido?.pace], [true, "tight", "calm"]);
-  // Lo que tocó y, detrás, lo que escribió, en una línea y sin repetir. Lo reservado, aparte.
-  assert.deepEqual(e.entendido?.looking_for, ["Comer bien", "Naturaleza", "quiero vistas al mar"]);
-  assert.deepEqual(e.entendido?.booked, ["el vuelo de ida"]);
+  // Lo que tocó, sin repetir. Lo que escribió no es algo que se busca: va aparte, con sus palabras, en una línea,
+  // para que lo separe el que escucha; hasta entonces no hay gustos ni nada reservado.
+  assert.deepEqual(e.entendido?.looking_for, ["Comer bien", "Naturaleza"]);
+  assert.deepEqual(e.entendido?.said, {
+    wants: "quiero vistas al mar",
+    booked: "el vuelo de ida",
+    heard: false,
+    answers: [],
+  });
+  assert.deepEqual([e.entendido?.booked, e.entendido?.tastes], [[], []]);
   assert.deepEqual(rojosDe(r), []);
 });
 
@@ -153,7 +161,7 @@ test("lo que alguien escribe va en una línea, sin marcas de control y sin pasar
   });
   const e = entendidoDe(r).entendido;
   assert.equal(e?.looking_for.length, FRASES_DEL_VIAJERO);
-  assert.deepEqual(e?.booked, ["un hotel"]);
+  assert.deepEqual([e?.said?.booked, e?.said?.wants.length], ["un hotel", FRASE_DEL_VIAJERO]);
   assert.ok(e?.destination.name.startsWith("Villa Inventada y"));
   assert.deepEqual(rojosDe(r), []);
 });

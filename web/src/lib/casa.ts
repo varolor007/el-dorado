@@ -53,6 +53,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/entendido$`), ["PUT"]],
   [new RegExp(`^viajes/${ID}/empezar$`), ["POST"]],
+  [new RegExp(`^viajes/${ID}/confirmar$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/eventos$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/version(/[1-9][0-9]{0,5})?$`), ["GET"]],
 ];

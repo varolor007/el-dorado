@@ -550,8 +550,15 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
                 {supuesto("budget")}
               </span>
               {r.moneda !== null && <span className="pastilla">{r.moneda}</span>}
+              {e.entendido?.looking_for.map((b) => (
+                <span key={b} className="pastilla">
+                  {b}
+                </span>
+              ))}
             </div>
             {r.origen === null && <p className="dato">{x.sinOrigen}</p>}
+            {/* Lo que escribiste no es algo que se busca: lo lee el que escucha, y te lo enseña antes de seguir. */}
+            {(r.libre.trim() !== "" || r.reservado.trim() !== "") && <p className="dato">{t.escucha.tusPalabras}</p>}
             {e.falta.length > 0 && (
               <div className="aviso">
                 <div>

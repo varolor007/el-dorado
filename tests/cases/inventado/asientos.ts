@@ -98,8 +98,42 @@ function miradoPara(hoja: Objeto): Objeto {
   };
 }
 
+/**
+ * Lo que entregaría el que escucha: cada frase de lo que escribió el viajero, citada entera. La que habla de un
+ * gimnasio es un gusto imprescindible, con su nombre de la lista; la que empieza por «no», un límite; lo de la caja
+ * de lo reservado, lo reservado. Pregunta una vez, en la primera vuelta, por la primera frase que no sabe dónde poner.
+ */
+export function entregaDeEscucha(palabras: Objeto, vuelta: Objeto): Objeto {
+  const frases = (texto: string): string[] =>
+    texto
+      .split(/[.;]/)
+      .map((f) => f.trim())
+      .filter((f) => f !== "");
+  const tastes: Objeto[] = [];
+  const limits: Objeto[] = [];
+  const otras: string[] = [];
+  for (const f of [...frases(palabras.wants), ...(palabras.answers ?? []).flatMap((a: Objeto) => frases(a.answer))]) {
+    if (/gym|gimnasio/i.test(f)) tastes.push({ thing: "gym", weight: "must", quote: f });
+    else if (/^no /i.test(f)) limits.push({ what: "something the traveller does not want", quote: f });
+    else if (/view|vistas/i.test(f)) tastes.push({ thing: "views", weight: "like", quote: f });
+    else otras.push(f);
+  }
+  const pregunta = vuelta.questions_allowed > 0 && otras.length > 0;
+  return {
+    seat: "listener",
+    limits,
+    tastes,
+    booked: frases(palabras.booked).map((f) => ({ what: "something already booked", quote: f })),
+    clashes: [],
+    questions: pregunta ? [{ ask: "¿Qué quieres decir?", quote: otras[0], why: "it may change where to sleep" }] : [],
+    assumed: [],
+    unknowns: [],
+  };
+}
+
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
 export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
+  if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
   if (asiento === "route-planner") return entregaDeRuta();
   if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
   if (asiento === "sights-picker") return entregaDeSitios();

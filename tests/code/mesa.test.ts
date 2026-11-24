@@ -274,5 +274,5 @@ test("los pasos de una investigación: cada uno, con quién lo da, y ninguno rep
     assert.ok(p.deja.length > 0, p.id);
     if (p.quien !== "code") assert.ok(existsSync(join(RAIZ, "agent", "contracts", p.quien, "README.md")), p.quien);
   }
-  assert.deepEqual([...ESTADOS_DE_UN_PASO], ["pending", "waiting", "done", "stopped"]);
+  assert.deepEqual([...ESTADOS_DE_UN_PASO], ["pending", "waiting", "yours", "done", "stopped"]);
 });
