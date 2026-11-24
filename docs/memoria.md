@@ -219,6 +219,32 @@ en el borrador de la sesión, fuera del repositorio, y la web la enseña en seco
 ella (su `grabado/` lleva el `viaje.json` y el `sucesos.json` del run); las capturas, en
 `revision/capturas-11` del borrador.
 
+**El ensayo entero desde la web, con la cuenta del PM (24-nov).** La casa local (del código de ese momento, en
+una copia limpia), con su mesa aparte y el correo del ensayo en la lista de la casa; la web local contra ella; y un
+guion que entra, busca Lisboa del 12 al 15 de febrero, contesta (sale de Madrid, puede mover las fechas, comer bien
+y cultura, y escribe «con un gimnasio de verdad y que no sea ruidoso»), confirma y sigue la investigación en vivo.
+Lo que pasó, con sus tiempos: el que escucha entregó en 30 segundos y la pantalla de confirmar enseñó sus dos
+gustos con las citas, que nada chocaba y tres preguntas; se confirmó sin contestar. Los papeles (198 segundos) y el
+calendario (138, y otra vuelta de 192 por citar una página que no abrió) trabajaron por detrás; nada bloqueó. La
+ruta, a la primera; los cinco que miran, unos 3 minutos. **Se paró en el que elige los sitios, que no llegó a
+contestar: el filtro de seguridad del propio modelo marcó su mensaje** (el aviso dice que a veces pasa con
+conversaciones normales). El conductor salió por su otra salida, parar y contarlo, y la pantalla lo dijo: dónde
+paró, que ese paso no acabó, su frase («por un fallo técnico») y los dos botones. Para seguir, quien orquesta
+repitió ese asiento una sola vez y sin cambiar nada (quitó a mano la marca de parado y el apunte del trabajo
+fallido, y siguió con `de_verdad.ts sigue`): pasó, y la investigación acabó con su viaje; el que cruza y el que
+explica, a la primera. **En total: 15 trabajos, unos 18 minutos de trabajo y el equivalente a 7,19 dólares**; en
+vueltas repetidas, solo 0,65. El viaje: cuatro días y 23 paradas, cinco alojamientos, tres maneras entre 227 y 262
+euros, cuatro palancas, diez avisos, tres avisos de fechas con una ventana propuesta, y la tabla de los papeles
+(dos en regla, dos avisos, una cosa que hacer y cuatro dudosas; nada bloquea). Mirado con capturas, en ancho y
+claro y en móvil y oscuro (`revision/capturas-12` del borrador). **Lo que enseñó, por arreglar o por decidir**:
+«Volver a intentarlo» empieza la investigación entera de cero y vuelve a gastarlo todo, cuando solo falló un
+asiento: debería retomar donde paró. Los avisos de las fechas se ven solo como datos (la clase, el nombre, las
+fechas y el enlace), sin la frase del asiento, y un evento que el viajero no conoce se queda sin explicar. Durante
+los tres minutos de los papeles la pantalla en vivo está casi vacía. «Lo que ha gastado aún no se sabe» sale
+mientras trabaja un asiento. En los papeles, lo dudoso va arriba aunque no importe (un español a Portugal). Un
+viaje ya en el mapa, abierto sin `at=trip` en su dirección, enseña el mapa del mundo (el enlace de «Tus viajes» sí
+lo lleva). La casa y la web locales quedaron paradas al acabar.
+
 **Los avisos de las fechas y los papeles (5.3 y 5.4), juntos** (una sesión de obra, revisada el 24-nov). Son los
 dos primeros asientos con `INTERNET.md`: `agent/contracts/calendar/` y `agent/contracts/papers/`, con sus números
 en `agent/data/calendario.ts` y `agent/data/papeles.ts`, sus comprobaciones en `agent/gates/puerta_calendario.ts`

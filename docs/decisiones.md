@@ -558,6 +558,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   dice qué arreglar cuesta una vuelta entera. Y los contratos dicen lo que mide la puerta.
 - **El del calendario y el de los papeles, estrenados solos con la cuenta del PM** (la sesión, con su sí a las
   pruebas con su cuenta): unos 1,13 dólares de equivalente entre los dos.
+- **El ensayo entero desde la web, con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): unos
+  7,19 dólares de equivalente. Cuando el filtro de seguridad del modelo marcó el mensaje de un asiento, la sesión
+  lo repitió una sola vez y sin cambiar nada, ni el mensaje ni el modelo, y dejó dicho al PM que, si volvía a
+  marcarlo, pararía ahí: no se rodea un filtro de seguridad. Pasó.
 - **El conductor, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): sobre una
   copia de la parada real de Lisboa, pidió la vuelta de más y la investigación acabó. Unos 1,8 dólares de
   equivalente entre el conductor, esa vuelta y lo que quedaba del viaje.
@@ -575,6 +579,13 @@ Lo que deja la obra del 24-nov, a decisión del PM:
 - **Los números de los papeles y del calendario**: 16 búsquedas y 24 páginas para los papeles; 5 avisos, 2 ventanas
   y 21 días como mucho para el calendario. Y dos cosas de cómo se portan: que un fallo de los papeles pare el
   viaje y pregunte al viajero, y el paso de elegir otras fechas («Tú, las fechas»), que aún no está.
+- **Qué hace la casa cuando el filtro de seguridad del modelo marca el mensaje de un asiento** (pasó una vez en el
+  ensayo, con una lista de sitios normal): hoy para y lo cuenta el conductor, como «un fallo técnico». Por decidir:
+  si se le dice al viajero lo que fue; si «Volver a intentarlo» repite solo ese asiento (hoy lo empieza todo de
+  cero); y si algún asiento debe tener un segundo modelo para cuando el primero no contesta, que se diría en el
+  entorno. La sesión no rodea el filtro ni cambia de modelo por su cuenta.
+- **Cómo se enseñan los avisos de las fechas**: hoy, solo datos; un evento que el viajero no conoce se queda sin
+  explicar. O los cuenta el que explica, o su frase pasa una puerta de palabras, como la del conductor.
 - **Qué es un dominio oficial en cualquier país**: sigue pendiente. Hoy, de un país que no está en la lista nada
   sale «en regla». Hay una propuesta de la sesión de obra, sin construir.
 
