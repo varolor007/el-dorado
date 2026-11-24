@@ -3,9 +3,9 @@
 Al día el 24-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 3, hecha y revisada, al visto bueno del PM** (el estado, punto a punto, en
-[plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él empezó la 3, **el agente hace
-el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
+**Estamos aquí: la tanda 3, cerrada con el visto bueno del PM (24-nov); antes de la 4, las fuentes de rutas** (el
+estado, punto a punto, en [plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él
+empezó la 3, **el agente hace el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
 absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje».
 
 **El punto de situación de la tanda 3** (23-nov). La investigación corre entera, de lo entendido al viaje en el mapa,
@@ -49,10 +49,11 @@ de prueba se anda entero; lo cubren las pruebas y una copia de prueba del viaje)
 habitación (una llamada de verdad a la fuente confirmó cómo responde: una tarifa por habitación, que se suman) y que
 el precio del vuelo guardado sea por persona (sale de cómo se pide, no de una llamada hecha ese día).
 
-No dio todavía el visto bueno de la tanda 3. **Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo
-y tu cuenta**, la primera que gasta de una clave. Antes de lanzar un asiento con una clave hay que cerrar lo que la
-revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida. Y espera su decisión del 3.14: de qué
-fuente salen las rutas, y si puede ser de pago.
+**El PM dio el visto bueno a la tanda 3 el 24-nov** («ok»), y pidió una cosa antes de la 4 («ok, primero esto»):
+mirar qué fuentes hay para las rutas y lo que cuestan, sin contratar nada, y traerle dos o tres opciones (3.14). Lo
+que se mire va en [fuentes.md](fuentes.md); la elección, y si es de pago, es suya. Después viene **la tanda 4: la casa
+en vivo y tu cuenta**, la primera que gasta de una clave. Antes de lanzar un asiento con una clave hay que cerrar lo
+que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
 
 El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
 viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se

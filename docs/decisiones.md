@@ -284,8 +284,12 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
 
 ## 24-nov-2026
 
-Las respuestas del PM a lo que dejó la revisión de la tanda 3. No dio todavía el visto bueno de la tanda: la 4 no
-empieza hasta que lo dé.
+Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese mismo día, su visto bueno a la tanda.
+
+- **El visto bueno de la tanda 3** (el PM: «ok»). La tanda 3, el agente hace el viaje, queda cerrada.
+- **Antes de la tanda 4, las fuentes de rutas** (el PM: «ok, primero esto»). La sesión le propuso mirar primero qué
+  fuentes hay para las rutas y lo que cuestan, sin contratar nada, y traerle dos o tres opciones. Qué fuente se usa,
+  y si es de pago, lo sigue decidiendo él (3.14). Lo que se mire va en [fuentes.md](fuentes.md).
 
 - **El buscador y el lector de webs (3.5), a la tanda 4** (el PM: «vale, lo que veas»). No estaba en ninguna tanda, y
   lo usan los asientos que consultan la web, que llegan con el bloque 5.
