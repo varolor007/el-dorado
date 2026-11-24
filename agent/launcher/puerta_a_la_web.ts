@@ -30,6 +30,7 @@ import { join } from "node:path";
 import { PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Lanzador } from "./asiento.ts";
+import { actaDe, actaDeCara, paradaDeCara } from "./acta.ts";
 import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
 import { confirmar, FalloAlConfirmar, paraConfirmar, turnoDelViajero } from "./escuchar.ts";
 import {
@@ -191,9 +192,9 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       })),
       spent: { usd: gasto.usd, turns: gasto.turnos, known: gasto.sabido },
       ceiling: adelanteDe(run)?.techo ?? null,
-      stopped: existsSync(join(run, PARADO))
-        ? { at: (leerJson(join(run, PARADO))?.en as string | undefined) ?? null }
-        : null,
+      // Si se paró: dónde, qué clase de parada es y qué puede hacer el viajero, por claves (y la frase del conductor,
+      // solo si pasó su puerta de palabras).
+      stopped: existsSync(join(run, PARADO)) ? paradaDeCara(run) : null,
       told: leerVivo(run).length,
       // Su turno: lo que he entendido, para que lo confirme. Solo lo lee su dueño, como todo lo de este viaje.
       waiting_for_you: turnoDelViajero(run),
@@ -498,6 +499,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === "confirmar" && cual === undefined) {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       return confirmarLoEntendido(p);
+    }
+    if (que === "acta" && cual === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const run = ultimoRun(suViaje(p));
+      if (run === null) throw NO_HAY();
+      return { estado: 200, cuerpo: { record: actaDeCara(actaDe(run)) } };
     }
     if (que === "version") {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

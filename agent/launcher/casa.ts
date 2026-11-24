@@ -9,7 +9,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ASIENTOS_A_LA_VEZ, TOPE_DE_UN_ASIENTO, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
+import { escribirActa } from "./acta.ts";
 import { lanzarAsiento, type Gasto, type Lanzador, type Tope } from "./asiento.ts";
+import { conducir } from "./conductor.ts";
 import { pararRun, sigue, type Estado, type Fuentes } from "./investigar.ts";
 import { guardarJson } from "./mesa.ts";
 import { porDondeVa } from "./pasos.ts";
@@ -48,7 +50,13 @@ export type Llevado = Estado & {
   lanzados: string[];
 };
 
-export type AlLlevar = { tope?: Tope; aLaVez?: number; ahora?: () => Date };
+export type AlLlevar = {
+  tope?: Tope;
+  aLaVez?: number;
+  ahora?: () => Date;
+  /** Sin conductor (false), un run parado por un asiento se queda parado sin que nadie lo mire. */
+  conductor?: boolean;
+};
 
 /** Unos cuantos a la vez, y no más: cada uno empieza cuando queda sitio. */
 async function porTandas<T>(cosas: T[], aLaVez: number, hacer: (cosa: T) => Promise<void>): Promise<void> {
@@ -85,9 +93,27 @@ function cerrarLosCortados(run: string, ahora: () => Date): void {
 
 /**
  * Lleva la investigación de un run hasta que esté hecha, la pare una puerta, falte el adelante o se llegue al techo
- * de gasto. Se puede llamar las veces que haga falta: sigue desde lo que hay en el disco.
+ * de gasto. Si la para un asiento que ya tuvo sus vueltas, o que no entregó, se le llama al conductor, una vez por
+ * run. Se puede llamar las veces que haga falta: sigue desde lo que hay en el disco. Al volver, deja el acta del run.
  */
 export async function llevar(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar = {}): Promise<Llevado> {
+  try {
+    return await llevarlo(run, f, lanzador, o);
+  } finally {
+    if (existsSync(run)) escribirActa(run);
+  }
+}
+
+/** Si se puede gastar ahora: con el adelante del viajero, sabiendo lo gastado y por debajo de su techo. */
+function sePuedeGastar(run: string): boolean {
+  const adelante = adelanteDe(run);
+  if (adelante === null) return false;
+  if (adelante.techo === null) return true;
+  const gastado = gastoDe(run);
+  return gastado.sabido && gastado.usd < adelante.techo;
+}
+
+async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar): Promise<Llevado> {
   const ahora = o.ahora ?? ((): Date => new Date());
   const tope = o.tope ?? TOPE_DE_UN_ASIENTO;
   const lanzados: string[] = [];
@@ -118,20 +144,33 @@ export async function llevar(run: string, f: Fuentes, lanzador: Lanzador, o: AlL
       lanzados,
       ...mas,
     });
+    // Un run parado por un asiento: el conductor lo mira, y si elige una vuelta más del dueño, el run vuelve a andar.
+    if (estado.parado !== null && o.conductor !== false) {
+      const lanzar = async (id: string): Promise<void> => {
+        await lanzarUno(id);
+        lanzados.push(id);
+      };
+      if (await conducir(run, { lanzar, puedeGastar: () => sePuedeGastar(run) })) continue;
+      return con({ parado: estado.parado });
+    }
     if (estado.hecho || estado.parado !== null || estado.esperan.length === 0) return con();
     const para = (paso: string, rojos: Rojo[]): Llevado =>
       con({ esperan: [], parado: pararRun(run, pasoDe(run, estado.esperan[0]), paso, rojos) });
 
     // Un asiento que ya trabajó y no entregó no se lanza otra vez sobre lo que dejó: se para aquí, y se dice.
     const rotos = estado.esperan.filter((id) => acaboSinEntregar(run, id));
-    if (rotos.length > 0)
-      return para(
+    if (rotos.length > 0) {
+      const parado = para(
         "un asiento no entregó",
         rotos.map((id) => ({
           donde: id,
           que: trabajosDe(run).find((t) => t.puesto === id)?.fallo ?? "acabó sin dejar su entrega",
         })),
       );
+      // Con el run ya parado, la vuelta siguiente se lo pasa al conductor, si le toca.
+      if (o.conductor !== false) continue;
+      return parado;
+    }
 
     // Nada que gaste arranca sin el botón del viajero.
     const adelante = adelanteDe(run);

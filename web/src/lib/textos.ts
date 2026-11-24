@@ -174,6 +174,14 @@ const en = {
     lever: () => "A change that saves money",
     done: () => "Your trip is on the map",
     stopped: () => "The research has stopped here",
+    conductor: (ref: string) =>
+      (
+        ({
+          looking: "Looking at why it stopped",
+          retry: "One more try at this step",
+          told: "Looked at why it stopped",
+        }) as Record<string, string>
+      )[ref] ?? null,
   },
   viaje: {
     rotulo: "Your trip",
@@ -504,6 +512,23 @@ const en = {
     parado: (paso: string) => `It stopped here: ${paso}. Nothing more is spent until you say so.`,
     otraVez: "Try again",
     ver: "See my trip",
+    // Un run parado: qué clase de parada es y qué puedes hacer, por las claves de la casa (agent/data/conductor.ts).
+    mirando: "I am looking at why it stopped. Nothing else is spent meanwhile.",
+    queHaPasado: {
+      seat_kept_failing:
+        "This step did not pass its checks, even after trying again. What it found is not shown, so that nothing unchecked reaches you.",
+      seat_did_not_finish: "This step did not finish its work.",
+      not_possible_yet: "This is a kind of trip I cannot plan yet.",
+      nothing_found: "I found nothing to work with for what you asked.",
+      spend_ceiling: "It reached the most you agreed to spend.",
+      house_broke: "Something went wrong on my side.",
+    } as Record<string, string>,
+    queHacer: "What you can do",
+    salidas: {
+      retry: "Try again",
+      change_request: "Change what you asked",
+      continue_without: "Go on without this part",
+    } as Record<string, string>,
   },
   // Tu confirmación de lo que he entendido de lo que escribiste (5.2): tus palabras, y lo demás por claves.
   escucha: {
@@ -769,6 +794,14 @@ const es: Textos = {
     lever: () => "Un cambio que ahorra",
     done: () => "Tu viaje está en el mapa",
     stopped: () => "La investigación se ha parado aquí",
+    conductor: (ref) =>
+      (
+        ({
+          looking: "Mirando por qué se ha parado",
+          retry: "Un intento más en este paso",
+          told: "Mirado por qué se ha parado",
+        }) as Record<string, string>
+      )[ref] ?? null,
   },
   viaje: {
     rotulo: "Tu viaje",
@@ -1081,6 +1114,22 @@ const es: Textos = {
     parado: (paso) => `Se ha parado aquí: ${paso}. No se gasta nada más hasta que tú digas.`,
     otraVez: "Volver a intentarlo",
     ver: "Ver mi viaje",
+    mirando: "Estoy mirando por qué se ha parado. Mientras, no se gasta nada más.",
+    queHaPasado: {
+      seat_kept_failing:
+        "Este paso no pasó sus comprobaciones, ni volviéndolo a intentar. Lo que encontró no se enseña, para que no te llegue nada sin comprobar.",
+      seat_did_not_finish: "Este paso no llegó a acabar su trabajo.",
+      not_possible_yet: "Es una clase de viaje que todavía no sé planear.",
+      nothing_found: "No encontré con qué trabajar para lo que pediste.",
+      spend_ceiling: "Se llegó a lo más que aceptaste gastar.",
+      house_broke: "Algo ha fallado por mi parte.",
+    },
+    queHacer: "Lo que puedes hacer",
+    salidas: {
+      retry: "Volver a intentarlo",
+      change_request: "Cambiar lo que pediste",
+      continue_without: "Seguir sin esta parte",
+    },
   },
   escucha: {
     rotulo: "Tu turno",

@@ -139,7 +139,9 @@ test("un asiento que falla sin entregar para la investigación y dice cuál: no 
     await conRun(async (run) => {
       darElAdelante(run, 5);
       const lanzador = lanzadorDeMentira({ falla: (asiento) => (asiento === "route-planner" ? falla : null) });
-      const r = await llevar(run, fuentesInventadas(), lanzador);
+      // La casa sola, sin conductor: lo que hace el conductor con esta parada, en conductor.test.ts.
+      const sin = { conductor: false };
+      const r = await llevar(run, fuentesInventadas(), lanzador, sin);
       assert.equal(r.parado?.en, "route");
       assert.equal(r.parado?.paso, "un asiento no entregó");
       assert.equal(r.parado?.rojos[0].donde, "ruta-v1");
@@ -147,7 +149,7 @@ test("un asiento que falla sin entregar para la investigación y dice cuál: no 
       assert.deepEqual(estados(run), { "ruta-v1": "failed" });
       // Lo que gastó hasta fallar también cuenta.
       assert.deepEqual(trabajosDe(run)[0].gasto, falla === "calla" ? GASTO : null);
-      const otra = await llevar(run, fuentesInventadas(), lanzador);
+      const otra = await llevar(run, fuentesInventadas(), lanzador, sin);
       assert.equal(otra.parado?.en, "route");
       assert.equal(lanzador.ordenes.length, 1);
     });
@@ -225,7 +227,7 @@ test("si la casa se cortó con un asiento trabajando, al volver lo cierra: hecho
     await sigue(run, fuentesInventadas());
     apuntarTrabajo(run, cortado(run));
     const lanzador = lanzadorDeMentira();
-    const r = await llevar(run, fuentesInventadas(), lanzador);
+    const r = await llevar(run, fuentesInventadas(), lanzador, { conductor: false });
     assert.deepEqual(estados(run), { "ruta-v1": "failed" });
     assert.equal(trabajosDe(run)[0].fallo, "la casa se cortó mientras trabajaba");
     assert.equal(r.parado?.en, "route");

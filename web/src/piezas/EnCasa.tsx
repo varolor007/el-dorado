@@ -3,6 +3,7 @@
 // La investigación de un viaje tuyo, contada por la casa mientras pasa: por qué paso va, lo que se ha ido
 // encontrando y lo que lleva gastado de tu clave. Si se para, lo dice, y no gasta más hasta que tú lo pidas.
 
+import Link from "next/link";
 import { useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA } from "../lib/formato.ts";
@@ -24,6 +25,9 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
   const parado = i?.stopped ?? null;
   // Tu turno: la investigación espera a que confirmes lo que he entendido. No es una parada.
   const tuTurno = parado === null && i?.waiting_for_you === true && i.heard != null ? i.heard : null;
+  // Lo que puedes hacer, por las claves de la casa. Sin claves (una casa de antes), volver a intentarlo. Seguir sin
+  // una parte no se ofrece todavía: ningún paso se puede saltar.
+  const salidas = parado?.options ?? ["retry"];
   const nombreDe = (paso: string | null): string => (paso === null ? "" : (t.casa.pasos[paso] ?? paso));
 
   // Mientras se mira un alojamiento se dice que se está mirando; al acabar, esa línea pasa a ser la de lo mirado.
@@ -69,14 +73,44 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
         </div>
       </div>
       {parado !== null && (
-        <p className="aviso" role="alert">
-          {t.casa.parado(nombreDe(parado.at ?? ahora))}
-        </p>
-      )}
-      {parado !== null && i !== null && !i.running && (
-        <button type="button" className="boton boton--hueco" disabled={ocupado} onClick={() => void otraVez()}>
-          {t.casa.otraVez}
-        </button>
+        <div className="parado">
+          <p className="aviso" role="alert">
+            {t.casa.parado(nombreDe(parado.at ?? ahora))}
+          </p>
+          {parado.looking === true ? (
+            <p className="suave">{t.casa.mirando}</p>
+          ) : (
+            <>
+              {parado.kind !== undefined && t.casa.queHaPasado[parado.kind] !== undefined && (
+                <p>{t.casa.queHaPasado[parado.kind]}</p>
+              )}
+              {/* Su frase, solo si la casa la dejó pasar y está en el idioma de quien mira. */}
+              {parado.said != null && parado.said.lang === idioma && <p className="suave">{parado.said.text}</p>}
+              {i !== null && !i.running && (
+                <>
+                  <p className="rotulo">{t.casa.queHacer}</p>
+                  <div className="parado__salidas">
+                    {salidas.includes("retry") && (
+                      <button
+                        type="button"
+                        className="boton boton--hueco"
+                        disabled={ocupado}
+                        onClick={() => void otraVez()}
+                      >
+                        {t.casa.salidas.retry}
+                      </button>
+                    )}
+                    {salidas.includes("change_request") && (
+                      <Link className="boton boton--hueco" href="/plan">
+                        {t.casa.salidas.change_request}
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       )}
       {fallo !== null && (
         <p className="aviso" role="alert">
