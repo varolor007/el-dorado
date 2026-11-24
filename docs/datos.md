@@ -204,21 +204,20 @@ opiniones y cuatro estrellas. Lo que enseñó:
 - **La cadena corre de punta a punta para el alojamiento**: la lista, los mínimos, el precio de esas noches, cinco
   finalistas elegidos por regla y la ficha de cada uno, en un par de minutos y sin IA hasta ahí.
 - **La puerta de la búsqueda hace falta.** Pedidos los mínimos a la fuente, devolvió 1.058; comprobados uno a uno por
-  el código, los cumplían 216. De esos, 170 tenían precio para esas noches (de 171 a más de 13.000 EUR; la mediana,
-  380).
+  el código, los cumplían 216. De esos, 170 tenían precio para esas noches.
 - **La habitación de ese precio se identifica**: en los cinco finalistas, con sus fotos propias (de 5 a 24) y, en
   cuatro, sus metros (de 14 a 45).
 - **Las opiniones dan para leer por temas**: sesenta por hotel, de los últimos meses, con lo bueno y lo malo; y la
   fuente trae ya un resumen por temas con sus contras, en frases cortas.
 - **El índice caza lo que el dato tapa.** Un finalista tiene piscina según el dato, y el índice dice que es exterior y
   de temporada, de abril a noviembre: cerrada en febrero. Es la trampa que estaba apuntada.
-- **La nota de la fuente no es la de Booking.com.** En un finalista, 9,5 en la fuente y 8,6 en Booking.com según el
-  índice; en otro, 9,8 y 9,4. La nota se contrasta siempre con una segunda fuente.
+- **La nota de la fuente no es la de Booking.com.** En dos finalistas, la de la fuente era bastante más alta que la
+  que da el índice para Booking.com. La nota se contrasta siempre con una segunda fuente.
 - **Cruzar con Parallel por el nombre falla**: de cinco, encontró uno, y con la oferta mal casada. Su búsqueda es por
   zona, no por nombre: hay que cruzar por posición, zona a zona.
 - **La fuente no trae la web del hotel** en ninguno de los cinco: se busca con el índice.
 - **Aviasales tiene huecos**: para la ida y la vuelta exactas de esas fechas no tenía precio; para los días de
-  alrededor, sí (trece días de febrero, de 19 a 43 EUR la ida y vuelta desde Madrid). Para las fechas exactas hace
+  alrededor, sí (trece días de ese mes). Para las fechas exactas hace
   falta una fuente en vivo.
 
 ## Las fotos, bajadas de verdad (23-nov)

@@ -282,26 +282,35 @@ Lo que enseñó Lisboa de verdad, y lo que se cambió por ello:
   - **La hoja tiene «en parte».** Una caja construida a medias lo dice, con lo que le falta.
   - **Las cuentas de pruebas salen del plan**: se quedaban atrás en cada commit. El total, en el «Estamos aquí».
 
+## 24-nov-2026
+
+Las respuestas del PM a lo que dejó la revisión de la tanda 3. No dio todavía el visto bueno de la tanda: la 4 no
+empieza hasta que lo dé.
+
+- **El buscador y el lector de webs (3.5), a la tanda 4** (el PM: «vale, lo que veas»). No estaba en ninguna tanda, y
+  lo usan los asientos que consultan la web, que llegan con el bloque 5.
+- **Cómo se mueve el viajero: se le ofrecen las alternativas** (el PM: «tendrás que ofrecer las alternativas,
+  dependiendo de coste y disponibilidad; si no se sabe, con indicar la distancia vale; también, pensando un poco,
+  habrá cosas a las que puedas ir de cualquier manera y otras que ni de coña»). No es el viajero quien dice de
+  antemano cómo se mueve: de cada trayecto, El Dorado dice las maneras que tienen sentido por su distancia, con lo que
+  cuestan y si las hay cuando una fuente lo sabe, y si no, la distancia. Lo que se anda en un rato no se manda en
+  coche, y lo que está a treinta kilómetros no se manda andando.
+- **Las habitaciones de un grupo las dice el viajero** (el PM: «lo dice el viajero»).
+- **Un alojamiento sin estrellas se juzga por su nota y sus opiniones** (el PM: «ok»). Las estrellas se le piden a
+  quien las lleva.
+- **Las quejas graves marcan, y las confirma el que mira** (el PM: «ok»). El código ya no descarta por palabras.
+- **Encoger las fotos antes de mirarlas, con una pieza nueva en el agente** (el PM: «ok»). Es su sí expreso a la
+  primera dependencia que el agente lleva para funcionar.
+- **Las cifras de `docs/datos.md`** (el PM: «lo que veas»): se quitan los precios y las notas de alojamientos
+  concretos, que son datos de una fuente, y se quedan los recuentos y lo que da cada fuente, que es para lo que está
+  el documento.
+
 ## Pendientes
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
 
-- **Cómo se mueve el viajero.** Hoy todo se mide a pie: la zona de un alojamiento, lo que cabe en un día, lo que
-  enseña la web. Para un parque en coche o una ciudad grande en metro hace falta que lo entendido lo diga (a pie, en
-  transporte, en coche) y decidir de dónde salen los tiempos: una cuenta por distancia, que es aproximada, o una
-  fuente de rutas, que sería una fuente nueva. Hasta entonces, un viaje que no se anda se para y se dice.
-- **Las habitaciones de un grupo.** Hoy se pide una para todos, y con una familia grande casi nada tiene precio.
-  Hay que decidir si lo dice el viajero, si se reparte por una regla, o las dos.
-- **Lo que no lleva estrellas.** Los mínimos de partida piden cuatro, y una casa de 9,5 sin estrellas solo entra en
-  el último escalón. La sesión propone que quien no las lleva se juzgue por su nota y sus opiniones.
-- **Las quejas graves.** Hoy descartan a un alojamiento por palabras en tres opiniones, de cualquier fecha y también
-  si es una negación. La sesión propone que marquen y que lo confirme el que mira.
 - **La segunda mirada a ciegas.** La hoja la nombra; la investigación mira cada alojamiento una vez, porque cada
   mirada son más de diez minutos. Va con el abaratado de la mirada (4.11).
-- **Las cifras de búsquedas de verdad en `docs/datos.md`** (recuentos, un rango de precios, la nota de dos
-  finalistas): son agregados, sin nombres ni viajeros. La regla 8 dice «ni lo que devuelve una fuente»: decide el PM
-  si los agregados valen o se quitan. Las dos frases literales de la fuente ya se han quitado.
-
 Lo que deja la tanda 3, a decisión del PM:
 
 - **Lo que solo vale en inglés y en español**: las palabras prohibidas que mira la puerta 7, los dos avisos de
@@ -314,7 +323,6 @@ Lo que deja la tanda 3, a decisión del PM:
 - **Probarlo con destinos distintos**: hasta ahora, uno. Una gran ciudad de otro continente, un pueblo, un sitio de
   naturaleza y un país entero, antes de darlo por general.
 
-- **Encoger las fotos**: pide una dependencia para funcionar en el agente. Con su sí expreso.
 - **Cómo se llama a la IA en el producto**: cada asiento tarda de once a quince minutos lanzado como una sesión
   entera. Para bajar a un minuto hace falta una llamada directa, con los seis pasos en una sola respuesta, y un
   método más corto. Es el 2.7, en la tanda 4, y toca el método común.
