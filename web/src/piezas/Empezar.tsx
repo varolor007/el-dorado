@@ -142,7 +142,7 @@ function DeDonde({
               <button
                 type="button"
                 className="buscador__lugar"
-                onClick={() => elige({ nombre: l.nombre, pais: l.pais })}
+                onClick={() => elige({ nombre: l.nombre, pais: l.pais, centro: { lat: l.lat, lon: l.lon } })}
               >
                 <b>{l.nombre}</b>
                 <span>{l.donde}</span>

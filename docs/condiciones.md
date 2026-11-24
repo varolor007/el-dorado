@@ -98,6 +98,9 @@ solo salió en extractos va como «sin confirmar». La sesión no lo comprobó a
   datos no vale tal cual.
 - **Lo demás**: nada sobre asistentes de IA ni sobre protección de datos entre las dos partes; pueden cortar el acceso
   cuando quieran; ley de Hong Kong.
+- **Lo que usa la búsqueda de transporte (24-nov)**: de la misma Data API, sus archivos de lugares (aeropuertos,
+  ciudades y rutas), que se guardan un día en la mesa, y los precios de la semana de alrededor, que no traen enlace:
+  el enlace es el de la búsqueda en su web, para ver el precio de ahora. No es una fuente nueva.
 
 ## Geoapify (las rutas; en prueba desde el 24-nov-2026)
 

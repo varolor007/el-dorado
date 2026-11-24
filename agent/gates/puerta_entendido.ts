@@ -5,6 +5,7 @@
 
 import { COSAS } from "../data/gustos.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
+import { DECIMALES_DEL_ORIGEN } from "../data/transporte.ts";
 import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, NOCHES_DE_UN_VIAJE, VIAJEROS } from "../data/viaje.ts";
 import { RITMOS } from "../output/viaje.ts";
 import { CLASES_DE_DESTINO, CUANTO_MOVERSE, GASTOS, PESOS_DE_GUSTO } from "../scripts/formas.ts";
@@ -87,6 +88,17 @@ export function puertaEntendido(v: unknown, o: { hoy?: string } = {}): Veredicto
       if (!esNombre(s.name)) rojo("origin.name", "el nombre de donde sale no es un nombre");
       if (!letras(s.country, 2)) rojo("origin.country", "el país de salida no son dos letras");
       if (!(s.airport === null || letras(s.airport, 3))) rojo("origin.airport", "el aeropuerto no son tres letras");
+      // Su punto es opcional, y redondeado: con más decimales diría dónde vive el viajero, y no hace falta.
+      const p = s.centre;
+      const redondo = (x: unknown): boolean =>
+        typeof x === "number" &&
+        Math.abs(x * 10 ** DECIMALES_DEL_ORIGEN - Math.round(x * 10 ** DECIMALES_DEL_ORIGEN)) < 1e-9;
+      if (p !== undefined) {
+        if (!esObjeto(p) || !entre(p.lat, -90, 90) || !entre(p.lon, -180, 180))
+          rojo("origin.centre", "el punto de salida no está en el mapa");
+        else if (!redondo(p.lat) || !redondo(p.lon))
+          rojo("origin.centre", `el punto de salida lleva más de ${DECIMALES_DEL_ORIGEN} decimal: diría demasiado`);
+      }
     }
   }
 

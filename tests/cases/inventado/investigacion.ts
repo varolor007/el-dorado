@@ -17,8 +17,8 @@ import type {
 } from "../../../agent/scripts/formas.ts";
 import { lugarDe, resolverZonas } from "../../../agent/scripts/ruta.ts";
 import { montarTabla, type PiezasDeLaTabla } from "../../../agent/scripts/tabla.ts";
-import type { Vuelo } from "../../../agent/tools/fuentes/tipos.ts";
-import { cambiosDePartida, pedirPalancas } from "../../../agent/tools/palancas.ts";
+import type { Aeropuerto, Ciudad, FuenteTransporte, Trayecto, Vuelo } from "../../../agent/tools/fuentes/tipos.ts";
+import { cambiosDePartida, mover, pedirPalancas } from "../../../agent/tools/palancas.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
 import { ESTANCIA, fuenteInventada, MINIMOS, VISTO } from "./inventado.ts";
 
@@ -209,6 +209,63 @@ export function vueloInventado(ida: string, vuelta: string): Vuelo {
     guardado: true,
     enlace: null,
   };
+}
+
+/**
+ * Los aeropuertos inventados: el del origen, uno pequeño junto a la villa, uno grande a unos noventa kilómetros, uno
+ * de una isla lejana y otro en otro país, dentro de la misma caja. Ninguno existe.
+ */
+export const AEROPUERTOS: Aeropuerto[] = [
+  { codigo: "OOO", ciudad: "OOO", nombre: "Origen Inventado", pais: "YY", lat: 40.0, lon: -3.0, rutas: 40 },
+  { codigo: "OOB", ciudad: "OOO", nombre: "Origen Inventado", pais: "YY", lat: 40.2, lon: -3.1, rutas: 8 },
+  { codigo: "VVV", ciudad: "VVV", nombre: "Villa Inventada", pais: "ZZ", lat: 10.02, lon: 20.03, rutas: 3 },
+  { codigo: "HHH", ciudad: "HHH", nombre: "Puerto Grande", pais: "ZZ", lat: 10.6, lon: 20.5, rutas: 120 },
+  { codigo: "III", ciudad: "III", nombre: "Isla Lejana", pais: "ZZ", lat: -30.0, lon: 60.0, rutas: 2 },
+  { codigo: "XXX", ciudad: "XXX", nombre: "Frontera Ajena", pais: "WW", lat: 10.5, lon: 20.4, rutas: 300 },
+];
+
+export const CIUDADES: Ciudad[] = [
+  { codigo: "OOO", nombre: "Origen Inventado", pais: "YY", lat: 40.1, lon: -3.0 },
+  { codigo: "PPP", nombre: "Pueblo Sin Aeropuerto", pais: "YY", lat: 41.0, lon: -3.5 },
+];
+
+/**
+ * La fuente de transporte inventada: sus aeropuertos, y para cada par y fechas, el vuelo inventado de esas fechas.
+ * Cuenta lo que se le pide. Se le puede decir que no conteste, o que no tenga precios.
+ */
+export function transporteInventado(o: { falla?: boolean; vacia?: boolean; semana?: boolean } = {}) {
+  const pedidos: { como: "fechas" | "alrededor" | "lugares"; t?: Trayecto }[] = [];
+  const vuelo = (t: Trayecto, ida: string, vuelta: string): Vuelo => ({
+    ...vueloInventado(ida, vuelta),
+    origen: t.origen,
+    destino: t.destino,
+  });
+  const fuente: FuenteTransporte & { pedidos: typeof pedidos } = {
+    nombre: "inventada",
+    pedidos,
+    async lugares() {
+      pedidos.push({ como: "lugares" });
+      if (o.falla) throw new Error("no contesta");
+      return { aeropuertos: AEROPUERTOS, ciudades: CIUDADES };
+    },
+    async fechas(t) {
+      pedidos.push({ como: "fechas", t });
+      if (o.falla) throw new Error("no contesta: un trozo de lo que dijo");
+      return o.vacia ? [] : [vuelo(t, t.ida, t.vuelta!)];
+    },
+  };
+  if (o.semana !== false)
+    fuente.alrededor = async (t) => {
+      pedidos.push({ como: "alrededor", t });
+      if (o.falla) throw new Error("no contesta");
+      if (o.vacia) return [];
+      // La semana de alrededor: un día antes, que es más barato, y uno con dos escalas, que no vale.
+      const antes = { ...vuelo(t, mover(t.ida, -1), mover(t.vuelta!, -1)), precio: 70, aerolinea: null, numero: null };
+      const escalas = { ...vuelo(t, mover(t.ida, 1), mover(t.vuelta!, 1)), precio: 40, escalasIda: 2 };
+      const lejos = { ...vuelo(t, mover(t.ida, 3), mover(t.vuelta!, 3)), precio: 30 };
+      return [antes, escalas, lejos];
+    };
+  return fuente;
 }
 
 /**

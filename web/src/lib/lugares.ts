@@ -142,8 +142,11 @@ export function lugarDe(resultado: unknown): Lugar | null {
   return { nombre: p.name, donde, pais: pais?.toUpperCase() ?? null, clase, lat, lon, caja: cajaDe(p.extent) };
 }
 
-/** De dónde sale alguien: el nombre de un sitio y su país, si se sabe. */
-export type Origen = { nombre: string; pais: string | null };
+/**
+ * De dónde sale alguien: el nombre de un sitio, su país, si se sabe, y su punto, con el que la casa busca sus
+ * aeropuertos. El punto lo redondea la casa antes de guardarlo.
+ */
+export type Origen = { nombre: string; pais: string | null; centro?: { lat: number; lon: number } | null };
 
 /**
  * De dónde sale alguien, por lo que el buscador dice que hay en un punto: su ciudad o, si no la dice, lo más parecido
@@ -154,5 +157,10 @@ export function origenDe(resultado: unknown): Origen | null {
   const nombre = [p.city, p.county, p.state, p.name].find((x) => typeof x === "string" && x.trim() !== "");
   if (typeof nombre !== "string") return null;
   const pais = typeof p.countrycode === "string" && /^[A-Za-z]{2}$/.test(p.countrycode) ? p.countrycode : null;
-  return { nombre: nombre.trim().slice(0, 80), pais: pais?.toUpperCase() ?? null };
+  // El punto de lo que se encontró, con una décima de grado: basta para los aeropuertos y no dice dónde está nadie.
+  const c = ((resultado ?? {}) as { geometry?: { coordinates?: unknown } }).geometry?.coordinates;
+  const [lon, lat] = Array.isArray(c) ? c : [];
+  const enElMapa = typeof lat === "number" && typeof lon === "number" && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+  const centro = enElMapa ? { lat: Math.round(lat * 10) / 10, lon: Math.round(lon * 10) / 10 } : null;
+  return { nombre: nombre.trim().slice(0, 80), pais: pais?.toUpperCase() ?? null, centro };
 }

@@ -21,7 +21,7 @@ import {
   entregaDeRuta,
   entregaDeSitios,
   SITIOS,
-  vueloInventado,
+  transporteInventado,
 } from "./investigacion.ts";
 
 /** La fuente inventada, con los alojamientos repartidos en los dos barrios: los tres primeros, en el viejo. */
@@ -47,7 +47,7 @@ export function fuentesInventadas(): Fuentes {
     sitios: async () => SITIOS,
     resumenes: async () => new Map([["Q1", "It guides ships into the bay."]]),
     fotos: async (archivos) => new Map(archivos.map((a) => [a, FOTO])),
-    vuelos: async (_viaje, ida, vuelta) => [vueloInventado(ida, vuelta)],
+    transporte: transporteInventado(),
     bajarFotos: { traer: async () => JPEG, segura: () => true, encoger: async (b) => b },
   };
 }
