@@ -106,6 +106,41 @@ const en = {
     empezar: "Start the research",
     gasta: "From here it uses your AI key. Nothing that spends starts without this button.",
   },
+  primerVistazo: {
+    // Lo que se ve antes del botón, sin cuenta y sin IA: lo cuenta el código de la casa con las fuentes.
+    titulo: "What there is, before you decide",
+    buscando: "Counting places to stay for your dates. It takes a few seconds.",
+    otraVez: "Counting again with what you have changed.",
+    // Con lo que se ha contado: el grupo que se ha supuesto, si no lo has dicho.
+    paraQuien: (adultos: number, habitaciones: number) =>
+      `Counted for ${EN.cuenta(adultos, "adult", "adults")} in ${EN.cuenta(habitaciones, "room", "rooms")}. If you change it, it is counted again.`,
+    mirados: (mirados: number, pasan: number) =>
+      `Priced ${EN.cifra(mirados)} of the ${EN.cifra(pasan)} that pass, to see where prices start.`,
+    aMedias: "Not every price arrived in time: this is what came.",
+    bajados: "With the starting minimums too few places passed: they were lowered to these.",
+    nada: "The source has no place to stay in this area.",
+    zonas: (n: number) =>
+      n === 1
+        ? "On the map, one area with its lowest price."
+        : `On the map, ${EN.cifra(n)} areas, each with its lowest price.`,
+    zona: (pasan: number) => EN.cuenta(pasan, "place passes", "places pass"),
+    vuelos: (origen: string, destino: string) => `Cheapest days to fly, ${origen} to ${destino}`,
+    vuelosNota: (noches: number) =>
+      `Saved prices from other people's searches, per ticket, for a ${EN.cuenta(noches, "night", "nights")} trip. Not a fare for now.`,
+    tuDia: "your day",
+    sinVuelos: "Cheap days to fly show up here once we know the airport you fly from.",
+    fallo: (clave: string, espera: number | null) =>
+      clave === "busy"
+        ? `Many people are looking right now. Try again in ${espera !== null && espera > 90 ? EN.cuenta(Math.ceil(espera / 60), "minute", "minutes") : EN.cuenta(espera ?? 30, "second", "seconds")}.`
+        : clave === "too_slow"
+          ? "The sources are slow right now and the first look did not arrive in time."
+          : clave === "no_sources"
+            ? "The sources cannot be reached right now."
+            : clave === "unclear"
+              ? "Something about the trip is still missing to count it."
+              : "The first look could not be counted right now.",
+    sigue: "You can still start the research.",
+  },
   vivo: {
     rotulo: "Researching, live",
     titulo: "Your trip is being drawn",
@@ -592,6 +627,39 @@ const es: Textos = {
     sinTransporte: "Todavía no hay ningún precio de transporte: este primer vistazo es solo dormir.",
     empezar: "Empezar la investigación",
     gasta: "Desde aquí usa tu clave de IA. Nada que gaste arranca sin este botón.",
+  },
+  primerVistazo: {
+    titulo: "Lo que hay, antes de decidir",
+    buscando: "Contando alojamientos para tus fechas. Tarda unos segundos.",
+    otraVez: "Volviendo a contar con lo que has cambiado.",
+    paraQuien: (adultos, habitaciones) =>
+      `Contado para ${ES.cuenta(adultos, "adulto", "adultos")} en ${ES.cuenta(habitaciones, "habitación", "habitaciones")}. Si lo cambias, se vuelve a contar.`,
+    mirados: (mirados, pasan) =>
+      `Con precio pedido a ${ES.cifra(mirados)} de los ${ES.cifra(pasan)} que pasan, para ver desde dónde empiezan.`,
+    aMedias: "No todos los precios llegaron a tiempo: esto es lo que llegó.",
+    bajados: "Con los mínimos de partida pasaban muy pocos: se han bajado a estos.",
+    nada: "La fuente no tiene ningún alojamiento en esta zona.",
+    zonas: (n) =>
+      n === 1
+        ? "En el mapa, una zona con su precio más bajo."
+        : `En el mapa, ${ES.cifra(n)} zonas, cada una con su precio más bajo.`,
+    zona: (pasan) => ES.cuenta(pasan, "pasa", "pasan"),
+    vuelos: (origen, destino) => `Los días más baratos para volar, de ${origen} a ${destino}`,
+    vuelosNota: (noches) =>
+      `Precios guardados de búsquedas de otras personas, por billete, para un viaje de ${ES.cuenta(noches, "noche", "noches")}. No es una tarifa de ahora.`,
+    tuDia: "tu día",
+    sinVuelos: "Los días baratos para volar salen aquí cuando sepamos de qué aeropuerto sales.",
+    fallo: (clave, espera) =>
+      clave === "busy"
+        ? `Ahora mismo mira mucha gente. Prueba otra vez en ${espera !== null && espera > 90 ? ES.cuenta(Math.ceil(espera / 60), "minuto", "minutos") : ES.cuenta(espera ?? 30, "segundo", "segundos")}.`
+        : clave === "too_slow"
+          ? "Las fuentes van lentas ahora mismo y el primer vistazo no ha llegado a tiempo."
+          : clave === "no_sources"
+            ? "Ahora mismo no se llega a las fuentes."
+            : clave === "unclear"
+              ? "Aún falta algo del viaje para poder contarlo."
+              : "Ahora mismo no se ha podido contar el primer vistazo.",
+    sigue: "Puedes empezar la investigación igual.",
   },
   vivo: {
     rotulo: "Investigando, en vivo",

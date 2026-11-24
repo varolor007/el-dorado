@@ -18,6 +18,9 @@ import { TEXTOS, type Textos } from "../lib/textos.ts";
 import { abrirViaje, cambiarLoEntendido, empezarLaInvestigacion, type FalloDeViaje } from "../lib/viajeVivo.ts";
 import { Hoja } from "./Hoja.tsx";
 import { Contador } from "./Pantallas.tsx";
+import type { Vistazo } from "../../../agent/output/viaje.ts";
+import { useVistazo } from "../lib/vistazo.ts";
+import { PrimerVistazo } from "./PrimerVistazo.tsx";
 
 type Opcion<T> = { valor: T; texto: string };
 
@@ -164,9 +167,11 @@ type Props = Comun & {
   viaje: string | null;
   cuenta: EstadoDeLaCuenta;
   alEmpezar: (id: string) => void;
+  /** El primer vistazo, cuando llega: el mapa pinta sus puntos y sus zonas. */
+  alVistazo?: (v: Vistazo | null) => void;
 };
 
-export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props) {
+export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistazo }: Props) {
   const p = t.preguntas;
   const x = t.empezar;
   const [r, setR] = useState<Respuestas>(inicial);
@@ -179,6 +184,9 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
   const pon = (cambio: Partial<Respuestas>): void => setR((antes) => ({ ...antes, ...cambio }));
 
   const e = useMemo(() => entendidoDe(r), [r]);
+  // El primer vistazo, sin cuenta: se pide con lo dicho y lo más probable, y se vuelve a pedir si cambia el grupo.
+  const vistazo = useVistazo(r, idioma);
+  useEffect(() => alVistazo?.(vistazo.vistazo), [vistazo.vistazo]);
   const supuesto = (campo: string): string => (e.supuesto.includes(campo) ? ` (${x.supuesto})` : "");
   const conSesion = typeof cuenta === "object" && cuenta !== null;
   const conClave = conSesion && cuenta.key !== null;
@@ -317,6 +325,15 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar }: Props)
           <span className="pastilla">{t.vistazo.noches(n)}</span>
         </div>
       </div>
+      <PrimerVistazo
+        t={t}
+        idioma={idioma}
+        estado={vistazo}
+        entrada={r.entrada}
+        salida={r.salida}
+        adultos={r.adultos ?? 2}
+        habitaciones={r.habitaciones ?? 1}
+      />
       {dentro && (
         <div className="preguntas">
           <h2 className="titulo">{x.preguntas}</h2>

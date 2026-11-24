@@ -10,6 +10,7 @@ import { test } from "node:test";
 import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import {
   CABECERA_DE_LA_SESION,
+  CABECERA_DEL_CLIENTE,
   INTENTOS_DE_ENTRAR,
   OYENTES_DE_UN_VIAJE,
   PESO_DE_UNA_PETICION,
@@ -53,6 +54,8 @@ async function conCasa(
     sinClave?: boolean;
     conLanzador?: Lanzador;
     comprueba?: (clave: string) => Promise<boolean>;
+    freno?: OpcionesDeLaPuerta["freno"];
+    fuentes?: OpcionesDeLaPuerta["fuentes"];
   } = {},
 ): Promise<void> {
   const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
@@ -65,8 +68,9 @@ async function conCasa(
     mesa,
     llave: LLAVE,
     secreto: SECRETO,
-    fuentes: fuentesInventadas,
+    fuentes: o.fuentes ?? fuentesInventadas,
     hoy: HOY,
+    ...(o.freno === undefined ? {} : { freno: o.freno }),
     cadaMs: 15,
     ...(o.sinIA ? {} : { lanzador }),
     ...(o.comprueba === undefined ? {} : { claveQueFunciona: o.comprueba }),
@@ -641,5 +645,82 @@ test("una clave se comprueba contra la IA antes de guardarla: la que no sirve no
       assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
     },
     { sinClave: true, comprueba },
+  );
+});
+
+test("el primer vistazo: sin sesión y con la llave, lo entendido por la puerta 1, y nada en la mesa", async () => {
+  let listas = 0;
+  const fuentes = (): ReturnType<typeof fuentesInventadas> => {
+    const f = fuentesInventadas();
+    const lista = f.alojamiento.lista;
+    return { ...f, alojamiento: { ...f.alojamiento, lista: (...x) => (listas++, lista(...x)) } };
+  };
+  await conCasa(
+    async (casa) => {
+      const pide = (cuerpo: unknown, o: { llave?: string | null; cliente?: string } = {}) =>
+        fetch(`${casa.url}/vistazo`, {
+          method: "POST",
+          headers: {
+            ...(o.llave === null ? {} : { authorization: `Bearer ${o.llave ?? LLAVE}` }),
+            ...(o.cliente === undefined ? {} : { [CABECERA_DEL_CLIENTE]: o.cliente }),
+          },
+          body: JSON.stringify(cuerpo),
+        }).then(async (r) => ({ estado: r.status, cuerpo: (await r.json()) as Objeto }));
+      assert.deepEqual(await pide({ understood: ENTENDIDO }, { llave: null }), {
+        estado: 401,
+        cuerpo: { error: "unauthorized" },
+      });
+      assert.equal(listas, 0);
+      const r = await pide({ understood: ENTENDIDO });
+      assert.equal(r.estado, 200);
+      assert.equal(r.cuerpo.cached, false);
+      assert.equal(r.cuerpo.look.pasan, 8);
+      assert.equal(r.cuerpo.look.desde, 186);
+      assert.equal(r.cuerpo.look.vuelos.dias.length, 3);
+      // El mismo vistazo otra vez sale de la memoria, sin volver a pedir a la fuente.
+      const otra = await pide({ understood: { ...ENTENDIDO, budget: "comfortable" } });
+      assert.equal(otra.cuerpo.cached, true);
+      assert.equal(listas, 1);
+      // Lo que no está claro no busca, y dice qué campo.
+      const mal = await pide({ understood: { ...ENTENDIDO, currency: "euros" } });
+      assert.deepEqual(mal, { estado: 422, cuerpo: { error: "unclear", fields: ["currency"] } });
+      assert.equal((await pide({})).estado, 422);
+      const pasado = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: "2026-12-01" } };
+      assert.equal((await pide({ understood: pasado })).estado, 422);
+      const pedidoConGet = await fetch(`${casa.url}/vistazo`, { headers: { authorization: `Bearer ${LLAVE}` } });
+      assert.equal(pedidoConGet.status, 405);
+      // El tope: dos vistazos nuevos por ventana, y el tercero espera, con lo que falta dicho en segundos.
+      const otroGrupo = (adultos: number) => ({
+        understood: { ...ENTENDIDO, travellers: { ...ENTENDIDO.travellers, adults: adultos, passports: [] } },
+      });
+      assert.equal((await pide(otroGrupo(3), { cliente: "cliente-inventado-1" })).estado, 200);
+      const frenado = await pide(otroGrupo(4), { cliente: "cliente-inventado-1" });
+      assert.equal(frenado.estado, 429);
+      assert.equal(frenado.cuerpo.error, "busy");
+      assert.ok(frenado.cuerpo.wait > 0);
+      assert.equal(listas, 2);
+      // Y no se ha guardado nada: ni un viaje, ni lo entendido.
+      assert.equal(todoLoEscrito(casa.mesa), "");
+    },
+    { freno: { porVentana: 2 }, fuentes },
+  );
+});
+
+test("el primer vistazo, sin fuentes: lo dice con su clave, y nada de por qué", async () => {
+  await conCasa(
+    async (casa) => {
+      const r = await fetch(`${casa.url}/vistazo`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${LLAVE}` },
+        body: JSON.stringify({ understood: ENTENDIDO }),
+      });
+      assert.equal(r.status, 503);
+      assert.deepEqual(await r.json(), { error: "no_sources" });
+    },
+    {
+      fuentes: () => {
+        throw new Error("la fuente de alojamiento está apagada en /ruta/secreta");
+      },
+    },
   );
 });

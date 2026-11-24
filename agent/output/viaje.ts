@@ -141,6 +141,39 @@ export type Vistazo = {
   /** Verdadero si en las zonas de la ruta no había con qué elegir y se buscó más lejos. */
   ensanchado: boolean;
   puntos: { punto: Punto; precio: number | null }[];
+  /**
+   * Lo mismo, zona a zona, en el primer vistazo de antes de investigar: la caja del destino partida en trozos, y el
+   * punto de cada uno, en medio de lo que tiene. El de un viaje hecho no lo lleva: sus zonas son las de la ruta.
+   */
+  zonas?: ZonaDelVistazo[];
+  /** A cuántos de los que pasan se les pidió precio: en el primer vistazo, no a todos. */
+  mirados?: number;
+  /** Verdadero si algo no llegó a tiempo (los precios): lo que se dice es lo que hubo. */
+  aMedias?: boolean;
+  /** Los días baratos para volar ese mes, si se sabe de dónde se sale; null si no se sabe o no hay. */
+  vuelos?: DiasParaVolar | null;
+};
+
+export type ZonaDelVistazo = {
+  id: string;
+  punto: Punto;
+  devueltos: number;
+  pasan: number;
+  conPrecio: number;
+  desde: number | null;
+};
+
+/** El precio más barato visto para cada día de salida de un mes, para un viaje de tantas noches, por billete. */
+export type DiasParaVolar = {
+  origen: string;
+  destino: string;
+  /** AAAA-MM. */
+  mes: string;
+  noches: number;
+  moneda: string;
+  fuente: string;
+  visto: string;
+  dias: { dia: string; precio: number }[];
 };
 
 export const RITMOS = ["calm", "normal", "full"] as const;
@@ -335,6 +368,57 @@ export function comprobarViaje(v: Viaje): Pega[] {
     if (!v.avisos.includes(deSiempre.precios)) pega("avisos", "falta el aviso de que los precios son orientativos");
   }
 
+  return pegas;
+}
+
+/**
+ * Lo que el código comprueba de un primer vistazo antes de dárselo a la web: que las cuentas cuadren (no pasan más de
+ * los que hay, ni tienen precio más de los que pasan), que cada precio sea un importe y cada punto esté en el mapa.
+ */
+export function comprobarVistazo(v: Vistazo): Pega[] {
+  const pegas: Pega[] = [];
+  const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  const cuenta = (n: unknown): boolean => Number.isInteger(n) && (n as number) >= 0;
+  const importe = (n: unknown): boolean => typeof n === "number" && Number.isFinite(n) && n > 0;
+  const cuadra = (donde: string, x: { devueltos: number; pasan: number; conPrecio: number; desde: number | null }) => {
+    if (![x.devueltos, x.pasan, x.conPrecio].every(cuenta)) pega(donde, "una cuenta no es un número entero");
+    if (x.pasan > x.devueltos) pega(donde, "pasan más de los que hay");
+    if (x.conPrecio > x.pasan) pega(donde, "tienen precio más de los que pasan");
+    if ((x.desde === null) !== (x.conPrecio === 0)) pega(donde, "el «desde» no casa con los que tienen precio");
+    if (x.desde !== null && !importe(x.desde)) pega(donde, "el «desde» no es un importe");
+  };
+  cuadra("vistazo", v);
+  if (!/^[A-Z]{3}$/.test(v.moneda)) pega("vistazo", "no dice su moneda");
+  if (v.mirados !== undefined && (!cuenta(v.mirados) || v.mirados > v.pasan || v.conPrecio > v.mirados))
+    pega("vistazo", "a los que se pidió precio no casan con los que pasan y los que lo tienen");
+  v.puntos.forEach((p, i) => {
+    if (!enElMapa(p.punto)) pega(`puntos[${i}]`, "no está en el mapa");
+    if (p.precio !== null && !importe(p.precio)) pega(`puntos[${i}]`, "su precio no es un importe");
+  });
+  if (v.zonas !== undefined) {
+    for (const id of repetidos(v.zonas.map((z) => z.id))) pega(`zonas.${id}`, "sale dos veces");
+    for (const z of v.zonas) {
+      cuadra(`zonas.${z.id}`, z);
+      if (!enElMapa(z.punto)) pega(`zonas.${z.id}`, "no está en el mapa");
+    }
+    const suma = (campo: "devueltos" | "pasan" | "conPrecio"): number => v.zonas!.reduce((s, z) => s + z[campo], 0);
+    if (suma("devueltos") !== v.devueltos || suma("pasan") !== v.pasan || suma("conPrecio") !== v.conPrecio)
+      pega("zonas", "las zonas no suman lo que dice el vistazo");
+  }
+  const d = v.vuelos;
+  if (d !== undefined && d !== null) {
+    if (!/^[A-Z]{3}$/.test(d.origen) || !/^[A-Z]{3}$/.test(d.destino))
+      pega("vuelos", "un aeropuerto no son tres letras");
+    if (!/^\d{4}-\d{2}$/.test(d.mes)) pega("vuelos", "el mes no es un mes");
+    if (!/^[A-Z]{3}$/.test(d.moneda)) pega("vuelos", "no dice su moneda");
+    if (!(Number.isInteger(d.noches) && d.noches > 0)) pega("vuelos", "no dice de cuántas noches es el viaje");
+    if (d.fuente.trim() === "" || Number.isNaN(Date.parse(d.visto))) pega("vuelos", "no dice de dónde sale");
+    d.dias.forEach((x, i) => {
+      if (!fecha(x.dia) || !x.dia.startsWith(d.mes)) pega(`vuelos.dias[${i}]`, "el día no es de ese mes");
+      if (!importe(x.precio)) pega(`vuelos.dias[${i}]`, "el precio no es un importe");
+      if (i > 0 && x.dia <= d.dias[i - 1].dia) pega(`vuelos.dias[${i}]`, "los días no van en orden");
+    });
+  }
   return pegas;
 }
 

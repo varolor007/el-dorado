@@ -5,8 +5,12 @@
 // sesión que devuelve la casa al registrarse o al entrar no baja nunca al navegador: la web la guarda en la cookie
 // y la quita de lo que contesta.
 
+import { createHash } from "node:crypto";
+
 export const COOKIE = "eldorado_session";
 export const CABECERA_DE_LA_SESION = "x-eldorado-session";
+/** Donde se le dice a la casa quién pide un primer vistazo, resumido: para su freno, nunca la dirección tal cual. */
+export const CABECERA_DEL_CLIENTE = "x-eldorado-client";
 const DIAS = 30;
 
 type Entorno = Record<string, string | undefined>;
@@ -16,7 +20,14 @@ export type DeLaWeb = {
   /** Lo que va detrás de `/api/house/`, ya partido. */
   partes: string[];
   consulta: string;
-  cabeceras: { origen: string | null; sitio: string | null; tipo: string | null; cookie: string | null };
+  cabeceras: {
+    origen: string | null;
+    sitio: string | null;
+    tipo: string | null;
+    cookie: string | null;
+    /** La dirección de quien pide, como la dice el servidor de la web (`x-forwarded-for`), para el freno. */
+    direccion?: string | null;
+  };
   cuerpo: string | null;
 };
 
@@ -37,6 +48,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [/^cuenta$/, ["GET"]],
   [/^cuenta\/clave$/, ["PUT", "DELETE"]],
   [/^viajes$/, ["GET", "POST"]],
+  [/^vistazo$/, ["POST"]],
   [new RegExp(`^viajes/${ID}$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/entendido$`), ["PUT"]],
   [new RegExp(`^viajes/${ID}/empezar$`), ["POST"]],
@@ -50,6 +62,16 @@ export function admitida(metodo: string, partes: string[]): "ok" | "not_found" |
   const suya = ADMITIDO.find(([forma]) => forma.test(ruta));
   if (suya === undefined || partes.some((p) => p === "" || p === "." || p === "..")) return "not_found";
   return suya[1].includes(metodo) ? "ok" : "method";
+}
+
+/**
+ * Quién pide, resumido: la primera dirección de `x-forwarded-for` (la que pone el servidor de la web delante),
+ * mezclada con la llave para que no se pueda deshacer. Sin dirección, nadie: solo cuenta el tope de toda la casa.
+ */
+export function clienteDe(direccion: string | null | undefined, llave: string): string | null {
+  const primera = (direccion ?? "").split(",")[0].trim();
+  if (primera === "" || primera.length > 64) return null;
+  return createHash("sha256").update(`${llave}|${primera}`).digest("base64url").slice(0, 32);
 }
 
 /** Una petición que cambia algo tiene que venir de esta misma web: su origen es el sitio que la recibe. */
@@ -115,6 +137,9 @@ export async function aLaCasa(p: DeLaWeb, entorno: Entorno, pedir: typeof fetch 
         authorization: `Bearer ${casa.llave}`,
         ...(sesion === null ? {} : { [CABECERA_DE_LA_SESION]: sesion }),
         ...(cambia && p.cuerpo ? { "content-type": "application/json" } : {}),
+        ...(ruta === "vistazo" && clienteDe(p.cabeceras.direccion, casa.llave) !== null
+          ? { [CABECERA_DEL_CLIENTE]: clienteDe(p.cabeceras.direccion, casa.llave)! }
+          : {}),
       },
       body: cambia && p.cuerpo ? p.cuerpo : undefined,
     });

@@ -1939,3 +1939,34 @@ select.toque {
     gap: 48px;
   }
 }
+
+/* ---------- Las zonas del primer vistazo, en el mapa: su precio más bajo y cuántos pasan */
+
+.pin-zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 11px 5px;
+  border-radius: 12px;
+  background: var(--papel);
+  color: var(--tinta);
+  box-shadow: var(--sombra-corta);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: aparece 0.45s var(--suave) both;
+}
+.pin-zona b {
+  font: 500 0.82rem/1 var(--numeros);
+  font-variant-numeric: tabular-nums;
+  color: var(--oro-fuerte);
+}
+.pin-zona span {
+  font-size: 0.66rem;
+  line-height: 1;
+  color: var(--tinta-suave);
+}
+.cifras[data-tenue="true"] {
+  opacity: 0.55;
+  transition: opacity 0.2s var(--suave);
+}

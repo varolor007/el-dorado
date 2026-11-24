@@ -17,6 +17,7 @@ async function pasa(peticion: Request, contexto: { params: Promise<{ path: strin
       sitio: peticion.headers.get("host"),
       tipo: peticion.headers.get("content-type"),
       cookie: peticion.headers.get("cookie"),
+      direccion: peticion.headers.get("x-forwarded-for") ?? peticion.headers.get("x-real-ip"),
     },
     cuerpo: peticion.method === "GET" ? null : await peticion.text(),
   };
