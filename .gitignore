@@ -1,6 +1,8 @@
 node_modules/
 .env
 .env.*
+# Los de ejemplo sí se suben: llevan las líneas en blanco.
+!.env.ejemplo
 mesa/
 *.log
 .claude/worktrees/

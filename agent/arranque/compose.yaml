@@ -1,0 +1,83 @@
+# La casa de El Dorado en el servidor. Ningún puerto abierto en la máquina: la casa escucha en 127.0.0.1, dentro de
+# su contenedor, y quien la saca fuera comparte su red (network_mode: service:casa). Hay dos maneras de sacarla:
+#
+#   - La puerta con candado (la de partida): este archivo y compose.puerta.yaml, que añade Caddy y abre el 443 y el 80.
+#   - El túnel de ngrok: este archivo con el perfil «tunel». No abre nada.
+#
+# No se lanza a mano: lo hace casa.sh, que elige la manera por ELDORADO_LLEGADA, en el .env. Las llaves de cada
+# servicio salen del .env, y cada uno recibe solo las suyas.
+
+name: eldorado
+
+x-comun: &comun
+  restart: unless-stopped
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  casa:
+    <<: *comun
+    build:
+      context: ../..
+      dockerfile: agent/arranque/Dockerfile
+    image: eldorado-casa:local
+    # El tope de la casa, para no quitarle sitio al ensamblador, que comparte el servidor.
+    mem_limit: ${ELDORADO_MEMORIA:-3g}
+    memswap_limit: ${ELDORADO_MEMORIA:-3g}
+    cpus: ${ELDORADO_NUCLEOS:-2}
+    pids_limit: 512
+    # Al apagarse (al ponerse al día), la casa deja acabar lo que investiga: se le da este tiempo antes de cortarla.
+    stop_grace_period: ${ELDORADO_ESPERA_AL_APAGAR:-60m}
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    environment:
+      ELDORADO_MESA: /datos/mesa
+      ELDORADO_LLAVES: /datos/llaves
+      ELDORADO_PUERTO: "4320"
+      ELDORADO_DIRECCION_PUBLICA: ${NGROK_DOMAIN:-}
+      ELDORADO_MODELO: ${ELDORADO_MODELO:-}
+      ELDORADO_ESFUERZO: ${ELDORADO_ESFUERZO:-}
+      ELDORADO_CORREOS_DE_LA_CASA: ${ELDORADO_CORREOS_DE_LA_CASA:-}
+      ELDORADO_TOKEN_DE_CLAUDE: ${ELDORADO_TOKEN_DE_CLAUDE:-}
+      ELDORADO_PRECIO_ENTRADA: ${ELDORADO_PRECIO_ENTRADA:-}
+      ELDORADO_PRECIO_SALIDA: ${ELDORADO_PRECIO_SALIDA:-}
+      LITEAPI_KEY: ${LITEAPI_KEY:-}
+      TRAVELPAYOUTS_TOKEN: ${TRAVELPAYOUTS_TOKEN:-}
+      PARALLEL_API_KEY: ${PARALLEL_API_KEY:-}
+      GEOAPIFY_KEY: ${GEOAPIFY_KEY:-}
+    volumes:
+      - datos:/datos
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:4320/salud"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  tunel:
+    <<: *comun
+    profiles: [tunel]
+    image: eldorado-casa:local
+    network_mode: service:casa
+    depends_on:
+      casa: { condition: service_healthy }
+    entrypoint: ["/app/agent/arranque/tunel.sh"]
+    command: []
+    mem_limit: 256m
+    cpus: 0.5
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    environment:
+      HOME: /tmp
+      ELDORADO_PUERTO: "4320"
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+      NGROK_DOMAIN: ${NGROK_DOMAIN:-}
+
+volumes:
+  # La mesa (los viajes y las cuentas) y las llaves de la casa. Su copia a otro sitio está por hacer.
+  datos:
