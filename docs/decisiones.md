@@ -451,6 +451,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   sesión no usa para eso el acceso de la propia sesión en la nube, que no es para el agente: hace falta su token
   (`claude setup-token`), en el servidor o, para empezar antes, en el entorno de las sesiones con el nombre
   `ELDORADO_TOKEN_DE_CLAUDE`.
+- **Cómo queda la cuenta de la casa** (una sesión de obra, revisada por quien orquesta). Claude Code, una vuelta por
+  asiento y sin herramientas, con un entorno hecho por lista de lo que pasa y no de lo que se quita: en una sesión
+  en la nube, las variables de la propia sesión lo engancharían a ella. El token llega con nombre propio para que no
+  lo lea otro Claude Code de la máquina. Con lista de correos y sin token, la casa no arranca: una lista que no
+  hace nada no pasa sin que se note. Un correo de la lista que también tiene clave piensa con la cuenta de la casa.
+  Las claves de otros solo se admiten si el entorno dice el precio. Y si la cuenta de la casa agota su límite, el
+  viaje para y lo dice: no cambia sola a una clave.
 
 ## Pendientes
 

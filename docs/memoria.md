@@ -142,10 +142,29 @@ lo hecho, lo decidido, lo que falta, lo probado y lo que no, lo que pide una dec
 para el plan y la memoria. Quien orquesta: escribe el encargo (dónde está dicho en la hoja y el plan, qué hay ya,
 qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no lo hizo, lo junta
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
-PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`),
-la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y la cuenta de la casa (2.9, primera parte,
-`claude/eldorado-2-9-cuenta-de-la-casa`). Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
+PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`)
+y la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`). Ya junta: la cuenta de la casa (2.9, primera
+parte, `claude/eldorado-2-9-cuenta-de-la-casa`). Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
 notas.
+
+**La cuenta de la casa (2.9, primera parte), hecha y sin estrenar** (una sesión de obra, revisada y junta el
+24-nov). `pensarConClaudeCode({ con, token, binario?, entorno? })`, en `agent/launcher/ia_de_claude_code.ts`, lanza
+`claude -p` con la entrada y la salida en `stream-json`, `--verbose`, `--system-prompt-file` (el contrato),
+`--model`, `--effort` si se dice, `--tools ""`, `--no-session-persistence`, `--safe-mode`, `--strict-mcp-config`,
+`--restricted` y `--disable-slash-commands`, en una carpeta vacía y con un HOME propio y vacío. De la máquina solo le
+pasan PATH, lo de la red (proxy y certificados) y el token, que la casa lee como `ELDORADO_TOKEN_DE_CLAUDE` y le da
+como `CLAUDE_CODE_OAUTH_TOKEN`. El gasto es el `total_cost_usd` que dice Claude Code: con la cuenta de la casa no
+hace falta precio. `iaDe` (en `arrancar.ts`): con `ELDORADO_CORREOS_DE_LA_CASA` hace falta ese token (y
+`ELDORADO_CLAUDE` si el programa no se llama `claude`); las claves de viajeros, solo si el entorno dice el precio.
+La puerta dice con qué piensa cada cuenta (`account.thinks_with`: `house`, `key` o nada) y `/empezar` no pide clave
+a una cuenta de la casa. `de_verdad.ts` piensa con la cuenta si está el token y, si no, con una clave; su techo es
+opcional. **Sin comprobar hasta la primera llamada de verdad**: la forma exacta de la entrada con fotos y de la
+salida, el texto que da cuando se acaba el límite o el token no vale, y que Claude Code funcione con un HOME vacío.
+**La llamada mínima de prueba**, cuando haya token (gasta de la cuenta del PM, que ya dio su sí), desde la raíz:
+`ELDORADO_TOKEN_DE_CLAUDE=<token> ELDORADO_MODELO=<modelo> node -e '...'` importando `pensarConClaudeCode` y
+pidiéndole una palabra, primero solo con texto y después con una foto pequeña. Lo que el PM tiene por decidir de
+esta pieza: si la casa admite a la vez claves de otros (hoy, solo si se le da precio) y qué pasa con un viaje suyo
+cuando su cuenta agota el límite (hoy para y lo dice).
 
 **El PM no va a meter su clave: quiere usar su cuenta de Claude, y todo en su servidor (24-nov, 2.9, en obra).** El
 túnel de abajo ya no hace falta: dijo «todo en el servidor directamente», así que la web y la casa van juntas en
