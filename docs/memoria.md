@@ -244,8 +244,16 @@ los tres minutos de los papeles la pantalla en vivo está casi vacía. «Lo que 
 mientras trabaja un asiento. En los papeles, lo dudoso va arriba aunque no importe (un español a Portugal). Un
 viaje ya en el mapa, abierto sin `at=trip` en su dirección, enseña el mapa del mundo (el enlace de «Tus viajes» sí
 lo lleva). La casa y la web locales quedaron paradas al acabar. **Lo que siguió (24-nov)**: tres adversarios
-revisan la tanda, cada uno en su copia y sin tocar nada (la mecánica, la seguridad y las biblias); su informe irá a
-`docs/revisiones/tanda-4.md`. Y con lo que contestó el PM, dos sesiones de obra más: que «Volver a intentarlo»
+revisaron la tanda, cada uno en su copia y sin tocar nada (la mecánica, la seguridad y las biblias): su informe,
+hallazgo a hallazgo y con lo que se hizo, en [revisiones/tanda-4.md](revisiones/tanda-4.md). Un bloqueante, de las
+biblias (el arranque no es del todo el de la hoja: un botón o dos), que es del PM; lo demás, diecinueve importantes
+y veinte menores, comprobado y arreglado con su prueba o dejado a su decisión. La batería pasó de 662 a 681. Lo
+que cambió por la revisión: «en regla» pide dos sitios distintos o un dominio propio del gobierno del destino, y a
+la pantalla solo llegan fuentes oficiales; una cita son palabras enteras; no puede haber más pasaportes que
+viajeros; un asiento no abre direcciones de dentro de la red; un texto para el viajero no lleva direcciones sin su
+esquema; el acta que se da al dueño son claves y números; la llave de la web no se escribe en el registro; la web
+manda sus cabeceras; la frase del conductor no se enseña hasta que la firme el PM; y la batería mira que el estado
+de un bloque del plan sale de sus puntos. Y con lo que contestó el PM, dos sesiones de obra más: que «Volver a intentarlo»
 repita solo el asiento que falló (`claude/eldorado-2-5-reintentar`) y que los avisos de las fechas los cuente el
 que explica, con una frase que pasa la puerta 7 (`claude/eldorado-5-3-avisos-contados`, ya junta). Y una tercera,
 por la revisión de seguridad: los frenos de la puerta, de entrar y de registrarse (`claude/eldorado-2-8-frenos`).

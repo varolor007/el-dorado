@@ -568,6 +568,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   de elegir los sitios. Los sitios y la búsqueda son código y no gastan; la ruta es un asiento, unos 25 céntimos,
   y es lo que queda en riesgo si un papel bloquea. A cambio, la pantalla se mueve desde el primer segundo y el
   viaje sale unos tres minutos antes.
+- **La revisión de la tanda 4** (la sesión, por la regla de la obra): tres adversarios en su copia. Lo que la
+  sesión decidió al comprobar sus hallazgos queda en `revisiones/tanda-4.md`, y dos cosas las dejó como estaban,
+  con su porqué: una nota puede nombrar una página que se intentó abrir sin éxito aunque diga que lo vio, y lo que
+  cuelga de una nota es la misma nota. La frase del conductor deja de enseñarse hasta que la firme el PM.
 - **El ensayo entero desde la web, con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): unos
   7,19 dólares de equivalente. Cuando el filtro de seguridad del modelo marcó el mensaje de un asiento, la sesión
   lo repitió una sola vez y sin cambiar nada, ni el mensaje ni el modelo, y dejó dicho al PM que, si volvía a
@@ -589,6 +593,12 @@ Lo que deja la obra del 24-nov, a decisión del PM:
 - **Los números de los papeles y del calendario**: 16 búsquedas y 24 páginas para los papeles; 5 avisos, 2 ventanas
   y 21 días como mucho para el calendario. Y dos cosas de cómo se portan: que un fallo de los papeles pare el
   viaje y pregunte al viajero, y el paso de elegir otras fechas («Tú, las fechas»), que aún no está.
+- **Lo que deja la revisión de la tanda 4, porque toca la hoja** (está entero en `revisiones/tanda-4.md`): el
+  arranque, con un botón o con dos; si la frase del conductor se enseña (hoy, no); si un papel que ya es tarde para
+  hacer para el viaje; si se lanza el de los papeles sin ningún dominio oficial, y cómo se dice una doble
+  nacionalidad; cuándo no se buscan vuelos y si se admiten dos escalas; los destinos de varios países; en qué
+  idiomas se sirve El Dorado; y los números del primer vistazo, de la habitación que se supone y de los topes de
+  grupo y de noches.
 - **Qué hace la casa cuando el filtro de seguridad del modelo marca el mensaje de un asiento** (pasó una vez en el
   ensayo, con una lista de sitios normal): hoy para y lo cuenta el conductor, como «un fallo técnico». Por decidir:
   si se le dice al viajero lo que fue, y si algún asiento debe tener un segundo modelo para cuando el primero no

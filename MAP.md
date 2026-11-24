@@ -29,7 +29,7 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `web/` | La web de El Dorado, con su propio paquete y sus dependencias: la identidad (`src/app/globals.css`); la portada (`src/app/page.tsx`); el panel (`src/app/(panel)/`), con el mapa (`plan/`), tus viajes (`trips/`), tu clave (`key/`) y tu cuenta (`account/`); el lado de la web de la puerta de la casa (`src/app/api/house/`, con lo que admite en `src/lib/casa.ts`) tu cuenta vista desde el navegador (`src/lib/cuenta.ts`) y un viaje tuyo en vivo (`src/lib/viajeVivo.ts`), y el primer vistazo de un viaje nuevo (`src/lib/vistazo.ts`, y su pieza, `src/piezas/PrimerVistazo.tsx`); las piezas (`src/piezas/`: el mapa, el carril, el buscador, la hoja, las pantallas, las preguntas de empezar, la investigación en vivo y la de carga), y lo que le pide a la casa (`src/app/api/`). Sus textos, en inglés y en español, en `src/lib/textos.ts` | En seco, con el viaje grabado |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |
 | `docs/paginas/` | Las dos biblias: los datos de la hoja y del plan (`hoja.datos.mjs` y `plan.datos.mjs`), el formato de las hojas de Cortex, el pintor (`pinta.mjs`) y las páginas que salen de ahí y se publican | La hoja y el plan, versión 2, firmados el 23-nov |
-| `docs/revisiones/` | El informe de los tres adversarios al cerrar cada tanda: cada hallazgo, con lo que se hizo | La de la tanda 3, del 23-nov |
+| `docs/revisiones/` | El informe de los tres adversarios al cerrar cada tanda: cada hallazgo, con lo que se hizo | La de la tanda 3, del 23-nov, y la de la tanda 4, del 24-nov |
 
 ## Lo que aún no existe
 
