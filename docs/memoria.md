@@ -20,8 +20,8 @@ dice dónde y por qué, y el run sigue parado hasta que se quita ese archivo.
 La página de la revisión, con sus capturas: https://claude.ai/artifact/MUuPbQ6TDhxMkibR8NeViZ.
 
 Al cerrarla, la revisaron tres adversarios que no la hicieron: su informe, hallazgo a hallazgo y con lo que se hizo,
-en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394, y con lo del 24-nov, a más de 400. Lo que hay que saber de
-cómo quedó:
+en [revisiones/tanda-3.md](revisiones/tanda-3.md). La batería pasó de 297 pruebas a 394 y, con lo del 24-nov, a 407.
+Lo que hay que saber de cómo quedó:
 
 - **Lo que lee el viajero lo dice la web por claves, o lo escribe el que explica y pasa la puerta 7.** Ninguna frase
   de otro asiento llega a la pantalla: ni la ficha de un alojamiento, ni un aviso de la casa.
@@ -44,9 +44,15 @@ cómo quedó:
 - **Las fotos se encogen** antes de mirarlas, con `sharp`: la única pieza de fuera que lleva el agente.
 - **El 3.5**, el buscador y el lector de webs, va en la tanda 4.
 
-No dio todavía el visto bueno de la tanda 3. **Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo y tu cuenta**, la primera que gasta de una
-clave. Antes de lanzar un asiento con una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el
-asiento, confinado a su salida.
+**Lo que no se ha comprobado con un viaje de verdad**, y así se le dijo al PM: un trayecto que no se anda (el viaje
+de prueba se anda entero; lo cubren las pruebas y una copia de prueba del viaje), un viaje entero con más de una
+habitación (una llamada de verdad a la fuente confirmó cómo responde: una tarifa por habitación, que se suman) y que
+el precio del vuelo guardado sea por persona (sale de cómo se pide, no de una llamada hecha ese día).
+
+No dio todavía el visto bueno de la tanda 3. **Espera el visto bueno del PM para empezar la tanda 4: la casa en vivo
+y tu cuenta**, la primera que gasta de una clave. Antes de lanzar un asiento con una clave hay que cerrar lo que la
+revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida. Y espera su decisión del 3.14: de qué
+fuente salen las rutas, y si puede ser de pago.
 
 El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
 viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se
