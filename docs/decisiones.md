@@ -289,7 +289,9 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **El visto bueno de la tanda 3** (el PM: «ok»). La tanda 3, el agente hace el viaje, queda cerrada.
 - **Antes de la tanda 4, las fuentes de rutas** (el PM: «ok, primero esto»). La sesión le propuso mirar primero qué
   fuentes hay para las rutas y lo que cuestan, sin contratar nada, y traerle dos o tres opciones. Qué fuente se usa,
-  y si es de pago, lo sigue decidiendo él (3.14). Lo que se mire va en [fuentes.md](fuentes.md).
+  y si es de pago, lo sigue decidiendo él (3.14). Mirado ese mismo día, solo leyendo: está en [fuentes.md](fuentes.md), con tres opciones. La que recomienda la
+  sesión es Geoapify: da lo que se tarda y si se puede ir, a pie, en coche y en transporte público, deja guardar sus
+  resultados y es gratis a este tamaño. Lo que cuesta cada manera no lo da ninguna fuente abierta en todo el mundo.
 
 - **El buscador y el lector de webs (3.5), a la tanda 4** (el PM: «vale, lo que veas»). No estaba en ninguna tanda, y
   lo usan los asientos que consultan la web, que llegan con el bloque 5.
@@ -343,7 +345,8 @@ Lo que deja la tanda 3, a decisión del PM:
   viajero. La hoja dice que no se guarda nada que no sea suyo: decide el PM.
 - **A quién se mira**: lo sigue eligiendo la regla provisional. Falta que lo elijan las cribas, y con qué tope de
   gasto.
-- **El transporte público**: la zona solo sabe lo que se anda. Un hotel a diez minutos en metro del centro sale
+- **La fuente de rutas** (3.14, 24-nov): elegir entre las tres opciones de [fuentes.md](fuentes.md). Con ella, la
+  zona de un alojamiento deja de saber solo lo que se anda: hoy, un hotel a diez minutos en metro del centro sale
   peor de lo que es.
 - **La hora de llegada y de salida**: sin ella, el día de llegada y el de salida cuentan como los demás.
 

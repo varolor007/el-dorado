@@ -277,6 +277,89 @@ el viajero traiga su lista o, después, la extensión.
 **Antes de construir**: una prueba pequeña con los hoteles de una ciudad (cuántos tienen web que se deja leer, qué se
 saca y cuánto cuesta por hotel), y que un abogado mire cómo se guardan y se enseñan las fotos.
 
+## Las rutas: cómo se va de un sitio a otro, lo que tarda y lo que cuesta (24-nov)
+
+Mirado el 24-nov-2026, a petición del PM («ok, primero esto»), para el punto 3.14 del plan: de dónde salen el tiempo
+de verdad de un trayecto, las maneras de ir que hay y lo que cuesta cada una. Solo lectura: no se registró nada ni se
+llamó a ninguna API. Lo hicieron cuatro búsquedas, cada una con sus fuentes; la sesión comprobó aparte, en sus
+páginas, las dos que mejor encajan (Geoapify y TripGo). Lo que no se pudo leer en una página oficial va como «sin
+confirmar».
+
+### Lo que hace falta
+
+- De cada trayecto (del alojamiento a un sitio, de un sitio a otro y, en un viaje de varias bases, de una base a
+  otra), por cada manera de ir: lo que se tarda de verdad, lo que hay de camino, si esa manera existe allí y lo que
+  cuesta.
+- En cualquier parte del mundo, y para cualquier clase de viaje.
+- Que se pueda guardar con el viaje, enseñar en nuestro mapa y pasar por el que explica, que es una IA.
+- Cuánto se pide, medido con el viaje de prueba: enseñar un viaje son 16 trayectos, 32 con las tres maneras de
+  dormir; elegir alojamiento con tiempos de verdad son unos 400 pares (32 alojamientos con precio por 12 sitios),
+  por cada manera de ir.
+
+### Lo que más pesa: guardar, la IA y el mapa
+
+| Fuente | Guardar con el viaje | Pasarlo por una IA | En nuestro mapa |
+|---|---|---|---|
+| Geoapify | Sí: «you can store and redistribute your results», en la página del producto; sus condiciones (versión de feb-2024) no lo tocan | Sin cláusula | Sin cláusula; pide atribución |
+| openrouteservice (HeiGIT) | Sin confirmar. Sus resultados llevan licencia de compartir igual (CC BY-SA 4.0), según un resumen de sus condiciones | Sin confirmar | Sí, con atribución |
+| TripGo (SkedGo) | Sin cláusula | Sin cláusula en lo leído (de la cláusula 17 en adelante, sin leer) | No lo tocan. No deja mezclar sus resultados con los de otros sin que se distingan (8(e)) y pide «Powered by SkedGo/TripGo», bien visible, en la misma pantalla |
+| Google Routes (condiciones para Europa) | No: solo coordenadas, y 30 días | No se puede «crear contenido» a partir del suyo; sin permiso expreso para una IA que escriba al usuario | El tiempo y la distancia, sí; las líneas y las paradas, no junto a un mapa |
+| HERE | 30 días | Prohibido sin acuerdo escrito, también la IA generativa | Sí, con atribución |
+| TomTom | No | No lo prohíbe expresamente | No lo dice |
+| Mapbox | No | Prohibido «operar» una IA con sus servicios; tampoco deja las consultas hechas por código | Sí, con atribución |
+| Stadia Maps | No: solo en el cliente, 7 días | Sin cláusula para rutas | Sin confirmar |
+| GraphHopper | Solo caché temporal en el cliente | Sin cláusula | Sí |
+
+### Qué da cada una
+
+| Fuente | ¿Se entra ya? | Precio | Qué da | La pega |
+|---|---|---|---|---|
+| Geoapify | Sí, sin tarjeta | 3.000 créditos gratis al día; después, desde 59 USD al mes (10.000 al día). Un trayecto, 1 crédito; una matriz de 32 por 12, 320 | A pie, en coche, en bici y en transporte público: con los horarios oficiales donde los hay («transit») y, donde no, con las líneas de OpenStreetMap («approximated_transit»). Matriz de hasta 1.000 casillas. Dice cubrir el transporte público de todo el mundo | No da tarifas ni precio de taxi. Sus páginas no dicen si la matriz admite el transporte público ni si da las horas de salida. Su página de precios deja el plan gratis en producción; sus condiciones dicen «con algunas limitaciones». Atribución obligatoria en el plan gratis |
+| openrouteservice (HeiGIT) | Sí, con cuenta gratis | Gratis: 2.000 rutas y 500 matrices al día (de un resumen del buscador: su página no se pudo leer) | A pie, en coche y en bici; matriz de 3.500 casillas | Sin transporte público fuera de Alemania. Lo de compartir igual sobre lo guardado, por mirar |
+| TripGo (SkedGo) | Sí, sin tarjeta | Gratis: 10.000 consultas al mes; por 5 USD al mes, 75.000 | Transporte público, taxi, coche con conductor, coche propio, a pie y largo recorrido, juntos de puerta a puerta, con lo que cuesta cuando lo sabe: un coste vacío quiere decir que no se sabe, no que sea gratis. Dice por su API qué regiones y qué maneras cubre | Más de 500 ciudades y regiones: no es el mundo entero. Sus condiciones se pueden cambiar sin aviso. Los campos de precio, vistos en su especificación por una sola búsqueda |
+| Google Routes | Sí, con tarjeta | 10.000 gratis al mes; después, 5 USD por 1.000 (en la matriz, por casilla) | A pie, en coche, en bici y en transporte público, con líneas, paradas y horas; la tarifa, solo donde la sabe; peajes en algunas ciudades | Sus condiciones, arriba. Sin precio de taxi |
+| HERE | Sí, con tarjeta | Gratis al mes: 30.000 rutas y 5.000 de transporte público; después, de 0,70 a 4,66 EUR por 1.000 | A pie, en coche y en transporte público en 67 países; peajes. Las tarifas, «pronto» | La IA, prohibida sin acuerdo |
+| TomTom y Mapbox | Sí | Gratis al mes: 20.000 y 100.000 | A pie y en coche | Sin transporte público, y no dejan guardar |
+| GraphHopper, Stadia Maps y TravelTime | Sí | El plan gratis, solo para uso no comercial | A pie y en coche; TravelTime, además, transporte público en 143 países | No valen para vender; Stadia y TravelTime tampoco dejan guardar |
+| Transitous (de la comunidad) | Sí, sin clave | Gratis | El transporte público de muchos países, con tarifas en pruebas | Prohíbe el uso comercial y pide que el proyecto sea abierto |
+| Transitland y Navitia | Sin confirmar: sus páginas no se pudieron leer | | Transitland, transporte público solo en Estados Unidos; Navitia, con tarifas donde las hay | |
+| Taxi: Uber, FreeNow, Bolt, Lyft y TaxiFareFinder | Uber y FreeNow, cerradas; Bolt y Lyft, sin confirmar; TaxiFareFinder, con clave a petición | TaxiFareFinder: 5.000 consultas gratis al día | El precio estimado de una carrera, en sus ciudades | TaxiFareFinder prohíbe guardar y las llamadas hechas por código |
+| Tren, bus y ferry: Omio, Trainline, 12Go, Busbud, Distribusion, FlixBus, Kiwi y Rome2Rio | Ninguna abierta: Omio pide tráfico; Trainline, solo enlaces; 12Go, Busbud, Distribusion y FlixBus, a petición; Kiwi, por invitación; Rome2Rio, sin confirmar (su documentación ya no está) | Comisión, sin confirmar | Precios y horarios, para quien tiene acuerdo | Al principio, solo enlaces |
+| Por Travelpayouts: intui.travel y GetTransfer | A petición (de resúmenes del buscador: su ayuda no se pudo abrir) | Comisión: en intui.travel, un 10 % | Traslados con su precio, en más de 175 países | El resto de sus programas de tierra (12Go, Kiwitaxi, Localrent, Economybookings), solo enlaces |
+| Peajes y gasolina: TollGuru | Sí | 14 días de prueba; después, desde 80 USD al mes | Lo que cuesta un trayecto en coche | Sin plan gratis |
+
+### Lo que sale de aquí
+
+- **Lo que se tarda y si se puede ir, a pie, en coche y en transporte público**: hay una fuente que encaja con lo que
+  hace El Dorado (guardar, enseñar en nuestro mapa, sin cláusula contra la IA) y es gratis a este tamaño: Geoapify.
+  Enseñar un viaje gasta menos de 100 créditos; elegir alojamiento con tiempos de verdad, unos 320 por cada manera
+  de ir. Caben varios viajes al día en el plan gratis, y decenas si para elegir alojamiento se sigue con la cuenta
+  aproximada de hoy.
+- **Lo que cuesta cada manera**: ninguna fuente abierta lo da en todo el mundo. TripGo lo da donde cubre. Google lo
+  da donde lo sabe, pero no deja guardarlo ni contarlo con una IA.
+- **Entre ciudades, en tren, bus o ferry, con su precio**: solo con acuerdos, que piden tráfico o una web en marcha.
+  Mientras, enlaces.
+- **El enlace de cada día a Google Maps**, que la web ya lleva, no usa su API: sigue valiendo para la ruta exacta.
+- **Las grandes (Google, HERE, TomTom, Mapbox) no encajan** con un viaje que se guarda y que explica una IA: lo
+  prohíben sus condiciones, no su precio.
+
+### Las opciones, para el PM
+
+1. **Geoapify** (la que recomienda la sesión). Da el tiempo de verdad y si se puede ir, por las tres maneras. Lo que
+   cuesta cada una sigue sin saberse: se dice la distancia y el tiempo, como pidió el PM para cuando no se sabe.
+   Gratis a este tamaño.
+2. **Geoapify y, donde cubre, TripGo**. Añade lo que cuesta el transporte público y el taxi en sus más de 500
+   ciudades y regiones. Pide enseñar su marca bien visible y no mezclar sus datos con los de otros; y sus
+   condiciones no dicen nada de guardar ni de la IA: antes, preguntárselo por escrito. Gratis a este tamaño.
+3. **Google Routes**. La más completa, con tarjeta y 5 USD por cada 1.000 consultas pasadas las 10.000 gratis del
+   mes. No encaja con sus condiciones para Europa: habría que pedirla en vivo cada vez, sin guardarla y sin que la
+   cuente el que explica.
+
+Antes de construir sobre la que se elija: probarla con una clave gratis en cuatro o cinco destinos de clases
+distintas (una gran ciudad de otro continente, un pueblo, un sitio de naturaleza y una ruta por un país), para ver
+qué transporte público conoce de verdad y cuál aproxima; y preguntar por escrito lo que sus condiciones no dicen (a
+Geoapify, la IA y las limitaciones del plan gratis en producción).
+
 ## Lo que queda por saber
 
 - LiteAPI: sus condiciones sobre IA y caché, lo que cuesta el exceso de búsquedas y cuántas fotos da.
@@ -284,6 +367,11 @@ saca y cuánto cuesta por hotel), y que un abogado mire cómo se guardan y se en
 - Qué aerolíneas de bajo coste cubre cada fuente de vuelos.
 - En qué queda la demanda de Google a SerpApi (plazo para volver a presentarla, hacia el 30-nov-2026).
 - Si se pueden usar las fotos de la web de cada hotel, y con qué condiciones.
+- Geoapify: qué transporte público conoce de verdad en cada clase de destino y cuál aproxima; si su matriz lo admite;
+  y, por escrito, si deja pasar sus resultados por una IA y qué limita del plan gratis en producción.
+- TripGo: por escrito, si deja guardar sus resultados con un viaje y pasarlos por una IA, y cómo hay que enseñarlos
+  al lado de los de otra fuente.
+- openrouteservice: sus condiciones y sus planes, que no se pudieron leer.
 
 ## Fuentes
 
@@ -323,3 +411,44 @@ Vuelos y trenes:
 - https://skift.com/2026/09/03/amadeus-brings-travel-tech-into-claude/
 - https://developers.google.com/travel/flights
 - https://www.thetrainline.com/about-us/affiliates
+
+Rutas:
+
+- https://www.geoapify.com/pricing/
+- https://www.geoapify.com/pricing-details/
+- https://www.geoapify.com/routing-api/
+- https://apidocs.geoapify.com/docs/routing/
+- https://apidocs.geoapify.com/docs/route-matrix/
+- https://www.geoapify.com/terms-and-conditions/
+- https://giscience.github.io/openrouteservice/hosted-api-restrictions
+- https://skedgo.com/tripgo-api/pricing/
+- https://skedgo.com/home/terms-of-use/
+- https://developer.tripgo.com/faq/
+- https://cloud.google.com/terms/maps-platform/eea
+- https://cloud.google.com/terms/maps-platform/eea/maps-service-terms
+- https://developers.google.com/maps/comms/eea/routes
+- https://developers.google.com/maps/billing-and-pricing/pricing
+- https://developers.google.com/maps/documentation/routes/usage-and-billing
+- https://www.here.com/get-started/pricing
+- https://www.here.com/en-gb/terms/here-platform-terms
+- https://docs.here.com/transit/docs/coverage-transit
+- https://docs.tomtom.com/pricing
+- https://docs.tomtom.com/legal/terms-and-conditions
+- https://www.mapbox.com/pricing
+- https://www.mapbox.com/legal/product-terms
+- https://www.graphhopper.com/pricing/
+- https://www.graphhopper.com/terms/
+- https://stadiamaps.com/pricing/
+- https://stadiamaps.com/terms-of-service/
+- https://traveltime.com/pricing
+- https://traveltime.com/terms-and-conditions
+- https://transitous.org/api/
+- https://doc.navitia.io/
+- https://www.taxifarefinder.com/apifaq.php
+- https://developer.uber.com/docs/riders/references/api/v1.2/estimates-price-get
+- https://www.thetrainline.com/about-us/partnerships/affiliates
+- https://www.busbud.com/partner/busbud-api/
+- https://docs.distribusion.com/dt/api/getting-started/intro
+- https://global.flixbus.com/company/partners/affiliate-partners
+- https://partner.intui.travel/en/
+- https://tollguru.com/toll-api-pricing-plans

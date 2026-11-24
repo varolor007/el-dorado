@@ -3,7 +3,7 @@
 Al día el 24-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 3, cerrada con el visto bueno del PM (24-nov); antes de la 4, las fuentes de rutas** (el
+**Estamos aquí: la tanda 3, cerrada con el visto bueno del PM (24-nov); las fuentes de rutas, a su decisión** (el
 estado, punto a punto, en [plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él
 empezó la 3, **el agente hace el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
 absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje».
@@ -50,8 +50,12 @@ habitación (una llamada de verdad a la fuente confirmó cómo responde: una tar
 el precio del vuelo guardado sea por persona (sale de cómo se pide, no de una llamada hecha ese día).
 
 **El PM dio el visto bueno a la tanda 3 el 24-nov** («ok»), y pidió una cosa antes de la 4 («ok, primero esto»):
-mirar qué fuentes hay para las rutas y lo que cuestan, sin contratar nada, y traerle dos o tres opciones (3.14). Lo
-que se mire va en [fuentes.md](fuentes.md); la elección, y si es de pago, es suya. Después viene **la tanda 4: la casa
+mirar qué fuentes hay para las rutas y lo que cuestan, sin contratar nada, y traerle dos o tres opciones (3.14). Está
+mirado, solo leyendo (ni un registro ni una llamada), y escrito en [fuentes.md](fuentes.md), con tres opciones: la
+que recomienda la sesión es Geoapify (lo que se tarda y si se puede ir, a pie, en coche y en transporte público;
+deja guardar; gratis a este tamaño). Lo que cuesta cada manera no lo da ninguna fuente abierta en todo el mundo. **La
+elección es del PM, y se le ha pedido.** Antes de construir sobre la que elija hay que probarla con una clave gratis,
+que da él por el formulario seguro, en destinos de clases distintas. Después viene **la tanda 4: la casa
 en vivo y tu cuenta**, la primera que gasta de una clave. Antes de lanzar un asiento con una clave hay que cerrar lo
 que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
 
