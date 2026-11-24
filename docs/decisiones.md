@@ -379,7 +379,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   números propios recomienda Geoapify, y TripGo después. El PM contesta que, si el problema es la IA, no se
   cuenta: «ponemos los datos en bruto y un script saca las mejores combinaciones». La sesión le da la razón en eso
   (quita el reparo de la IA) y le dice lo que no quita: guardar, la tabla que leen los asientos, las líneas junto
-  al mapa y que la cuenta es nuestra. Queda como segunda opción, en [fuentes.md](fuentes.md). Espera su respuesta.
+  al mapa y que la cuenta es nuestra. Queda como segunda opción, en [fuentes.md](fuentes.md).
+- **Se prueba Geoapify primero** (el PM: «vale, probamos Geoapify primero»). Si se queda corta en transporte
+  público, Google en vivo y con un script, solo para eso. El enlace a Google Maps de cada trayecto se queda en los
+  dos casos. Su clave va en la dirección de cada pedido y no en una cabecera, así que el formulario seguro no puede
+  ponerla: la pone el PM como variable del entorno (`GEOAPIFY_KEY`).
 
 ## Pendientes
 

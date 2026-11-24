@@ -5,6 +5,16 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { leerCalendario, leerVuelos, vistoEnEnlace, type Trayecto } from "../../agent/tools/fuentes/aviasales.ts";
 import { encendida } from "../../agent/tools/fuentes/enchufes.ts";
+import {
+  caminoEntre,
+  CASILLAS_DE_UNA_MATRIZ,
+  claveDeGeoapify,
+  cuerpoDeMatriz,
+  direccionDeRuta,
+  leerMatriz,
+  leerRuta,
+  matrizDeCaminos,
+} from "../../agent/tools/fuentes/geoapify.ts";
 import { clave, ErrorDeFuente, pedirJson, REINTENTOS, reloj } from "../../agent/tools/fuentes/http.ts";
 import {
   cuerpoDePrecios,
@@ -19,6 +29,7 @@ import {
 } from "../../agent/tools/fuentes/liteapi.ts";
 import { repartirEnHabitaciones } from "../../agent/tools/fuentes/tipos.ts";
 import { cuerpoDeZona, leerOfertas } from "../../agent/tools/fuentes/parallel.ts";
+import { puntoDe } from "../../agent/launcher/rutas.ts";
 import { ALOJAMIENTOS, ESTANCIA, MINIMOS, VISTO } from "../cases/inventado/inventado.ts";
 
 test("LiteAPI: la lista, y lo que viene sin identificador o sin posición no entra", () => {
@@ -503,4 +514,201 @@ test("trampa: con la clave de una fuente no se sigue una redirección; sin clave
     pedidos.map((p) => p.redirect),
     ["error", undefined, undefined],
   );
+});
+
+// Geoapify: las rutas. Su clave va en la dirección de cada pedido, y por eso se cuida de que no salga en ningún fallo.
+
+const CLAVE_DE_RUTAS = "claveinventada0123456789abcdef";
+const A = { lat: 10.5, lon: 20.25 };
+const B = { lat: 10.75, lon: 20.5 };
+
+/** Una Geoapify de mentira: contesta por el modo que se le pide, y apunta lo que le llega. */
+async function conGeoapify(
+  contesta: (modo: string, url: string) => Response | Error,
+  prueba: (pedidos: { url: string; cuerpo: unknown }[]) => Promise<void>,
+): Promise<void> {
+  const deVerdad = { fetch: globalThis.fetch, clave: process.env.GEOAPIFY_KEY, dormir: reloj.dormir };
+  const pedidos: { url: string; cuerpo: unknown }[] = [];
+  process.env.GEOAPIFY_KEY = CLAVE_DE_RUTAS;
+  reloj.dormir = async () => {};
+  globalThis.fetch = (async (url: string, pedido?: RequestInit) => {
+    const cuerpo = typeof pedido?.body === "string" ? JSON.parse(pedido.body) : null;
+    pedidos.push({ url, cuerpo });
+    const modo = new URL(url).searchParams.get("mode") ?? (cuerpo as { mode?: string } | null)?.mode ?? "";
+    const r = contesta(modo, url);
+    if (r instanceof Error) throw r;
+    return r;
+  }) as typeof fetch;
+  try {
+    await prueba(pedidos);
+  } finally {
+    globalThis.fetch = deVerdad.fetch;
+    reloj.dormir = deVerdad.dormir;
+    if (deVerdad.clave === undefined) delete process.env.GEOAPIFY_KEY;
+    else process.env.GEOAPIFY_KEY = deVerdad.clave;
+  }
+}
+
+const ruta = (metros: number, segundos: number): Response =>
+  new Response(JSON.stringify({ results: [{ distance: metros, distance_units: "meters", time: segundos }] }));
+const noHay = (): Response =>
+  new Response(JSON.stringify({ statusCode: 400, message: "No path could be found" }), { status: 400 });
+
+test("Geoapify: la clave se lee del entorno, y sin una clave de verdad no se pide nada", () => {
+  assert.equal(claveDeGeoapify({ GEOAPIFY_KEY: ` ${CLAVE_DE_RUTAS} ` }), CLAVE_DE_RUTAS);
+  // La que pone sola la red en las otras fuentes aquí no vale: va en la dirección, no en una cabecera.
+  for (const mala of [undefined, "", "proxy-injected", "corta", "con espacios dentro de la clave"])
+    assert.throws(() => claveDeGeoapify({ GEOAPIFY_KEY: mala }), /falta su clave en el entorno \(GEOAPIFY_KEY\)/);
+});
+
+test("Geoapify: la dirección de una ruta y lo que mide, sin fiarse de lo que venga roto", () => {
+  const url = new URL(direccionDeRuta(A, B, "walk", CLAVE_DE_RUTAS));
+  assert.equal(url.origin + url.pathname, "https://api.geoapify.com/v1/routing");
+  assert.deepEqual(Object.fromEntries(url.searchParams), {
+    waypoints: "10.5,20.25|10.75,20.5",
+    mode: "walk",
+    format: "json",
+    apiKey: CLAVE_DE_RUTAS,
+  });
+  assert.deepEqual(leerRuta({ results: [{ distance: 1234.4, distance_units: "meters", time: 950 }] }), {
+    metros: 1234.4,
+    segundos: 950,
+  });
+  assert.deepEqual(leerRuta({ results: [{ distance: 0, time: 0 }] }), { metros: 0, segundos: 0 });
+  for (const rota of [
+    null,
+    {},
+    { results: [] },
+    { results: [{ distance: 5 }] },
+    { results: [{ distance: -1, time: 3 }] },
+    "texto",
+  ])
+    assert.equal(leerRuta(rota), null);
+  // Si contestara en otra unidad, no se adivina.
+  assert.equal(leerRuta({ results: [{ distance: 3, distance_units: "Miles", time: 300 }] }), null);
+});
+
+test("Geoapify: la matriz se pide con la longitud delante y se lee casilla a casilla, con sus huecos", () => {
+  assert.deepEqual(cuerpoDeMatriz([A], [B, A], "drive"), {
+    mode: "drive",
+    sources: [{ location: [20.25, 10.5] }],
+    targets: [{ location: [20.5, 10.75] }, { location: [20.25, 10.5] }],
+  });
+  const json = {
+    sources_to_targets: [
+      [
+        { distance: 100, time: 60 },
+        { distance: null, time: null },
+      ],
+      "rota",
+    ],
+  };
+  assert.deepEqual(leerMatriz(json, 3, 2), [
+    [{ metros: 100, segundos: 60 }, null],
+    [null, null],
+    [null, null],
+  ]);
+});
+
+test("Geoapify: un camino por cada manera; el transporte, de verdad si lo hay y, si no, aproximado", async () => {
+  await conGeoapify(
+    (modo) => (modo === "transit" ? noHay() : ruta(modo === "walk" ? 1490.6 : 2100, modo === "walk" ? 1130 : 20)),
+    async (pedidos) => {
+      const andando = await caminoEntre(A, B, "walk");
+      assert.deepEqual(
+        [andando?.manera, andando?.metros, andando?.minutos, andando?.aproximado],
+        ["walk", 1491, 19, false],
+      );
+      assert.equal(andando?.fuente, "geoapify");
+      assert.ok(!Number.isNaN(Date.parse(andando?.visto ?? "")));
+      // Un camino no tarda cero minutos aunque la fuente lo redondee a nada.
+      assert.equal((await caminoEntre(A, B, "car"))?.minutos, 1);
+      const enTransporte = await caminoEntre(A, B, "transit");
+      assert.deepEqual([enTransporte?.manera, enTransporte?.aproximado], ["transit", true]);
+      assert.deepEqual(
+        pedidos.map((p) => new URL(p.url).searchParams.get("mode")),
+        ["walk", "drive", "transit", "approximated_transit"],
+      );
+    },
+  );
+  // Si ningún modo da ruta, esa manera no existe ahí: null, que no es un fallo.
+  await conGeoapify(noHay, async () => assert.equal(await caminoEntre(A, B, "transit"), null));
+  await conGeoapify(
+    () => new Response(JSON.stringify({ results: [] })),
+    async () => assert.equal(await caminoEntre(A, B, "walk"), null),
+  );
+});
+
+test("Geoapify: un fallo que no es «no hay ruta» se lanza, y la clave no sale en su mensaje", async () => {
+  const fallos: [string, (modo: string, url: string) => Response | Error][] = [
+    [
+      "la clave no vale",
+      () => new Response(JSON.stringify({ statusCode: 401, message: "Invalid apiKey" }), { status: 401 }),
+    ],
+    ["la fuente repite la dirección entera", (_m, url) => new Response(`Bad gateway for ${url}`, { status: 502 })],
+    ["la red falla y lo dice con la dirección", (_m, url) => new Error(`fetch failed: ${url}`)],
+  ];
+  for (const [caso, contesta] of fallos)
+    await conGeoapify(contesta, async () => {
+      for (const pide of [() => caminoEntre(A, B, "walk"), () => matrizDeCaminos([A], [B], "car")])
+        await assert.rejects(pide, (e: unknown) => {
+          assert.ok(e instanceof ErrorDeFuente, caso);
+          assert.ok(!e.message.includes(CLAVE_DE_RUTAS), `${caso}: ${e.message}`);
+          assert.match(e.message, /^geoapify: (?!geoapify)/);
+          return true;
+        });
+    });
+});
+
+test("Geoapify: la matriz se rellena primero con lo de verdad, y lo que falta, con lo aproximado", async () => {
+  const celda = (m: number, s: number): { distance: number; time: number } => ({ distance: m, time: s });
+  await conGeoapify(
+    (modo) =>
+      new Response(
+        JSON.stringify({
+          sources_to_targets:
+            modo === "transit"
+              ? [[celda(5000, 1200), { distance: null, time: null }]]
+              : [[celda(6000, 1500), celda(900, 300)]],
+        }),
+      ),
+    async (pedidos) => {
+      const [fila] = await matrizDeCaminos([A], [B, A], "transit");
+      assert.deepEqual(
+        fila.map((c) => [c?.metros, c?.minutos, c?.aproximado]),
+        [
+          [5000, 20, false],
+          [900, 5, true],
+        ],
+      );
+      assert.deepEqual(
+        pedidos.map((p) => (p.cuerpo as { mode: string }).mode),
+        ["transit", "approximated_transit"],
+      );
+      assert.ok(pedidos.every((p) => p.url.startsWith("https://api.geoapify.com/v1/routematrix?apiKey=")));
+      // Andando hay un solo modo: lo que no tenga ruta se queda sin ella.
+      const [andando] = await matrizDeCaminos([A], [B, A], "walk");
+      assert.equal(andando[1]?.aproximado, false);
+    },
+  );
+  await conGeoapify(
+    () => new Response("{}"),
+    async (pedidos) => {
+      assert.deepEqual(await matrizDeCaminos([], [B], "walk"), []);
+      assert.deepEqual(await matrizDeCaminos([A], [], "walk"), [[]]);
+      const muchos = Array.from({ length: 40 }, () => A);
+      await assert.rejects(
+        matrizDeCaminos(muchos, [...muchos.slice(0, 26)], "walk"),
+        new RegExp(`${CASILLAS_DE_UNA_MATRIZ} casillas`),
+      );
+      assert.deepEqual(pedidos, []);
+    },
+  );
+});
+
+test("un punto escrito para probar las rutas es «lat,lon», dentro del mapa", () => {
+  assert.deepEqual(puntoDe("10.5,-20.25"), { lat: 10.5, lon: -20.25 });
+  assert.deepEqual(puntoDe(" 0 , 180 "), { lat: 0, lon: 180 });
+  for (const malo of ["", "10.5", "10.5,", ",20", "91,0", "0,181", "a,b", "1,2,3", "10.5;20.25"])
+    assert.equal(puntoDe(malo), null, malo);
 });

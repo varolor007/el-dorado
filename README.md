@@ -72,6 +72,12 @@ cd web && ELDORADO_CASA_URL=http://127.0.0.1:4320 ELDORADO_LLAVE=<la misma llave
 
 Sin `ELDORADO_CASA_URL`, la web dice que las cuentas no están conectadas y sigue enseñando el viaje grabado.
 
+Para probar la fuente de rutas con sitios de verdad, de dos en dos puntos:
+
+```bash
+GEOAPIFY_KEY=<la clave> node agent/launcher/rutas.ts <lat,lon> <lat,lon>   # cada manera de ir, lo que tarda y lo que hay
+```
+
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`
 delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). Una fuente se apaga con
@@ -95,5 +101,5 @@ delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). 
 | [docs/piezas.md](docs/piezas.md) | Borrador: los asientos, el código, las puertas y los datos que salen de lo hablado |
 | [docs/datos.md](docs/datos.md) | El mapa de los datos: cada pieza de información y de dónde sale, con lo comprobado |
 | [docs/fuentes.md](docs/fuentes.md) | Las fuentes de datos miradas, y las formas de sacar la información |
-| [docs/condiciones.md](docs/condiciones.md) | Las condiciones de las tres fuentes: lo que dejan y lo que hay que cerrar para vender |
+| [docs/condiciones.md](docs/condiciones.md) | Las condiciones de las fuentes: lo que dejan y lo que hay que cerrar para vender |
 | [docs/paginas/](docs/paginas/) | Los datos de las dos biblias, su formato y el pintor: `node docs/paginas/pinta.mjs` |

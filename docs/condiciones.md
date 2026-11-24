@@ -1,4 +1,4 @@
-# Las condiciones de las tres fuentes
+# Las condiciones de las fuentes
 
 Leídas el 23-nov-2026, a petición del PM, tras registrarse en las tres. Las leyeron tres búsquedas, una por fuente,
 citando cada cláusula; la sesión comprobó aparte, en el texto, las que más pesan, y lo dice. No es un consejo legal: lo
@@ -99,6 +99,23 @@ solo salió en extractos va como «sin confirmar». La sesión no lo comprobó a
 - **Lo demás**: nada sobre asistentes de IA ni sobre protección de datos entre las dos partes; pueden cortar el acceso
   cuando quieran; ley de Hong Kong.
 
+## Geoapify (las rutas; en prueba desde el 24-nov-2026)
+
+Leído el 24-nov-2026 en sus páginas de precios, de producto y de condiciones (versión 5, de febrero de 2024), por
+una búsqueda y comprobado aparte por la sesión. Todavía no se ha llamado con una clave.
+
+- **Lo que deja**: usar el plan gratis también para vender, según su página de precios («You can use the Free plan
+  for commercial websites, apps, and business projects, including in production»); y guardar y redistribuir los
+  resultados de sus rutas, según la página del producto («Because our Routing API is based on open data, you can
+  store and redistribute your results»).
+- **Lo que pide**: decir de dónde sale. En el plan gratis, «Powered by Geoapify», y siempre la atribución de
+  OpenStreetMap. Cuando sus tiempos se enseñen en la web, hay que ponerlo.
+- **Lo que hay que cerrar por escrito antes de vender**: sus condiciones dicen que el plan gratis vale en producción
+  «con algunas limitaciones», sin decir cuáles; no dicen nada de guardar, que solo está en la página del producto; y
+  no dicen nada de pasar sus resultados por una IA, ni que sí ni que no.
+- **Su clave** va en la dirección de cada pedido. Se puede atar en su panel a unas direcciones de red o a unos
+  orígenes.
+
 ## Lo que sale de aquí
 
 1. **Para probar y montar las bases, vale ya**: las tres responden, y sus claves de prueba están para eso.
@@ -124,3 +141,6 @@ solo salió en extractos va como «sin confirmar». La sesión no lo comprobó a
 - https://support.travelpayouts.com/hc/en-us/articles/204529267
 - https://support.travelpayouts.com/hc/en-us/articles/4402565416594
 - https://support.travelpayouts.com/hc/en-us/articles/203956053
+- https://www.geoapify.com/pricing/
+- https://www.geoapify.com/routing-api/
+- https://www.geoapify.com/terms-and-conditions/

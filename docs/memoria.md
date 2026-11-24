@@ -78,6 +78,16 @@ tuyo ya hecho con `/plan?trip=<id>`. **Falta en la web**: que el mapa empiece el
 de las preguntas de empezar, bloque 5), pulse el botón y escuche en vivo. Para mirar pantallas con un viaje en la
 casa local hay un guion en el borrador de la sesión que copia el de prueba a una cuenta inventada.
 
+**Las rutas (3.14): se prueba Geoapify primero** (el PM, 24-nov). Hecho, con datos inventados: su enchufe
+(`agent/tools/fuentes/geoapify.ts`: `caminoEntre` y `matrizDeCaminos`) y la orden para probarlo
+(`agent/launcher/rutas.ts`). Su clave va en la dirección de cada pedido, no en una cabecera: la red de la sesión no
+puede ponerla, así que tiene que estar en el entorno como `GEOAPIFY_KEY`, puesta por el PM en los ajustes del
+entorno; el enchufe cuida de que no salga en ningún mensaje de fallo. **Falta**: la prueba en cuatro o cinco destinos
+de clases distintas (una gran ciudad de otro continente, un pueblo, un sitio de naturaleza y una ruta por un país),
+mirando qué transporte público conoce de verdad y cuál aproxima; y, con lo que salga, que la casa lo use en las
+cribas, en el ritmo y en la tabla. Si se queda corta en transporte público, la segunda opción es Google en vivo y
+con un script (en [fuentes.md](fuentes.md)). El enlace a Google Maps de cada trayecto ya está en la web.
+
 **La llamada directa (2.7), a medias.** Hecho, sin llamar a nadie: `agent/launcher/ia.ts` monta lo que se le manda a
 un asiento (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con
 el precio del entorno (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`, en dólares por millón);
