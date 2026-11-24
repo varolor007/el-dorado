@@ -132,6 +132,16 @@ que pide dos cosas del PM: la clave de Claude en el entorno, como `ELDORADO_CLAV
 formulario seguro: la red de la sesión no pone claves en los pedidos a Anthropic), y su adelante, que dijo que da
 cuando meta la clave de Geoapify. Se propuso un techo de 5 dólares.
 
+**Cómo se lanza la primera investigación de verdad**, cuando el PM dé su adelante: con la orden
+`agent/launcher/de_verdad.ts <entendido.json> <techo>`, que lleva el run de una vez con la llamada directa, cuenta lo
+que pasa y acaba diciendo lo que tardó y lo que gastó cada asiento. Delante van `ELDORADO_CLAVE_DE_CLAUDE`,
+`ELDORADO_MODELO`, `ELDORADO_PRECIO_ENTRADA`, `ELDORADO_PRECIO_SALIDA`, `ELDORADO_MESA` y `NODE_USE_ENV_PROXY=1`. El
+modelo y sus precios se le preguntan al PM y se dicen en la orden, nunca en el repositorio. Lo entendido de la
+prueba es un archivo fuera del repositorio (el del viaje de la tanda 3 se perdió con su sesión si esta es otra: se
+vuelve a escribir, o se saca de la web con las preguntas de empezar). Tiene que correr en una sesión que vea la
+clave: una nueva, o una auxiliar abierta para eso, como la de la prueba de Geoapify. El viaje que salga se graba
+para la web con `grabar.ts`.
+
 **Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada directa por asiento («lo de la llamada
 directa me parece bien»); uno se registra bien, con su cuenta, sin llave de entrada («pon que se pueda registrar
 bien ya de la que estás y listo»); y el motor se sube a un servidor al final, con las pruebas hechas. Para el

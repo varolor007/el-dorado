@@ -77,6 +77,13 @@ millón (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`); cuánto se esfue
 `ELDORADO_ESFUERZO`. La clave de la IA la pone cada viajero en su cuenta. Sin modelo, la casa arranca sin IA: las
 cuentas y los viajes funcionan, y el botón de investigar dice que no hay con qué.
 
+Para lanzar una investigación entera con la IA de verdad desde la terminal (gasta de la clave: es decisión del PM):
+
+```bash
+ELDORADO_CLAVE_DE_CLAUDE=<la clave> ELDORADO_MODELO=<el modelo> ELDORADO_PRECIO_ENTRADA=<usd por millón> \
+  ELDORADO_PRECIO_SALIDA=<usd por millón> node agent/launcher/de_verdad.ts <entendido.json> <techo en dólares>
+```
+
 Para probar la fuente de rutas con sitios de verdad, de dos en dos puntos:
 
 ```bash
