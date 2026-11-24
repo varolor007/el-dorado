@@ -334,6 +334,7 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
         salida={r.salida}
         adultos={r.adultos ?? 2}
         habitaciones={r.habitaciones ?? 1}
+        conOrigen={r.origen !== null}
       />
       {dentro && (
         <div className="preguntas">

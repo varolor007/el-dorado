@@ -144,7 +144,7 @@ qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no 
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
 PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de la casa (2.9, primera parte,
 `claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
-primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda, en marcha desde el 24-nov**: los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
+primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda (24-nov)**, junta salvo lo último de esta rama: los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
 (5.5, `claude/eldorado-5-5-dias-baratos`), que lleva después los tres días a cada lado. Ya junto: el gasto de cada
 viaje (11.4, `claude/eldorado-11-4-gasto`): sale de `agent/launcher/gasto.ts` por `GET /cuenta/gasto`, solo a su
 dueño; lo enseñan la tarjeta de la pestaña de la clave y una pastilla en Tus viajes. Lo siguiente es la media de
@@ -173,8 +173,9 @@ en `agent/data/vistazo.ts`. La puerta lo da en `POST /vistazo`, sin sesión y co
 y sin tocar la mesa. En la web, `web/src/lib/vistazo.ts` y `web/src/piezas/PrimerVistazo.tsx`, antes del botón de
 un viaje nuevo; el mapa pinta los puntos y un rótulo por zona. La pasarela le dice a la casa quién pide con un
 resumen de su dirección, nunca la dirección. Medido con LiteAPI: de 2 a 14 segundos; el primer pedido a un sitio es
-el lento, y entonces va a medias y lo dice. **Falta**: los días baratos para volar (`Fuentes.diasBaratos` pide el
-aeropuerto en lo entendido, y la web no lo manda: hay que darle los que saca la búsqueda de transporte); que el PM
+el lento, y entonces va a medias y lo dice. Los días baratos, hechos después por otra sesión de obra:
+`FuenteTransporte.diasBaratos`, y en `transporte.ts`, `lugaresDelViaje` y `parPrincipal`, que usan la parrilla y el
+vistazo; `Fuentes.diasBaratos` ya no existe, y la clave del freno lleva de dónde se sale. **Falta**: que el PM
 diga si le valen los números del freno y que el vistazo se vuelva a pedir mientras se contesta; y comprobar en
 Vercel que la dirección del visitante es de fiar. Las zonas son trozos de la caja del destino, sin nombre.
 

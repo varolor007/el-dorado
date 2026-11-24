@@ -240,6 +240,44 @@ export function paresDe(salida: LugarDeVuelo[], llegada: LugarDeVuelo[], tope: n
     .map((p) => [p.de, p.a]);
 }
 
+/**
+ * De qué sitios con vuelos se sale y a cuáles se llega en un viaje, con lo que se dice de cada lado. Los datos de
+ * lugares de la fuente solo se piden si hacen falta: sin origen no se busca nada, y con los dos aeropuertos dichos,
+ * no hacen falta. Lo usan la parrilla y el primer vistazo, para que los dos miren los mismos aeropuertos.
+ */
+export async function lugaresDelViaje(
+  viaje: Entendido,
+  fuente: Pick<FuenteTransporte, "lugares">,
+): Promise<{ salida: LugarDeVuelo[]; llegada: LugarDeVuelo[]; avisos: string[] }> {
+  let datos: LugaresDeVuelo | null = null;
+  const hacenFalta = !viaje.origin?.airport || !viaje.destination.airport;
+  if (viaje.origin !== null && hacenFalta) {
+    try {
+      datos = await fuente.lugares();
+    } catch {
+      // El mensaje de un fallo lleva un trozo de lo que contestó la fuente: no se guarda.
+      datos = null;
+    }
+  }
+  const salida = lugaresDeSalida(viaje, datos);
+  const llegada = viaje.origin === null ? { lugares: [], aviso: null } : lugaresDeLlegada(viaje, datos);
+  const avisos: string[] = [];
+  for (const a of [salida.aviso, llegada.aviso]) if (a !== null && !avisos.includes(a)) avisos.push(a);
+  return { salida: salida.lugares, llegada: llegada.lugares, avisos };
+}
+
+/** El par principal de un viaje: el primero que pediría la parrilla, de los sitios que van delante. O ninguno. */
+export function parPrincipal(
+  salida: LugarDeVuelo[],
+  llegada: LugarDeVuelo[],
+): { de: LugarDeVuelo; a: LugarDeVuelo } | null {
+  const primero = paresDe(salida, llegada, 1)[0];
+  if (primero === undefined) return null;
+  const de = salida.find((s) => s.codigo === primero[0]);
+  const a = llegada.find((l) => l.codigo === primero[1]);
+  return de === undefined || a === undefined ? null : { de, a };
+}
+
 export type AlBuscar = {
   /** El primer día en que se puede viajar: lo que sale antes no vale. */
   desde?: string;
@@ -257,25 +295,12 @@ export async function buscarTransporte(
 ): Promise<Parrilla> {
   const ida = viaje.dates.check_in;
   const vuelta = viaje.dates.check_out;
-  const avisos: string[] = [];
-  let datos: LugaresDeVuelo | null = null;
-  const hacenFalta = !viaje.origin?.airport || !viaje.destination.airport;
-  if (viaje.origin !== null && hacenFalta) {
-    try {
-      datos = await fuente.lugares();
-    } catch {
-      // El mensaje de un fallo lleva un trozo de lo que contestó la fuente: no se guarda.
-      datos = null;
-    }
-  }
-  const salida = lugaresDeSalida(viaje, datos);
-  const llegada = viaje.origin === null ? { lugares: [], aviso: null } : lugaresDeLlegada(viaje, datos);
-  for (const a of [salida.aviso, llegada.aviso]) if (a !== null && !avisos.includes(a)) avisos.push(a);
+  const { salida, llegada, avisos } = await lugaresDelViaje(viaje, fuente);
   const flexible = viaje.dates.flexible && fuente.alrededor !== undefined;
   const parrilla: Parrilla = {
     fuente: fuente.nombre,
-    salida: salida.lugares,
-    llegada: llegada.lugares,
+    salida,
+    llegada,
     pares: [],
     dias: flexible ? DIAS_ALREDEDOR : 0,
     ida,
@@ -285,9 +310,9 @@ export async function buscarTransporte(
     fuera: { escalas: 0, moneda: 0, antes: 0 },
     avisos,
   };
-  const pares = paresDe(salida.lugares, llegada.lugares);
+  const pares = paresDe(salida, llegada);
   if (pares.length === 0) {
-    if (salida.lugares.length > 0 && llegada.lugares.length > 0)
+    if (salida.length > 0 && llegada.length > 0)
       avisos.push("transporte: se sale y se llega por el mismo aeropuerto, y no hay vuelo que buscar");
     return parrilla;
   }
