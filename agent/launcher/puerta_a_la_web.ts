@@ -19,7 +19,8 @@
 //   GET    /viajes/<id>                cómo está, y por dónde va su investigación
 //   PUT    /viajes/<id>/entendido      cambia lo entendido, mientras no esté confirmado
 //   POST   /viajes/<id>/empezar        el botón: confirma, da el adelante (con su techo, si se da) y lanza
-//   POST   /viajes/<id>/confirmar      tu confirmación de lo que he entendido, o tus respuestas: y sigue
+//   POST   /viajes/<id>/confirmar      tu confirmación de lo que he entendido, o tus respuestas, o que sigues
+//                                       aunque un papel bloquee ({ "papers": "go_on" }): y sigue
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
 
@@ -33,6 +34,7 @@ import type { Lanzador } from "./asiento.ts";
 import { actaDe, actaDeCara, paradaDeCara } from "./acta.ts";
 import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
 import { confirmar, FalloAlConfirmar, paraConfirmar, turnoDelViajero } from "./escuchar.ts";
+import { paraElViajero, seguirConLosPapeles, turnoDeLosPapeles } from "./papeles.ts";
 import {
   borrarClave,
   claveDe,
@@ -196,9 +198,10 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       // solo si pasó su puerta de palabras).
       stopped: existsSync(join(run, PARADO)) ? paradaDeCara(run) : null,
       told: leerVivo(run).length,
-      // Su turno: lo que he entendido, para que lo confirme. Solo lo lee su dueño, como todo lo de este viaje.
-      waiting_for_you: turnoDelViajero(run),
+      // Su turno: lo que he entendido, para que lo confirme; o los papeles, si algo bloquea. Solo lo lee su dueño.
+      waiting_for_you: turnoDelViajero(run) || turnoDeLosPapeles(run),
       heard: paraConfirmar(run),
+      papers: paraElViajero(run),
     },
   };
 }
@@ -428,14 +431,21 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const id = v.ficha.id;
     if (marchas.has(id)) throw new Fallo(409, "already_running");
     const run = ultimoRun(v);
-    if (run === null || !turnoDelViajero(run)) throw new Fallo(409, "not_now");
+    const deLosPapeles = run !== null && !turnoDelViajero(run) && turnoDeLosPapeles(run);
+    if (run === null || !(turnoDelViajero(run) || deLosPapeles)) throw new Fallo(409, "not_now");
     const conQue = conQuePiensa(p.cuenta);
     if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
     if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
-    let hecho: "answered" | "confirmed";
+    let hecho: "answered" | "confirmed" | "papers_go_on";
     try {
-      hecho = confirmar(run, p.cuerpo, hoy());
+      if (deLosPapeles) {
+        try {
+          hecho = seguirConLosPapeles(run, p.cuerpo, hoy());
+        } catch {
+          throw new FalloAlConfirmar("bad_request");
+        }
+      } else hecho = confirmar(run, p.cuerpo, hoy());
     } catch (error) {
       if (error instanceof FalloAlConfirmar) throw new Fallo(error.message === "not_now" ? 409 : 400, error.message);
       throw error;

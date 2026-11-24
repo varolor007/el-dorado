@@ -3,6 +3,8 @@
 // hay cuentas: solo la forma, para que cada paso sepa qué recibe y qué deja. La de la búsqueda de alojamiento está en
 // `busqueda_alojamiento.ts`, y la del viaje para la web, en `output/viaje.ts`.
 
+import { CLASES_DE_AVISO, type TemaDelCalendario } from "../data/calendario.ts";
+import { DUDAS, ESTADOS_DE_PAPEL, LADOS, PREGUNTAS, type EstadoDePapel } from "../data/papeles.ts";
 import type { Punto, Ritmo } from "../output/viaje.ts";
 
 export const SIN_SABER = "unknown";
@@ -96,28 +98,64 @@ export type EntregaDeEscucha = {
 
 // 2. Los avisos de las fechas y la tabla de los papeles. Sus asientos llegan con el bloque 5; aquí, su forma.
 
-export const CLASES_DE_AVISO = ["blocks", "raises", "bothers", "favours"] as const;
+export { CLASES_DE_AVISO };
+/**
+ * Un hallazgo del del calendario: su clase, de qué trata, su nombre propio si lo tiene (una fiesta, un evento), sus
+ * días, la página abierta de donde sale y la fecha que da esa página. Un precio, solo si la página lo da.
+ */
 export type Aviso = {
   kind: (typeof CLASES_DE_AVISO)[number];
-  what: string;
+  topic: TemaDelCalendario;
+  name: string;
   from: string;
   to: string;
+  /** Los días que pide el destino, si es de eso: lo compara con el viaje el código. */
+  days?: number;
+  price: { amount: number; currency: string } | typeof SIN_SABER;
+  what: string;
   source: string;
   seen: string;
 };
 
-export const ESTADOS_DE_PAPEL = ["in_order", "to_do", "warning", "blocks", "doubtful"] as const;
-/** Una casilla de la tabla de los papeles: un viajero, un país y una pregunta de la lista fija. */
-export type Papel = {
-  passport: string;
-  country: string;
-  question: string;
-  status: (typeof ESTADOS_DE_PAPEL)[number];
-  says: string;
-  sources: { url: string; seen: string }[];
-  /** El plazo, si lo hay: lo calcula el código. */
-  deadline: string | null;
+/** Otra ventana, para quien puede mover sus fechas: el día en que entraría y los hallazgos que la mueven. */
+export type Ventana = { check_in: string; because: number[] };
+
+export type EntregaDelCalendario = {
+  seat: "calendar";
+  findings: Aviso[];
+  windows: Ventana[];
+  unknowns: string[];
 };
+
+export { ESTADOS_DE_PAPEL };
+/** Una fuente de una casilla: la página abierta, de qué lado es, lo que dice por su estado y la fecha que da. */
+export type FuenteDePapel = {
+  url: string;
+  side: (typeof LADOS)[number];
+  status: Exclude<EstadoDePapel, "doubtful">;
+  seen: string;
+};
+/** Un plazo que da una fuente, para que lo cuente el código: tantos meses o días desde la llegada o la salida. */
+export type Vigencia = { months: number; days: number; after: "arrival" | "departure" };
+/** Una casilla de la tabla de los papeles: un viajero (por su fila), un país y una pregunta de la lista fija. */
+export type Papel = {
+  traveller: string;
+  country: string;
+  question: (typeof PREGUNTAS)[number];
+  status: EstadoDePapel;
+  /** Por qué es dudosa, si lo es; si no, unknown. */
+  doubt: (typeof DUDAS)[number] | typeof SIN_SABER;
+  sources: FuenteDePapel[];
+  /** Lo que tiene que valer el pasaporte, si lo dice la fuente: solo en la vigencia del pasaporte. */
+  valid_for: Vigencia | typeof SIN_SABER;
+  /** Con cuántos días antes de llegar hay que hacerlo, si lo dice la fuente: solo en lo que hay que hacer. */
+  before_arrival: { days: number } | typeof SIN_SABER;
+  /** Lo que cuesta, si lo dice la fuente: solo en lo que hay que hacer. */
+  cost: { amount: number; currency: string } | typeof SIN_SABER;
+  what: string;
+};
+
+export type EntregaDeLosPapeles = { seat: "papers"; cells: Papel[]; unknowns: string[] };
 
 // 3. La ruta: dónde se duerme cada noche, por dónde se entra y se sale y en qué zonas buscar.
 

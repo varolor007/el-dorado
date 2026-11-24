@@ -4,7 +4,7 @@
 // entendido, pulsar el botón y escuchar lo que pasa mientras se investiga. Todo pasa por la web hasta la casa.
 
 import { useEffect, useState } from "react";
-import type { Suceso } from "../../../agent/output/viaje.ts";
+import type { DeLosPapeles, Suceso } from "../../../agent/output/viaje.ts";
 import { pideALaCasa, type ResumenDeViaje } from "./cuenta.ts";
 
 /** Por dónde va la investigación de un viaje, como lo dice la casa: con claves y números, sin frases. */
@@ -28,6 +28,8 @@ export type Investigacion = {
   /** Es tu turno: confirmar lo que he entendido, o contestar lo que te pregunto. */
   waiting_for_you?: boolean;
   heard?: LoEscuchado | null;
+  /** La tabla de los papeles, en cuanto está: si algo bloquea, o faltan, es tu turno de decidir. */
+  papers?: DeLosPapeles | null;
 };
 
 /**
@@ -46,7 +48,9 @@ export type LoEscuchado = {
 
 /** Lo que mandas al confirmar: los gustos que se quedan, con su peso, y los límites que se quedan; o tus respuestas. */
 export type TuConfirmacion =
-  { tastes: { i: number; weight: string }[]; limits: number[] } | { answers: { i: number; answer: string }[] };
+  | { tastes: { i: number; weight: string }[]; limits: number[] }
+  | { answers: { i: number; answer: string }[] }
+  | { papers: "go_on" };
 export type EnLaCasa = { trip: ResumenDeViaje; research: Investigacion | null };
 
 /** Lo que falló, por su clave; y, si lo entendido no está claro, qué campos. */

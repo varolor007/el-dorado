@@ -541,6 +541,16 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   con la parada real de Lisboa y su entrega dio rojo por citar el método común como fuente de lo que dice el
   método. Lo que da la casa a un asiento es su material y su contrato, los dos sellados: los dos valen como fuente
   de una nota. Un archivo que no existe en ninguno de los dos sigue siendo un rojo.
+- **Cómo quedan el del calendario y el de los papeles** (una sesión de obra, revisada por quien orquesta). Corren
+  por detrás de verdad: la casa no los espera mientras el viajero contesta y confirma. La puerta 2 se mira justo
+  tras lo entendido, antes de los sitios y la ruta, porque la hoja dice «antes de gastar en buscar»: por eso los
+  papeles gastan siempre antes que la ruta. Si los papeles fallan o no pasan su puerta, el viaje no sigue solo:
+  decide el viajero, como si algo bloqueara, porque sin saber no se puede decir que nada bloquee. «En regla»,
+  literal de la hoja: dos fuentes oficiales con fecha, o una del gobierno del destino; sin dominio conocido del
+  destino, nada sale en regla. Una ventana de fechas la da el asiento solo con su día de entrada, y lo que mejora
+  o empeora lo cuenta el código. Los días que pide el destino se comparan con las noches más uno.
+- **A quien viaja por el país de su pasaporte no se le pregunta por papeles** (la sesión, al revisar): ese país no
+  le pide nada para entrar, y preguntarlo gastaba un asiento con búsquedas para nada. Si son todos, no se lanza.
 - **El conductor, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): sobre una
   copia de la parada real de Lisboa, pidió la vuelta de más y la investigación acabó. Unos 1,8 dólares de
   equivalente entre el conductor, esa vuelta y lo que quedaba del viaje.
@@ -555,6 +565,11 @@ Lo que deja la obra del 24-nov, a decisión del PM:
   parte del viaje (y cuáles) o cambiar un tope. Si su frase se enseña al viajero tal cual, pasada su puerta de
   palabras, o solo las claves. Y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje.
 - **La nota de los huéspedes, al que explica**: para que diga las dos, la nuestra y la suya.
+- **Los números de los papeles y del calendario**: 16 búsquedas y 24 páginas para los papeles; 5 avisos, 2 ventanas
+  y 21 días como mucho para el calendario. Y dos cosas de cómo se portan: que un fallo de los papeles pare el
+  viaje y pregunte al viajero, y el paso de elegir otras fechas («Tú, las fechas»), que aún no está.
+- **Qué es un dominio oficial en cualquier país**: sigue pendiente. Hoy, de un país que no está en la lista nada
+  sale «en regla». Hay una propuesta de la sesión de obra, sin construir.
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
 

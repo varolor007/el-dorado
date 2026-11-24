@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { PREGUNTAS_DE_MAS } from "../../agent/data/viaje.ts";
 import { puertaEntendido } from "../../agent/gates/puerta_entendido.ts";
 import { puertaEscucha, type ParaEscuchar } from "../../agent/gates/puerta_escucha.ts";
-import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
+import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
   confirmar,
   CONFIRMADO,
@@ -162,7 +162,8 @@ const estadoDe = (run: string, id: string): string | undefined => porDondeVa(run
 test("si el viajero no escribió nada, el que escucha no se lanza y no se gasta", async () => {
   await conRun(SIN_PALABRAS, async (run) => {
     const estado = await sigue(run, fuentesInventadas());
-    assert.deepEqual(estado.esperan, ["ruta-v1"]);
+    // Sin nada que escuchar, lo primero que se espera son los papeles: su puerta 2, antes de gastar en buscar.
+    assert.deepEqual(estado.esperan, ["papeles-v1"]);
     assert.ok(!puestosDe(run).some((p) => p.asiento === "listener"));
     assert.equal(estadoDe(run, "understood"), "done");
     assert.equal(leerJson(join(run, ESCUCHADO)).escuchado, false);
@@ -191,12 +192,22 @@ test("si escribió, se lanza el que escucha y, cuando pasa su puerta, espera tu 
     assert.deepEqual([estado.esperan, estado.parado, estado.hecho, estado.alViajero], [[], null, false, true]);
     assert.equal(estadoDe(run, "understood"), "yours");
     assert.ok(turnoDelViajero(run));
-    // La casa no lanza nada más mientras espera.
+    // Mientras espera, la casa solo lanza lo que corre por detrás, el calendario y los papeles, y no los espera.
+    assert.deepEqual(estado.porDetras, ["calendario-v1", "papeles-v1"]);
     darElAdelante(run, null);
     const lanzador = lanzadorDeMentira();
     const llevado = await llevar(run, fuentesInventadas(), lanzador);
-    assert.deepEqual([llevado.lanzados, llevado.alViajero, llevado.parado], [[], true, null]);
+    assert.deepEqual(
+      [llevado.lanzados, llevado.alViajero, llevado.parado],
+      [["calendario-v1", "papeles-v1"], true, null],
+    );
+    await esperarLoDeDetras(run);
     assert.ok(!existsSync(join(run, "sitios.json")));
+    // Sus avisos quedan guardados mientras el viajero confirma. Y no ve sus palabras.
+    assert.equal(leerJson(join(run, "calendario.json")).avisos.length, 1);
+    const delCalendario = puestosDe(run).find((p) => p.id === "calendario-v1")!;
+    const suyo = JSON.stringify(leerJson(join(delCalendario.carpeta, "in", "trip.json")));
+    assert.ok(!suyo.includes(DICHO.wants) && !suyo.includes("passports") && !suyo.includes("said"));
 
     // Lo que se le enseña: sus palabras y las claves.
     const visto = paraConfirmar(run)!;
@@ -272,6 +283,9 @@ test("si contesta, se suma a sus palabras y el que escucha corre otra vez, sin p
     // Ya no se contesta: solo se confirma.
     assert.throws(() => confirmar(run, { answers: [{ i: 0, answer: "otra cosa" }] }), FalloAlConfirmar);
     assert.equal(confirmar(run, {}), "confirmed");
+    // Los papeles aún no entregaron: ahora que hacen falta, se les espera, y con su tabla sigue la ruta.
+    assert.deepEqual((await sigue(run, fuentesInventadas())).esperan, ["papeles-v1"]);
+    trabaja(run, "papeles-v1");
     assert.deepEqual((await sigue(run, fuentesInventadas())).esperan, ["ruta-v1"]);
     const final = leerJson(join(run, ESCUCHADO)).entendido as Entendido;
     assert.equal(final.said?.answers.length, 1);

@@ -8,6 +8,8 @@ import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
 import type { Gasto, Lanzador } from "../../../agent/launcher/asiento.ts";
 import type { Pensar, Respuesta } from "../../../agent/launcher/ia.ts";
 import type { Fuentes } from "../../../agent/launcher/investigar.ts";
+import { conFuenteOficial } from "../../../agent/data/papeles.ts";
+import { guardarConsultado } from "../../../agent/launcher/consultado.ts";
 import { puestosDe } from "../../../agent/launcher/puesto.ts";
 import type { Foto } from "../../../agent/output/viaje.ts";
 import type { ParaExplicar } from "../../../agent/scripts/explica.ts";
@@ -144,8 +146,61 @@ export function entregaDelConductor(parada: Objeto | null): Objeto {
   };
 }
 
+/** La página inventada del tiempo del destino, que abre el del calendario de mentira. */
+export const PAGINA_DEL_TIEMPO = "https://tiempo.inventado.example/clima/villa";
+
+/**
+ * Lo que entregaría el del calendario: sin internet, nada (así vale también para la llamada directa de mentira, que
+ * no abre páginas). El que trabaja en su puesto, en cambio, abre una página y encuentra lluvia en los días del viaje.
+ */
+export function entregaDelCalendario(viaje: Objeto | null, conPagina: boolean): Objeto {
+  const findings =
+    conPagina && viaje !== null
+      ? [
+          {
+            kind: "bothers",
+            topic: "weather",
+            name: "unknown",
+            from: viaje.dates.check_in,
+            to: viaje.dates.check_out,
+            price: "unknown",
+            what: "it rains on most days of these weeks",
+            source: PAGINA_DEL_TIEMPO,
+            seen: "unknown",
+          },
+        ]
+      : [];
+  return { seat: "calendar", findings, windows: [], unknowns: [] };
+}
+
+/**
+ * Lo que entregaría el de los papeles: cada casilla de su tabla, dudosa, porque de los países inventados no hay
+ * dominios oficiales en nuestra lista; si los hubiera de los dos lados, dudosa porque no la encontró. Así no bloquea
+ * nada, y vale también para la llamada directa de mentira, que no abre páginas.
+ */
+export function entregaDeLosPapeles(preguntas: Objeto[] | null, filas: Objeto[] | null): Objeto {
+  const cells = (preguntas ?? []).map((c) => {
+    const pasaporte = (filas ?? []).find((f) => f.id === c.traveller)?.passport ?? "";
+    return {
+      traveller: c.traveller,
+      country: c.country,
+      question: c.question,
+      status: "doubtful",
+      doubt: conFuenteOficial(c.country) && conFuenteOficial(pasaporte) ? "not_found" : "no_official_source",
+      sources: [],
+      valid_for: "unknown",
+      before_arrival: "unknown",
+      cost: "unknown",
+      what: "no official page of our list answers this",
+    };
+  });
+  return { seat: "papers", cells, unknowns: [] };
+}
+
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
 export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
+  if (asiento === "calendar") return entregaDelCalendario(dado("trip.json"), false);
+  if (asiento === "papers") return entregaDeLosPapeles(dado("questions.json"), dado("travellers.json"));
   if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
   if (asiento === "route-planner") return entregaDeRuta();
   if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
@@ -184,7 +239,17 @@ export function trabaja(
 ): void {
   const puesto = puestosDe(run).find((p) => p.id === id);
   if (puesto === undefined) throw new Error(`no existe el puesto ${id}`);
-  const entrega = entregaDe(puesto.asiento, puesto.carpeta);
+  const entrega =
+    puesto.asiento === "calendar"
+      ? entregaDelCalendario(leerJson(join(puesto.carpeta, "in", "trip.json")), true)
+      : entregaDe(puesto.asiento, puesto.carpeta);
+  // Un asiento con internet abre sus páginas: la casa lo apunta en lo consultado del run.
+  if (puesto.asiento === "calendar")
+    guardarConsultado(puesto, {
+      busquedas: [{ consulta: "weather Villa Inventada", resultados: [], fallo: null }],
+      paginas: [{ url: PAGINA_DEL_TIEMPO, final: null, titulo: null, cuando: null }],
+      fallidas: [],
+    });
   estropea(puesto.asiento, entrega);
   const textos = seisPasos(readdirSync(join(puesto.carpeta, "in")), entrega);
   for (const nombre of [...PASOS, ENTREGA]) writeFileSync(join(puesto.carpeta, "out", nombre), textos[nombre]);
@@ -272,4 +337,15 @@ export function pensarDeMentira(
   }) as Pensar & { llamadas: Llamada[] };
   pensar.llamadas = [];
   return pensar;
+}
+
+/** Apunta en lo consultado del run las páginas que abrió un puesto: como lo haría la casa con un asiento de verdad. */
+export function guardarPaginas(run: string, id: string, paginas: string[]): void {
+  const puesto = puestosDe(run).find((p) => p.id === id);
+  if (puesto === undefined) throw new Error(`no existe el puesto ${id}`);
+  guardarConsultado(puesto, {
+    busquedas: [],
+    paginas: paginas.map((url) => ({ url, final: null, titulo: null, cuando: null })),
+    fallidas: [],
+  });
 }

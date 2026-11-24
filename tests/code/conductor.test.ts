@@ -44,10 +44,17 @@ type Guion = {
 };
 
 /** Un lanzador de mentira con guion: la ruta hace lo que diga su vuelta, y el conductor entrega lo que se le diga. */
+/** Los asientos que corren por detrás: aquí trabajan bien y de balde, y no se cuentan entre los lanzados. */
+const DE_DETRAS = new Set(["calendar", "papers"]);
+
 function lanzadorConGuion(g: Guion): Lanzador & { lanzados: string[] } {
   const lanzador = (async (_orden, puesto) => {
-    lanzador.lanzados.push(puesto.id);
     const run = resolve(puesto.carpeta, "..", "..");
+    if (DE_DETRAS.has(puesto.asiento)) {
+      trabaja(run, puesto.id);
+      return { ...GASTO, usd: 0 };
+    }
+    lanzador.lanzados.push(puesto.id);
     if (puesto.asiento === "conductor") {
       if (g.conductor === "rompe") throw Object.assign(new Error("la IA no contestó"), { gasto: GASTO });
       const parada = leerJson(join(puesto.carpeta, "in", "stop.json"));
@@ -94,16 +101,19 @@ test("el acta de un run hecho: cada paso, cada trabajo con su vuelta, tiempo y g
     assert.equal(acta.conductor, null);
     assert.ok(acta.pasos.every((p: Objeto) => p.estado === "done"));
     assert.equal(acta.trabajos.length, trabajosDe(run).length);
+    // Lo de detrás (el calendario y los papeles) también está en el acta: aquí trabaja de balde.
+    const deDetras = (t: Objeto): boolean => DE_DETRAS.has(t.asiento);
+    assert.equal(acta.trabajos.filter(deDetras).length, DE_DETRAS.size);
     for (const t of acta.trabajos) {
       assert.equal(t.estado, "done");
-      assert.equal(t.usd, GASTO.usd);
+      assert.equal(t.usd, deDetras(t) ? 0 : GASTO.usd);
       assert.equal(typeof t.ms, "number");
     }
     assert.equal(acta.trabajos.find((t: Objeto) => t.puesto === "ruta-v1").paso, "route");
     assert.equal(acta.trabajos.find((t: Objeto) => t.puesto === "ruta-v1").puertas, "green");
     assert.deepEqual(acta.vueltas_en_rojo, []);
     assert.deepEqual(acta.repetido, { ms: acta.repetido.ms, usd: 0, trabajos: 0 });
-    assert.ok(Math.abs(acta.total.usd - GASTO.usd * acta.trabajos.length) < 1e-9);
+    assert.ok(Math.abs(acta.total.usd - GASTO.usd * (acta.trabajos.length - DE_DETRAS.size)) < 1e-9);
     assert.equal(acta.total.sabido, true);
     // No lleva el texto de ninguna entrega: ni lo que escribió el que explica, ni un resumen de un alojamiento.
     const texto = JSON.stringify(acta);

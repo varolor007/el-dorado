@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { COSAS } from "../../../agent/data/gustos.ts";
-import type { Alojamiento, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
+import type { Alojamiento, DeLosPapeles, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../agent/output/viaje.ts";
 import type { Reparto } from "../../../agent/scripts/ritmo.ts";
 import { caminosDe, type Caminos } from "../../../agent/tools/caminos.ts";
@@ -752,7 +752,169 @@ function Cuentas(x: DeViaje) {
   );
 }
 
-function Avisos({ t, viaje, manera, reparto }: DeViaje) {
+/**
+ * Lo que hay en tus fechas (5.3): cada aviso por su clase y su tema, con el nombre que da su fuente, sus días y los
+ * tuyos que toca, y el enlace a la página de donde sale. Y, si puedes moverlas, otras fechas con lo que cambia.
+ */
+function TusFechas({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
+  const c = viaje.calendario;
+  if (c === undefined) return null;
+  const f = t.fechas;
+  const dia = (x: string): string => diaCorto(x, idioma);
+  // La fecha de una página va con su año: puede ser de otro.
+  const conAno = (x: string): string =>
+    new Intl.DateTimeFormat(idioma, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(
+      new Date(`${x}T00:00:00Z`),
+    );
+  const total = noches(viaje.entrada, viaje.salida) + 1;
+  const deAviso = (n: number): string => {
+    const a = c.avisos[n];
+    return a === undefined ? "" : (a.nombre ?? f.tema[a.tema] ?? a.tema);
+  };
+  return (
+    <div className="grupo fechas">
+      <h2 className="titulo">{f.titulo}</h2>
+      {c.falta !== null && <p className="aviso">{f.faltan[c.falta]}</p>}
+      {c.falta === null && c.avisos.length === 0 && <p className="aviso">{f.nada}</p>}
+      {c.avisos.length > 0 && (
+        <ul className="fechas__lista">
+          {c.avisos.map((a, i) => (
+            <li key={i} className={`fecha fecha--${a.clase}`}>
+              <span className="fecha__clase">{f.clase[a.clase] ?? a.clase}</span>
+              <b>{a.nombre ?? f.tema[a.tema] ?? a.tema}</b>
+              {a.nombre !== null && <span className="fecha__tema">{f.tema[a.tema] ?? a.tema}</span>}
+              {a.desde !== null && a.hasta !== null && (
+                <span className="dato">
+                  {f.deA(dia(a.desde), dia(a.hasta))}. {f.tuyos(a.dias.length, total)}
+                </span>
+              )}
+              {a.pide !== undefined && <span className="dato">{f.pide(a.pide.dias, a.pide.dias + a.pide.deMas)}</span>}
+              {a.precio !== null && (
+                <span className="dato">{f.precio(dinero(a.precio.importe, a.precio.moneda, idioma))}</span>
+              )}
+              <a className="enlace" href={a.fuente} target="_blank" rel="noopener noreferrer nofollow">
+                {f.fuente(a.visto === null ? null : conAno(a.visto))}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {c.ventanas.length > 0 && (
+        <>
+          <h3 className="fechas__sub">{f.ventanas}</h3>
+          {c.ventanas.map((v) => (
+            <div key={v.entrada} className="fecha fecha--ventana">
+              <b>{f.ventana(dia(v.entrada), dia(v.salida), v.seMueve)}</b>
+              {(
+                [
+                  ["evita", v.evita],
+                  ["alcanza", v.alcanza],
+                  ["pierde", v.pierde],
+                  ["entra", v.entra],
+                ] as const
+              )
+                .filter(([, ns]) => ns.length > 0)
+                .map(([clave, ns]) => (
+                  <span key={clave} className="dato">
+                    {f[clave]}: {ns.map(deAviso).join(", ")}
+                  </span>
+                ))}
+            </div>
+          ))}
+        </>
+      )}
+      {c.avisos.length > 0 && <p className="credito">{f.nota}</p>}
+    </div>
+  );
+}
+
+/**
+ * Tus papeles (5.4, puerta 2): por cada viajero, lo que piden las fuentes oficiales pregunta a pregunta, con su
+ * fuente y los plazos que cuenta el código. Lo que no piden nada va junto, en una línea. Si algo bloquea, o faltan,
+ * se dice antes que nada; y, si es tu turno, puedes seguir igual.
+ */
+export function TusPapeles({
+  t,
+  idioma,
+  papeles: p,
+  alSeguir,
+  ocupado = false,
+}: Comun & { papeles: DeLosPapeles; alSeguir?: () => void; ocupado?: boolean }) {
+  const f = t.papeles;
+  const fecha = (x: string): string =>
+    new Intl.DateTimeFormat(idioma, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(
+      new Date(`${x}T00:00:00Z`),
+    );
+  const paran = p.bloquea || p.falta !== null;
+  const escalas = p.fuera.some((x) => x.porQue === "transit_unknown");
+  return (
+    <div className="grupo papeles">
+      <h2 className="titulo">{f.titulo}</h2>
+      {p.falta !== null && (
+        <p className="aviso" role={alSeguir ? "alert" : undefined}>
+          {f.faltan[p.falta]}
+        </p>
+      )}
+      {p.bloquea && (
+        <p className="aviso" role={alSeguir ? "alert" : undefined}>
+          {f.bloquean}
+        </p>
+      )}
+      {paran && p.sigue && <p className="dato">{f.seguido}</p>}
+      {paran && !p.sigue && alSeguir !== undefined && (
+        <>
+          <p className="suave">{f.decide}</p>
+          <button type="button" className="boton boton--hueco" disabled={ocupado} onClick={alSeguir}>
+            {f.seguir}
+          </button>
+        </>
+      )}
+      {p.casillas.length > 0 && <p className="suave">{f.sub}</p>}
+      {p.viajeros.map((v, i) => {
+        const suyas = p.casillas.filter((c) => c.viajero === i);
+        if (suyas.length === 0) return null;
+        const nada = suyas.filter((c) => c.estado === "in_order");
+        const algo = suyas.filter((c) => c.estado !== "in_order");
+        // Primero lo que bloquea, después lo dudoso y lo que hay que hacer.
+        const orden = ["blocks", "doubtful", "to_do", "warning"];
+        algo.sort((a, b) => orden.indexOf(a.estado) - orden.indexOf(b.estado));
+        return (
+          <div key={i} className="papeles__viajero">
+            <h3 className="fechas__sub">{f.viajero(v.pasaporte, v.edad, v.cuantos)}</h3>
+            <ul className="fechas__lista">
+              {algo.map((c) => (
+                <li key={`${c.pais}-${c.pregunta}`} className={`fecha fecha--papel-${c.estado}`}>
+                  <span className="fecha__clase">{f.estado[c.estado] ?? c.estado}</span>
+                  <b>{f.pregunta[c.pregunta] ?? c.pregunta}</b>
+                  {c.duda !== null && <span className="fecha__tema">{f.duda[c.duda] ?? c.duda}</span>}
+                  {c.hasta !== null && <span className="dato">{f.hasta(fecha(c.hasta))}</span>}
+                  {c.antesDe !== null && <span className="dato">{f.antesDe(fecha(c.antesDe), c.tarde)}</span>}
+                  {c.coste !== null && (
+                    <span className="dato">{f.coste(dinero(c.coste.importe, c.coste.moneda, idioma))}</span>
+                  )}
+                  {c.fuentes.map((x) => (
+                    <a key={x.url} className="enlace" href={x.url} target="_blank" rel="noopener noreferrer nofollow">
+                      {f.fuente(f.lado[x.lado] ?? x.lado, fecha(x.visto))}
+                    </a>
+                  ))}
+                </li>
+              ))}
+            </ul>
+            {nada.length > 0 && (
+              <p className="dato">
+                {f.enRegla}: {nada.map((c) => f.pregunta[c.pregunta] ?? c.pregunta).join(", ")}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      {p.fuera.some((x) => x.porQue === "own_country") && <p className="dato">{f.fuera.own_country}</p>}
+      {escalas && p.casillas.length > 0 && <p className="credito">{f.fuera.transit_unknown}</p>}
+    </div>
+  );
+}
+
+function Avisos({ t, idioma, viaje, manera, reparto }: DeViaje) {
   const c = caminosDe(viaje.caminos);
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
   // También cuenta lo de donde duermes a la primera parada de cada día.
@@ -781,6 +943,8 @@ function Avisos({ t, viaje, manera, reparto }: DeViaje) {
           </p>
         ))}
       </div>
+      <TusFechas t={t} idioma={idioma} viaje={viaje} />
+      {viaje.papeles !== undefined && <TusPapeles t={t} idioma={idioma} papeles={viaje.papeles} />}
       <p className="credito">
         {viaje.muestra ? `${t.viaje.muestra} ` : ""}
         {t.ia}

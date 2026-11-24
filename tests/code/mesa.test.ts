@@ -266,7 +266,21 @@ test("guardar es de una vez: no queda ningún archivo a medias", () => {
 test("los pasos de una investigación: cada uno, con quién lo da, y ninguno repetido", () => {
   assert.deepEqual(
     PASOS.map((p) => p.id),
-    ["understood", "sights", "route", "search", "look", "pick", "days", "table", "cross", "explain", "trip"],
+    [
+      "understood",
+      "papers",
+      "sights",
+      "route",
+      "search",
+      "look",
+      "pick",
+      "days",
+      "table",
+      "cross",
+      "explain",
+      "calendar",
+      "trip",
+    ],
   );
   assert.equal(new Set(PASOS.map((p) => p.id)).size, PASOS.length);
   // Cada asiento de la investigación tiene su contrato en el repositorio, y cada paso deja algo.

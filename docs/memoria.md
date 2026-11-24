@@ -180,8 +180,8 @@ la investigación esperando su confirmación). Y el buscador y el lector de webs
 de la propia IA (las de la API en la llamada directa; WebSearch y WebFetch en Claude Code); la casa guarda la
 memoria de lo que se buscó y se abrió, y la puerta de todos da rojo a lo que cite una página que no se abrió. **La
 cuarta tanda (24-nov)**: el conductor (2.5, `claude/eldorado-2-5-conductor`), ya junto, y el del calendario con el
-de los papeles (5.3 y 5.4, en una sola sesión porque tocan lo mismo, `claude/eldorado-5-3-y-5-4-avisos`), en
-marcha. Del conductor, la idea era que el acta del run la escriba el código y que el asiento
+de los papeles (5.3 y 5.4, en una sola sesión porque tocan lo mismo, `claude/eldorado-5-3-y-5-4-avisos`), ya
+juntos también. Del conductor, la idea era que el acta del run la escriba el código y que el asiento
 solo coja un rojo que su dueño ya intentó dos veces, para decirle al viajero en claro qué pasó y qué puede hacer.
 
 **La cuenta del PM, estrenada (24-nov).** Su token está en el entorno de las sesiones. Una sesión auxiliar no pudo
@@ -218,6 +218,37 @@ Un run empezado con el código de antes se retomó sin problema con el de ahora.
 en el borrador de la sesión, fuera del repositorio, y la web la enseña en seco con `ELDORADO_MESA` apuntando a
 ella (su `grabado/` lleva el `viaje.json` y el `sucesos.json` del run); las capturas, en
 `revision/capturas-11` del borrador.
+
+**Los avisos de las fechas y los papeles (5.3 y 5.4), juntos** (una sesión de obra, revisada el 24-nov). Son los
+dos primeros asientos con `INTERNET.md`: `agent/contracts/calendar/` y `agent/contracts/papers/`, con sus números
+en `agent/data/calendario.ts` y `agent/data/papeles.ts`, sus comprobaciones en `agent/gates/puerta_calendario.ts`
+(sin número en la hoja) y `agent/gates/puerta_papeles.ts` (la puerta 2), y lo suyo del run en
+`agent/launcher/calendario.ts` y `agent/launcher/papeles.ts`. **La casa los lanza por detrás desde el principio y
+no los espera**: `casa.ts` tiene `lanzarPorDetras`, `enSuTurno` (los pasos de un run se dan de uno en uno) y
+`esperarLoDeDetras` (para las pruebas), e `investigar.ts` devuelve `porDetras`; lo de detrás no cuenta en los
+asientos a la vez. A los papeles se les espera tras lo entendido, por su puerta 2, antes de los sitios y la ruta:
+si algo bloquea, o fallaron, o no pasaron su puerta tras sus vueltas, es el turno del viajero (el paso `papers` en
+`yours`, sin gastar), que sigue con `POST /viajes/<id>/confirmar` y `{ "papers": "go_on" }` (`papeles-sigue.json`).
+Al calendario se le espera solo al montar el viaje; si falta, el viaje se hace igual y lleva `falta`. En el run,
+`calendario.json` y `papeles.json`; en el viaje, `calendario` y `papeles`, como datos: ninguna frase de estos
+asientos llega a la pantalla, la pone la web por claves (`TusFechas` y `TusPapeles` en `Pantallas.tsx`, y los
+papeles también en vivo, en `EnCasa.tsx`, con «Seguir igual»). Lo que ven: el destino, las fechas, el país de
+salida y lo que se busca; los pasaportes y las edades; nunca quién viaja. Los países del viaje son hoy solo el
+del destino; la escala no se pregunta hasta que haya transporte, y lo de menores solo por un menor. Los dominios
+comunes de la Unión valen solo para sus países. **Al juntarlo se añadió**: a quien viaja por el país de su propio
+pasaporte no se le pregunta nada (`esSuPais`), y si son todos, la tabla queda vacía y no se lanza a nadie. Los
+dos chocaban con el conductor en `casa.ts` y en cuatro archivos de pruebas, y se resolvió a mano: el conductor se
+llama antes de mirar lo de detrás, y las pruebas del conductor dejan fuera a los dos asientos de detrás. Un fallo
+del calendario o de los papeles no para el run ni llama al conductor. Sin hacer: elegir otras fechas (el paso 14,
+«Tú, las fechas»), enseñar los avisos de las fechas mientras se confirma, que el que explica lea los papeles, la
+puerta 2 en el transporte y en los cambios, y cerrar el lector por dominios. Sin comprobar: nada con una IA ni
+una búsqueda de verdad, ni lo que tardan por detrás; y dos casas sobre la misma mesa se pisarían, como antes. El
+pie del commit del 5.4 de la sesión de obra lleva por error la dirección de la sesión que orquesta. Pendiente del
+PM: los topes de los papeles (16 búsquedas y 24 páginas) y los números del calendario (5 avisos, 2 ventanas, 21
+días); que un fallo de los papeles pare y le pregunte; el paso 14; y cómo saber qué dominio es oficial en
+cualquier país (la sesión de obra propone, sin construirlo: dar por oficial el dominio del destino al que enlaza
+la página de consejos de viaje del ministerio del viajero, y patrones de dominio de gobierno, revisados por una
+persona).
 
 **El conductor (2.5), junto** (una sesión de obra, revisada el 24-nov). El acta del run (`agent/launcher/acta.ts`,
 `acta.json` en el run) la rehace el código del disco: pasos, trabajos con su vuelta, tiempo y gasto, cada vuelta en

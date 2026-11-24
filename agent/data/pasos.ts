@@ -17,6 +17,9 @@ export const CODIGO = "code";
 export const PASOS: Paso[] = [
   // El que escucha solo se lanza si el viajero escribió algo; lo que deja, ya confirmado, es `escuchado.json`.
   { id: "understood", quien: "listener", puerta: 1, deja: ["escuchado.json"] },
+  // El de los papeles corre por detrás desde el principio; su puerta 2 se mira antes de gastar en buscar. Si algo
+  // bloquea, o no se pudo mirar, espera la decisión del viajero.
+  { id: "papers", quien: "papers", puerta: 2, deja: ["papeles.json"] },
   { id: "sights", quien: CODIGO, puerta: null, deja: ["sitios.json"] },
   { id: "route", quien: "route-planner", puerta: 3, deja: ["ruta.json"] },
   { id: "search", quien: CODIGO, puerta: 4, deja: ["busqueda.json"] },
@@ -26,6 +29,8 @@ export const PASOS: Paso[] = [
   { id: "table", quien: CODIGO, puerta: null, deja: ["tabla-1.json"] },
   { id: "cross", quien: "trip-crosser", puerta: 6, deja: ["cruce-1.json"] },
   { id: "explain", quien: "trip-explainer", puerta: 7, deja: ["explica.json"] },
+  // El del calendario corre por detrás desde el principio: hace falta cuando se monta el viaje, no antes.
+  { id: "calendar", quien: "calendar", puerta: null, deja: ["calendario.json"] },
   { id: "trip", quien: CODIGO, puerta: null, deja: ["viaje.json", "sucesos.json"] },
 ];
 
