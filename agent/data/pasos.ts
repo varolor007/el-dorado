@@ -34,3 +34,12 @@ export const PARADO = "parado.json";
 /** Cómo está un paso de un run: sin empezar, esperando a su asiento, hecho o parado en una puerta. */
 export const ESTADOS_DE_UN_PASO = ["pending", "waiting", "done", "stopped"] as const;
 export type EstadoDeUnPaso = (typeof ESTADOS_DE_UN_PASO)[number];
+
+/** Cómo está un trabajo de la IA, como lo dice la hoja: en cola, trabajando, hecho, parado en su tope o fallido. */
+export const ESTADOS_DE_UN_TRABAJO = ["queued", "working", "done", "stopped", "failed"] as const;
+export type EstadoDeUnTrabajo = (typeof ESTADOS_DE_UN_TRABAJO)[number];
+
+/** Lo más que se espera a un asiento, cuántos trabajan a la vez y cuántas vueltas da la casa antes de pararse. */
+export const TOPE_DE_UN_ASIENTO = { segundos: 1800 };
+export const ASIENTOS_A_LA_VEZ = 6;
+export const VUELTAS_DE_LA_CASA = 40;

@@ -331,6 +331,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   paso, sino que mira la carpeta del run y cuenta lo que aún no está contado. Así un corte no pierde ni repite
   nada, que es lo mismo que deja retomar un run. Si la investigación se para, se cuenta en qué paso; el porqué, que
   está escrito para quien la lleva, no viaja a la web: lo que lee el viajero lo dice la web por claves.
+- **Cómo lleva la casa una investigación sola** (la sesión; lo pide la hoja: «nada que gaste arranca sin un botón
+  tuyo»): el adelante del viajero queda escrito en el run, con el techo de gasto que aceptó, y sin él no se lanza a
+  nadie. Al llegar al techo no se lanza más, y se dice. Si de un asiento acabado no se sabe lo que gastó y hay
+  techo, no se sigue a ciegas: por eso el lanzador dice lo que gastó también cuando falla. Un puesto se lanza una
+  sola vez: el asiento que no entrega para la investigación, salvo si es uno de los que miran, que deja su
+  alojamiento sin mirar y se dice. El techo se mira antes de cada tanda de asientos, así que puede pasarse en lo
+  que gaste esa tanda.
 
 ## Pendientes
 
@@ -369,6 +376,8 @@ Lo que pide la versión 2, a decisión del PM:
 
 - **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de enchufar las cuentas, en
   la tanda 4 (11.1). El ensamblador corre en Docker en un servidor, con la web en Vercel, y aún no tiene cuentas.
+- **El techo de gasto de una investigación** (24-nov): cuánto es, y cómo se le dice al viajero antes de pulsar. El
+  mecanismo está hecho; la cifra pide medir lo que gasta cada asiento con la IA de verdad. Va con el 11.4.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
 - **Dónde se reserva un precio de LiteAPI** (23-nov): no tiene página pública. Hoy se enlazaría a otra agencia cuando
   casa y, si no, a la web del hotel. Antes de la tanda 5.

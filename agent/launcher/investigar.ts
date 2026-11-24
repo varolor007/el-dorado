@@ -57,6 +57,7 @@ import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
+import { acaboSinEntregar } from "./trabajos.ts";
 import { contar } from "./vivo.ts";
 
 /** Lo de fuera que usa una investigación. Se le pasa: con lo de verdad investiga, y con lo inventado se prueba. */
@@ -511,6 +512,12 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
   return [];
 }
 
+/** Deja un run parado, en un paso y con su porqué, y lo cuenta. Sigue parado hasta que se quite `parado.json`. */
+export function pararRun(run: string, en: string, paso: string, rojos: Rojo[]): Parado {
+  guardar(run, PARADO, { en, paso, rojos });
+  return { en, paso, rojos };
+}
+
 /**
  * Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. Al
  * volver, lo que haya pasado queda contado, pase lo que pase: también si un paso se rompe a medias.
@@ -532,8 +539,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   const viaje = leer<Entendido>(run, "entendido.json");
   const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
   const para = (en: string, paso: string, rojos: Rojo[]): Estado => {
-    guardar(run, PARADO, { en, paso, rojos });
-    return { esperan: [], hecho: false, parado: { en, paso, rojos }, avisos };
+    return { esperan: [], hecho: false, parado: pararRun(run, en, paso, rojos), avisos };
   };
   // Lo entendido se mira antes de gastar nada: un dato mal escrito no llega ni a una fuente ni a un asiento.
   const claro = puertaEntendido(viaje);
@@ -601,7 +607,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     } else {
       const { quienes } = leer<{ quienes: { puesto: string }[] }>(run, "mirar.json");
       const deMirar = puestosDe(run).filter((p) => quienes.some((q) => q.puesto === p.id));
-      pendientes.push(...deMirar.filter((p) => !entregado(p)).map((p) => p.id));
+      // A quien ya trabajó y no entregó no se le espera más: su alojamiento se queda sin mirar, y se dice.
+      pendientes.push(...deMirar.filter((p) => !entregado(p) && !acaboSinEntregar(run, p.id)).map((p) => p.id));
     }
     const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
     const dados = sitiosParaElegir(sitios, nochesDe(viaje), new Map(Object.entries(resumenes)));
