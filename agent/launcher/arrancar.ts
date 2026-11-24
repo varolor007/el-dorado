@@ -92,7 +92,8 @@ function principal(): void {
     const sinCuenta = correosSinCuenta(ia.correosDeLaCasa ?? [], mesa);
     if (sinCuenta.length > 0)
       console.warn(
-        `Ojo: estos correos de la casa aún no tienen cuenta: ${sinCuenta.join(", ")}. Quien se registre antes con ` +
+        // Cuántos, y no cuáles: lo que se dice aquí queda en el registro, y la lista la sabe quien la escribió.
+        `Ojo: ${sinCuenta.length} de los correos de la casa aún no tienen cuenta. Quien se registre antes con ` +
           "uno de ellos pensará con la cuenta de la casa: regístralos tú antes de dar la dirección a nadie.",
       );
   });

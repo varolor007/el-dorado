@@ -2,6 +2,7 @@
 // que comprueba la casa: una clave sin frase saldría en pantalla con su nombre de dentro.
 
 import assert from "node:assert/strict";
+import { resolve } from "node:path";
 import { test } from "node:test";
 import {
   GRAVES,
@@ -724,4 +725,18 @@ test("el primer vistazo pasa a la casa sin sesión, con quién pide resumido, nu
   // Y, como todo lo que cambia algo, tiene que venir de esta misma web.
   const fuera = await aLaCasa(deLaWeb("POST", "vistazo", { origen: "https://otra.example" }, cuerpo), CASA, casa.pedir);
   assert.equal(fuera.estado, 403);
+});
+
+test("la web no se deja meter en un marco de otra página, y lo dice en sus cabeceras", async () => {
+  // Se carga por su ruta, como un módulo cualquiera: no tiene tipos, y aquí solo se le pide lo que se mira.
+  const ruta = resolve(import.meta.dirname, "..", "..", "web", "next.config.mjs");
+  const config = ((await import(ruta)) as { default: unknown }).default as {
+    headers: () => Promise<{ source: string; headers: { key: string; value: string }[] }[]>;
+  };
+  const [todas] = await config.headers();
+  assert.equal(todas.source, "/:path*");
+  const de = Object.fromEntries(todas.headers.map((c) => [c.key, c.value]));
+  assert.equal(de["Content-Security-Policy"], "frame-ancestors 'none'");
+  assert.equal(de["X-Frame-Options"], "DENY");
+  assert.equal(de["X-Content-Type-Options"], "nosniff");
 });

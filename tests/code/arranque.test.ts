@@ -267,7 +267,7 @@ test("el vigía: mientras la casa contesta, deja en paz a quien la saca fuera; s
     assert.match(b, /casa: \{ condition: service_healthy \}/);
 });
 
-test("lo que arranca crea sus llaves la primera vez, las guarda y dice lo que va en Vercel sin el secreto", () => {
+test("lo que arranca crea sus llaves la primera vez, las guarda y no escribe ninguna en el registro", () => {
   const datos = mkdtempSync(join(tmpdir(), "arranque-"));
   const corre = (): ReturnType<typeof spawnSync> =>
     spawnSync(
@@ -292,13 +292,16 @@ test("lo que arranca crea sus llaves la primera vez, las guarda y dice lo que va
   assert.notEqual(llave, secreto);
   const dicho = String(primera.stdout);
   assert.match(dicho, /ELDORADO_CASA_URL = https:\/\/1-2-3-4\.sslip\.io/);
-  assert.ok(dicho.includes(`ELDORADO_LLAVE    = ${llave}`));
+  // La llave no se escribe al arrancar (quedaría en el registro del contenedor): la dice `casa.sh vercel`.
+  const delArranque = dicho.split("\n").filter((l) => !l.startsWith("llave="));
+  assert.ok(!delArranque.join("\n").includes(llave), "la llave no se escribe en el registro");
+  assert.ok(delArranque.some((l) => l.includes("ELDORADO_LLAVE") && l.includes("casa.sh vercel")));
   assert.ok(!dicho.includes(secreto), "el secreto no se enseña");
   // La casa recibe las dos, el secreto de 32 bytes.
   assert.ok(dicho.includes(`llave=${llave} secreto=64`));
   // La segunda vez, las mismas.
   const segunda = corre();
-  assert.ok(String(segunda.stdout).includes(`ELDORADO_LLAVE    = ${llave}`));
+  assert.ok(String(segunda.stdout).includes(`llave=${llave} secreto=64`));
   assert.ok(!String(segunda.stdout).includes("Primera vez"));
   assert.equal(readFileSync(join(datos, "llaves", "secreto"), "utf8"), secreto);
   // Solo las lee su dueño.

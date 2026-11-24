@@ -9,6 +9,21 @@ const config = {
   experimental: { externalDir: true },
   outputFileTracingRoot: join(import.meta.dirname, ".."),
   devIndicators: false,
+  // Nadie mete la web en un marco de otra página (para hacer pulsar un botón que gasta), ni adivina el tipo de lo
+  // que se sirve, ni recibe de dónde viene quien sale por un enlace.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "static.cupid.travel" },

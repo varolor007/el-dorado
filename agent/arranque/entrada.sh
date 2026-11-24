@@ -30,12 +30,14 @@ ELDORADO_LLAVE="$(cat "$llaves/llave")"
 ELDORADO_SECRETO="$(cat "$llaves/secreto")"
 export ELDORADO_LLAVE ELDORADO_SECRETO
 
+# La llave de la web no se escribe aquí: lo que dice este arranque se queda en el registro del contenedor, que lee
+# cualquiera que pueda ver sus registros. La enseña, a quien la pide en el servidor, `casa.sh vercel`.
 echo "Lo que va en Vercel (Settings, Environment Variables):"
 if [ -n "${ELDORADO_DIRECCION_PUBLICA:-}" ]; then
   echo "  ELDORADO_CASA_URL = https://${ELDORADO_DIRECCION_PUBLICA}"
 else
   echo "  ELDORADO_CASA_URL = (falta la dirección: mira ELDORADO_DOMINIO o NGROK_DOMAIN en el .env)"
 fi
-echo "  ELDORADO_LLAVE    = ${ELDORADO_LLAVE}"
+echo "  ELDORADO_LLAVE    = (no se escribe en el registro: la dice casa.sh vercel)"
 
 exec "$@"

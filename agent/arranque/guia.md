@@ -105,7 +105,7 @@ sudo /opt/el-dorado/agent/arranque/casa.sh vercel
 
 Entra en la web, ve a tu cuenta y regístrate con **cada** correo de `ELDORADO_CORREOS_DE_LA_CASA`. El correo no se
 confirma: quien se registrara antes con uno de ellos pensaría con tu cuenta. Mientras no lo hagas, el registro de la
-casa te lo recuerda al arrancar (`Ojo: estos correos de la casa aún no tienen cuenta`).
+casa te lo recuerda al arrancar (`Ojo: 1 de los correos de la casa aún no tienen cuenta`; dice cuántos, no cuáles).
 
 Al acabar, en la web tienes que ver tu cuenta, sin que te pida una clave de IA.
 
