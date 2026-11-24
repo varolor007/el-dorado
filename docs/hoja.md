@@ -23,7 +23,8 @@ Hoja de El Dorado, versión 2, firmada el 23 de noviembre de 2026.
 - **El precio** de El Dorado y cómo se cobra. La IA va aparte, con la clave del viajero. *(por decidir)*
 - **Dónde se reserva un precio de LiteAPI:** no tiene página pública. Hoy se enlaza a otra agencia cuando casa y, si no, a la web del hotel. *(por decidir)*
 - **Los vuelos en vivo:** hoy solo hay precios guardados de hace días, y a veces ninguno para las fechas exactas. *(por decidir)*
-- **Abaratar la mirada:** un alojamiento tardaba catorce minutos; el objetivo es menos de uno. Ya van menos fotos y mejor elegidas. Falta encogerlas antes de mirarlas, que pide una pieza que el agente no lleva y tu sí expreso, y llamar a la IA sin rodeos. *(por decidir)*
+- **Abaratar la mirada:** un alojamiento tardaba catorce minutos; el objetivo es menos de uno. Ya van menos fotos, mejor elegidas y encogidas antes de mirarlas (tu sí del 24-nov a la única pieza de fuera que lleva el agente). Falta llamar a la IA sin rodeos. *(por decidir)*
+- **La fuente de rutas:** de dónde salen el tiempo de verdad de un trayecto, si esa manera de ir existe allí y lo que cuesta. Mirado el 24-nov: hay una fuente que encaja para lo que se tarda, y ninguna abierta que dé lo que cuesta en todo el mundo. Falta que elijas. *(por decidir)*
 - **Los dibujos de la guía:** una colección propia o generados para cada viaje. *(por decidir)*
 - **Las fotos de los hoteles en la web** y las de viajeros: con qué derechos se enseñan. *(por decidir)*
 - **Los pesos, los mínimos y los topes:** son de partida, y se ajustan con casos reales. *(por decidir)*
@@ -779,8 +780,8 @@ Los datos se sacan en el momento, cuando se piden; el viajero no trae nada, no h
 | Los papeles, las fiestas y lo que se agota | Las webs oficiales y el buscador de la IA | en borrador |
 | Los sitios que ver | Wikidata y Wikipedia, pedidos en el momento: qué es cada sitio, dónde está, cuánto se habla de él y lo que dice su artículo. Qué es un sitio lo dice la clase de la que desciende en la fuente, no su nombre ni su idioma: vale igual para una capital, un pueblo o un valle. Son libres: piden citar la fuente. OpenStreetMap, sin enchufar todavía | en parte |
 | La foto de cada sitio | Wikimedia Commons, con su autor y su licencia al pie. Una foto sin autor o sin licencia no se enseña | hecho |
-| El mapa y el buscador de lugares | Mapas abiertos, sin clave y sin coste: el mapa, con MapLibre y OpenFreeMap; el buscador, Photon. No garantizan el servicio | pendiente |
-| Lo que se anda entre dos paradas | El código, en línea recta y con un margen; la ruta exacta, un enlace a Google Maps | hecho |
+| El mapa y el buscador de lugares | Mapas abiertos, sin clave y sin coste: el mapa, con MapLibre y OpenFreeMap; el buscador, Photon. No garantizan el servicio | hecho |
+| Lo que hay entre dos paradas, y cómo se va | El código: la distancia, en línea recta y con un margen, y las maneras de ir que tienen sentido (a pie lo que se anda; en transporte o en coche lo que no), con un tiempo aproximado. La ruta exacta, un enlace a Google Maps. El tiempo de verdad, si esa manera existe allí y lo que cuesta, de una fuente de rutas que está por decidir | en parte |
 | Las palancas: el precio de otros días, otro hotel u otra zona | Las mismas fuentes, pedidas otra vez por código: las mismas noches movidas y una noche más o menos. Otro aeropuerto y el tren esperan a la búsqueda de transporte | en parte |
 | Dónde se reserva cada precio | El enlace de donde se encontró; el de LiteAPI no tiene página pública | por decidir |
 
@@ -803,7 +804,7 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 | Lo que lanza | En `agent/launcher/`. Una búsqueda desde la terminal, cómo se lanza un asiento, con su puesto y su sello, y la investigación entera, paso a paso y desde el disco: para cuando toca un asiento, y un rojo vuelve a su dueño dos veces como mucho. Falta que los lance sola, con la IA de verdad, y que lo cuente en vivo | en parte |
 | La mesa | Fuera del repositorio. Hoy, un archivo por búsqueda; falta la carpeta de cada viaje, con su estado y sus versiones | en parte |
 | Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica | en parte |
-| La web | En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Solo habla con la casa | pendiente |
+| La web | En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Hecha en seco, con un viaje grabado; falta que hable con la casa, que es lo único con lo que habla | en parte |
 | La puerta de la casa a la web | Lo que la web puede pedir y lo que la casa cuenta en vivo | pendiente |
 | La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov). El asiento solo puede abrir su puesto | pendiente |
 | Las cuentas | Registro, sesión, tu clave cifrada y tus viajes. Con qué se guardan, por decidir en su tanda | por decidir |
