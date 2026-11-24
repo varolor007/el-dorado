@@ -215,6 +215,8 @@ test("las trampas: cada fallo puesto a propósito, cazado", () => {
     // El nombre llega a la pantalla: no puede traer una dirección sin su «https», ni un teléfono.
     ["findings[0].name", con((e) => (e.findings[0].name = "Fado night: tickets at fado-inventado.eu"))],
     ["findings[0].name", con((e) => (e.findings[0].name = "Fado night, call +351 912 345 678"))],
+    // Lo que dice de un hallazgo mide lo que dice su contrato: 200 letras.
+    ["findings[0].what", con((e) => (e.findings[0].what = "x".repeat(201)))],
     ["unknowns", con((e) => (e.unknowns = "nada"))],
     // Cada frase de lo que no se sabe dice su pega: una dirección de la web, o más larga de lo que cabe.
     ["unknowns[1]", con((e) => (e.unknowns = ["Fine.", "See https://www.example.org/page."]))],

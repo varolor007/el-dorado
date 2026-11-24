@@ -8,7 +8,7 @@
 // cada página citada se abrió de verdad lo mira la puerta de todos.
 
 import { conFuenteOficial, dominioOficial, DUDAS, ESTADOS_DE_PAPEL, LADOS } from "../data/papeles.ts";
-import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO } from "../data/viaje.ts";
+import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, LO_QUE_DICE_DE_UN_DATO } from "../data/viaje.ts";
 import { direccionComparable, esDireccion } from "../launcher/consultado.ts";
 import { celdasDe, filasDe } from "../launcher/papeles.ts";
 import type { Entendido } from "../scripts/formas.ts";
@@ -155,7 +155,11 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
         !/^[A-Za-z]{3}$/.test(coste.currency))
     )
       rojo(`${donde}.cost`, "solo lo que hay que hacer lleva su coste, un importe con su moneda");
-    if (!esTexto(c.what)) rojo(`${donde}.what`, "no dice en una línea corta lo que piden las fuentes");
+    if (!esTexto(c.what, LO_QUE_DICE_DE_UN_DATO))
+      rojo(
+        `${donde}.what`,
+        `no dice en una línea de ${LO_QUE_DICE_DE_UN_DATO} letras como mucho lo que piden las fuentes`,
+      );
     else if (PUEDE_ENTRAR.test(c.what))
       rojo(`${donde}.what`, "dice que se puede entrar: solo se dice lo que piden (RP1)");
   });

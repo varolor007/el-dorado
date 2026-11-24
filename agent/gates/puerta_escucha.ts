@@ -6,7 +6,7 @@
 
 import { COSAS } from "../data/gustos.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
-import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, LARGO_DE_UNA_PREGUNTA } from "../data/viaje.ts";
+import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, LARGO_DE_UNA_PREGUNTA, SIGNO_DE_PREGUNTA } from "../data/viaje.ts";
 import { CHOQUES, PESOS_DE_GUSTO, type Dicho, type Entendido, type EntregaDeEscucha } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { estaDicho, puertaEntendido } from "./puerta_entendido.ts";
@@ -106,7 +106,7 @@ export function puertaEscucha(v: unknown, p: ParaEscuchar): Veredicto {
         : `son ${preguntas.length} preguntas, y se pueden hacer ${p.preguntas} como mucho (RE3)`,
     );
   preguntas.forEach((q, i) => {
-    if (!esTexto(q.ask, LARGO_DE_UNA_PREGUNTA) || !q.ask.includes("?"))
+    if (!esTexto(q.ask, LARGO_DE_UNA_PREGUNTA) || !SIGNO_DE_PREGUNTA.test(q.ask))
       rojo(`questions[${i}].ask`, `no es una pregunta corta, de ${LARGO_DE_UNA_PREGUNTA} letras como mucho`);
     if (!esTexto(q.why)) rojo(`questions[${i}].why`, "no dice qué cambia en el viaje la respuesta");
     cita(`questions[${i}].quote`, q.quote);

@@ -15,7 +15,7 @@ import {
   TEMAS_DEL_CALENDARIO,
   VENTANAS,
 } from "../data/calendario.ts";
-import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO } from "../data/viaje.ts";
+import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, LO_QUE_DICE_DE_UN_DATO } from "../data/viaje.ts";
 import { esDireccion } from "../launcher/consultado.ts";
 import { diasEntre, loQueCambia } from "../launcher/calendario.ts";
 import type { Aviso, Entendido } from "../scripts/formas.ts";
@@ -106,7 +106,8 @@ export function puertaCalendario(v: unknown, p: ParaElCalendario): Veredicto {
       /^[A-Za-z]{3}$/.test(precio.currency);
     if (precio !== SIN_SABER && !conPrecio)
       rojo(`${donde}.price`, "el precio no es un importe con su moneda, ni unknown");
-    if (!esTexto(h.what)) rojo(`${donde}.what`, "no dice en una línea corta qué es");
+    if (!esTexto(h.what, LO_QUE_DICE_DE_UN_DATO))
+      rojo(`${donde}.what`, `no dice en una línea de ${LO_QUE_DICE_DE_UN_DATO} letras como mucho qué es`);
     else if (precio === SIN_SABER && DE_AHORRAR.test(h.what))
       rojo(`${donde}.what`, "habla de ahorrar o de más barato sin un precio de su página (RC5)");
     buenos.push(rojos.length === antes);

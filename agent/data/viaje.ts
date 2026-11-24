@@ -29,3 +29,7 @@ export const SE_PASA_A: Record<EstadoDelViaje, readonly EstadoDelViaje[]> = {
 /** Las preguntas de más que puede hacer el que escucha, como dice la hoja, y lo más que mide cada una. */
 export const PREGUNTAS_DE_MAS = 3;
 export const LARGO_DE_UNA_PREGUNTA = 200;
+/** Con qué signo se pregunta, en cualquier escritura: el de siempre, el ancho, el árabe, el griego y el armenio. */
+export const SIGNO_DE_PREGUNTA = /[?\uff1f\u061f\u037e;\u055e]/u;
+/** Lo más que mide lo que un asiento dice de un dato suyo en una línea (su `what`), como dicen sus contratos. */
+export const LO_QUE_DICE_DE_UN_DATO = 200;

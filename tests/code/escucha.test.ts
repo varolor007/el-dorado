@@ -89,6 +89,17 @@ test("cada cita está de verdad, letra a letra, en lo que escribió el viajero",
   }
 });
 
+test("una pregunta lleva su signo, el de la escritura que sea", () => {
+  for (const pregunta of ["¿Es imprescindible?", "ジムは必要ですか\uff1f", "هل هو ضروري\u061f", "Είναι απαραίτητο;"]) {
+    const e = BUENA();
+    e.questions[0].ask = pregunta;
+    assert.ok(!rojosDe(e).includes("questions[0].ask"), pregunta);
+  }
+  const sin = BUENA();
+  sin.questions[0].ask = "Dime si es imprescindible.";
+  assert.ok(rojosDe(sin).includes("questions[0].ask"));
+});
+
 test("una cita son palabras enteras de lo que escribió, en cualquier escritura, y no una letra suelta", () => {
   const dicho: Dicho = {
     wants: "Quiero un hotel con gimnasio, y vistas al mar.",
