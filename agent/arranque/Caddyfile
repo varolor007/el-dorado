@@ -1,0 +1,47 @@
+# La puerta con candado: Caddy termina el HTTPS (saca solo el certificado de la dirección) y pasa a la casa, que
+# escucha en 127.0.0.1 de la red que comparten, solo lo que es de su puerta. Lo demás, cerrado: 404.
+#
+# El candado de verdad es la llave de la web, que mira la casa en cada petición (menos /salud). Aquí se pone lo que
+# cuida la puerta ahora que da a internet: solo sus rutas y sus métodos, el tamaño de lo que se manda (el mismo
+# tope que la casa, 64 KB), tiempos para leer las cabeceras y el cuerpo, y nada de registro de cada petición, que
+# apuntaría la sesión del viajero. No hay tiempo de escritura: lo que pasa en vivo es una conexión larga.
+
+{
+	admin off
+	email {$ELDORADO_CORREO_DEL_CERTIFICADO}
+	servers {
+		protocols h1 h2
+		max_header_size 16KB
+		timeouts {
+			read_header 10s
+			read_body 30s
+			idle 2m
+		}
+	}
+}
+
+{$ELDORADO_DOMINIO} {
+	@casa {
+		method GET POST PUT DELETE
+		path /salud /vistazo /cuentas /sesiones /cuenta /cuenta/clave /cuenta/gasto /viajes /viajes/*
+	}
+
+	handle @casa {
+		request_body {
+			max_size 64KB
+		}
+		reverse_proxy 127.0.0.1:4320 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		respond 404
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+	}
+}

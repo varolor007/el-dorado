@@ -1,0 +1,45 @@
+# La puerta con candado: Caddy, delante de la casa, con HTTPS y su certificado, que saca solo. Se suma a compose.yaml
+# (lo hace casa.sh cuando ELDORADO_LLEGADA=puerta). Abre el 443 y el 80 de la máquina, y nada más: el 80 solo sirve
+# para que le den el certificado y para mandar al 443. Lo que deja pasar a la casa lo dice el Caddyfile.
+
+services:
+  casa:
+    # Los puertos van en la casa porque la red es suya; quien escucha en ellos es Caddy, que la comparte.
+    ports:
+      - "443:443/tcp"
+      - "80:80/tcp"
+    environment:
+      ELDORADO_DIRECCION_PUBLICA: ${ELDORADO_DOMINIO:-}
+
+  puerta:
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    image: caddy:2.11.9-alpine
+    network_mode: service:casa
+    depends_on:
+      casa: { condition: service_healthy }
+    # Caddy, con el vigía delante: si la casa se reinicia, la puerta vuelve a arrancar en su red nueva.
+    entrypoint: ["/bin/sh", "/vigia.sh"]
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    mem_limit: 256m
+    cpus: 0.5
+    tmpfs:
+      - /tmp:size=16m
+    environment:
+      ELDORADO_DOMINIO: ${ELDORADO_DOMINIO:-}
+      ELDORADO_CORREO_DEL_CERTIFICADO: ${ELDORADO_CORREO_DEL_CERTIFICADO:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./vigia.sh:/vigia.sh:ro
+      - certificados:/data
+      - ajustes-de-caddy:/config
+
+volumes:
+  certificados:
+  ajustes-de-caddy:

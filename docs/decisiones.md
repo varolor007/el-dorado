@@ -479,6 +479,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   La búsqueda de transporte mira siempre los días de alrededor, y son tres a cada lado; la palanca de mover los
   días pasa también a tres. El transporte del viaje sigue siendo el de sus fechas: lo de los días de al lado se
   ofrece, no se elige por el viajero. Encargado a una sesión de obra.
+- **Cómo queda el arranque en el servidor** (una sesión de obra, revisada por quien orquesta). La casa no abre
+  ningún puerto suyo: quien la saca fuera, Caddy o ngrok, comparte su red. Con la puerta se abren el 443 y el 80,
+  que Docker publica por encima del cortafuegos; con el túnel, nada. La puerta solo deja pasar las rutas y los
+  métodos de la casa, con sus topes de tamaño y de tiempo, y no apunta las peticiones, para no guardar la sesión de
+  nadie. Lo que no cubre: nada limita las peticiones por dirección, y `/salud` contesta sin llave. La dirección
+  gratuita puede quedarse sin certificado unos días; por eso la sesión propone al PM un subdominio suyo.
 
 ## Pendientes
 

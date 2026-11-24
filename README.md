@@ -90,6 +90,14 @@ ELDORADO_CORREOS_DE_LA_CASA=<correo,correo> ELDORADO_TOKEN_DE_CLAUDE=<el token> 
   ELDORADO_LLAVE=<la llave> ELDORADO_SECRETO=<32 bytes> node agent/launcher/arrancar.ts
 ```
 
+Para poner la casa en el servidor, en Docker y con la cuenta de Claude de la casa, la guía paso a paso está en
+[agent/arranque/guia.md](agent/arranque/guia.md). Todo pasa por una orden, que se corre como root en el servidor:
+
+```bash
+sudo agent/arranque/casa.sh instalar      # la primera vez, o al cambiar el .env
+sudo agent/arranque/casa.sh actualizar    # baja lo nuevo y reconstruye sin cortar lo que se investiga
+```
+
 Para lanzar una investigación entera con la IA de verdad desde la terminal (gasta de la clave: es decisión del PM):
 
 ```bash

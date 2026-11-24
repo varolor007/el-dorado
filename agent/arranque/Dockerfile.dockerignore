@@ -1,0 +1,9 @@
+# Lo que entra en la imagen, y nada más: el paquete del agente y su código. Ni pruebas, ni web, ni docs, ni el .env.
+*
+!package.json
+!package-lock.json
+!agent
+agent/arranque
+!agent/arranque/entrada.sh
+!agent/arranque/tunel.sh
+!agent/arranque/vigia.sh

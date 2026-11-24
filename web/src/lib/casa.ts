@@ -115,6 +115,18 @@ export function casaDe(entorno: Entorno): { url: string; llave: string } | null 
   return /^https?:\/\/[^\s/]+/.test(url) && llave.length >= 24 ? { url, llave } : null;
 }
 
+/** Lo más que se espera a la casa en lo que no es en vivo: si no contesta, es que no está. */
+export const ESPERA_A_LA_CASA_MS = 120_000;
+
+/** Si la casa está detrás de un túnel de ngrok: entonces se le dice que no ponga su aviso para navegadores. */
+export function porNgrok(url: string): boolean {
+  try {
+    return /(^|\.)ngrok(-free)?\.(app|dev|io)$/.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Le pasa a la casa una petición del navegador, si la puerta la admite, y prepara lo que se le contesta. */
 export async function aLaCasa(p: DeLaWeb, entorno: Entorno, pedir: typeof fetch = fetch): Promise<ALaWeb> {
   const casa = casaDe(entorno);
@@ -141,8 +153,10 @@ export async function aLaCasa(p: DeLaWeb, entorno: Entorno, pedir: typeof fetch 
         ...(ruta === "vistazo" && clienteDe(p.cabeceras.direccion, casa.llave) !== null
           ? { [CABECERA_DEL_CLIENTE]: clienteDe(p.cabeceras.direccion, casa.llave)! }
           : {}),
+        ...(porNgrok(casa.url) ? { "ngrok-skip-browser-warning": "1" } : {}),
       },
       body: cambia && p.cuerpo ? p.cuerpo : undefined,
+      ...(enVivo ? {} : { signal: AbortSignal.timeout(ESPERA_A_LA_CASA_MS) }),
     });
   } catch {
     return dice(502, "house_down");

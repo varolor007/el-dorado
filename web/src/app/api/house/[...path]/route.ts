@@ -4,6 +4,9 @@
 import { aLaCasa, type DeLaWeb } from "../../../../lib/casa.ts";
 
 export const dynamic = "force-dynamic";
+// En Vercel, lo que pasa en vivo es una conexión larga: se le da el tiempo que admiten todos sus planes. Cuando se
+// corta, el navegador vuelve a conectar solo y la casa le cuenta otra vez dónde va.
+export const maxDuration = 300;
 
 async function pasa(peticion: Request, contexto: { params: Promise<{ path: string[] }> }): Promise<Response> {
   const { path } = await contexto.params;

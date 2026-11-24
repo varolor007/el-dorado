@@ -144,14 +144,25 @@ qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no 
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
 PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de la casa (2.9, primera parte,
 `claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
-primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda, en marcha desde el 24-nov**: el arranque
-en el servidor (2.9, segunda parte, `claude/eldorado-2-9-arranque`, con las dos maneras de llegar desde Vercel: la
-puerta con candado y el túnel) y los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
+primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda, en marcha desde el 24-nov**: los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
 (5.5, `claude/eldorado-5-5-dias-baratos`), que lleva después los tres días a cada lado. Ya junto: el gasto de cada
 viaje (11.4, `claude/eldorado-11-4-gasto`): sale de `agent/launcher/gasto.ts` por `GET /cuenta/gasto`, solo a su
 dueño; lo enseñan la tarjeta de la pestaña de la clave y una pastilla en Tus viajes. Lo siguiente es la media de
 las investigaciones enteras de la cuenta, o no se dice. Para la cuenta de la casa es lo que habría costado con una
-clave. Falta decirlo junto al botón de empezar (`useGasto().next`) y verlo con gasto de verdad. **Lo que queda
+clave. Falta decirlo junto al botón de empezar (`useGasto().next`) y verlo con gasto de verdad. Y ya junto también
+**el arranque (2.9, segunda parte, `claude/eldorado-2-9-arranque`), sin probar en el servidor**: `agent/arranque/`
+(la imagen, `compose.yaml` con el túnel como perfil, `compose.puerta.yaml` con Caddy, `.env.ejemplo`, `casa.sh` con
+instalar, actualizar, vercel, estado, registro y parar, y `guia.md` para el PM). La casa sigue escuchando en
+127.0.0.1; quien la saca fuera comparte su red, con un vigía que lo vuelve a arrancar si la casa se reinicia. Las
+llaves de la casa viven en el volumen `eldorado_datos` y salen en su registro; el secreto, nunca. La puerta solo
+deja pasar las rutas de la casa: **una ruta nueva de la puerta hay que añadirla también en el `Caddyfile`** (lo
+vigila `tests/code/arranque.test.ts`). En la web, la cabecera de ngrok, `maxDuration` de 300 segundos y 120 para lo
+que no es en vivo. El repositorio no tiene `main`: su rama de partida es la de la sesión, y es la que baja el
+servidor y la que despliega Vercel. **Pendiente**: que el PM elija puerta o túnel e instale con la guía; lo que hay
+que mirar al instalar (que la imagen se construye, que Claude Code piensa con el disco de solo lectura, que Caddy
+saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
+Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de
+certificados con todo el que la usa: con un subdominio del PM no pasa. **Lo que queda
 por repartir y pide antes un diseño de quien orquesta**: el que escucha (5.2), que cambia el flujo de empezar; el
 conductor (2.5); el buscador y el lector de webs (3.5), y con ellos el del calendario (5.3) y el de los papeles
 (5.4); y Geoapify dentro de la casa (3.14), que tiene que caber en su cupo gratuito.
