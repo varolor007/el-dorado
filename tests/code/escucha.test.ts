@@ -6,7 +6,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { PREGUNTAS_DE_MAS } from "../../agent/data/viaje.ts";
-import { puertaEntendido } from "../../agent/gates/puerta_entendido.ts";
+import { estaDicho, puertaEntendido } from "../../agent/gates/puerta_entendido.ts";
 import { puertaEscucha, type ParaEscuchar } from "../../agent/gates/puerta_escucha.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
@@ -87,6 +87,29 @@ test("cada cita está de verdad, letra a letra, en lo que escribió el viajero",
     estropea(e);
     assert.ok(rojosDe(e).includes(donde), donde);
   }
+});
+
+test("una cita son palabras enteras de lo que escribió, en cualquier escritura, y no una letra suelta", () => {
+  const dicho: Dicho = {
+    wants: "Quiero un hotel con gimnasio, y vistas al mar.",
+    booked: "",
+    heard: false,
+    answers: [],
+  };
+  for (const buena of [
+    "hotel con gimnasio",
+    "gimnasio,",
+    " vistas al mar.",
+    "Quiero un hotel con gimnasio, y vistas al mar.",
+  ])
+    assert.equal(estaDicho(buena, dicho), true, buena);
+  // Una letra suelta, un trozo de palabra o media palabra al final no dicen lo que escribió.
+  for (const mala of ["a", "e", "y", "imnasio", "hotel con gim", "vistas al ma", "", "  ", 7, null])
+    assert.equal(estaDicho(mala, dicho), false, String(mala));
+  // En una escritura sin espacios, las palabras las parte el segmentador: vale la palabra, no medio trozo.
+  const sinEspacios: Dicho = { wants: "ホテルにジムが欲しいです", booked: "", heard: false, answers: [] };
+  assert.equal(estaDicho("ジム", sinEspacios), true);
+  assert.equal(estaDicho("テルにジ", sinEspacios), false);
 });
 
 test("tres preguntas como mucho, y ninguna en la segunda vuelta", () => {

@@ -3,7 +3,8 @@
 These rules win over the guide.
 
 - **RE1. Every quote is copied letter by letter from `in/words.json`**: from one of its sentences, without joining
-  two, without correcting a typo and without translating. A quote that is not there is a red.
+  two, without correcting a typo and without translating. It is whole words: it does not start or end in the middle
+  of a word, and it has at least two letters. A quote that is not there is a red.
 - **RE2. Nothing added.** No taste, limit or booking that the traveller did not write. What they did not say is not
   yours to fill, not even with what most travellers want.
 - **RE3. Questions only when the answer changes the trip**, and never more than `questions_allowed` of

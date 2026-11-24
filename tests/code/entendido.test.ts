@@ -183,6 +183,22 @@ test("trampa: sin pasaporte y sin saber de dónde sale no hay precio que pedir, 
   );
 });
 
+test("trampa: más pasaportes que viajeros no son de nadie", () => {
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers = { adults: 1, children: [], rooms: 1, passports: ["US", "PT"] })),
+    ["travellers.passports"],
+  );
+  // Uno por cada uno, o menos (los que faltan llevan el del primero), sí.
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers = { adults: 2, children: [5], rooms: 1, passports: ["US", "PT", "US"] })),
+    [],
+  );
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers = { adults: 2, children: [5], rooms: 1, passports: ["US"] })),
+    [],
+  );
+});
+
 test("trampa: un gusto sin su peso o sin las palabras del viajero, o con un nombre que no se puede usar", () => {
   assert.deepEqual(
     rojosDe((v) => (v.tastes[0].weight = "a lot")),

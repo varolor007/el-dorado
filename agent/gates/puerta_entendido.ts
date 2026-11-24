@@ -52,13 +52,34 @@ const UN_DIA = 24 * 60 * 60 * 1000;
 export const palabrasDe = (d: Dicho): string[] =>
   [d.wants, d.booked, ...d.answers.map((a) => a.answer)].filter((x) => x.trim() !== "");
 
+const PALABRAS = new Intl.Segmenter(undefined, { granularity: "word" });
+
+/** Dónde empieza o acaba una palabra en una frase, en cualquier escritura: los cortes que da el segmentador. */
+function cortesDe(frase: string): Set<number> {
+  const cortes = new Set<number>([0, frase.length]);
+  for (const trozo of PALABRAS.segment(frase)) {
+    cortes.add(trozo.index);
+    cortes.add(trozo.index + trozo.segment.length);
+  }
+  return cortes;
+}
+
 /**
- * Si una cita está de verdad en lo que escribió el viajero, letra a letra: un trozo de una de sus frases, tal cual,
- * con alguna letra. Una cita no junta dos frases distintas: así no se le hace decir lo que no dijo.
+ * Si una cita está de verdad en lo que escribió el viajero, letra a letra: un trozo de una de sus frases, tal cual.
+ * Son palabras enteras, con dos letras al menos: una cita no empieza ni acaba a media palabra, y una letra suelta
+ * no dice nada. Una cita no junta dos frases distintas: así no se le hace decir lo que no dijo.
  */
 export function estaDicho(cita: unknown, d: Dicho): boolean {
-  if (typeof cita !== "string" || cita.trim() === "" || !/\p{L}/u.test(cita)) return false;
-  return palabrasDe(d).some((frase) => frase.includes(cita));
+  if (typeof cita !== "string" || (cita.match(/[\p{L}\p{N}]/gu) ?? []).length < 2) return false;
+  // Lo que cuenta es lo que va de su primera letra a la última: un espacio o una coma de más no cambian la cita.
+  const hueco = cita.length - cita.trimStart().length;
+  const suya = cita.trim();
+  return palabrasDe(d).some((frase) => {
+    const cortes = cortesDe(frase);
+    for (let i = frase.indexOf(cita); i !== -1; i = frase.indexOf(cita, i + 1))
+      if (cortes.has(i + hueco) && cortes.has(i + hueco + suya.length)) return true;
+    return false;
+  });
 }
 
 /** Lo que el viajero dijo con sus palabras: un texto en una línea, que puede estar vacío. */
@@ -172,6 +193,9 @@ export function puertaEntendido(v: unknown, o: { hoy?: string } = {}): Veredicto
       rojo("travellers.passports", "cada pasaporte son las dos letras de su país");
     else if (pasaportes.length === 0 && !(esObjeto(s) && letras(s.country, 2)))
       rojo("travellers.passports", "no se sabe con qué pasaporte viaja ni de qué país sale: sin eso no hay precio");
+    // Un pasaporte por viajero, como mucho: los que sobran no serían de nadie, y los papeles se mirarían mal.
+    else if (ninos !== null && pasaportes.length > adultos + ninos.length)
+      rojo("travellers.passports", "hay más pasaportes que viajeros: uno por cada uno, en su orden");
   }
 
   // Lo que dice con sus palabras: frases, y cada gusto con su peso.
