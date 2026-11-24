@@ -426,6 +426,8 @@ const en = {
         bad_login: "The email or the password is not right.",
         too_many_attempts: `Too many tries. Wait ${minutos} ${minutos === 1 ? "minute" : "minutes"} and try again.`,
         bad_key: "That does not look like an API key. Paste it whole, with no spaces.",
+        key_rejected: "Claude did not accept that key. Check it is whole, active, and has access to the API.",
+        ai_unreachable: "We could not reach Claude to check your key. Nothing was saved. Try again in a moment.",
         no_session: "Your session has ended. Sign in again.",
         no_house: "Accounts are not connected on this site yet.",
         house_down: "We could not reach El Dorado. Try again in a moment.",
@@ -809,6 +811,9 @@ const es: Textos = {
         bad_login: "El correo o la contraseña no coinciden.",
         too_many_attempts: `Demasiados intentos. Espera ${minutos} ${minutos === 1 ? "minuto" : "minutos"} y prueba otra vez.`,
         bad_key: "Eso no parece una clave de la API. Pégala entera y sin espacios.",
+        key_rejected: "Claude no ha admitido esa clave. Mira que esté entera, activa y con acceso a la API.",
+        ai_unreachable:
+          "No hemos podido llegar a Claude para comprobar tu clave. No se ha guardado. Prueba en un momento.",
         no_session: "Tu sesión se ha acabado. Entra otra vez.",
         no_house: "Las cuentas todavía no están conectadas en este sitio.",
         house_down: "No hemos podido llegar a El Dorado. Prueba dentro de un momento.",

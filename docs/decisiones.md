@@ -384,6 +384,15 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   público, Google en vivo y con un script, solo para eso. El enlace a Google Maps de cada trayecto se queda en los
   dos casos. Su clave va en la dirección de cada pedido y no en una cabecera, así que el formulario seguro no puede
   ponerla: la pone el PM como variable del entorno (`GEOAPIFY_KEY`).
+- **La librería oficial de Anthropic entra en el agente** (el PM, a la pregunta de la sesión: «si obvio esto
+  metelo»). Es la segunda pieza de fuera que lleva el agente para funcionar, con `sharp`; cualquier otra sigue
+  pidiendo su sí, y la prueba del repositorio lo comprueba.
+  Cómo queda hecho (la sesión): una llamada por asiento, sin herramientas; el contrato va como instrucciones del
+  sistema y el material en un mensaje; la respuesta llega por partes, para que una larga no se corte por esperar.
+  El modelo, el esfuerzo y el precio los dice el entorno de la casa, nunca el repositorio. Una clave se comprueba
+  contra la IA antes de guardarla, preguntando por el modelo, que no gasta. Y si la IA no quiere contestar, la casa
+  para y lo dice: no se cambia sola a otro modelo, porque el techo de gasto del viajero se cuenta con el precio del
+  modelo que se le dijo. Si el PM quiere que pruebe con otro antes de parar, es una decisión suya.
 
 ## Pendientes
 

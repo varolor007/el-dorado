@@ -108,6 +108,24 @@ test("ninguna clave en el repositorio", () => {
   assert.deepEqual(sospechosos, []);
 });
 
+test("el agente no lleva más piezas de fuera que las que tienen el sí del PM", () => {
+  // Las dos que hay: la que encoge las fotos y la librería oficial de Anthropic, que llama a la IA (24-nov).
+  const CON_SU_SI = ["@anthropic-ai/sdk", "sharp"];
+  const paquete = JSON.parse(readFileSync(join(RAIZ, "package.json"), "utf8")) as { dependencies?: object };
+  assert.deepEqual(Object.keys(paquete.dependencies ?? {}).sort(), CON_SU_SI);
+  // Y en el código del agente no se trae nada más: lo suyo, lo de Node y esas dos.
+  const traido = /(?:from|import)\s*\(?\s*"([^"]+)"/g;
+  const deFuera = new Set<string>();
+  for (const a of TODOS.filter((t) => t.startsWith("agent/") && t.endsWith(".ts")))
+    for (const [, de] of readFileSync(join(RAIZ, a), "utf8").matchAll(traido))
+      if (!de.startsWith(".") && !de.startsWith("node:")) deFuera.add(de);
+  assert.deepEqual(
+    [...deFuera].filter((d) => !CON_SU_SI.includes(d)),
+    [],
+  );
+  assert.deepEqual([...deFuera].sort(), CON_SU_SI);
+});
+
 test("la mesa no puede estar dentro del repositorio", () => {
   assert.throws(() => carpetaDeLaMesa({ ELDORADO_MESA: join(RAIZ, "mesa") }), /dentro del repositorio/);
   assert.throws(() => carpetaDeLaMesa({ ELDORADO_MESA: RAIZ }), /dentro del repositorio/);

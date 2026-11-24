@@ -64,8 +64,9 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 ## Cómo se escribe
 
 - El código, en TypeScript sobre Node 22 (Node ejecuta los `.ts` sin compilar), a 120 caracteres por línea, con
-  `npx prettier --write` para el formato. El agente (`agent/`), sin dependencias para funcionar, salvo
-  `sharp`, que encoge las fotos antes de mirarlas (el PM, 24-nov): cualquier otra pide su sí. La web (`web/`) lleva
+  `npx prettier --write` para el formato. El agente (`agent/`), sin dependencias para funcionar, salvo dos:
+  `sharp`, que encoge las fotos antes de mirarlas, y `@anthropic-ai/sdk`, la librería oficial de Anthropic, que llama
+  a la IA (el PM, 24-nov). Cualquier otra pide su sí, y la prueba del repositorio lo comprueba. La web (`web/`) lleva
   las suyas, en su propia carpeta.
 - Los contratos de los asientos, en inglés; lo que ve el cliente en la web, en inglés, como la web de Cortex; el agente
   responde al viajero en su idioma. Todo lo demás, en español.

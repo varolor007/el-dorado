@@ -41,7 +41,8 @@ Lo que hay que saber de cómo quedó:
   habitación y el precio es el de todas.
 - **Lo que no lleva estrellas** se juzga por su nota y sus opiniones.
 - **Las quejas graves** las señala el código en las opiniones y las confirma el que mira (`serious` en su entrega).
-- **Las fotos se encogen** antes de mirarlas, con `sharp`: la única pieza de fuera que lleva el agente.
+- **Las fotos se encogen** antes de mirarlas, con `sharp`: una de las dos piezas de fuera que lleva el agente (la
+  otra, la librería oficial de Anthropic, que llama a la IA).
 - **El 3.5**, el buscador y el lector de webs, va en la tanda 4.
 
 **Lo que no se ha comprobado con un viaje de verdad**, y así se le dijo al PM: un trayecto que no se anda (el viaje
@@ -88,21 +89,31 @@ mirando qué transporte público conoce de verdad y cuál aproxima; y, con lo qu
 cribas, en el ritmo y en la tabla. Si se queda corta en transporte público, la segunda opción es Google en vivo y
 con un script (en [fuentes.md](fuentes.md)). El enlace a Google Maps de cada trayecto ya está en la web.
 
-**La llamada directa (2.7), a medias.** Hecho, sin llamar a nadie: `agent/launcher/ia.ts` monta lo que se le manda a
-un asiento (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con
-el precio del entorno (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`, en dólares por millón);
+**La llamada directa (2.7), hecha y sin estrenar.** `agent/launcher/ia.ts` monta lo que se le manda a un asiento
+(`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con el precio
+del entorno (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`, en dólares por millón);
 `lanzadorDirecto(pensar, precio)` es el `Lanzador` de la casa. El método común ya dice contestar de una vez, con cada
-paso bajo su marca (`=== 1-acknowledgement.md ===`). **Falta `pensar`**, la pieza que llama a Claude: tiene que usar
-la pieza oficial de Anthropic para TypeScript, que es una dependencia nueva del agente y pide el sí del PM; el
-modelo se dice en el entorno, nunca en el repositorio. Y la primera llamada de verdad pide su adelante. Aún no tiene orden de arranque: se arranca con su lanzador de la
-IA de verdad, que es el 2.7. Lo siguiente, cuando el PM decida: el lanzador de la IA de verdad (2.7), el lado de la
-web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). **Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada
-directa por asiento («lo de la llamada directa me parece bien»); uno se registra bien, con su cuenta, sin llave de
-entrada («pon que se pueda registrar bien ya de la que estás y listo»); y el motor se sube a un servidor al final,
-con las pruebas hechas. La fuente de rutas sigue sin elegir. Para el montaje sirve de guía la casa del ensamblador,
-en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor y la web en Vercel le
-habla por un túnel con una llave. Nada gasta de una clave sin el adelante del PM, y antes de lanzar un asiento con
-una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
+paso bajo su marca (`=== 1-acknowledgement.md ===`). Quien piensa de verdad es `agent/launcher/ia_de_verdad.ts`
+(`pensarConClaude`), con la librería oficial de Anthropic, la segunda pieza de fuera del agente (el PM, 24-nov: «si
+obvio esto metelo»): una llamada por asiento, sin herramientas, con el contrato como instrucciones y el material en
+un mensaje. El modelo lo dice el entorno (`ELDORADO_MODELO`), nunca el repositorio, y cuánto se esfuerza, si se
+quiere (`ELDORADO_ESFUERZO`). `arrancar.ts` la enchufa si el entorno dice el modelo (`iaDe`), y entonces pide el
+precio; sin modelo, la casa arranca sin IA y el botón lo dice. La puerta comprueba cada clave contra la IA antes de
+guardarla (`claveQueFunciona`, que pregunta por el modelo y no gasta): `key_rejected` si no sirve, `ai_unreachable`
+si no se llega. Si la IA no quiere contestar, la casa para y lo dice; no se cambia sola a otro modelo. **Nada de
+esto ha llamado todavía a nadie**: las pruebas usan una librería de mentira. **Falta la primera llamada de verdad**,
+que pide dos cosas del PM: la clave de Claude en el entorno, como `ELDORADO_CLAVE_DE_CLAUDE` (no puede ir por el
+formulario seguro: la red de la sesión no pone claves en los pedidos a Anthropic), y su adelante, que dijo que da
+cuando meta la clave de Geoapify. Se propuso un techo de 5 dólares.
+
+**Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada directa por asiento («lo de la llamada
+directa me parece bien»); uno se registra bien, con su cuenta, sin llave de entrada («pon que se pueda registrar
+bien ya de la que estás y listo»); y el motor se sube a un servidor al final, con las pruebas hechas. Para el
+montaje sirve de guía la casa del ensamblador, en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en
+Docker en un servidor y la web en Vercel le habla por un túnel con una llave. Nada gasta de una clave sin el adelante
+del PM. Lo que la revisión de seguridad dejó en el 2.7 queda cerrado con la llamada directa: el asiento no toca
+ningún disco, solo contesta. Lo siguiente: la prueba de Geoapify, la primera investigación de verdad, el mapa
+empezando el viaje en la casa (bloque 5) y el conductor (2.5).
 
 El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
 viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se

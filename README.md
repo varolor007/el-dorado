@@ -72,6 +72,11 @@ cd web && ELDORADO_CASA_URL=http://127.0.0.1:4320 ELDORADO_LLAVE=<la misma llave
 
 Sin `ELDORADO_CASA_URL`, la web dice que las cuentas no están conectadas y sigue enseñando el viaje grabado.
 
+Para que la casa investigue, su entorno dice con qué se piensa: `ELDORADO_MODELO`, y lo que cuesta, en dólares por
+millón (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`); cuánto se esfuerza, si se quiere, en
+`ELDORADO_ESFUERZO`. La clave de la IA la pone cada viajero en su cuenta. Sin modelo, la casa arranca sin IA: las
+cuentas y los viajes funcionan, y el botón de investigar dice que no hay con qué.
+
 Para probar la fuente de rutas con sitios de verdad, de dos en dos puntos:
 
 ```bash

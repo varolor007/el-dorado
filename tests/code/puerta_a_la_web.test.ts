@@ -47,7 +47,13 @@ type Casa = {
 
 async function conCasa(
   prueba: (casa: Casa) => Promise<void>,
-  o: { asientos?: DeMentira; sinIA?: boolean; sinClave?: boolean; conLanzador?: Lanzador } = {},
+  o: {
+    asientos?: DeMentira;
+    sinIA?: boolean;
+    sinClave?: boolean;
+    conLanzador?: Lanzador;
+    comprueba?: (clave: string) => Promise<boolean>;
+  } = {},
 ): Promise<void> {
   const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
   const claves: string[] = [];
@@ -63,6 +69,7 @@ async function conCasa(
     hoy: HOY,
     cadaMs: 15,
     ...(o.sinIA ? {} : { lanzador }),
+    ...(o.comprueba === undefined ? {} : { claveQueFunciona: o.comprueba }),
   });
   await new Promise<void>((r) => puerta.servidor.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${(puerta.servidor.address() as AddressInfo).port}`;
@@ -584,5 +591,40 @@ test("tu clave de IA se guarda cifrada, solo se enseña cómo acaba, y se borra 
       assert.equal((await casa.pide("GET", "/cuenta/otra")).estado, 404);
     },
     { sinClave: true },
+  );
+});
+
+test("una clave se comprueba contra la IA antes de guardarla: la que no sirve no se guarda", async () => {
+  const preguntadas: string[] = [];
+  let contesta: () => boolean = () => false;
+  const comprueba = async (clave: string): Promise<boolean> => {
+    preguntadas.push(clave);
+    return contesta();
+  };
+  await conCasa(
+    async (casa) => {
+      const pone = (key: unknown): ReturnType<Casa["pide"]> => casa.pide("PUT", "/cuenta/clave", { cuerpo: { key } });
+      // Lo que no tiene forma de clave no sale de la casa a preguntarle a nadie.
+      assert.deepEqual(await pone("corta"), { estado: 400, cuerpo: { error: "bad_key" } });
+      assert.deepEqual(preguntadas, []);
+      // La IA dice que esa clave no vale, o que no tiene el modelo: no se guarda.
+      assert.deepEqual(await pone(CLAVE), { estado: 400, cuerpo: { error: "key_rejected" } });
+      assert.deepEqual(preguntadas, [CLAVE]);
+      assert.equal((await casa.pide("GET", "/cuenta")).cuerpo.account.key, null);
+      // No se llega a la IA: no se da por mala ni por buena, y tampoco se guarda. De por qué falló no sale nada.
+      contesta = () => {
+        throw new Error(`no se llega con ${CLAVE}`);
+      };
+      assert.deepEqual(await pone(CLAVE), { estado: 503, cuerpo: { error: "ai_unreachable" } });
+      assert.equal((await casa.pide("GET", "/cuenta")).cuerpo.account.key, null);
+      assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
+      // La que sirve se guarda, cifrada como siempre.
+      contesta = () => true;
+      const puesta = await pone(CLAVE);
+      assert.equal(puesta.estado, 200);
+      assert.equal(puesta.cuerpo.account.key.hint, CLAVE.slice(-4));
+      assert.ok(!todoLoEscrito(casa.mesa).includes(CLAVE));
+    },
+    { sinClave: true, comprueba },
   );
 });

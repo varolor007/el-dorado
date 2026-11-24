@@ -31,6 +31,7 @@ import { adelanteDe, darElAdelante, llevar, type AlLlevar } from "./casa.ts";
 import {
   borrarClave,
   claveDe,
+  claveQueVale,
   entrar,
   FalloDeCuenta,
   guardarClave,
@@ -75,6 +76,8 @@ export type OpcionesDeLaPuerta = {
   fuentes: () => Fuentes;
   /** Quien piensa en los asientos, para la clave de IA de un viajero. Sin él, el botón dice que no hay IA. */
   lanzador?: (clave: string) => Lanzador;
+  /** Si una clave de IA sirve, preguntado a la IA. Sin ello, la clave se guarda sin comprobar. */
+  claveQueFunciona?: (clave: string) => Promise<boolean>;
   hoy?: () => Date;
   alLlevar?: AlLlevar;
   /** Cada cuánto mira la casa si hay algo nuevo que contar a quien escucha, y cada cuánto le da señal de vida. */
@@ -232,7 +235,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   }
 
   /** Mi cuenta y mi clave de IA: de la clave solo sale cómo acaba. */
-  function miCuenta(p: Peticion, cuenta: Cuenta): Respuesta | null {
+  async function miCuenta(p: Peticion, cuenta: Cuenta): Promise<Respuesta | null> {
     const [raiz, que, mas] = p.partes;
     if (raiz !== "cuenta" || mas !== undefined) return null;
     if (que === undefined) {
@@ -243,6 +246,17 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     try {
       if (p.metodo === "PUT") {
         const dado = objeto(p.cuerpo) ? p.cuerpo.key : undefined;
+        // Una clave se comprueba contra la IA antes de guardarla, si la casa tiene con qué. Lo que no tiene forma de
+        // clave no llega a salir de aquí.
+        if (o.claveQueFunciona !== undefined && claveQueVale(dado)) {
+          let sirve: boolean;
+          try {
+            sirve = await o.claveQueFunciona(dado);
+          } catch {
+            throw new Fallo(503, "ai_unreachable");
+          }
+          if (!sirve) throw new Fallo(400, "key_rejected");
+        }
         return { estado: 200, cuerpo: { account: publica(guardarClave(cuenta.id, dado, o.secreto, o.mesa, hoy())) } };
       }
       if (p.metodo === "DELETE") return { estado: 200, cuerpo: { account: publica(borrarClave(cuenta.id, o.mesa)) } };
@@ -443,7 +457,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           return escuchar(p, req, res);
         }
         p.cuerpo = await cuerpoDe(req);
-        const r = miCuenta(p, cuenta) ?? atender(p);
+        const r = (await miCuenta(p, cuenta)) ?? atender(p);
         responder(res, r.estado, r.cuerpo);
       } catch (e) {
         // Lo que falla por dentro no se cuenta fuera: a la web le llega una clave, y nada más.
