@@ -393,6 +393,18 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   contra la IA antes de guardarla, preguntando por el modelo, que no gasta. Y si la IA no quiere contestar, la casa
   para y lo dice: no se cambia sola a otro modelo, porque el techo de gasto del viajero se cuenta con el precio del
   modelo que se le dijo. Si el PM quiere que pruebe con otro antes de parar, es una decisión suya.
+- **Geoapify, probada: vale para andar y para el coche, y se queda corta en transporte público** (la sesión, con la
+  clave del PM). Once trayectos de clases distintas; las conclusiones, en [fuentes.md](fuentes.md). La sesión
+  propone usarla para andar y para el coche, diciendo del coche que es sin tráfico. Para el transporte público
+  queda la segunda opción que el PM ya dejó dicha (Google en vivo y con un script), que pide tarjeta: espera su
+  decisión. Mientras, de cada trayecto que no se anda sigue el enlace a Google Maps.
+- **Las preguntas de empezar, por el lado del código** (la sesión, con la hoja en la mano). Lo que el viajero no ha
+  dicho se pone con lo más probable para poder ir buscando, y se le enseña como supuesto para que lo confirme: así
+  las habitaciones y quiénes viajan los sigue diciendo él. Lo que no se puede suponer se pide: la moneda, la edad de
+  un niño y de qué país es. La moneda se propone por el país del que sale. Lo de moverse por un país o una región
+  entra en lo entendido como un campo nuevo, y el contrato del que hace la ruta dice cómo leerlo: es un cambio
+  pequeño en un contrato ya firmado, y va con la tanda. Lo que escribe en la caja libre va tal cual a lo que busca
+  hasta que exista el que escucha.
 
 ## Pendientes
 

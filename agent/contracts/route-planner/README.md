@@ -8,7 +8,10 @@ after you, and it searches where you say.
 
 - `trip.json`: what the traveller asked for. The destination (its name, its country, whether it is a city, a region
   or a country, and its box on the map), where they leave from, the dates, who travels, how much they want to spend,
-  what they are looking for, their pace, and their tastes and limits, each with the traveller's own words.
+  what they are looking for, their pace, and their tastes and limits, each with the traveller's own words. When the
+  destination is a region or a country it may carry `moving`: whether they want to see more than one place
+  (`several_places`), whether leaving the country is fine (`leave_country`) and how much they want to move
+  (`how_much`: `little`, `some` or `a_lot`). A `null` there means they did not say: do not read it as a no.
 - `days.json`: the dates, worked out by the house: how many nights the trip has, and each day with its date and its
   weekday.
 - `places.json`: what open data knows about the destination. Places inside its box, each with its `id`, its name,

@@ -206,6 +206,17 @@ test("trampa: un gusto sin su peso o sin las palabras del viajero, o con un nomb
   );
 });
 
+test("lo de moverse por un país o una región: puede no ir, y si va, cada cosa es un sí, un no o nada", () => {
+  const con = (moving: unknown): string[] => rojosDe((v) => void (v.moving = moving));
+  assert.deepEqual(con({ several_places: null, leave_country: null, how_much: null }), []);
+  assert.deepEqual(con({ several_places: true, leave_country: false, how_much: "a_lot" }), []);
+  assert.deepEqual(con("mucho"), ["moving"]);
+  assert.deepEqual(con({ several_places: "yes", leave_country: null, how_much: null }), ["moving"]);
+  assert.deepEqual(con({ several_places: null, how_much: null }), ["moving"]);
+  assert.deepEqual(con({ several_places: null, leave_country: null, how_much: "muchísimo" }), ["moving.how_much"]);
+  assert.deepEqual(con({ several_places: null, leave_country: null }), ["moving.how_much"]);
+});
+
 test("lo que no es ni un objeto no rompe la puerta", () => {
   for (const roto of [null, 7, "viaje", [], {}]) assert.equal(puertaEntendido(roto).verde, false);
   const sinNada = puertaEntendido({} as unknown as Entendido);

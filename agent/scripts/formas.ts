@@ -20,6 +20,8 @@ export type Limite = { what: string; quote: string };
 
 export const CLASES_DE_DESTINO = ["city", "region", "country"] as const;
 export const GASTOS = ["tight", "medium", "comfortable"] as const;
+/** Cuánto quiere moverse el viajero por un país o una región. */
+export const CUANTO_MOVERSE = ["little", "some", "a_lot"] as const;
 
 export type Entendido = {
   /** El idioma del viajero, en dos letras: en él se escribe lo que lee. */
@@ -48,6 +50,15 @@ export type Entendido = {
   limits: Limite[];
   /** Lo que ya tiene reservado, con sus palabras. */
   booked: string[];
+  /**
+   * En un país o una región: si quiere ver más de un sitio, si le vale salir del país y cuánto quiere moverse. Lo
+   * que no ha dicho va en null: no se supone. En una ciudad no se pregunta, y no va.
+   */
+  moving?: {
+    several_places: boolean | null;
+    leave_country: boolean | null;
+    how_much: (typeof CUANTO_MOVERSE)[number] | null;
+  };
 };
 
 // 2. Los avisos de las fechas y la tabla de los papeles. Sus asientos llegan con el bloque 5; aquí, su forma.

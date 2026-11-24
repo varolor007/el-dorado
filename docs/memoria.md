@@ -79,18 +79,29 @@ tuyo ya hecho con `/plan?trip=<id>`. **Falta en la web**: que el mapa empiece el
 de las preguntas de empezar, bloque 5), pulse el botón y escuche en vivo. Para mirar pantallas con un viaje en la
 casa local hay un guion en el borrador de la sesión que copia el de prueba a una cuenta inventada.
 
-**Las rutas (3.14): se prueba Geoapify primero** (el PM, 24-nov). Hecho, con datos inventados: su enchufe
+**Las rutas (3.14): Geoapify, probada** (el PM la eligió para probar primero, 24-nov). Hecho: su enchufe
 (`agent/tools/fuentes/geoapify.ts`: `caminoEntre` y `matrizDeCaminos`) y la orden para probarlo
 (`agent/launcher/rutas.ts`). Su clave va en la dirección de cada pedido, no en una cabecera: la red de la sesión no
 puede ponerla, así que tiene que estar en el entorno como `GEOAPIFY_KEY`; el enchufe cuida de que no salga en
 ningún mensaje de fallo. El PM la guardó el 24-nov en los ajustes del entorno de las sesiones con el nombre
 `GEOAPIFY`: una sesión se la pasa al enchufe poniendo `GEOAPIFY_KEY="$GEOAPIFY"` delante de la orden, sin
-enseñarla. Las variables entran al empezar una sesión, no en la que ya está abierta: la sesión del 24-nov no llegó
-a verla. **Falta**: la prueba en cuatro o cinco destinos
-de clases distintas (una gran ciudad de otro continente, un pueblo, un sitio de naturaleza y una ruta por un país),
-mirando qué transporte público conoce de verdad y cuál aproxima; y, con lo que salga, que la casa lo use en las
-cribas, en el ritmo y en la tabla. Si se queda corta en transporte público, la segunda opción es Google en vivo y
-con un script (en [fuentes.md](fuentes.md)). El enlace a Google Maps de cada trayecto ya está en la web.
+enseñarla. Las variables entran al empezar una sesión, no en la que ya está abierta: la sesión del 24-nov no la
+veía, y corrió la prueba desde una sesión auxiliar abierta para eso, que sí la ve y solo devuelve lo que imprime
+la orden. **La prueba (24-nov), en once trayectos de clases distintas**: a pie va bien y cuenta con las cuestas; en
+coche, la distancia bien y el tiempo sin tráfico; en transporte público se queda corta (horarios de verdad solo en
+algunas ciudades, nada del tren entre ciudades, y lo aproximado no es de fiar). Sus conclusiones, en
+[fuentes.md](fuentes.md); lo que devolvió, fuera del repositorio. **Falta**: la decisión del PM para el transporte
+público (Google en vivo y con un script, que pide tarjeta, o de momento solo el enlace de cada trayecto, que ya está
+en la web); y que la casa use Geoapify, para andar y para el coche, en las cribas, en el ritmo y en la tabla.
+
+**Las preguntas de empezar (5.1), por el lado del código.** `agent/scripts/empezar.ts`, sin nada de Node para que lo
+use también la web: `respuestasDe` (lo que ha dicho quien solo eligió dónde y cuándo) y `entendidoDe(respuestas)`,
+que da lo entendido, lo que se supuso con lo más probable (`supuesto`, para enseñárselo al confirmar) y lo que no se
+puede suponer y hay que pedir (`falta`: la moneda, la edad de un niño, de qué país es). La moneda se propone por el
+país (`agent/data/monedas.ts`). Lo de moverse por un país o una región va en lo entendido (`moving`), lo mira la
+puerta 1 y lo lee el que hace la ruta. La caja libre va tal cual a `looking_for` hasta que llegue el que escucha
+(5.2). **Falta la web**: que la hoja de preguntas cambie lo entendido, que el buscador traiga el país del sitio, y
+que el mapa abra el viaje en la casa, pulse el botón con su techo y escuche en vivo.
 
 **La llamada directa (2.7), hecha y sin estrenar.** `agent/launcher/ia.ts` monta lo que se le manda a un asiento
 (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con el precio

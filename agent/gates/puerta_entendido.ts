@@ -7,7 +7,7 @@ import { COSAS } from "../data/gustos.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
 import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, NOCHES_DE_UN_VIAJE, VIAJEROS } from "../data/viaje.ts";
 import { RITMOS } from "../output/viaje.ts";
-import { CLASES_DE_DESTINO, GASTOS, PESOS_DE_GUSTO } from "../scripts/formas.ts";
+import { CLASES_DE_DESTINO, CUANTO_MOVERSE, GASTOS, PESOS_DE_GUSTO } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
 type Objeto = Record<string, unknown>;
@@ -146,5 +146,15 @@ export function puertaEntendido(v: unknown, o: { hoy?: string } = {}): Veredicto
       if (!esObjeto(l) || !esFrase(l.what) || !esFrase(l.quote))
         rojo(`limits[${i}]`, "un límite lleva qué y sus palabras");
     });
+
+  // Lo de moverse por un país o una región: puede no ir; si va, cada cosa es un sí, un no o un «no lo ha dicho».
+  const m = v.moving;
+  if (m !== undefined) {
+    const siNoONada = (x: unknown): boolean => x === null || typeof x === "boolean";
+    if (!esObjeto(m) || !siNoONada(m.several_places) || !siNoONada(m.leave_country))
+      rojo("moving", "lo de moverse no dice un sí, un no o nada de cada cosa");
+    else if (!(m.how_much === null || de(CUANTO_MOVERSE, m.how_much)))
+      rojo("moving.how_much", "cuánto quiere moverse no es de su lista");
+  }
   return { verde: rojos.length === 0, rojos };
 }

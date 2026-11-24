@@ -401,6 +401,32 @@ distintas (una gran ciudad de otro continente, un pueblo, un sitio de naturaleza
 qué transporte público conoce de verdad y cuál aproxima; y preguntar por escrito lo que sus condiciones no dicen (a
 Geoapify, la IA y las limitaciones del plan gratis en producción).
 
+### La prueba de Geoapify (24-nov)
+
+Con la clave del PM, once trayectos de clases distintas: cuatro dentro de ciudades grandes de tres continentes, uno
+corto que se anda, uno de un pueblo a su capital, dos de naturaleza y tres entre ciudades de un país. Lo que
+devolvió se leyó y no se guarda aquí. Lo que se dice de «lo que se tarda de verdad» es lo que se sabe de esos
+trayectos, no otra consulta hecha ese día.
+
+- **A pie, bien.** Da el camino de verdad y cuenta con las cuestas: una subida de montaña que en línea recta es un
+  paseo salió con más del triple de camino y varias horas, que es lo que se tarda. Más allá de 100 km no contesta.
+- **En coche, la distancia bien y el tiempo sin tráfico.** Dentro de una ciudad da alrededor de la mitad de lo que
+  se tarda con tráfico; por carretera se queda algo corto. Vale para comparar y para saber si algo cabe en un día,
+  diciendo que es sin tráfico.
+- **En transporte público, se queda corta.** Con horarios de verdad solo contestó en dos de las cuatro ciudades
+  grandes, y en una de ellas con el doble de lo que se tarda. De una capital de Asia no sabe nada. Entre ciudades no
+  da el tren: de tres trayectos, dos sin respuesta y uno aproximado, con casi el triple de lo que tarda el tren. Y
+  lo aproximado no es de fiar: para un mismo trayecto dio la mitad que con horarios.
+- **La cuenta de la casa, de partida**, falla donde no hay camino recto: en la montaña dijo un paseo donde en coche
+  es una hora.
+- **Que no haya ruta** lo dice con un fallo 400 y una frase (demasiado lejos para ir a pie, sin parada cerca, sin
+  camino). El enchufe ya lo lee así.
+
+Lo que propone la sesión: Geoapify para andar y para el coche, que es con lo que se elige dónde dormir y se ordenan
+los días, diciendo del coche que es sin tráfico. Para el transporte público, la segunda opción que ya se habló:
+Google en vivo y con un script, solo para eso; o, de momento, solo el enlace a Google Maps de cada trayecto, que ya
+está. Es decisión del PM: Google pide tarjeta.
+
 ## Lo que queda por saber
 
 - LiteAPI: sus condiciones sobre IA y caché, lo que cuesta el exceso de búsquedas y cuántas fotos da.
@@ -408,8 +434,8 @@ Geoapify, la IA y las limitaciones del plan gratis en producción).
 - Qué aerolíneas de bajo coste cubre cada fuente de vuelos.
 - En qué queda la demanda de Google a SerpApi (plazo para volver a presentarla, hacia el 30-nov-2026).
 - Si se pueden usar las fotos de la web de cada hotel, y con qué condiciones.
-- Geoapify: qué transporte público conoce de verdad en cada clase de destino y cuál aproxima; si su matriz lo admite;
-  y, por escrito, si deja pasar sus resultados por una IA y qué limita del plan gratis en producción.
+- Geoapify: si su matriz admite el transporte público, que está por probar; y, por escrito, si deja pasar sus
+  resultados por una IA y qué limita del plan gratis en producción.
 - TripGo: por escrito, si deja guardar sus resultados con un viaje y pasarlos por una IA, y cómo hay que enseñarlos
   al lado de los de otra fuente.
 - openrouteservice: sus condiciones y sus planes, que no se pudieron leer.
