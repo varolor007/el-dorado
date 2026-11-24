@@ -110,12 +110,10 @@ test("trampa: ni un puesto dentro del repositorio, ni un nombre raro, ni un asie
   assert.throws(() => monta(run), /ya existe/);
 });
 
-test("la orden que abre el asiento lleva la carpeta de su puesto y nada por rellenar", () => {
-  const p = monta(nuevoRun());
-  const orden = ordenDeApertura(p);
-  assert.ok(orden.includes(`${p.carpeta}/contract/README.md`));
-  assert.ok(orden.includes(`${p.carpeta}/out/`));
-  assert.ok(!orden.includes("{WORKPLACE}"));
+test("la orden que abre un asiento es la misma para todos: sin carpetas y sin nada por rellenar", () => {
+  const orden = ordenDeApertura();
+  assert.ok(orden.includes("contract/README.md") && orden.includes("delivery.json"));
+  assert.ok(!orden.includes("{") && !orden.includes("/tmp") && !orden.includes(monta(nuevoRun()).carpeta));
   assert.ok(!orden.includes("The order that opens a seat"));
 });
 

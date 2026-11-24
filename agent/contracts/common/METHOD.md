@@ -1,8 +1,9 @@
 # The method of every seat
 
-Six steps, in this order. Each step leaves its file in `out/`, and no step starts before the previous one has left its
-file. Each file is written once: what a later step changes is written in that later step, never by going back. The
-house checks from outside that the files exist and were written in this order.
+Six steps, in this order. Each step is one part of your answer, under the name of its file, and no step starts before
+the previous one is written. Each part is written once: what a later step changes is written in that later step,
+never by going back. The house writes each part to its file in `out/` and checks from outside that the six are there,
+in this order.
 
 1. **Acknowledgement** (`out/1-acknowledgement.md`). List what you received: name every file and folder at the top of
    `in/`, say what each one holds, and say what is missing. If something is missing without which you cannot work, say

@@ -1,6 +1,6 @@
 # The delivery of the sights picker
 
-`out/delivery.json`, one object with exactly these fields.
+`delivery.json`, one object with exactly these fields.
 
 | Field | What it is |
 |---|---|

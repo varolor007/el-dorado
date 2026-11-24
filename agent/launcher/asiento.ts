@@ -40,15 +40,15 @@ export function gastoQueVale(g: unknown): g is Gasto {
   return cuenta(x.turnos) && cuenta(x.entrada) && cuenta(x.salida) && cuenta(x.usd);
 }
 
-/** La orden que abre el asiento: el texto fijo del contrato común, con la carpeta de su puesto. */
-export function ordenDeApertura(p: Puesto): string {
+/**
+ * La orden que abre un asiento: el texto fijo del contrato común, que va entre su contrato y su material. Es la
+ * misma para todos: de qué puesto es lo dice lo que la acompaña.
+ */
+export function ordenDeApertura(): string {
   const texto = readFileSync(ORDEN, "utf8");
   const corte = texto.indexOf("\n---\n");
   if (corte < 0) throw new Error("la orden de apertura no tiene su raya de corte");
-  return texto
-    .slice(corte + 5)
-    .trim()
-    .replaceAll("{WORKPLACE}", p.carpeta);
+  return texto.slice(corte + 5).trim();
 }
 
 /** Recoge un asiento que ya trabajó: pasa la puerta de todos sobre su puesto. */
@@ -76,7 +76,7 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
     }, tope.segundos * 1000);
   });
   try {
-    const dicho = await Promise.race([lanzador(ordenDeApertura(p), p, corte.signal), limite]);
+    const dicho = await Promise.race([lanzador(ordenDeApertura(), p, corte.signal), limite]);
     if (gastoQueVale(dicho))
       gasto = { turnos: dicho.turnos, entrada: dicho.entrada, salida: dicho.salida, usd: dicho.usd };
   } catch (e) {

@@ -73,7 +73,7 @@ export async function prepararMirar(
   writeFileSync(join(run, ".mirar.json.a-medias"), JSON.stringify({ quienes, avisos }, null, 2));
   renameSync(join(run, ".mirar.json.a-medias"), join(run, "mirar.json"));
   mkdirSync(join(run, "ordenes"), { recursive: true });
-  for (const p of puestos) writeFileSync(join(run, "ordenes", `${p.id}.txt`), ordenDeApertura(p));
+  for (const p of puestos) writeFileSync(join(run, "ordenes", `${p.id}.txt`), ordenDeApertura());
   return { puestos, quienes, avisos };
 }
 

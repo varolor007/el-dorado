@@ -1,6 +1,6 @@
 # The delivery of the trip explainer
 
-`out/delivery.json`, one object with exactly these fields. The texts are for the traveller: they are written in the
+`delivery.json`, one object with exactly these fields. The texts are for the traveller: they are written in the
 language given in `language` of `in/trip.json`.
 
 | Field | What it is |

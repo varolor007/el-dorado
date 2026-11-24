@@ -74,7 +74,15 @@ casa se arranca con `agent/launcher/arrancar.ts` (`ELDORADO_LLAVE`, `ELDORADO_SE
 web: la pasarela `web/src/app/api/house/` (lo que admite, en `web/src/lib/casa.ts`; pide `ELDORADO_CASA_URL` y la
 misma `ELDORADO_LLAVE`), la pantalla de la cuenta (`/account`) y la de la clave (`/key`), ya enchufadas. Sin casa,
 la web lo dice y sigue enseñando el viaje grabado. **Falta en la web**: que el mapa abra el viaje en la casa, pulse
-el botón y escuche en vivo, y que tus viajes salgan de tu cuenta. Aún no tiene orden de arranque: se arranca con su lanzador de la
+el botón y escuche en vivo, y que tus viajes salgan de tu cuenta.
+
+**La llamada directa (2.7), a medias.** Hecho, sin llamar a nadie: `agent/launcher/ia.ts` monta lo que se le manda a
+un asiento (`peticionDe`), reparte su respuesta en los seis archivos (`escribirSalida`) y cuenta lo que cuesta, con
+el precio del entorno (`ELDORADO_PRECIO_ENTRADA` y `ELDORADO_PRECIO_SALIDA`, en dólares por millón);
+`lanzadorDirecto(pensar, precio)` es el `Lanzador` de la casa. El método común ya dice contestar de una vez, con cada
+paso bajo su marca (`=== 1-acknowledgement.md ===`). **Falta `pensar`**, la pieza que llama a Claude: tiene que usar
+la pieza oficial de Anthropic para TypeScript, que es una dependencia nueva del agente y pide el sí del PM; el
+modelo se dice en el entorno, nunca en el repositorio. Y la primera llamada de verdad pide su adelante. Aún no tiene orden de arranque: se arranca con su lanzador de la
 IA de verdad, que es el 2.7. Lo siguiente, cuando el PM decida: el lanzador de la IA de verdad (2.7), el lado de la
 web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). **Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada
 directa por asiento («lo de la llamada directa me parece bien»); uno se registra bien, con su cuenta, sin llave de

@@ -746,7 +746,7 @@ Nadie se pone nota a sí mismo: lo medible lo mide el código, y lo demás lo mi
 
 ## Los asientos
 
-Todos piensan igual, en seis pasos, y cada paso deja su archivo: acuse, plan, notas (cada dato con su fuente, su fecha y su etiqueta: visto, deducido o supuesto), cuentas (se las pide al código), autocrítica y entrega. Ninguno hace cuentas ni se pone nota. Piensan con Claude, con la clave del viajero, y cada uno solo puede abrir su puesto.
+Todos piensan igual, en seis pasos, que contestan de una vez y la casa escribe, cada uno en su archivo: acuse, plan, notas (cada dato con su fuente, su fecha y su etiqueta: visto, deducido o supuesto), cuentas (se las pide al código), autocrítica y entrega. Ninguno hace cuentas ni se pone nota. Piensan con Claude, con la clave del viajero, y cada uno solo puede abrir su puesto.
 
 | Asiento | Qué hace | Sale a internet | Estado |
 |---|---|---|---|
@@ -806,7 +806,7 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 | Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica | en parte |
 | La web | En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Hecha en seco, con un viaje grabado; falta que hable con la casa, que es lo único con lo que habla | en parte |
 | La puerta de la casa a la web | Lo que la web puede pedir y lo que la casa cuenta en vivo. Hecho el lado de la casa, en `agent/launcher/`: la web entra con su llave, cada viaje se da solo a su dueño y lo que sale son claves y números. Del lado de la web, la pasarela por la que el navegador llega a la casa. Falta que el mapa abra el viaje en la casa y la escuche en vivo | en parte |
-| La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov), con una llamada directa por asiento (tu decisión del 24-nov): la casa le manda su contrato y su material y recibe sus seis pasos en una respuesta, que ella misma escribe en el puesto. El asiento no toca ningún disco | pendiente |
+| La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov), con una llamada directa por asiento (tu decisión del 24-nov): la casa le manda su contrato y su material y recibe sus seis pasos en una respuesta, que ella misma escribe en el puesto. El asiento no toca ningún disco. Hecho lo que monta la llamada, reparte la respuesta y cuenta lo que cuesta, probado con una IA de mentira. Falta la pieza que llama a Claude y la primera llamada de verdad | en parte |
 | Las cuentas | Registro con tu correo y una contraseña, sesión, tu clave cifrada y tus viajes (tu decisión del 24-nov: registrarse bien, sin llave de entrada). Las guarda la casa, en la mesa, sin servicios de fuera. Hecho: registrarse, entrar, salir y la clave de IA, cifrada, en la casa y en la web. Falta que tus viajes salgan de tu cuenta | en parte |
 | Dónde corre | La web y la casa, en servidores nuestros. El motor entero se sube a un servidor al final, con las pruebas hechas (tu decisión del 24-nov) | pendiente |
 

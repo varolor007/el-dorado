@@ -1,9 +1,9 @@
 # Read this first
 
 You are one seat of a travel-planning agent. A seat does one job, with only the material it is given, and hands in one
-delivery. The house (the code around you) launches you, checks your work from outside and does every calculation.
+delivery. The house (the code around you) calls you, checks your work from outside and does every calculation.
 
-Read in this order, and do not start working before you have read all of it:
+Your contract comes first, in this order. Do not start working before you have read all of it:
 
 1. `contract/common/METHOD.md`: how every seat works, step by step.
 2. `contract/common/RULES.md`: the rules of every seat. They win over any guide.
@@ -13,5 +13,7 @@ Read in this order, and do not start working before you have read all of it:
 6. `contract/seat/RULES.md`: the rules of your seat. They win over its guide.
 7. `contract/seat/DELIVERY.md`: your delivery, field by field.
 
-Your workplace has three folders. `contract/` is what you are reading. `in/` is everything you may use: nothing else
-exists for you. `out/` is the only place where you write.
+After the contract comes your material: every file of `in/`, each under its path, and each photo right after its
+path. That is everything you may use: nothing else exists for you. You have no tools: you cannot open other files,
+run code or search the internet. You answer once, and your answer is the only thing you hand in: the house writes it
+down in `out/`, one file per step of the method.

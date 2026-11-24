@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
 import type { Gasto, Lanzador } from "../../../agent/launcher/asiento.ts";
+import type { Pensar, Respuesta } from "../../../agent/launcher/ia.ts";
 import type { Fuentes } from "../../../agent/launcher/investigar.ts";
 import { puestosDe } from "../../../agent/launcher/puesto.ts";
 import type { Foto } from "../../../agent/output/viaje.ts";
@@ -55,8 +56,7 @@ export type Objeto = Record<string, any>;
 export const leerJson = (ruta: string): Objeto => JSON.parse(readFileSync(ruta, "utf8"));
 
 /** Lo que entregaría el que mira, hecho a la medida del material de su puesto para que pase la puerta 5. */
-function miradoPara(puesto: string): Objeto {
-  const hoja = leerJson(join(puesto, "in", "sheet.json"));
+function miradoPara(hoja: Objeto): Objeto {
   const foto = (ref: string, what: string) => ({ kind: "photo", ref, what });
   const conMetros = typeof hoja.room === "object" && hoja.room.size_m2 !== "unknown";
   // El más barato de todos tiene un gimnasio simbólico: el viajero lo marcó como imprescindible.
@@ -99,10 +99,9 @@ function miradoPara(puesto: string): Objeto {
 }
 
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
-function entregaDe(asiento: string, puesto: string): Objeto {
-  const dado = (nombre: string): any => leerJson(join(puesto, "in", nombre));
+export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
   if (asiento === "route-planner") return entregaDeRuta();
-  if (asiento === "lodging-viewer") return miradoPara(puesto);
+  if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
   if (asiento === "sights-picker") return entregaDeSitios();
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
   const paraExplicar: ParaExplicar = {
@@ -111,6 +110,22 @@ function entregaDe(asiento: string, puesto: string): Objeto {
     checks: dado("checks.json"),
   };
   return entregaDeExplicar(paraExplicar);
+}
+
+function entregaDe(asiento: string, puesto: string): Objeto {
+  return entregaCon(asiento, (nombre) => leerJson(join(puesto, "in", nombre)));
+}
+
+/** Los seis textos de un asiento aplicado, por el nombre de su archivo, con la entrega que se le diga. */
+export function seisPasos(piezas: string[], entrega: Objeto): Record<string, string> {
+  return {
+    "1-acknowledgement.md": `I received ${piezas.join(", ")}.`,
+    "2-plan.md": "Read everything, then decide.",
+    "3-notes.md": `- What the material says. [in/${piezas[0]}] [seen]`,
+    "4-computations.md": "None needed.",
+    "5-self-critique.md": "Nothing missing.",
+    "delivery.json": JSON.stringify(entrega),
+  };
 }
 
 /** Un asiento de mentira trabaja en su puesto: deja sus seis archivos, en su orden, con la entrega que se le diga. */
@@ -123,15 +138,7 @@ export function trabaja(
   if (puesto === undefined) throw new Error(`no existe el puesto ${id}`);
   const entrega = entregaDe(puesto.asiento, puesto.carpeta);
   estropea(puesto.asiento, entrega);
-  const piezas = readdirSync(join(puesto.carpeta, "in"));
-  const textos: Record<string, string> = {
-    "1-acknowledgement.md": `I received ${piezas.join(", ")}.`,
-    "2-plan.md": "Read everything, then decide.",
-    "3-notes.md": `- What the material says. [in/${piezas[0]}] [seen]`,
-    "4-computations.md": "None needed.",
-    "5-self-critique.md": "Nothing missing.",
-    "delivery.json": JSON.stringify(entrega),
-  };
+  const textos = seisPasos(readdirSync(join(puesto.carpeta, "in")), entrega);
   for (const nombre of [...PASOS, ENTREGA]) writeFileSync(join(puesto.carpeta, "out", nombre), textos[nombre]);
 }
 
@@ -181,4 +188,40 @@ export function lanzadorDeMentira(
   lanzador.cortados = [];
   lanzador.aLaVez = 0;
   return lanzador;
+}
+
+/** Lo que cuenta una IA de mentira de cada llamada: para mirar qué se le mandó. */
+export type Llamada = { asiento: string; archivos: string[]; fotos: number; contrato: string };
+
+/**
+ * Una IA de mentira para la llamada directa. Solo ve lo que se le manda, como la de verdad: saca de ahí qué asiento
+ * es y su material, y contesta los seis pasos de un asiento aplicado, cada uno bajo su marca. No toca ningún disco.
+ */
+export function pensarDeMentira(
+  o: { fin?: Respuesta["fin"]; estropea?: (texto: string, asiento: string) => string } = {},
+): Pensar & {
+  llamadas: Llamada[];
+} {
+  const pensar = (async (p) => {
+    const asiento = /\| `seat` \| Always `"([a-z-]+)"` \|/.exec(p.contrato)?.[1] ?? "";
+    const archivos = new Map<string, string>();
+    for (const parte of p.partes) {
+      if (!("texto" in parte)) continue;
+      const suyo =
+        /^\[\[file ([0-9a-f]+) in\/(\S+)\]\]( \(a photo, shown next\))?(?:\n([\s\S]*)\n\[\[end \1\]\])?$/.exec(
+          parte.texto,
+        );
+      if (suyo !== null) archivos.set(suyo[2], suyo[4] ?? "");
+    }
+    const fotos = p.partes.filter((x) => "foto" in x).length;
+    pensar.llamadas.push({ asiento, archivos: [...archivos.keys()], fotos, contrato: p.contrato });
+    const entrega = entregaCon(asiento, (nombre) => JSON.parse(archivos.get(nombre) ?? "null"));
+    // Lo que hay en lo alto de `in/`, como lo vería quien abre la carpeta.
+    const arriba = [...new Set([...archivos.keys()].map((ruta) => ruta.split("/")[0]))];
+    const pasos = seisPasos(arriba, entrega);
+    const texto = [...PASOS, ENTREGA].map((nombre) => `=== ${nombre} ===\n${pasos[nombre]}`).join("\n\n");
+    return { texto: o.estropea?.(texto, asiento) ?? texto, fin: o.fin ?? "end", entrada: 12_000, salida: 3_000 };
+  }) as Pensar & { llamadas: Llamada[] };
+  pensar.llamadas = [];
+  return pensar;
 }

@@ -350,6 +350,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   casa le manda su contrato y su material y recibe sus seis pasos en una respuesta. Cambia el método común, que
   estaba firmado: el asiento ya no escribe archivos, los escribe la casa con lo que él contesta. Cuánto baja, por
   medir.
+  Cómo queda hecho (la sesión): el contrato va primero y el material después, cada archivo bajo su ruta y cada
+  foto como foto. El asiento contesta sus seis pasos, cada uno bajo una línea con el nombre de su archivo entre
+  marcas, y la casa los escribe en su orden: las puertas no cambian. No se usa la salida con forma cerrada de la
+  IA porque la entrega de cada asiento no tiene todavía un esquema cerrado, solo su contrato y su puerta. Cada
+  archivo del material va entre dos marcas con una seña al azar, distinta en cada llamada, para que una opinión no
+  pueda hacerse pasar por el final de su archivo. Una negativa o una respuesta cortada por larga no son una
+  entrega: no se escribe nada, y se sabe lo que gastaron.
 - **Registrarse bien, ya, sin llave de entrada** (el PM: «quiero que se pueda registrar uno bien; no nos enredemos
   ahora con si llave, no llave; pon que se pueda registrar bien ya de la que estás y listo»). La sesión lo hace con
   correo y contraseña, guardado por la casa en la mesa, sin servicios de fuera: no pide darse de alta en nada ni

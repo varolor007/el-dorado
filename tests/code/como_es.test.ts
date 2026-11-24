@@ -8,6 +8,7 @@ import { join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { puertaComoEs, type Material } from "../../agent/gates/puerta_como_es.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
+import { ordenDeApertura } from "../../agent/launcher/asiento.ts";
 import { materialDe, prepararMirar, recogerMirar } from "../../agent/launcher/mirar.ts";
 import { acuerdo } from "../../agent/scripts/acuerdo.ts";
 import { buscarAlojamiento } from "../../agent/scripts/busqueda_alojamiento.ts";
@@ -571,7 +572,8 @@ test("de una búsqueda salen los puestos a ciegas, y lo que entregan se recoge p
   assert.ok(!delPuesto.join("").includes(p.quienes[0].nombre));
   assert.deepEqual(readdirSync(join(primero.carpeta, "in")).sort(), ["photos", "reviews.json", "sheet.json"]);
   assert.deepEqual(materialDe(primero.carpeta).fotos, ["hotel-01.jpg", "hotel-02.jpg", "room-01.jpg"]);
-  assert.ok(readFileSync(join(run, "ordenes", `${primero.id}.txt`), "utf8").includes(primero.carpeta));
+  // La orden que abre a cada uno es la misma: de qué puesto es lo dice el nombre de su archivo.
+  assert.equal(readFileSync(join(run, "ordenes", `${primero.id}.txt`), "utf8"), ordenDeApertura());
 
   // Un asiento inventado trabaja en los dos puestos del primer finalista; los demás se quedan sin entregar.
   const delPrimero = p.quienes.filter((q) => q.alojamiento === p.quienes[0].alojamiento).map((q) => q.puesto);

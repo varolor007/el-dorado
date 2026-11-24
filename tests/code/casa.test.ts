@@ -63,7 +63,7 @@ test("con el adelante lleva la investigación entera, sola, y apunta cada trabaj
     assert.deepEqual(r.lanzados.slice(7), ["cruce-1-v1", "explica-v1"]);
     assert.equal(new Set(r.lanzados).size, 9);
     assert.equal(lanzador.ordenes.length, 9);
-    assert.ok(lanzador.ordenes.every((orden) => orden.includes(join(run, "puestos"))));
+    assert.ok(lanzador.ordenes.every((orden) => orden === lanzador.ordenes[0] && orden.includes("six parts")));
     assert.ok(lanzador.aLaVez > 1 && lanzador.aLaVez <= 6);
     // Cada trabajo queda apuntado: hecho, con sus horas y con lo que gastó. El total es la suma.
     const trabajos = trabajosDe(run);

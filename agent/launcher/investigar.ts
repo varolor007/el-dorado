@@ -138,7 +138,7 @@ function puestoDe(run: string, base: string): Puesto | null {
 function montar(run: string, base: string, asiento: string, piezas: Pieza[], vuelta = 1): Puesto {
   const puesto = montarPuesto(run, `${base}-v${vuelta}`, asiento, piezas);
   mkdirSync(join(run, "ordenes"), { recursive: true });
-  writeFileSync(join(run, "ordenes", `${puesto.id}.txt`), ordenDeApertura(puesto));
+  writeFileSync(join(run, "ordenes", `${puesto.id}.txt`), ordenDeApertura());
   return puesto;
 }
 
@@ -173,7 +173,7 @@ function recoger<T>(
     const orden = join(run, "ordenes", `${puesto.id}.txt`);
     if (!existsSync(orden)) {
       mkdirSync(join(run, "ordenes"), { recursive: true });
-      writeFileSync(orden, ordenDeApertura(puesto));
+      writeFileSync(orden, ordenDeApertura());
     }
     return { espera: puesto.id };
   }
