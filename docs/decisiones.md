@@ -438,6 +438,19 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   sesión seguida y tarda menos, y así se lo dijo la sesión. Antes le contestó que no está todo diseñado al detalle:
   la hoja y el plan bastan para seguir, pero los contratos de los asientos que faltan, el conductor y las tandas 5
   a 8 se diseñan al construirlos.
+- **El servidor, el del ensamblador** (el PM: «sí, el del ensamblador, que solo tiene el ensamblador; debería poder
+  con las dos cosas, ¿no?»). La sesión le contesta que sí: la casa de El Dorado pesa poco, y lleva su tope para no
+  quitarle sitio al ensamblador.
+- **La web, en Vercel** (el PM, a la pregunta de con qué dirección se entra: «¿no vale con Vercel?»). Vale: la web
+  sigue donde está. Lo que queda por decidir es cómo llega Vercel a la casa del servidor: o una puerta con candado
+  en el servidor (una dirección gratuita con HTTPS y un puerto abierto, por el que solo entra la llave de la web), o
+  un túnel como el del ensamblador, que no abre nada pero pide otra dirección de ngrok. La sesión recomienda la
+  primera; abrir un puerto en su servidor es decisión del PM.
+- **Las pruebas, con la cuenta del PM** (el PM: «sí, sí: en cuanto tires de mi cuenta, no de mi API, puedes empezar
+  a hacer pruebas»). Es su visto bueno a las llamadas de prueba y a la primera investigación con su suscripción. La
+  sesión no usa para eso el acceso de la propia sesión en la nube, que no es para el agente: hace falta su token
+  (`claude setup-token`), en el servidor o, para empezar antes, en el entorno de las sesiones con el nombre
+  `ELDORADO_TOKEN_DE_CLAUDE`.
 
 ## Pendientes
 

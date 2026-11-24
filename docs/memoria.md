@@ -149,8 +149,16 @@ notas.
 
 **El PM no va a meter su clave: quiere usar su cuenta de Claude, y todo en su servidor (24-nov, 2.9, en obra).** El
 túnel de abajo ya no hace falta: dijo «todo en el servidor directamente», así que la web y la casa van juntas en
-Docker y se hablan por dentro, y de fuera solo se llega a la web, con su dirección y su candado. Falta que diga en
-qué servidor y con qué dirección; lo de si DaVi usa ngrok no se pudo confirmar. Lo demás sigue valiendo. Como
+Docker y se hablan por dentro, y de fuera solo se llega a la web, con su dirección y su candado. Después precisó:
+el servidor es el del ensamblador, y la web se queda en Vercel («¿no vale con Vercel?»). Con eso la casa va sola en
+el servidor, y falta su decisión de cómo llega Vercel a ella: una puerta con candado (dirección gratuita con HTTPS y
+el puerto 443 abierto, solo para la llave de la web; es lo que recomienda la sesión) o un túnel como el del
+ensamblador (pide otra dirección de ngrok). **Las pruebas con su cuenta tienen su sí** («en cuanto tires de mi
+cuenta, no de mi API, puedes empezar a hacer pruebas»): hace falta su token (`claude setup-token`), que la casa lee
+como `ELDORADO_TOKEN_DE_CLAUDE` y pasa a Claude Code como `CLAUDE_CODE_OAUTH_TOKEN`; para empezar antes de tener el
+servidor, puede ponerlo él en el entorno de las sesiones con ese nombre, y se prueba desde una sesión auxiliar. El
+acceso de la propia sesión en la nube NO se usa para el agente, y a Claude Code se le pasa un entorno limpio (en la
+nube, las variables de la sesión lo engancharían a ella). Lo de si DaVi usa ngrok no se pudo confirmar. Como
 el ensamblador (`aurora-web/ensamblador/arranque/`: su `README.md`, `Dockerfile` y `compose.yaml` son la guía): la
 casa en Docker, en su ordenador o en su servidor, con Claude Code y el token de su suscripción
 (`CLAUDE_CODE_OAUTH_TOKEN`, de `claude setup-token`) en un `.env` que no sale de su máquina; el túnel, otro servicio
