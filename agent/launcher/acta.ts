@@ -276,18 +276,43 @@ export function escribirActa(run: string): Acta {
 }
 
 /**
- * Lo que se le enseña al dueño del viaje del acta: todo menos el porqué de cada fallo, que puede llevar lo que dijo
- * por dentro quien piensa. Lo demás son claves, números y lo que dicen las puertas.
+ * El acta como se le da a su dueño: lo que pasó por claves y números, y nada de dentro. Ni el nombre de un asiento
+ * o de un puesto, ni el porqué de un rojo o de un fallo (pueden llevar lo que escribió un asiento, o lo que decía una
+ * opinión), ni lo que el conductor escribió para la casa. Lo que el conductor le dice al viajero ya va, si pasó su
+ * puerta, en lo que cuenta la parada (`paradaDeCara`).
  */
-export function actaDeCara(acta: Acta): Acta {
-  const puestos = new Set(acta.trabajos.map((t) => t.puesto));
-  // El rojo de quien no entregó lleva ese porqué: se dice que falló, y nada más.
-  const sinPorque = (rojos: Rojo[]): Rojo[] => rojos.map((r) => (puestos.has(r.donde) ? { ...r, que: "failed" } : r));
+export type ActaDeCara = {
+  pasos: Acta["pasos"];
+  trabajos: Pick<TrabajoDelActa, "paso" | "vuelta" | "estado" | "ms" | "usd" | "turnos" | "puertas">[];
+  vueltas_en_rojo: { paso: string; vuelta: number; rojos: number }[];
+  parada: { en: string | null; clase: ClaseDeParada } | null;
+  conductor: Pick<DelConductor, "estado" | "decision" | "kind" | "options"> | null;
+  hecho: boolean;
+  total: Acta["total"];
+  repetido: Acta["repetido"];
+  del_conductor: Acta["del_conductor"];
+};
+
+export function actaDeCara(acta: Acta): ActaDeCara {
+  const c = acta.conductor;
   return {
-    ...acta,
-    trabajos: acta.trabajos.map((t) => ({ ...t, fallo: t.fallo === null ? null : "failed" })),
-    parada: acta.parada === null ? null : { ...acta.parada, rojos: sinPorque(acta.parada.rojos) },
-    conductor: acta.conductor === null ? null : { ...acta.conductor, rojos: sinPorque(acta.conductor.rojos) },
+    pasos: acta.pasos.map((p) => ({ id: p.id, estado: p.estado })),
+    trabajos: acta.trabajos.map((t) => ({
+      paso: t.paso,
+      vuelta: t.vuelta,
+      estado: t.estado,
+      ms: t.ms,
+      usd: t.usd,
+      turnos: t.turnos,
+      puertas: t.puertas,
+    })),
+    vueltas_en_rojo: acta.vueltas_en_rojo.map((v) => ({ paso: v.paso, vuelta: v.vuelta, rojos: v.rojos.length })),
+    parada: acta.parada === null ? null : { en: acta.parada.en, clase: acta.parada.clase },
+    conductor: c === null ? null : { estado: c.estado, decision: c.decision, kind: c.kind, options: c.options },
+    hecho: acta.hecho,
+    total: acta.total,
+    repetido: acta.repetido,
+    del_conductor: acta.del_conductor,
   };
 }
 

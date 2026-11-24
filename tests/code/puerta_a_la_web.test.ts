@@ -476,16 +476,17 @@ test("un run parado: el conductor lo cuenta por claves, y el acta del run la pid
       assert.equal(acta.cuerpo.record.conductor.estado, "told");
       assert.deepEqual(
         acta.cuerpo.record.trabajos
-          .filter((t: Objeto) => t.asiento !== "calendar" && t.asiento !== "papers")
-          .map((t: Objeto) => [t.puesto, t.estado, t.fallo]),
+          .filter((t: Objeto) => t.paso !== "calendar" && t.paso !== "papers")
+          .map((t: Objeto) => [t.paso, t.vuelta, t.estado]),
         [
-          ["ruta-v1", "failed", "failed"],
-          ["conductor-1", "done", null],
+          ["route", 1, "failed"],
+          ["conductor", 1, "done"],
         ],
       );
-      // Ni el porqué de un fallo ni una ruta del disco.
+      // Ni el porqué de un fallo, ni una ruta del disco, ni el nombre de un asiento o de un puesto.
       const dicho = JSON.stringify(acta.cuerpo);
-      for (const callado of ["la IA se cortó", casa.mesa]) assert.ok(!dicho.includes(callado), callado);
+      for (const callado of ["la IA se cortó", casa.mesa, "route-planner", "ruta-v1", "fallo"])
+        assert.ok(!dicho.includes(callado), callado);
       assert.deepEqual(await casa.pide("GET", `/viajes/${id}/acta`, { dueno: "luis" }), {
         estado: 404,
         cuerpo: { error: "not_found" },

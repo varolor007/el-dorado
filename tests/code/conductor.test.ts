@@ -443,5 +443,9 @@ test("el acta de cara al dueño no lleva el porqué de ningún fallo", async () 
     const deCara = JSON.stringify(actaDeCara(actaDe(run)));
     assert.ok(!deCara.includes("la IA"));
     assert.ok(JSON.stringify(actaDe(run)).includes("la IA se cortó a medias"));
+    // Ni el nombre de un asiento o de un puesto, ni lo que el conductor escribe para la casa.
+    for (const deDentro of ["route-planner", "ruta-v1", "conductor-1", "hint", 'rojos":['])
+      assert.ok(!deCara.includes(deDentro), deDentro);
+    assert.ok(deCara.includes('"paso":"route"'));
   });
 });
