@@ -140,3 +140,43 @@ export function useViajeDeLaCasa(id: string | null): Grabado | null | undefined 
   }, [id]);
   return viaje;
 }
+
+/** Lo que ha gastado de IA un viaje tuyo, sumando todas sus investigaciones. */
+export type GastoDeUnViaje = {
+  id: string;
+  destination: string | null;
+  check_in: string | null;
+  check_out: string | null;
+  usd: number;
+  calls: number;
+  /** Falso si de alguna llamada no se sabe lo que gastó: lo de `usd` se queda corto. */
+  known: boolean;
+  last: string | null;
+  researches: number;
+};
+export type GastoDeLaCuenta = {
+  trips: GastoDeUnViaje[];
+  total: { usd: number; calls: number; known: boolean };
+  /** Lo que costó de media una investigación tuya que acabó, y de cuántas sale; null si aún no hay ninguna. */
+  next: { usd: number; from: number } | null;
+};
+
+/** Lo que han gastado tus viajes. `undefined` mientras llega o si no has entrado; `null` si no se pudo leer. */
+export function useGasto(): GastoDeLaCuenta | null | undefined {
+  const cuenta = useCuenta();
+  const quien = typeof cuenta === "object" && cuenta !== null ? cuenta.id : null;
+  const [gasto, setGasto] = useState<GastoDeLaCuenta | null | undefined>(undefined);
+  useEffect(() => {
+    setGasto(undefined);
+    if (quien === null) return;
+    let vivo = true;
+    void pideALaCasa("GET", "cuenta/gasto").then((r) => {
+      const dicho = r.cuerpo.spend as GastoDeLaCuenta | undefined;
+      if (vivo) setGasto(r.estado === 200 && dicho !== undefined && Array.isArray(dicho.trips) ? dicho : null);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [quien]);
+  return gasto;
+}

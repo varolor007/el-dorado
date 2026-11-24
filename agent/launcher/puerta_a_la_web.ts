@@ -13,6 +13,7 @@
 //   DELETE /sesiones                   salir
 //   GET    /cuenta                     quién soy, si tengo puesta mi clave de IA y con qué pienso
 //   PUT    /cuenta/clave               pone mi clave de IA        DELETE la borra
+//   GET    /cuenta/gasto               lo que ha gastado cada viaje mío, el total y lo que costaría el siguiente
 //   GET    /viajes                     mis viajes
 //   POST   /viajes                     abre un viaje con lo entendido hasta ahora
 //   GET    /viajes/<id>                cómo está, y por dónde va su investigación
@@ -43,6 +44,7 @@ import {
   sesionDe,
   type Cuenta,
 } from "./cuentas.ts";
+import { gastoDeLaCuenta } from "./gasto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import {
@@ -195,6 +197,25 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
   };
 }
 
+/** Lo que ha gastado una cuenta, dicho para la web: números y fechas, y de cada viaje, a dónde va. */
+function gastoDeCara(g: ReturnType<typeof gastoDeLaCuenta>): Record<string, unknown> {
+  return {
+    trips: g.viajes.map((v) => ({
+      id: v.id,
+      destination: v.destino,
+      check_in: v.entrada,
+      check_out: v.salida,
+      usd: v.usd,
+      calls: v.llamadas,
+      known: v.sabido,
+      last: v.ultima,
+      researches: v.investigaciones,
+    })),
+    total: { usd: g.total.usd, calls: g.total.llamadas, known: g.total.sabido },
+    next: g.siguiente === null ? null : { usd: g.siguiente.usd, from: g.siguiente.de },
+  };
+}
+
 /** Lo que se contó, sin la hora de reloj: a la web le basta el orden y los milisegundos desde el principio. */
 function contado(run: string, desde: number): unknown[] {
   return leerVivo(run, desde).map((s) => {
@@ -280,6 +301,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
       return { estado: 200, cuerpo: { account: deCara(cuenta) } };
+    }
+    if (que === "gasto") {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      return { estado: 200, cuerpo: { spend: gastoDeCara(gastoDeLaCuenta(cuenta.id, o.mesa)) } };
     }
     if (que !== "clave") throw NO_HAY();
     try {

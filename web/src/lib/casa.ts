@@ -47,6 +47,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [/^sesiones$/, ["POST", "DELETE"]],
   [/^cuenta$/, ["GET"]],
   [/^cuenta\/clave$/, ["PUT", "DELETE"]],
+  [/^cuenta\/gasto$/, ["GET"]],
   [/^viajes$/, ["GET", "POST"]],
   [/^vistazo$/, ["POST"]],
   [new RegExp(`^viajes/${ID}$`), ["GET"]],

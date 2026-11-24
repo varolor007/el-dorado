@@ -5,8 +5,14 @@
 
 import Link from "next/link";
 import type { Punto, Viaje } from "../../../../../agent/output/viaje.ts";
-import { useMisViajes, useViajeDeLaCasa, type ResumenDeViaje } from "../../../lib/cuenta.ts";
-import { diaCorto, dinero, noches } from "../../../lib/formato.ts";
+import {
+  useGasto,
+  useMisViajes,
+  useViajeDeLaCasa,
+  type GastoDeUnViaje,
+  type ResumenDeViaje,
+} from "../../../lib/cuenta.ts";
+import { diaCorto, dinero, gastoDeIA, noches } from "../../../lib/formato.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { useGrabado, useIdioma } from "../../../lib/usar.ts";
 
@@ -38,7 +44,7 @@ function Dibujo({ viaje }: { viaje: Viaje }) {
 }
 
 /** Un viaje de tu cuenta. Si ya está en el mapa, se dibuja y se abre; si no, dice cómo está. */
-function Tuyo({ resumen }: { resumen: ResumenDeViaje }) {
+function Tuyo({ resumen, gasto }: { resumen: ResumenDeViaje; gasto: GastoDeUnViaje | undefined }) {
   const idioma = useIdioma();
   const t = TEXTOS[idioma];
   const enElMapa = resumen.state === "on_map" || resumen.state === "closed";
@@ -65,6 +71,11 @@ function Tuyo({ resumen }: { resumen: ResumenDeViaje }) {
           {medio !== null && (
             <span className="pastilla pastilla--oro">{dinero(medio.total, medio.moneda, idioma)}</span>
           )}
+          {gasto !== undefined && gasto.calls > 0 && (
+            <span className="pastilla">
+              {t.panel.gastoIA(`${gastoDeIA(gasto.usd, idioma)}${gasto.known ? "" : "+"}`)}
+            </span>
+          )}
         </span>
         {enElMapa ? <span className="enlace">{t.panel.abrir} →</span> : <span className="suave">{t.panel.aun}</span>}
       </span>
@@ -84,6 +95,7 @@ export default function Viajes() {
   const t = TEXTOS[idioma];
   const grabado = useGrabado();
   const mios = useMisViajes();
+  const gastos = new Map((useGasto()?.trips ?? []).map((g) => [g.id, g]));
   const viaje = grabado?.viaje ?? null;
   const medio = viaje?.maneras.find((m) => m.id === "best_value") ?? viaje?.maneras[0] ?? null;
   return (
@@ -94,7 +106,7 @@ export default function Viajes() {
       </header>
       <div className="viajes">
         {(mios ?? []).map((resumen) => (
-          <Tuyo key={resumen.id} resumen={resumen} />
+          <Tuyo key={resumen.id} resumen={resumen} gasto={gastos.get(resumen.id)} />
         ))}
         {viaje !== null && (
           <Link className="viaje" href="/plan?at=trip">

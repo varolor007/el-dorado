@@ -146,8 +146,12 @@ PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de l
 `claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
 primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). **La segunda tanda, en marcha desde el 24-nov**: el arranque
 en el servidor (2.9, segunda parte, `claude/eldorado-2-9-arranque`, con las dos maneras de llegar desde Vercel: la
-puerta con candado y el túnel), el gasto de cada viaje (11.4, `claude/eldorado-11-4-gasto`) y los días baratos del
-vistazo con los aeropuertos de la búsqueda de transporte (5.5, `claude/eldorado-5-5-dias-baratos`). **Lo que queda
+puerta con candado y el túnel) y los días baratos del vistazo con los aeropuertos de la búsqueda de transporte
+(5.5, `claude/eldorado-5-5-dias-baratos`), que lleva después los tres días a cada lado. Ya junto: el gasto de cada
+viaje (11.4, `claude/eldorado-11-4-gasto`): sale de `agent/launcher/gasto.ts` por `GET /cuenta/gasto`, solo a su
+dueño; lo enseñan la tarjeta de la pestaña de la clave y una pastilla en Tus viajes. Lo siguiente es la media de
+las investigaciones enteras de la cuenta, o no se dice. Para la cuenta de la casa es lo que habría costado con una
+clave. Falta decirlo junto al botón de empezar (`useGasto().next`) y verlo con gasto de verdad. **Lo que queda
 por repartir y pide antes un diseño de quien orquesta**: el que escucha (5.2), que cambia el flujo de empezar; el
 conductor (2.5); el buscador y el lector de webs (3.5), y con ellos el del calendario (5.3) y el de los papeles
 (5.4); y Geoapify dentro de la casa (3.14), que tiene que caber en su cupo gratuito.
