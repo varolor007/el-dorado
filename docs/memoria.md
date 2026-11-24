@@ -82,8 +82,11 @@ casa local hay un guion en el borrador de la sesión que copia el de prueba a un
 **Las rutas (3.14): se prueba Geoapify primero** (el PM, 24-nov). Hecho, con datos inventados: su enchufe
 (`agent/tools/fuentes/geoapify.ts`: `caminoEntre` y `matrizDeCaminos`) y la orden para probarlo
 (`agent/launcher/rutas.ts`). Su clave va en la dirección de cada pedido, no en una cabecera: la red de la sesión no
-puede ponerla, así que tiene que estar en el entorno como `GEOAPIFY_KEY`, puesta por el PM en los ajustes del
-entorno; el enchufe cuida de que no salga en ningún mensaje de fallo. **Falta**: la prueba en cuatro o cinco destinos
+puede ponerla, así que tiene que estar en el entorno como `GEOAPIFY_KEY`; el enchufe cuida de que no salga en
+ningún mensaje de fallo. El PM la guardó el 24-nov en los ajustes del entorno de las sesiones con el nombre
+`GEOAPIFY`: una sesión se la pasa al enchufe poniendo `GEOAPIFY_KEY="$GEOAPIFY"` delante de la orden, sin
+enseñarla. Las variables entran al empezar una sesión, no en la que ya está abierta: la sesión del 24-nov no llegó
+a verla. **Falta**: la prueba en cuatro o cinco destinos
 de clases distintas (una gran ciudad de otro continente, un pueblo, un sitio de naturaleza y una ruta por un país),
 mirando qué transporte público conoce de verdad y cuál aproxima; y, con lo que salga, que la casa lo use en las
 cribas, en el ritmo y en la tabla. Si se queda corta en transporte público, la segunda opción es Google en vivo y
