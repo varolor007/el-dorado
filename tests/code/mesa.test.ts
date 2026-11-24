@@ -268,10 +268,10 @@ test("los pasos de una investigación: cada uno, con quién lo da, y ninguno rep
     PASOS.map((p) => p.id),
     [
       "understood",
-      "papers",
       "sights",
       "route",
       "search",
+      "papers",
       "look",
       "pick",
       "days",

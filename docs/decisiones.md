@@ -563,6 +563,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **Los avisos de las fechas los cuenta el que explica** (el PM, a las dos maneras: «lo que consideres»; elige la
   sesión). Una frase por aviso y por ventana, en el idioma del viajero, que pasa la puerta 7: así la regla de la
   pantalla no cambia. Encargado a una sesión de obra.
+- **Los papeles se miran a la vez que se busca, y lo caro los espera** (el PM, a la propuesta de la sesión: «vale
+  perfe»). Cambia la hoja: la puerta 2 ya no va «antes de gastar en buscar», sino antes de mirar cada alojamiento y
+  de elegir los sitios. Los sitios y la búsqueda son código y no gastan; la ruta es un asiento, unos 25 céntimos,
+  y es lo que queda en riesgo si un papel bloquea. A cambio, la pantalla se mueve desde el primer segundo y el
+  viaje sale unos tres minutos antes.
 - **El ensayo entero desde la web, con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): unos
   7,19 dólares de equivalente. Cuando el filtro de seguridad del modelo marcó el mensaje de un asiento, la sesión
   lo repitió una sola vez y sin cambiar nada, ni el mensaje ni el modelo, y dejó dicho al PM que, si volvía a
@@ -588,9 +593,6 @@ Lo que deja la obra del 24-nov, a decisión del PM:
   ensayo, con una lista de sitios normal): hoy para y lo cuenta el conductor, como «un fallo técnico». Por decidir:
   si se le dice al viajero lo que fue, y si algún asiento debe tener un segundo modelo para cuando el primero no
   contesta, que se diría en el entorno. La sesión no rodea el filtro ni cambia de modelo por su cuenta.
-- **Los papeles, antes de buscar o a la vez**: la hoja pide mirarlos antes de gastar en buscar, y son unos tres
-  minutos con la pantalla en vivo casi vacía. La sesión propone buscar a la vez y no lanzar a los que miran
-  alojamientos, que es lo caro, hasta que pasen los papeles. Toca la hoja: decide el PM.
 - **Qué es un dominio oficial en cualquier país**: sigue pendiente. Hoy, de un país que no está en la lista nada
   sale «en regla». Hay una propuesta de la sesión de obra, sin construir.
 

@@ -256,7 +256,9 @@ en `agent/data/calendario.ts` y `agent/data/papeles.ts`, sus comprobaciones en `
 `agent/launcher/calendario.ts` y `agent/launcher/papeles.ts`. **La casa los lanza por detrás desde el principio y
 no los espera**: `casa.ts` tiene `lanzarPorDetras`, `enSuTurno` (los pasos de un run se dan de uno en uno) y
 `esperarLoDeDetras` (para las pruebas), e `investigar.ts` devuelve `porDetras`; lo de detrás no cuenta en los
-asientos a la vez. A los papeles se les espera tras lo entendido, por su puerta 2, antes de los sitios y la ruta:
+asientos a la vez. A los papeles se les espera por su puerta 2 tras la búsqueda y antes de lo caro, que es mirar
+cada finalista y elegir los sitios (el PM, 24-nov: antes era tras lo entendido, y la pantalla en vivo se quedaba
+tres minutos quieta; el paso `papers` va ahora después de `search`):
 si algo bloquea, o fallaron, o no pasaron su puerta tras sus vueltas, es el turno del viajero (el paso `papers` en
 `yours`, sin gastar), que sigue con `POST /viajes/<id>/confirmar` y `{ "papers": "go_on" }` (`papeles-sigue.json`).
 Al calendario se le espera solo al montar el viaje; si falta, el viaje se hace igual y lleva `falta`. En el run,

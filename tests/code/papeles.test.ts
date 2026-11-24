@@ -25,6 +25,7 @@ import {
   type Celda,
 } from "../../agent/launcher/papeles.ts";
 import { porDondeVa } from "../../agent/launcher/pasos.ts";
+import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarViaje, pegasDeLosPapeles, type Viaje } from "../../agent/output/viaje.ts";
 import type { Entendido, Papel } from "../../agent/scripts/formas.ts";
 import {
@@ -382,12 +383,15 @@ test("en regla: dos sitios distintos, o uno propio del gobierno del destino; a l
   });
 });
 
-test("si un papel bloquea, se para antes de gastar en buscar, y sigue si el viajero lo decide", async () => {
+test("si un papel bloquea, se para antes de lo caro, y sigue si el viajero lo decide", async () => {
   await conDominios(async () => {
-    const run = runNuevo(VIAJE);
+    // Con las fechas del caso inventado, para que la ruta y la búsqueda de mentira valgan tal cual.
+    const run = runNuevo({ ...VIAJE, dates: ENTENDIDO.dates });
     try {
+      // Los papeles se miran por detrás, a la vez que se busca: lo primero que se espera es la ruta.
       let estado = await sigue(run, fuentesInventadas());
-      assert.deepEqual(estado.esperan, ["papeles-v1"]);
+      assert.deepEqual([estado.esperan, estado.porDetras], [["ruta-v1"], ["calendario-v1", "papeles-v1"]]);
+      trabaja(run, "ruta-v1");
       // El de los papeles encuentra que el ministerio del viajero desaconseja ir: bloquea.
       const entrega = buena();
       const aviso = entrega.cells.find((c: Objeto) => c.question === "travel_advisory" && c.traveller === "t1");
@@ -402,8 +406,13 @@ test("si un papel bloquea, se para antes de gastar en buscar, y sigue si el viaj
       assert.deepEqual([estado.esperan, estado.alViajero, estado.parado], [[], true, null]);
       assert.ok(turnoDeLosPapeles(run));
       assert.equal(porDondeVa(run).find((p) => p.id === "papers")?.estado, "yours");
-      // Ni los sitios ni la ruta: nada que gaste en buscar.
-      assert.equal(porDondeVa(run).find((p) => p.id === "sights")?.estado, "pending");
+      // Se buscó a la vez, y lo caro no ha empezado: ni mirar cada finalista ni elegir los sitios.
+      const paso = (id: string): string | undefined => porDondeVa(run).find((p) => p.id === id)?.estado;
+      assert.deepEqual(
+        [paso("route"), paso("search"), paso("look"), paso("pick")],
+        ["done", "done", "pending", "pending"],
+      );
+      assert.ok(!puestosDe(run).some((p) => p.asiento === "lodging-viewer" || p.asiento === "sights-picker"));
       const tabla = leerJson(join(run, "papeles.json"));
       assert.equal(tabla.bloquea, true);
       assert.equal(tabla.casillas.find((c: Objeto) => c.estado === "blocks").fuentes[0].lado, "home");
@@ -415,7 +424,7 @@ test("si un papel bloquea, se para antes de gastar en buscar, y sigue si el viaj
       seguirConLosPapeles(run, { papers: "go_on" });
       assert.ok(!turnoDeLosPapeles(run));
       estado = await sigue(run, fuentesInventadas());
-      assert.deepEqual(estado.esperan, ["ruta-v1"]);
+      assert.ok(estado.esperan.includes("sitios-v1") && estado.esperan.includes("a1-p1"), estado.esperan.join(", "));
       assert.equal(porDondeVa(run).find((p) => p.id === "papers")?.estado, "done");
     } finally {
       rmSync(run, { recursive: true, force: true });

@@ -1,6 +1,7 @@
 // El de los papeles en la investigación: lo que se le da, las cuentas de plazos que se hacen con lo que entrega, lo
 // que se guarda y la decisión del viajero si algo bloquea. Corre por detrás desde el principio, mientras se contesta;
-// antes de gastar en buscar, la puerta 2 tiene que haber dicho que nada bloquea, o el viajero, que sigue igual.
+// antes de lo caro (mirar cada finalista y elegir los sitios), la puerta 2 tiene que haber dicho que nada bloquea, o
+// el viajero, que sigue igual.
 //
 // Lo que queda en el run:
 //

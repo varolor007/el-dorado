@@ -860,7 +860,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   // El del calendario, desde el principio y por detrás: no frena nada hasta que se monta el viaje.
   const calendario = delCalendario(run, base, f);
   if (calendario !== null) porDetras.push(calendario);
-  // El de los papeles, también desde el principio: su puerta 2 se mira antes de gastar en buscar.
+  // El de los papeles, también desde el principio: su puerta 2 se mira antes de lo caro, tras la búsqueda.
   const papeles = deLosPapeles(run, base);
   if (papeles !== null) porDetras.push(papeles);
 
@@ -874,13 +874,6 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     }
   }
   const viaje = sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido);
-
-  // La puerta 2: antes de gastar en buscar, los papeles. Si aún se miran, ahora sí se les espera. Si algo bloquea, o
-  // no se pudieron mirar, el viaje se para aquí y espera la decisión del viajero, sin gastar más.
-  if (papeles !== null) return espera(papeles);
-  const tabla = papelesDelRun(run);
-  if (tabla !== null && paranElViaje(tabla) && !tabla.sigue)
-    return { esperan: [], hecho: false, parado: null, avisos, alViajero: true, porDetras: conLoDeDetras([]) };
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
@@ -932,6 +925,15 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   const encontrado = leer<{ busqueda: Busqueda }>(run, "busqueda.json").busqueda;
   if (encontrado.finalistas.length === 0)
     return para("search", "la búsqueda de alojamiento", [{ donde: "alojamiento", que: sinAlojamiento(encontrado) }]);
+
+  // La puerta 2. Los papeles se miran a la vez que se busca, que casi no gasta (los sitios y la búsqueda son código,
+  // y la ruta, un asiento), y lo caro espera a que estén: mirar cada finalista y elegir los sitios (el PM, 24-nov).
+  // Si aún se miran, ahora sí se les espera. Si algo bloquea, o no se pudieron mirar, el viaje se para aquí y espera
+  // la decisión del viajero, sin gastar más.
+  if (papeles !== null) return espera(papeles);
+  const deLosPapelesDelRun = papelesDelRun(run);
+  if (deLosPapelesDelRun !== null && paranElViaje(deLosPapelesDelRun) && !deLosPapelesDelRun.sigue)
+    return { esperan: [], hecho: false, parado: null, avisos, alViajero: true, porDetras: conLoDeDetras([]) };
 
   // 4. A la vez: mirar cada finalista y elegir los sitios. Después, los días y su puerta.
   if (!hay(run, "dias.json")) {

@@ -890,8 +890,11 @@ test("los papeles (5.4): si no se pudieron mirar, la casa espera tu decisión, y
       assert.equal(espera.research.waiting_for_you, true);
       assert.equal(espera.research.stopped, null);
       assert.equal(espera.research.steps.find((p: Objeto) => p.id === "papers").state, "yours");
-      assert.ok(
-        espera.research.steps.filter((p: Objeto) => p.id === "route").every((p: Objeto) => p.state === "pending"),
+      // Se buscó a la vez, y lo caro no ha empezado.
+      const paso = (id: string): string => espera.research.steps.find((p: Objeto) => p.id === id).state;
+      assert.deepEqual(
+        [paso("route"), paso("search"), paso("look"), paso("pick")],
+        ["done", "done", "pending", "pending"],
       );
       // Lo que se le dice: que faltan, por su clave, sin el porqué de quien lo lleva.
       assert.equal(espera.research.papers.falta, "failed");

@@ -387,11 +387,11 @@ const flujo = [
     },
     {
       tipo: "puerta",
-      parte: "hecha aquí, al empezar. Si los papeles no se pudieron mirar, también se para y decides tú. Falta en el transporte y en los cambios.",
+      parte: "hecha aquí, al empezar. Si los papeles no se pudieron mirar, también se para y decides tú. «En regla» pide dos sitios distintos, o un dominio propio del gobierno del destino. Falta en el transporte y en los cambios.",
       k: "Puerta 2",
       x: "¿algún papel bloquea?",
       titulo: "Puerta 2: ¿algún papel bloquea?",
-      d: "La tabla, completa; cada respuesta, de un dominio oficial de nuestra lista y con su fecha; «en regla» pide dos fuentes, o una del gobierno del destino; lo dudoso sale como aviso. Si algo bloquea, el viaje se para aquí y te lo digo, antes de gastar en buscar.",
+      d: "La tabla, completa; cada respuesta, de un dominio oficial de nuestra lista y con su fecha; «en regla» pide dos fuentes, o una del gobierno del destino; lo dudoso sale como aviso. Los papeles se miran mientras se busca, que casi no gasta. Si algo bloquea, el viaje se para y te lo digo antes de gastar en lo caro: mirar cada alojamiento y elegir qué ver.",
     },
     {
       tipo: "tu",
@@ -847,7 +847,7 @@ const secciones = [
         estados: true,
         filas: [
           ["1. ¿El viaje, claro?", "Empezar", "Los campos base, completos; cada gusto y cada límite, con su cita literal; tres preguntas de más como mucho", "hecho"],
-          ["2. ¿Algún papel bloquea?", "Empezar, El transporte y Cambios", "La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes; si bloquea, se para antes de buscar. Hecha al empezar; falta en el transporte y en los cambios", "parte"],
+          ["2. ¿Algún papel bloquea?", "Empezar, El transporte y Cambios", "La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes; si bloquea, se para antes de lo caro (mirar cada alojamiento y elegir qué ver). Hecha al empezar; falta en el transporte y en los cambios", "parte"],
           ["3. ¿Las noches suman?", "La investigación", "Las noches, los traslados con su duración y su fuente, dos noches por base, lo imprescindible, dentro, y cada zona con su centro y su radio", "hecho"],
           ["4. ¿La búsqueda es de fiar?", "La investigación y El alojamiento", "Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio", "parte"],
           ["5. ¿Cada nivel, con su prueba?", "La investigación y El alojamiento", "Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe»", "hecho"],

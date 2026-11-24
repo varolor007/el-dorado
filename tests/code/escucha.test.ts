@@ -185,8 +185,9 @@ const estadoDe = (run: string, id: string): string | undefined => porDondeVa(run
 test("si el viajero no escribió nada, el que escucha no se lanza y no se gasta", async () => {
   await conRun(SIN_PALABRAS, async (run) => {
     const estado = await sigue(run, fuentesInventadas());
-    // Sin nada que escuchar, lo primero que se espera son los papeles: su puerta 2, antes de gastar en buscar.
-    assert.deepEqual(estado.esperan, ["papeles-v1"]);
+    // Sin nada que escuchar, lo primero que se espera es la ruta: los papeles se miran por detrás, a la vez.
+    assert.deepEqual(estado.esperan, ["ruta-v1"]);
+    assert.deepEqual(estado.porDetras, ["calendario-v1", "papeles-v1"]);
     assert.ok(!puestosDe(run).some((p) => p.asiento === "listener"));
     assert.equal(estadoDe(run, "understood"), "done");
     assert.equal(leerJson(join(run, ESCUCHADO)).escuchado, false);
@@ -306,9 +307,7 @@ test("si contesta, se suma a sus palabras y el que escucha corre otra vez, sin p
     // Ya no se contesta: solo se confirma.
     assert.throws(() => confirmar(run, { answers: [{ i: 0, answer: "otra cosa" }] }), FalloAlConfirmar);
     assert.equal(confirmar(run, {}), "confirmed");
-    // Los papeles aún no entregaron: ahora que hacen falta, se les espera, y con su tabla sigue la ruta.
-    assert.deepEqual((await sigue(run, fuentesInventadas())).esperan, ["papeles-v1"]);
-    trabaja(run, "papeles-v1");
+    // Confirmado, sigue la ruta; los papeles, que aún no entregaron, van por detrás.
     assert.deepEqual((await sigue(run, fuentesInventadas())).esperan, ["ruta-v1"]);
     const final = leerJson(join(run, ESCUCHADO)).entendido as Entendido;
     assert.equal(final.said?.answers.length, 1);

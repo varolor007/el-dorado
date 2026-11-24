@@ -39,12 +39,14 @@ test("sin el adelante del viajero la casa no lanza a nadie: da los pasos de cód
     const r = await llevar(run, fuentesInventadas(), lanzador);
     assert.equal(r.sinAdelante, true);
     assert.equal(r.hecho, false);
-    assert.deepEqual(r.esperan, ["papeles-v1"]);
+    // Lo primero que se espera es la ruta: los papeles y el calendario van por detrás, y tampoco se lanzan.
+    assert.deepEqual(r.esperan, ["ruta-v1"]);
     assert.deepEqual(r.lanzados, []);
     assert.deepEqual(lanzador.ordenes, []);
     assert.deepEqual(trabajosDe(run), []);
-    // Antes de gastar en buscar, los papeles: ni siquiera los sitios, hasta que digan que nada bloquea.
-    assert.ok(!existsSync(join(run, "sitios.json")));
+    // Lo que no gasta sí se da: los sitios, que son código. La ruta, que es un asiento, espera al adelante.
+    assert.ok(existsSync(join(run, "sitios.json")));
+    assert.ok(!existsSync(join(run, "ruta.json")));
     assert.ok(!existsSync(join(run, "parado.json")));
   });
 });
@@ -121,7 +123,7 @@ test("si de un asiento no se sabe lo que gastó y hay techo, no se sigue a ciega
     await conRun(async (run) => {
       darElAdelante(run, 5);
       const r = await llevar(run, fuentesInventadas(), lanzadorDeMentira({ gasto }));
-      assert.deepEqual(r.lanzados, ["calendario-v1", "papeles-v1"]);
+      assert.deepEqual(r.lanzados, ["calendario-v1", "papeles-v1", "ruta-v1"]);
       assert.ok(trabajosDe(run).every((t) => t.gasto === null));
       assert.equal(r.gasto.sabido, false);
       assert.equal(r.parado?.paso, "el gasto");

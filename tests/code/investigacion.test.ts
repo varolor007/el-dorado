@@ -226,7 +226,7 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     assert.deepEqual(lanzados.slice(1, 7).sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
     assert.deepEqual(lanzados.slice(7), ["cruce-1-v1", "explica-v1"]);
     // El del calendario, por detrás, desde el principio, a la vez que la ruta.
-    assert.deepEqual(deDetras, ["papeles-v1", "calendario-v1"]);
+    assert.deepEqual([...deDetras].sort(), ["calendario-v1", "papeles-v1"]);
 
     const viaje = leerJson(join(run, "viaje.json")) as Viaje;
     const sucesos = leerJson(join(run, "sucesos.json")) as unknown as Suceso[];
@@ -722,30 +722,35 @@ test("por dónde va un run se lee de su carpeta: cada paso, sin empezar, esperan
       Object.entries(estados(run)).filter(([, e]) => e !== "pending"),
       [["understood", "done"]],
     );
-    // La primera llamada deja a los papeles esperando, antes de nada que gaste en buscar.
+    // La primera llamada trae los sitios y deja a la ruta esperando a su asiento; los papeles y el calendario van
+    // por detrás, a la vez.
     const primera = await sigue(run, fuentesInventadas());
-    assert.deepEqual([primera.esperan, primera.porDetras], [["papeles-v1"], ["calendario-v1"]]);
+    assert.deepEqual([primera.esperan, primera.porDetras], [["ruta-v1"], ["calendario-v1", "papeles-v1"]]);
     assert.equal(estados(run).papers, "waiting");
-    assert.equal(estados(run).sights, "pending");
-    // Con su tabla, que no bloquea, trae los sitios y deja a la ruta esperando a su asiento.
-    trabaja(run, "papeles-v1");
-    let estado = await sigue(run, fuentesInventadas());
-    assert.deepEqual(estado.esperan, ["ruta-v1"]);
-    assert.equal(estados(run).papers, "done");
     assert.equal(estados(run).sights, "done");
+    let estado = primera;
+    assert.deepEqual(estado.esperan, ["ruta-v1"]);
     assert.deepEqual(
       porDondeVa(run).find((p) => p.id === "route"),
       { id: "route", quien: "route-planner", puerta: 3, estado: "waiting", esperan: ["ruta-v1"] },
     );
     assert.equal(estados(run).search, "pending");
-    // Con la ruta, busca, y deja esperando a la vez a los que miran y al que elige los sitios.
+    // Con la ruta, busca. Lo caro espera a los papeles: mientras no entregan, solo se les espera a ellos.
     trabaja(run, "ruta-v1");
     estado = await sigue(run, fuentesInventadas());
-    const va = porDondeVa(run);
-    assert.deepEqual([va[3].estado, va[4].estado, va[5].estado, va[6].estado], ["done", "done", "waiting", "waiting"]);
-    assert.deepEqual(va[5].esperan, ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1"]);
-    assert.deepEqual(va[6].esperan, ["sitios-v1"]);
-    assert.deepEqual([...va[5].esperan, ...va[6].esperan].sort(), [...estado.esperan].sort());
+    assert.deepEqual(estado.esperan, ["papeles-v1"]);
+    assert.deepEqual([estados(run).route, estados(run).search, estados(run).look], ["done", "done", "pending"]);
+    // Con su tabla, que no bloquea, quedan esperando a la vez los que miran y el que elige los sitios.
+    trabaja(run, "papeles-v1");
+    estado = await sigue(run, fuentesInventadas());
+    const va = Object.fromEntries(porDondeVa(run).map((p) => [p.id, p]));
+    assert.deepEqual(
+      [va.route.estado, va.search.estado, va.papers.estado, va.look.estado, va.pick.estado],
+      ["done", "done", "done", "waiting", "waiting"],
+    );
+    assert.deepEqual(va.look.esperan, ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1"]);
+    assert.deepEqual(va.pick.esperan, ["sitios-v1"]);
+    assert.deepEqual([...va.look.esperan, ...va.pick.esperan].sort(), [...estado.esperan].sort());
     // Al acabar, todos hechos.
     const fin = await investiga(run);
     assert.equal(fin.estado.hecho, true);
