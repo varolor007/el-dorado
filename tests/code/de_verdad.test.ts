@@ -45,6 +45,9 @@ test("lleva la investigación entera con su adelante, cuenta lo que pasa y dice 
     );
     assert.equal(resumen.filter((l) => /^ {2}\S+ \([a-z-]+\): done, \d+ s, \d+\.\d\d USD$/.test(l)).length, 9);
     assert.equal(resumen.at(-1), `El run, en ${run}`);
+    // Si lo que toca es que el viajero confirme lo entendido, lo dice así, y no como algo sin acabar.
+    const suTurno = resumenDe({ ...hecho, llevado: { ...hecho.llevado, hecho: false, alViajero: true } });
+    assert.match(suTurno[0], /^Es el turno del viajero/);
   } finally {
     rmSync(run, { recursive: true, force: true });
   }

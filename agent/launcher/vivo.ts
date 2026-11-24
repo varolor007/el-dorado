@@ -7,6 +7,7 @@
 
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { CONDUCTOR } from "../data/conductor.ts";
 import { RONDAS } from "../data/palancas.ts";
 import { PARADO } from "../data/pasos.ts";
 import { MANERAS, type Punto, type Suceso } from "../output/viaje.ts";
@@ -121,6 +122,14 @@ export function loQueHaPasado(run: string): Pasado[] {
   if (viaje !== null) {
     for (const p of lista(viaje.palancas)) pasado.push({ clase: "lever", ref: texto(p.id) });
     pasado.push({ clase: "done" });
+  }
+
+  // El conductor: que mira una parada y, si ya eligió, si da una vuelta más o lo cuenta.
+  const conductor = leer(run, CONDUCTOR);
+  if (conductor !== null) {
+    pasado.push({ clase: "conductor", ref: "looking" });
+    if (conductor.estado === "retry" || conductor.estado === "told")
+      pasado.push({ clase: "conductor", ref: conductor.estado });
   }
 
   // Si el run está parado, se dice dónde. El porqué es para quien lo lleva: no viaja en lo que se cuenta.

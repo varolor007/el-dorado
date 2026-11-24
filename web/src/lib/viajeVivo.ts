@@ -13,7 +13,17 @@ export type Investigacion = {
   steps: { id: string; state: string; waiting: number }[];
   spent: { usd: number; turns: number; known: boolean };
   ceiling: number | null;
-  stopped: { at: string | null } | null;
+  /**
+   * Si se ha parado: en qué paso, qué clase de parada es y qué puedes hacer, por claves; una frase del conductor, si
+   * pasó su puerta de palabras, con su idioma; y si el conductor aún la está mirando.
+   */
+  stopped: {
+    at: string | null;
+    kind?: string;
+    options?: string[];
+    said?: { text: string; lang: string } | null;
+    looking?: boolean;
+  } | null;
   told: number;
   /** Es tu turno: confirmar lo que he entendido, o contestar lo que te pregunto. */
   waiting_for_you?: boolean;

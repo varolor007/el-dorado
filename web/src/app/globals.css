@@ -957,6 +957,22 @@ img {
   border-radius: 50%;
   background: var(--ojo);
 }
+/* Un run parado: lo que pasó y lo que puedes hacer. */
+.parado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.parado > p:not(.aviso):not(.rotulo) {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.parado__salidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .grupo {
   display: flex;
   flex-direction: column;

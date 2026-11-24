@@ -531,6 +531,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   llamadas, unos 15 minutos y el equivalente a 6,86 dólares de su suscripción. Para seguir tras la parada se quitó
   a mano la marca de parado y se retomó con el código arreglado: lo decide quien lleva el run, y queda dicho aquí.
   El modelo se dio solo en la orden de la terminal.
+- **Cómo queda el conductor** (una sesión de obra, revisada por quien orquesta). El acta la escribe el código, no
+  una IA. El conductor se llama una vez por run, da como mucho una vuelta de más y su gasto cuenta en el techo: lo
+  más prudente. Si su entrega sale en rojo, no se le devuelve: el run se queda parado. La clase de una parada la
+  saca primero el código, y la del conductor solo vale para la parada a la que se le llamó. Su frase para el
+  viajero no puede llevar números y pasa la puerta de palabras, o no se enseña. Al dueño, el acta va sin el porqué
+  de los fallos, que puede llevar lo que se dijo por dentro. «Cambiar lo que pediste» lleva a una búsqueda nueva.
 
 ## Pendientes
 
@@ -538,6 +544,10 @@ Lo que deja la obra del 24-nov, a decisión del PM:
 
 - **Los números del buscador de webs**: 8 búsquedas, 12 páginas y 6 vueltas por asiento, de partida. Y si el lector
   se cierra por dominios en algún asiento (los oficiales, en el de los papeles).
+- **Hasta dónde llega el conductor**: hoy, una vuelta de más y dentro del techo. Si algún día puede seguir sin una
+  parte del viaje (y cuáles) o cambiar un tope. Si su frase se enseña al viajero tal cual, pasada su puerta de
+  palabras, o solo las claves. Y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje.
+- **La nota de los huéspedes, al que explica**: para que diga las dos, la nuestra y la suya.
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
 

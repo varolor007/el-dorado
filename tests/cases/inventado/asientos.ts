@@ -131,6 +131,19 @@ export function entregaDeEscucha(palabras: Objeto, vuelta: Objeto): Objeto {
   };
 }
 
+/** Lo que entregaría el conductor si no ve arreglo: parar y contarlo, con la primera salida que tiene el viajero. */
+export function entregaDelConductor(parada: Objeto | null): Objeto {
+  return {
+    seat: "conductor",
+    decision: "stop_and_tell",
+    hint: "",
+    kind: "seat_kept_failing",
+    options: [parada?.allowed_options?.[0] ?? "retry"],
+    message: "",
+    why: "The same red came back on every pass.",
+  };
+}
+
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
 export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
   if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
@@ -138,6 +151,7 @@ export function entregaCon(asiento: string, dado: (nombre: string) => any): Obje
   if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
   if (asiento === "sights-picker") return entregaDeSitios();
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
+  if (asiento === "conductor") return entregaDelConductor(dado("stop.json"));
   const paraExplicar: ParaExplicar = {
     ways: dado("ways.json"),
     levers: dado("levers.json"),

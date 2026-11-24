@@ -178,9 +178,10 @@ cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la
 la investigación esperando su confirmación). Y el buscador y el lector de webs (3.5,
 `claude/eldorado-3-5-buscador`): un asiento dice en su contrato si sale a internet; busca y lee con las herramientas
 de la propia IA (las de la API en la llamada directa; WebSearch y WebFetch en Claude Code); la casa guarda la
-memoria de lo que se buscó y se abrió, y la puerta de todos da rojo a lo que cite una página que no se abrió. **Lo
-que queda por repartir**: el del calendario (5.3) y el de los papeles (5.4), que ya tienen su buscador; y el
-conductor (2.5): la idea es que el acta del run la escriba el código y que el asiento
+memoria de lo que se buscó y se abrió, y la puerta de todos da rojo a lo que cite una página que no se abrió. **La
+cuarta tanda (24-nov)**: el conductor (2.5, `claude/eldorado-2-5-conductor`), ya junto, y el del calendario con el
+de los papeles (5.3 y 5.4, en una sola sesión porque tocan lo mismo, `claude/eldorado-5-3-y-5-4-avisos`), en
+marcha. Del conductor, la idea era que el acta del run la escriba el código y que el asiento
 solo coja un rojo que su dueño ya intentó dos veces, para decirle al viajero en claro qué pasó y qué puede hacer.
 
 **La cuenta del PM, estrenada (24-nov).** Su token está en el entorno de las sesiones. Una sesión auxiliar no pudo
@@ -218,6 +219,25 @@ en el borrador de la sesión, fuera del repositorio, y la web la enseña en seco
 ella (su `grabado/` lleva el `viaje.json` y el `sucesos.json` del run); las capturas, en
 `revision/capturas-11` del borrador.
 
+**El conductor (2.5), junto** (una sesión de obra, revisada el 24-nov). El acta del run (`agent/launcher/acta.ts`,
+`acta.json` en el run) la rehace el código del disco: pasos, trabajos con su vuelta, tiempo y gasto, cada vuelta en
+rojo, la parada con su clase, el total y lo repetido. La dejan `llevar` y `de_verdad.ts`, y la puerta la da a su
+dueño (`GET /viajes/<id>/acta`) sin el porqué de los fallos. El conductor (`agent/contracts/conductor/`,
+`agent/gates/puerta_conductor.ts`, `agent/launcher/conductor.ts`, sus listas cerradas en
+`agent/data/conductor.ts`) se lanza una vez por run, con el adelante y bajo el techo, cuando un asiento para el run
+en rojo tras sus vueltas o sin entregar. Ve el acta, cada vuelta con sus rojos y sus líneas, y el contrato de ese
+asiento; del viajero, solo el idioma. Elige otra vuelta (la casa monta `<base>-v(N+1)` con el mismo material y su
+indicación en `returned.json`, en `from_the_conductor`, y la vuelta pasa las mismas puertas; si vuelve a salir en
+rojo, el run se para y ya no se le llama) o parar y contarlo (clase y salidas por claves, y su frase solo si pasa
+la puerta de palabras y sin números). Si falla o desobedece, el run sigue parado. `llevar` lo llama solo; con
+`conductor: false` no. La web lo dice en la pantalla del run parado (`EnCasa.tsx`): lo que pasó, «Volver a
+intentarlo» y «Cambiar lo que pediste», que lleva a una búsqueda nueva. Sin hacer: «seguir sin esa parte» está en
+la lista y no se ofrece nunca (ningún paso se puede saltar); la web no enseña el acta, solo se puede pedir; en el
+móvil hay que desplazar la hoja para llegar a los botones. Que lo mire el adversario: la indicación del conductor
+es texto de una IA que entra en el material de otro asiento (una línea, 400 letras). Pendiente del PM: si puede
+hacer más (seguir sin una parte, cambiar un tope) y cuánto gasta; si su frase se enseña tal cual o solo las claves;
+y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje. Sin estrenar con una IA de verdad.
+
 **El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
 asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`
 (W1 a W7), sus topes (`agent/data/internet.ts`: 8 búsquedas y 12 páginas de partida, que se pueden cambiar asiento
@@ -246,8 +266,8 @@ viajero (paso `yours`, `waiting_for_you` y `heard` en lo que cuenta la puerta) s
 inventadas (24-nov)**, desde la terminal: entregó a la primera en 56 segundos (unos 16 céntimos de equivalente) y
 pasó la puerta 1, con dos límites, tres gustos, lo reservado, un choque (vuelos ya comprados con fechas que se
 pueden mover) y dos preguntas; el run quedó en el turno del viajero sin gastar más. La orden de la terminal dice
-entonces «Sin acabar. Esperan: nadie»: falta que diga que es el turno del viajero (se arregla al juntar el 2.5,
-que toca ese resumen). Pendiente: verlo entero desde la web, con la confirmación, y la firma del PM a enseñar la
+entonces que es el turno del viajero (arreglado al juntar el 2.5; antes decía «Sin acabar. Esperan: nadie»).
+Pendiente: verlo entero desde la web, con la confirmación, y la firma del PM a enseñar la
 pregunta del asiento tal cual la escribe.
 
 **El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):

@@ -247,7 +247,14 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
       await casa.puerta.esperar();
       const { cuerpo } = await casa.pide("GET", `/viajes/${id}`);
       assert.equal(cuerpo.trip.state, "researching");
-      assert.deepEqual(cuerpo.research.stopped, { at: "route" });
+      // Dónde, y por claves, qué clase de parada es y qué puede hacer: sin gasto sabido, el conductor no se lanza.
+      assert.deepEqual(cuerpo.research.stopped, {
+        at: "route",
+        kind: "seat_did_not_finish",
+        options: ["retry"],
+        said: null,
+        looking: false,
+      });
       assert.deepEqual(cuerpo.research.jobs, [{ step: "route", state: "failed", usd: null }]);
       assert.equal(cuerpo.research.spent.known, false);
       const dicho = JSON.stringify(cuerpo);
@@ -443,6 +450,45 @@ test("a un viaje no le escuchan más oyentes de los que caben, y al irse uno cab
     abiertos.push(otro!.body!.getReader());
     for (const lector of abiertos) await lector.cancel();
   });
+});
+
+test("un run parado: el conductor lo cuenta por claves, y el acta del run la pide solo su dueño", async () => {
+  await conCasa(
+    async (casa) => {
+      const id = await abre(casa);
+      // Sin viaje aún, no hay acta.
+      assert.equal((await casa.pide("GET", `/viajes/${id}/acta`)).estado, 404);
+      await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } });
+      await casa.puerta.esperar();
+      const { cuerpo } = await casa.pide("GET", `/viajes/${id}`);
+      assert.deepEqual(cuerpo.research.stopped, {
+        at: "route",
+        kind: "seat_kept_failing",
+        options: ["retry"],
+        said: null,
+        looking: false,
+      });
+      const acta = await casa.pide("GET", `/viajes/${id}/acta`);
+      assert.equal(acta.estado, 200);
+      assert.equal(acta.cuerpo.record.conductor.estado, "told");
+      assert.deepEqual(
+        acta.cuerpo.record.trabajos.map((t: Objeto) => [t.puesto, t.estado, t.fallo]),
+        [
+          ["ruta-v1", "failed", "failed"],
+          ["conductor-1", "done", null],
+        ],
+      );
+      // Ni el porqué de un fallo ni una ruta del disco.
+      const dicho = JSON.stringify(acta.cuerpo);
+      for (const callado of ["la IA se cortó", casa.mesa]) assert.ok(!dicho.includes(callado), callado);
+      assert.deepEqual(await casa.pide("GET", `/viajes/${id}/acta`, { dueno: "luis" }), {
+        estado: 404,
+        cuerpo: { error: "not_found" },
+      });
+      assert.equal((await casa.pide("POST", `/viajes/${id}/acta`)).estado, 405);
+    },
+    { asientos: { falla: (asiento) => (asiento === "route-planner" ? "rompe y lo dice" : null) } },
+  );
 });
 
 test("lo que no es de la puerta se rechaza: otra ruta, otro método, lo que no es JSON o pesa demasiado", async () => {

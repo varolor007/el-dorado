@@ -254,6 +254,9 @@ export const SUCESOS = [
   "done",
   // La investigación se paró: `ref` dice en qué paso. El porqué no viaja a la web.
   "stopped",
+  // El conductor mira una parada: `ref` es `looking` mientras mira, `retry` si da una vuelta más a ese paso y `told`
+  // si lo cuenta.
+  "conductor",
 ] as const;
 
 export type Suceso = {

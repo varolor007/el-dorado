@@ -13,8 +13,10 @@
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1. Ni el token ni la clave se escriben ni salen en lo que imprime.
 
 import { join, resolve } from "node:path";
+import { ACTA } from "../data/conductor.ts";
 import type { Suceso } from "../output/viaje.ts";
 import type { Lanzador } from "./asiento.ts";
+import { actaDe } from "./acta.ts";
 import { darElAdelante, llevar, type Llevado } from "./casa.ts";
 import { claveQueVale } from "./cuentas.ts";
 import { lanzadorDirecto, precioDe } from "./ia.ts";
@@ -105,6 +107,8 @@ export function resumenDe(r: DeVerdad): string[] {
     lineas.push(`Parado en ${llevado.parado.paso}:`);
     for (const rojo of llevado.parado.rojos) lineas.push(`  ${rojo.donde}: ${rojo.que}`);
   } else if (llevado.sinAdelante) lineas.push("Sin adelante: no se lanzó ningún asiento.");
+  else if (llevado.alViajero)
+    lineas.push("Es el turno del viajero: el que escucha entregó y espera su confirmación, que llega por la web.");
   else lineas.push(`Sin acabar. Esperan: ${llevado.esperan.join(", ") || "nadie"}`);
   for (const aviso of llevado.avisos) lineas.push(`Aviso: ${aviso}`);
   const g = llevado.gasto;
@@ -121,6 +125,30 @@ export function resumenDe(r: DeVerdad): string[] {
       `  ${t.puesto} (${t.asiento}): ${t.estado}, ${segundos ?? "?"} s, ${gasto}${t.fallo ? `, ${t.fallo}` : ""}`,
     );
   }
+  // Del acta: lo que se fue en vueltas repetidas, lo que hizo el conductor y dónde queda entera.
+  const acta = actaDe(run);
+  const enSegundos = (ms: number): string => `${Math.round(ms / 1000)} s`;
+  if (acta.repetido.trabajos > 0)
+    lineas.push(
+      `En vueltas repetidas: ${acta.repetido.trabajos} trabajos, ${enSegundos(acta.repetido.ms)}, ` +
+        `${dolares(acta.repetido.usd)}.`,
+    );
+  for (const v of acta.vueltas_en_rojo)
+    lineas.push(`  ${v.puesto} en rojo: ${v.rojos.map((x) => `${x.donde}: ${x.que}`).join("; ")}`);
+  if (acta.conductor !== null) {
+    const c = acta.conductor;
+    const que = {
+      working: "sin acabar",
+      red: "su entrega no pasó su puerta: el run sigue parado",
+      failed: "no entregó: el run sigue parado",
+      retry: `pidió una vuelta más (${c.vuelta_extra}): «${c.hint}»`,
+      told: `lo cuenta al viajero: ${c.kind}, ${c.options.join(" o ")}`,
+    }[c.estado];
+    lineas.push(`El conductor, en la parada de ${c.para.puesto}: ${que}. Gastó ${dolares(acta.del_conductor.usd)}.`);
+    for (const rojo of c.rojos) lineas.push(`  ${rojo.donde}: ${rojo.que}`);
+  }
+  if (acta.parada !== null) lineas.push(`Clase de parada: ${acta.parada.clase}`);
+  lineas.push(`El acta, en ${join(run, ACTA)}`);
   lineas.push(`El run, en ${run}`);
   return lineas;
 }

@@ -750,14 +750,14 @@ Todos piensan igual, en seis pasos, que contestan de una vez y la casa escribe, 
 
 | Asiento | Qué hace | Sale a internet | Estado |
 |---|---|---|---|
-| El que escucha | Saca tus gustos y tus límites de lo que escribes, con tus palabras, y decide si hay que preguntar algo más | No | en borrador |
+| El que escucha | Saca tus gustos y tus límites de lo que escribes, con tus palabras, y decide si hay que preguntar algo más. Hecho y estrenado con una llamada de verdad; falta verlo entero desde la web, con tu confirmación | No | en parte |
 | El del calendario | El tiempo, la temporada, las fiestas y lo que se agota; avisa y propone fechas mejores | Sí | en borrador |
 | El de los papeles | Contesta la lista fija de requisitos para cada pasaporte, cada destino y cada escala, con fuente oficial | Sí | en borrador |
 | El de la ruta | Dónde duermes cada noche, por dónde entras y sales, y en qué zonas buscar. Hecho con los sitios de los datos abiertos y sin salir a internet: el centro de cada zona y lo que se anda los pone el código. Falta el buscador, y de dónde salen los tiempos de un traslado | Sí | en parte |
 | El que mira el alojamiento | Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas. Hecho, a ciegas y sin salir a internet, y probado con cinco alojamientos de verdad; falta el contraste con otras webs | Sí | en parte |
 | El que cruza | Lee la tabla del código, recorre la lista fija de palancas, cierra las tres maneras de hacer el viaje y elige qué palancas contarte. Hecho con el alojamiento y con el transporte que haya; las palancas del transporte esperan a su búsqueda | No | en parte |
 | El que explica | Escribe qué ganas y qué pierdes con cada manera, y lo que ahorra cada palanca; los números, con sus diferencias ya hechas, se los da el código. Falta lo que hay que hacer y para cuándo, que sale de los papeles y de cerrar el viaje | No | en parte |
-| El conductor | Vigila la investigación, devuelve cada rojo a su dueño y cuida el tiempo y el gasto | No | en borrador |
+| El conductor | Vigila la investigación, devuelve cada rojo a su dueño y cuida el tiempo y el gasto. Hecho: devolver cada rojo, el tiempo, el gasto y el acta son cosa del código; el asiento solo entra cuando una investigación se para, y elige entre una vuelta más de ese asiento, con una indicación, o parar y contarte qué pasó y qué puedes hacer. Falta estrenarlo con una IA de verdad | No | en parte |
 | El del día a día | Qué merece tu tiempo y qué no, en qué orden y cuánto lleva; repartirlo por días es cosa del código. Hecho con los sitios de los datos abiertos y sin salir a internet: lo que echa en falta lo dice, y no entra hasta que una fuente lo traiga | Sí | en parte |
 | El que escribe la guía | Los textos de tu cuaderno: cada día, contado para quien lo va a andar, solo con lo que hay en el viaje | No | en borrador |
 | El revisor | Lee el viaje entero en frío, sin haberlo hecho | No | por decidir |
