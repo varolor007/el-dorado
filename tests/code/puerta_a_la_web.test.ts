@@ -492,7 +492,7 @@ test("registrarse deja la sesión abierta; un correo, una cuenta; y lo que no va
     });
     assert.equal(alta.estado, 201);
     assert.deepEqual(Object.keys(alta.cuerpo).sort(), ["account", "session"]);
-    assert.deepEqual(Object.keys(alta.cuerpo.account).sort(), ["email", "id", "key"]);
+    assert.deepEqual(Object.keys(alta.cuerpo.account).sort(), ["email", "id", "key", "thinks_with"]);
     assert.deepEqual([alta.cuerpo.account.email, alta.cuerpo.account.key], ["ana@inventado.example", null]);
     // Con esa sesión ya es ella, y nadie más.
     const quien = await casa.pide("GET", "/cuenta", { sesion: alta.cuerpo.session });

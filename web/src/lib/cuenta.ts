@@ -7,7 +7,14 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { grabadoQueVale } from "./grabado.ts";
 import type { Grabado } from "./usar.ts";
 
-export type Cuenta = { id: string; email: string; key: { hint: string; since: string } | null };
+/** Con qué piensa tu cuenta: con la cuenta de la casa, con tu clave, o con nada todavía. */
+export type ConQuePiensa = "house" | "key" | null;
+export type Cuenta = {
+  id: string;
+  email: string;
+  key: { hint: string; since: string } | null;
+  thinks_with?: ConQuePiensa;
+};
 /** `undefined` mientras se mira; `null` sin sesión; "no_house" si esta web no tiene casa a la que preguntar. */
 export type EstadoDeLaCuenta = Cuenta | null | "no_house" | undefined;
 
