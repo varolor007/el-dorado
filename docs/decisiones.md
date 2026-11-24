@@ -474,6 +474,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   la vez. Lo que no cubre: quien llegue a la web puede gastar el tope de todos durante diez minutos (el cupo queda
   protegido; el servicio, no), y el tope por visitante se fía de quien pone su dirección. Los números son de
   partida y los confirma el PM.
+- **Siempre se ofrecen tres días a cada lado, aunque las fechas sean fijas** (el PM, a la pregunta de si pedir
+  también la semana de alrededor: «sí, aunque las fechas sean fijas, siempre ofrecer +-3 días; puede ser clave»).
+  La búsqueda de transporte mira siempre los días de alrededor, y son tres a cada lado; la palanca de mover los
+  días pasa también a tres. El transporte del viaje sigue siendo el de sus fechas: lo de los días de al lado se
+  ofrece, no se elige por el viajero. Encargado a una sesión de obra.
 
 ## Pendientes
 

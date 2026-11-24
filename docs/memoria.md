@@ -169,8 +169,10 @@ rutas, bajados una vez al día a `<mesa>/fuentes/`) y la semana de alrededor. Lo
 `agent/data/transporte.ts`. `Fuentes.vuelos` pasó a `Fuentes.transporte`. Lo entendido lleva, si se sabe, el punto
 de donde se sale (`origin.centre`, a una décima de grado; la puerta 1 rechaza uno más fino). En `busqueda.json`,
 `transporte` es la parrilla entera y `vuelos`, lo de las fechas del viaje. **Con fechas fijas casi nunca hay precio
-guardado**, y el viaje sale sin transporte: pendiente de que el PM decida si se pide también la semana de alrededor
-con fechas fijas, y de dónde sale el precio en vivo (3.7). Sin hacer: el tren (la fuente no lo da), las cribas del
+guardado**, y el viaje sale sin transporte. El PM decidió el 24-nov que siempre se ofrezcan tres días a cada lado,
+aunque las fechas sean fijas («puede ser clave»): la búsqueda de transporte los pide siempre y la palanca de mover
+los días pasa a tres; encargado a la sesión de los días baratos, como segundo encargo en su misma rama. De dónde
+sale el precio en vivo (3.7) sigue por decidir. Sin hacer: el tren (la fuente no lo da), las cribas del
 vuelo, las palancas «otro aeropuerto» y «entrar por un sitio y salir por otro» (la parrilla ya tiene lo que
 necesitan) y la ficha del transporte en la web. Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
 notas.
