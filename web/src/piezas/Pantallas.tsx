@@ -9,8 +9,9 @@ import { COSAS } from "../../../agent/data/gustos.ts";
 import type { Alojamiento, Manera, Parada, Ritmo, Suceso, Viaje } from "../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../agent/output/viaje.ts";
 import type { Reparto } from "../../../agent/scripts/ritmo.ts";
+import { andando } from "../../../agent/tools/distancias.ts";
 import { andar, coordenadas, diaCorto, diaDeLaSemana, diaEnGoogleMaps, dinero, duracion, ir } from "../lib/formato.ts";
-import { enGoogleMaps, noches } from "../lib/formato.ts";
+import { enGoogleMaps, noches, trayectoEnGoogleMaps } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 
@@ -387,6 +388,10 @@ function Dias(x: DeViaje) {
   const { t, idioma, viaje, reparto } = x;
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
   const abierto = x.dia === null ? null : (reparto.dias[x.dia] ?? null);
+  // Donde se duerme con la manera elegida, y la primera parada del día abierto: de una a otra se empieza el día.
+  const cama =
+    viaje.alojamientos.find((a) => a.id === viaje.maneras.find((m) => m.id === x.manera)?.alojamiento) ?? null;
+  const primera = abierto === null ? undefined : deParada.get(abierto.paradas[0] ?? "");
   const fuera = reparto.fuera.filter((id) => !x.quitadas.includes(id));
   return (
     <>
@@ -459,6 +464,26 @@ function Dias(x: DeViaje) {
           </span>
           {abierto.paradas.length === 0 && <p className="suave">{t.viaje.sinParadas}</p>}
           <div className="paradas">
+            {/* De donde duermes a la primera parada: lo que hay y cómo se va. Si no se anda, lo enseña Google. */}
+            {cama !== null && primera !== undefined && (
+              <div className="tramo">
+                <span className="tramo__texto">
+                  <span className="dato">
+                    {t.viaje.desdeLaCama(tramo(t, andando(cama.punto, primera.punto), idioma))}
+                  </span>
+                  {ir(andando(cama.punto, primera.punto), idioma).cogiendo.length > 0 && (
+                    <a
+                      className="enlace"
+                      href={trayectoEnGoogleMaps(cama.punto, primera.punto, false)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t.viaje.comoIr}
+                    </a>
+                  )}
+                </span>
+              </div>
+            )}
             {abierto.paradas
               .flatMap((id) => deParada.get(id) ?? [])
               .map((p, i, todas) => (
@@ -506,7 +531,20 @@ function Dias(x: DeViaje) {
                   )}
                   {i < todas.length - 1 && (
                     <div className="tramo">
-                      <span className="dato">{tramo(t, abierto.metros[i], idioma)}</span>
+                      <span className="tramo__texto">
+                        <span className="dato">{tramo(t, abierto.metros[i], idioma)}</span>
+                        {/* Lo que no se anda: cómo ir de verdad lo enseña Google, con sus horarios y sus precios. */}
+                        {ir(abierto.metros[i], idioma).cogiendo.length > 0 && (
+                          <a
+                            className="enlace"
+                            href={trayectoEnGoogleMaps(p.punto, todas[i + 1].punto, false)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {t.viaje.comoIr}
+                          </a>
+                        )}
+                      </span>
                     </div>
                   )}
                 </div>

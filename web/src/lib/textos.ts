@@ -144,6 +144,8 @@ const en = {
       "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet.",
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
+    comoIr: "See how to get there, in Google Maps",
+    desdeLaCama: (tramo: string) => `From where you sleep: ${tramo}`,
     imprescindible: "Not to miss",
     // En inglés se dice igual de una parada que de varias; en español, no.
     fuera: (_n: number) => "Left out at this pace",
@@ -536,6 +538,8 @@ const es: Textos = {
       "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
+    comoIr: "Ver cómo ir, en Google Maps",
+    desdeLaCama: (tramo) => `Desde donde duermes: ${tramo}`,
     imprescindible: "Imprescindible",
     fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
     fueraLejos: (n) => ES.plural(n, "Queda demasiado lejos para tus días", "Quedan demasiado lejos para tus días"),

@@ -75,3 +75,13 @@ export function diaEnGoogleMaps(puntos: Punto[], aPie = true): string | null {
   const paradas = intermedias ? `&waypoints=${encodeURIComponent(intermedias)}` : "";
   return `${base}&destination=${a(puntos[puntos.length - 1])}${paradas}`;
 }
+
+/**
+ * El enlace de un trayecto a Google Maps, de un punto a otro. Si se anda, va andando; si no, se deja que Google
+ * proponga cómo ir: ahí ve el viajero las maneras que hay de verdad, lo que tarda cada una y, si lo sabe, lo que
+ * cuesta. Es un enlace: no pide clave, y lo que enseña Google se queda en Google.
+ */
+export function trayectoEnGoogleMaps(de: Punto, a: Punto, aPie: boolean): string {
+  const modo = aPie ? "&travelmode=walking" : "";
+  return `https://www.google.com/maps/dir/?api=1${modo}&origin=${de.lat},${de.lon}&destination=${a.lat},${a.lon}`;
+}

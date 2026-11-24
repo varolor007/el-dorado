@@ -371,7 +371,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **El motor, a un servidor, al final** (el PM: «luego ya subiremos todo el motor a un servidor y se acabó; pero eso
   ya al final, una vez estén las pruebas hechas»).
 - **La fuente de rutas sigue sin elegir** (el PM preguntó qué otras hay; se le contestó con la lista de
-  [fuentes.md](fuentes.md)).
+  [fuentes.md](fuentes.md)). Después propuso Google Maps («lo más lógico y lo más fácil es utilizar Google Maps,
+  pidiendo autorización al propio user y que lo haga desde su propio Chrome; si me dices que no, pues no; si
+  realmente es más problemas que beneficios, buscamos la otra alternativa»). La sesión le contesta que sí como
+  ventana y no como fuente: de cada trayecto que no se anda hay ya un enlace a Google Maps, que no pide clave ni
+  permiso; traerse sus números al viaje no lo dejan sus condiciones, con permiso del viajero o sin él. Para los
+  números propios recomienda Geoapify, y TripGo después. Espera su respuesta.
 
 ## Pendientes
 

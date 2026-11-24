@@ -28,7 +28,7 @@ import {
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
 import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
-import { ir } from "../../web/src/lib/formato.ts";
+import { ir, trayectoEnGoogleMaps } from "../../web/src/lib/formato.ts";
 import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
 import { SUCESOS_INVENTADOS, viajeInventado } from "../cases/inventado/viaje.ts";
 
@@ -620,4 +620,18 @@ test("cada fallo de la cuenta tiene su frase en los dos idiomas, y la espera se 
   assert.match(es.cuenta.fallo("too_many_attempts", 900), /Espera 15 minutos /);
   assert.match(es.cuenta.fallo("too_many_attempts", 5), /Espera 1 minuto /);
   assert.equal(es.clave.acaba("0042"), "acaba en 0042");
+});
+
+test("el enlace de un trayecto a Google Maps: andando si se anda, y si no, que Google proponga cómo ir", () => {
+  const de = { lat: 10.5, lon: -20.25 };
+  const a = { lat: 10.75, lon: -20.5 };
+  const base = "https://www.google.com/maps/dir/?api=1";
+  assert.equal(
+    trayectoEnGoogleMaps(de, a, true),
+    `${base}&travelmode=walking&origin=10.5,-20.25&destination=10.75,-20.5`,
+  );
+  assert.equal(trayectoEnGoogleMaps(de, a, false), `${base}&origin=10.5,-20.25&destination=10.75,-20.5`);
+  // Es un enlace y nada más: sin clave y sin nada de quien viaja.
+  assert.ok(!/key=|token|email/i.test(trayectoEnGoogleMaps(de, a, false)));
+  for (const idioma of IDIOMAS) assert.ok(TEXTOS[idioma].viaje.comoIr.includes("Google Maps"));
 });

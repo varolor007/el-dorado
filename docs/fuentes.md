@@ -343,6 +343,29 @@ confirmar».
 - **Las grandes (Google, HERE, TomTom, Mapbox) no encajan** con un viaje que se guarda y que explica una IA: lo
   prohíben sus condiciones, no su precio.
 
+### Google Maps, como ventana y no como fuente (24-nov)
+
+El PM propuso usar Google Maps pidiendo permiso al viajero y haciéndolo desde su propio navegador. Mirado ese día
+en las páginas de Google:
+
+- **Un enlace a Google Maps** no pide clave («You don't need a Google API key to use Maps URLs») y admite el origen,
+  el destino y la manera de ir; sin decir la manera, Google enseña las que más encajan. Es lo que lleva la web: el
+  viajero ve en Google cómo ir de verdad, con sus horarios y lo que cuesta si lo sabe. Lo que enseña Google se queda
+  en Google.
+- **El mapa de Google incrustado** en la página también es gratis y sin límite («All Maps Embed API requests are
+  available at no charge with unlimited usage»), con su modo de cómo ir. Pide una clave de Google y, por tanto, un
+  proyecto en su nube; si además pide tarjeta, sin confirmar. Queda como mejora.
+- **Traerse los números a El Dorado** es otra cosa. Una página no puede leer lo que enseña Google en otra pestaña
+  o en un marco. Solo hay dos caminos: la API de Google con nuestra clave, corriendo en el navegador del viajero,
+  que es la misma API con las mismas condiciones (no guardar, no crear contenido con una IA), y el acuerdo es entre
+  Google y nosotros, no con el viajero: no se encontró ninguna excepción por su permiso; o una extensión que lea la
+  página de Google Maps, que el PM descartó el 22-nov, solo valdría en Chrome de escritorio, se rompe cada vez que
+  Google cambia su página, y las condiciones de uso de Google Maps no dejan copiar su contenido.
+
+Así que Google sirve para que el viajero vea, y no para que El Dorado sepa. Los números que El Dorado necesita
+suyos (para elegir dónde dormir por lo que se tarda de verdad, ordenar los días y decirlo) tienen que salir de
+otra fuente.
+
 ### Las opciones, para el PM
 
 1. **Geoapify** (la que recomienda la sesión). Da el tiempo de verdad y si se puede ir, por las tres maneras. Lo que
@@ -452,3 +475,7 @@ Rutas:
 - https://global.flixbus.com/company/partners/affiliate-partners
 - https://partner.intui.travel/en/
 - https://tollguru.com/toll-api-pricing-plans
+- https://developers.google.com/maps/documentation/urls/get-started
+- https://developers.google.com/maps/documentation/embed/get-started
+- https://developers.google.com/maps/documentation/embed/usage-and-billing
+- https://www.google.com/help/terms_maps/
