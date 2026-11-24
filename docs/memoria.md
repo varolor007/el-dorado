@@ -163,8 +163,8 @@ la guía; lo que hay
 que mirar al instalar (que la imagen se construye, que Claude Code piensa con el disco de solo lectura, que Caddy
 saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
 Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de
-certificados con todo el que la usa: con un subdominio del PM no pasa. **La tercera tanda, en marcha desde el
-24-nov**, con su diseño escrito en el encargo: los caminos de verdad en la casa (3.14,
+certificados con todo el que la usa: con un subdominio del PM no pasa. **La tercera tanda (24-nov)**, con su
+diseño escrito en el encargo; el que escucha ya está junto, y siguen en marcha: los caminos de verdad en la casa (3.14,
 `claude/eldorado-3-14-caminos`: una tabla de caminos por viaje, a pie y en coche, con tope de casillas, que usan las
 cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la fuente falta) y el que escucha (5.2,
 `claude/eldorado-5-2-el-que-escucha`: las palabras del viajero aparte, su contrato, la mitad de IA de la puerta 1 y
@@ -176,11 +176,24 @@ que queda por repartir**: cuando esté el 3.5, el del calendario (5.3) y el de l
 5.2, que toca lo mismo, el conductor (2.5): la idea es que el acta del run la escriba el código y que el asiento
 solo coja un rojo que su dueño ya intentó dos veces, para decirle al viajero en claro qué pasó y qué puede hacer.
 
-**La primera llamada con la cuenta del PM, sin hacer todavía (24-nov).** Su token está en el entorno de las
-sesiones, y se abrió una sesión auxiliar (session_016R3jET1bkeCb7Q5twPbPWS) con el guion de dos llamadas mínimas,
-pero no las lanzó: el sistema de permisos pide que el sí al gasto lo dé el PM en esa misma sesión, y no vale que lo
-diga quien orquesta. No se rodeó. Se le ha pedido al PM que la abra y le diga que sí; lo mismo hará falta para la
-primera investigación entera, que se lanza con `de_verdad.ts` y el viaje de Madrid a Lisboa.
+**La cuenta del PM, estrenada (24-nov).** Su token está en el entorno de las sesiones. Una sesión auxiliar no pudo
+lanzar las llamadas de prueba: el sistema de permisos pide que el sí al gasto lo haya dado el PM en la sesión que lo
+gasta, y no vale que lo diga quien orquesta; no se rodeó. Al reiniciarse la sesión de siempre, que es donde el PM
+dio su sí, ya veía el token, y las hizo ella: dos llamadas mínimas por Claude Code, una de texto (6 segundos) y otra
+con una foto (la vio bien), a menos de un céntimo cada una según Claude Code. Queda comprobado que acepta las fotos
+en una sola llamada sin herramientas, que la casa lee bien su respuesta y que funciona con un HOME vacío. **La
+primera investigación entera con su cuenta** se lanzó ese día con `de_verdad.ts`, el viaje de Madrid a Lisboa del
+12 al 15 de febrero y una guarda de 25 dólares, desde una copia limpia del código (`git worktree`) y con su mesa
+fuera del repositorio; lo que salga, en el punto de situación.
+
+**El que escucha (5.2), junto** (una sesión de obra, revisada el 24-nov). Lo que escribe el viajero va en `said` de
+lo entendido; `agent/launcher/escuchar.ts` lleva el primer paso: sin palabras no se lanza; con ellas, el que escucha
+(`agent/contracts/listener/`) entrega y pasa la puerta 1 (`agent/gates/puerta_escucha.ts`), y el run espera al
+viajero (paso `yours`, `waiting_for_you` y `heard` en lo que cuenta la puerta) sin gastar.
+`POST /viajes/<id>/confirmar` confirma, corrige o contesta, y la casa sigue sola. Lo confirmado queda en
+`escuchado.json` y pasa a lo entendido del run y del viaje. Los demás asientos no ven `said`. En la web,
+`web/src/piezas/Confirmacion.tsx`, dentro de la pantalla en vivo. Pendiente: probarlo con una IA de verdad, y la
+firma del PM a enseñar la pregunta del asiento tal cual la escribe.
 
 **El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):
 `agent/scripts/vistazo.ts` (`primerVistazo`, `paraElVistazo`), su freno en `agent/launcher/freno.ts` y sus números

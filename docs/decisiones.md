@@ -491,6 +491,15 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   `ELDORADO_TOKEN_DE_CLAUDE`. Con su sí a las pruebas con su cuenta, se empieza por dos llamadas mínimas desde una
   sesión auxiliar. El modelo de los asientos es el que la sesión le propuso tres veces y él no cambió; no lo dijo
   con sus palabras, y así se le cuenta.
+- **Cómo queda el que escucha** (una sesión de obra, revisada por quien orquesta). Las palabras del viajero van
+  dentro de lo entendido, aparte de lo que tocó, y no llegan a los demás asientos. Una cita no puede juntar dos
+  frases ni corregir una errata. Si el viajero contesta preguntas no corrige a la vez, y tras la segunda lectura
+  vuelve a confirmar. Lo que choca se enseña siempre, se pregunte o no. Una cosa pide la firma del PM: la pregunta
+  del que escucha es lo único de un asiento que llega a la pantalla sin pasar por el que explica; va en una línea,
+  con su tope de letras, sin enlaces y citando las palabras del viajero.
+- **La cuenta del PM, estrenada** (la sesión). Las dos llamadas de prueba se hicieron en la sesión de siempre, que
+  es donde el PM dio su sí, cuando al reiniciarse ya veía su token: la sesión auxiliar no pudo, porque allí nadie lo
+  había aprobado, y no se rodeó. Con las dos bien, se lanzó la primera investigación entera.
 
 ## Pendientes
 
