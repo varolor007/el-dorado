@@ -718,10 +718,19 @@ test("el primer vistazo pasa a la casa sin sesión, con quién pide resumido, nu
   assert.notEqual(clienteDe("203.0.113.8", CASA.ELDORADO_LLAVE), cliente);
   assert.equal(clienteDe(null, CASA.ELDORADO_LLAVE), null);
   assert.equal(clienteDe("", CASA.ELDORADO_LLAVE), null);
-  // Solo el vistazo lleva quién pide.
+  // Solo lo que tiene freno por cliente en la casa lleva quién pide: el vistazo, registrarse, entrar y la clave.
   const otra = casaDeMentira(() => ({ estado: 200, cuerpo: { trips: [] } }));
   await aLaCasa(deLaWeb("GET", "viajes", { direccion: "203.0.113.7" }), CASA, otra.pedir);
   assert.equal(otra.llegadas[0].cabeceras[CABECERA_DEL_CLIENTE], undefined);
+  for (const [metodo, ruta] of [
+    ["POST", "sesiones"],
+    ["POST", "cuentas"],
+    ["PUT", "cuenta/clave"],
+  ]) {
+    const conFreno = casaDeMentira(() => ({ estado: 200, cuerpo: {} }));
+    await aLaCasa(deLaWeb(metodo, ruta, { direccion: "203.0.113.7" }, "{}"), CASA, conFreno.pedir);
+    assert.equal(conFreno.llegadas[0].cabeceras[CABECERA_DEL_CLIENTE], cliente, ruta);
+  }
   // Y, como todo lo que cambia algo, tiene que venir de esta misma web.
   const fuera = await aLaCasa(deLaWeb("POST", "vistazo", { origen: "https://otra.example" }, cuerpo), CASA, casa.pedir);
   assert.equal(fuera.estado, 403);

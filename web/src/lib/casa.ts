@@ -9,8 +9,10 @@ import { createHash } from "node:crypto";
 
 export const COOKIE = "eldorado_session";
 export const CABECERA_DE_LA_SESION = "x-eldorado-session";
-/** Donde se le dice a la casa quién pide un primer vistazo, resumido: para su freno, nunca la dirección tal cual. */
+/** Donde se le dice a la casa quién pide, resumido: para sus frenos, nunca la dirección tal cual. */
 export const CABECERA_DEL_CLIENTE = "x-eldorado-client";
+/** Lo que lleva freno por cliente en la casa: solo esas peticiones le dicen quién pide. */
+const CON_CLIENTE = new Set(["vistazo", "cuentas", "sesiones", "cuenta/clave"]);
 const DIAS = 30;
 
 type Entorno = Record<string, string | undefined>;
@@ -143,6 +145,7 @@ export async function aLaCasa(p: DeLaWeb, entorno: Entorno, pedir: typeof fetch 
   const sesion = sesionDeLaCookie(p.cabeceras.cookie);
   const ruta = p.partes.join("/");
   const enVivo = p.metodo === "GET" && ruta.endsWith("/eventos");
+  const cliente = CON_CLIENTE.has(ruta) ? clienteDe(p.cabeceras.direccion, casa.llave) : null;
 
   let r: Response;
   try {
@@ -152,9 +155,7 @@ export async function aLaCasa(p: DeLaWeb, entorno: Entorno, pedir: typeof fetch 
         authorization: `Bearer ${casa.llave}`,
         ...(sesion === null ? {} : { [CABECERA_DE_LA_SESION]: sesion }),
         ...(cambia && p.cuerpo ? { "content-type": "application/json" } : {}),
-        ...(ruta === "vistazo" && clienteDe(p.cabeceras.direccion, casa.llave) !== null
-          ? { [CABECERA_DEL_CLIENTE]: clienteDe(p.cabeceras.direccion, casa.llave)! }
-          : {}),
+        ...(cliente === null ? {} : { [CABECERA_DEL_CLIENTE]: cliente }),
         ...(porNgrok(casa.url) ? { "ngrok-skip-browser-warning": "1" } : {}),
       },
       body: cambia && p.cuerpo ? p.cuerpo : undefined,

@@ -484,6 +484,7 @@ const en = {
         already_running: "This trip is already being researched.",
         not_now: "This trip cannot be started now.",
         too_many_trips: "You have too many trips. Open one you already have.",
+        house_full: "El Dorado cannot take new trips right now. Try again later.",
         no_session: "Your session has ended. Sign in again.",
       };
       return frases[clave] ?? "Something went wrong. Try again in a moment.";
@@ -746,6 +747,8 @@ const en = {
         exists: "There is already an account with that email. Sign in instead.",
         bad_login: "The email or the password is not right.",
         too_many_attempts: `Too many tries. Wait ${minutos} ${minutos === 1 ? "minute" : "minutes"} and try again.`,
+        busy: "Many people are signing in right now. Try again in a moment.",
+        house_full: "El Dorado cannot take new accounts right now. Try again later.",
         bad_key: "That does not look like an API key. Paste it whole, with no spaces.",
         key_rejected: "Claude did not accept that key. Check it is whole, active, and has access to the API.",
         ai_unreachable: "We could not reach Claude to check your key. Nothing was saved. Try again in a moment.",
@@ -1179,6 +1182,7 @@ const es: Textos = {
         already_running: "Este viaje ya se está investigando.",
         not_now: "Este viaje no se puede empezar ahora.",
         too_many_trips: "Tienes demasiados viajes. Abre uno de los que ya tienes.",
+        house_full: "El Dorado no puede abrir viajes nuevos ahora. Prueba más tarde.",
         no_session: "Tu sesión ha terminado. Entra otra vez.",
       };
       return frases[clave] ?? "Algo ha ido mal. Prueba en un momento.";
@@ -1432,6 +1436,8 @@ const es: Textos = {
         exists: "Ya hay una cuenta con ese correo. Prueba a entrar.",
         bad_login: "El correo o la contraseña no coinciden.",
         too_many_attempts: `Demasiados intentos. Espera ${minutos} ${minutos === 1 ? "minuto" : "minutos"} y prueba otra vez.`,
+        busy: "Hay mucha gente entrando ahora mismo. Prueba en un momento.",
+        house_full: "El Dorado no puede abrir cuentas nuevas ahora. Prueba más tarde.",
         bad_key: "Eso no parece una clave de la API. Pégala entera y sin espacios.",
         key_rejected: "Claude no ha admitido esa clave. Mira que esté entera, activa y con acceso a la API.",
         ai_unreachable:

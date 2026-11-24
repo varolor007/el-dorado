@@ -2,9 +2,13 @@
 // La web no le habla directamente: pasa por aquí, que solo deja pedir esto y recorta lo que vuelve. Qué vale como
 // destino, y qué se comprueba de cada uno antes de darlo, está en `lib/lugares.ts`.
 
+import { frenoDeLugares, quienPide } from "../../../lib/freno.ts";
 import { lugarDe, origenDe, type Lugar } from "../../../lib/lugares.ts";
 
 export const dynamic = "force-dynamic";
+
+/** El freno de este servidor: lo que pide cada cliente y toda la web al buscador, por ventana. */
+const freno = frenoDeLugares();
 
 /** Le pide algo al buscador. Si no se llega a él, lo intenta una vez más: es un servicio abierto y a ratos falla. */
 async function alBuscador(direccion: string): Promise<Response> {
@@ -36,6 +40,13 @@ async function cerca(lat: number, lon: number): Promise<Response> {
 
 export async function GET(pedido: Request): Promise<Response> {
   const url = new URL(pedido.url);
+  const cliente = quienPide(pedido.headers.get("x-forwarded-for") ?? pedido.headers.get("x-real-ip"));
+  const espera = freno.pasa(cliente);
+  if (espera > 0)
+    return Response.json(
+      { lugares: [], origen: null, error: "busy", wait: espera },
+      { status: 429, headers: { "retry-after": String(espera) } },
+    );
   const punto = url.searchParams.get("near");
   if (punto !== null) {
     const [lat, lon] = punto.split(",").map((x) => (x.trim() === "" ? Number.NaN : Number(x)));
