@@ -62,6 +62,16 @@ cd web && npm install                                                       # un
 ELDORADO_MESA=<la mesa> npm run dev                                         # y abrir /plan
 ```
 
+Para ver la web con cuentas, la casa tiene que estar arrancada. La llave es la misma en los dos lados, y el secreto
+cifra la clave de IA de cada cuenta:
+
+```bash
+ELDORADO_LLAVE=<una llave larga> ELDORADO_SECRETO=<32 bytes en hexadecimal> node agent/launcher/arrancar.ts
+cd web && ELDORADO_CASA_URL=http://127.0.0.1:4320 ELDORADO_LLAVE=<la misma llave> npm run dev   # y abrir /account
+```
+
+Sin `ELDORADO_CASA_URL`, la web dice que las cuentas no están conectadas y sigue enseñando el viaje grabado.
+
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`
 delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). Una fuente se apaga con

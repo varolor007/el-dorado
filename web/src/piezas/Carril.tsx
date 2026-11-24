@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { TEXTOS } from "../lib/textos.ts";
 import { useIdioma } from "../lib/usar.ts";
 
-// Los dibujos del carril, en trazos: un sitio en el mapa, una lista y una llave.
+// Los dibujos del carril, en trazos: un sitio en el mapa, una lista, una llave y una persona.
 const TRAZOS = {
   planear:
     "M10 2.5c-3 0-5.2 2.2-5.2 5.1 0 3.6 5.2 9.4 5.2 9.4s5.2-5.8 5.2-9.4c0-2.9-2.2-5.1-5.2-5.1z" +
@@ -18,6 +18,7 @@ const TRAZOS = {
   clave:
     "M12.8 2.5a4.7 4.7 0 00-4.5 6.2L2.5 14.5v3h3.2v-2h2v-2h2l1.6-1.6a4.7 4.7 0 101.5-9.4z" +
     "m1.3 4.7a1.3 1.3 0 110-2.6 1.3 1.3 0 010 2.6z",
+  cuenta: "M10 10a3.6 3.6 0 100-7.2 3.6 3.6 0 000 7.2zm0 1.8c-3.6 0-6.5 1.9-6.5 4.3v1.1h13v-1.1c0-2.4-2.9-4.3-6.5-4.3z",
 };
 
 export function Carril() {
@@ -33,6 +34,7 @@ export function Carril() {
     { href: "/plan", nombre: t.planear, trazo: TRAZOS.planear },
     { href: "/trips", nombre: t.viajes, trazo: TRAZOS.viajes },
     { href: "/key", nombre: t.clave, trazo: TRAZOS.clave },
+    { href: "/account", nombre: t.cuenta, trazo: TRAZOS.cuenta },
   ];
   return (
     <nav className="carril" aria-label="El Dorado">

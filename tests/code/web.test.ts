@@ -14,6 +14,17 @@ import {
 } from "../../agent/data/niveles.ts";
 import { AVISOS_DE_FICHA, PRUEBAS, type Transporte } from "../../agent/output/viaje.ts";
 import { CLASES_DE_DESTINO } from "../../agent/scripts/formas.ts";
+import {
+  admitida,
+  aLaCasa,
+  CABECERA_DE_LA_SESION,
+  casaDe,
+  COOKIE,
+  cookieDeSesion,
+  deEstaWeb,
+  sesionDeLaCookie,
+  type DeLaWeb,
+} from "../../web/src/lib/casa.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
 import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
@@ -409,4 +420,204 @@ test("un trayecto que no se anda se dice con lo que tiene sentido coger, y nada 
     assert.match(t.dormir.donde(null, 12, true), /andando|on foot/i);
     assert.ok(!/andando|a pie|on foot/i.test(t.dormir.donde(null, 25, false)));
   }
+});
+
+// El lado de la web de la puerta de la casa: qué le pasa a la casa, con qué, y qué baja al navegador.
+
+const CASA = { ELDORADO_CASA_URL: "http://127.0.0.1:4320/", ELDORADO_LLAVE: "una-llave-larga-e-inventada-para-la-web" };
+const SESION = "s".repeat(43);
+const deLaWeb = (
+  metodo: string,
+  ruta: string,
+  mas: Partial<DeLaWeb["cabeceras"]> = {},
+  cuerpo: string | null = null,
+): DeLaWeb => ({
+  metodo,
+  partes: ruta.split("/"),
+  consulta: "",
+  cabeceras: {
+    origen: "https://eldorado.example",
+    sitio: "eldorado.example",
+    tipo: "application/json",
+    cookie: null,
+    ...mas,
+  },
+  cuerpo,
+});
+
+/** Una casa de mentira: apunta lo que le llega y contesta lo que se le diga. */
+function casaDeMentira(contesta: (ruta: string) => { estado: number; cuerpo: unknown }): {
+  pedir: typeof fetch;
+  llegadas: { url: string; metodo: string; cabeceras: Record<string, string>; cuerpo: unknown }[];
+} {
+  const llegadas: { url: string; metodo: string; cabeceras: Record<string, string>; cuerpo: unknown }[] = [];
+  const pedir = (async (url: string, o: RequestInit) => {
+    llegadas.push({
+      url,
+      metodo: o.method ?? "GET",
+      cabeceras: o.headers as Record<string, string>,
+      cuerpo: o.body ?? null,
+    });
+    const r = contesta(new URL(url).pathname);
+    return new Response(JSON.stringify(r.cuerpo), { status: r.estado });
+  }) as unknown as typeof fetch;
+  return { pedir, llegadas };
+}
+
+test("la web solo le pasa a la casa lo que su puerta admite, con sus métodos", () => {
+  for (const [metodo, ruta] of [
+    ["POST", "cuentas"],
+    ["POST", "sesiones"],
+    ["DELETE", "sesiones"],
+    ["GET", "cuenta"],
+    ["PUT", "cuenta/clave"],
+    ["DELETE", "cuenta/clave"],
+    ["GET", "viajes"],
+    ["POST", "viajes"],
+    ["GET", "viajes/2031-01-02-abc123"],
+    ["PUT", "viajes/2031-01-02-abc123/entendido"],
+    ["POST", "viajes/2031-01-02-abc123/empezar"],
+    ["GET", "viajes/2031-01-02-abc123/eventos"],
+    ["GET", "viajes/2031-01-02-abc123/version"],
+    ["GET", "viajes/2031-01-02-abc123/version/3"],
+  ])
+    assert.equal(admitida(metodo, ruta.split("/")), "ok", `${metodo} ${ruta}`);
+  for (const ruta of [
+    "",
+    "salud",
+    "sellos",
+    "cuenta/otra",
+    "viajes/..",
+    "viajes/../cuenta",
+    "viajes/A",
+    "viajes/a/version/0",
+    "viajes/a/b/c/d",
+  ])
+    assert.equal(admitida("GET", ruta.split("/")), "not_found", ruta);
+  for (const [metodo, ruta] of [
+    ["GET", "cuentas"],
+    ["DELETE", "viajes"],
+    ["POST", "cuenta"],
+    ["GET", "viajes/a/empezar"],
+  ])
+    assert.equal(admitida(metodo, ruta.split("/")), "method", `${metodo} ${ruta}`);
+});
+
+test("lo que cambia algo tiene que venir de esta misma web, y la sesión solo vale con su forma", () => {
+  assert.ok(deEstaWeb("https://eldorado.example", "eldorado.example"));
+  assert.ok(deEstaWeb("http://localhost:3210", "localhost:3210"));
+  for (const [origen, sitio] of [
+    [null, "eldorado.example"],
+    ["https://eldorado.example", null],
+    ["https://otra.example", "eldorado.example"],
+    ["https://eldorado.example.otra.example", "eldorado.example"],
+    ["no es una dirección", "eldorado.example"],
+  ])
+    assert.ok(!deEstaWeb(origen, sitio), String(origen));
+  assert.equal(sesionDeLaCookie(`tema=oscuro; ${COOKIE}=${SESION}; otra=1`), SESION);
+  for (const cookie of [null, "", `${COOKIE}=corta`, `${COOKIE}=${"s".repeat(42)}/`, `otra=${SESION}`])
+    assert.equal(sesionDeLaCookie(cookie), null);
+  // La cookie no la puede leer ningún código de la página, y al salir se quita.
+  assert.equal(
+    cookieDeSesion(SESION, true),
+    `${COOKIE}=${SESION}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`,
+  );
+  assert.equal(cookieDeSesion(null, false), `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+});
+
+test("al registrarse o entrar, la llave de la sesión se queda en la cookie y no baja al navegador", async () => {
+  for (const ruta of ["cuentas", "sesiones"]) {
+    const casa = casaDeMentira(() => ({
+      estado: 201,
+      cuerpo: { account: { id: "u-1", email: "a@b.c", key: null }, session: SESION },
+    }));
+    const r = await aLaCasa(deLaWeb("POST", ruta, {}, '{"email":"a@b.c","password":"x"}'), CASA, casa.pedir);
+    assert.equal(r.estado, 201);
+    assert.deepEqual(JSON.parse(r.cuerpo as string), { account: { id: "u-1", email: "a@b.c", key: null } });
+    assert.ok(!String(r.cuerpo).includes(SESION));
+    assert.equal(r.cookie, cookieDeSesion(SESION, true));
+    // A la casa le llega con la llave de la web, que el navegador no ve nunca.
+    assert.deepEqual(casa.llegadas[0], {
+      url: `http://127.0.0.1:4320/${ruta}`,
+      metodo: "POST",
+      cabeceras: { authorization: `Bearer ${CASA.ELDORADO_LLAVE}`, "content-type": "application/json" },
+      cuerpo: '{"email":"a@b.c","password":"x"}',
+    });
+  }
+});
+
+test("con la cookie, la web le pasa la sesión a la casa; al salir, o si ya no vale, quita la cookie", async () => {
+  const cookie = `${COOKIE}=${SESION}`;
+  const bien = casaDeMentira(() => ({ estado: 200, cuerpo: { trips: [] } }));
+  const r = await aLaCasa(deLaWeb("GET", "viajes", { cookie }), CASA, bien.pedir);
+  assert.deepEqual([r.estado, r.cuerpo, r.cookie], [200, '{"trips":[]}', null]);
+  assert.equal(bien.llegadas[0].cabeceras[CABECERA_DE_LA_SESION], SESION);
+  const fuera = casaDeMentira(() => ({ estado: 200, cuerpo: { ok: true } }));
+  assert.equal(
+    (await aLaCasa(deLaWeb("DELETE", "sesiones", { cookie }), CASA, fuera.pedir)).cookie,
+    cookieDeSesion(null, true),
+  );
+  const caducada = casaDeMentira(() => ({ estado: 401, cuerpo: { error: "no_session" } }));
+  const c = await aLaCasa(deLaWeb("GET", "cuenta", { cookie }), CASA, caducada.pedir);
+  assert.deepEqual([c.estado, c.cookie], [401, cookieDeSesion(null, true)]);
+});
+
+test("lo que no viene de esta web, no es de la puerta o no es JSON no llega a la casa", async () => {
+  const casa = casaDeMentira(() => ({ estado: 200, cuerpo: {} }));
+  const pide = (p: DeLaWeb, entorno: Record<string, string> = CASA): Promise<{ estado: number; cuerpo: unknown }> =>
+    aLaCasa(p, entorno, casa.pedir);
+  const dice = (r: { estado: number; cuerpo: unknown }): [number, unknown] => [
+    r.estado,
+    JSON.parse(r.cuerpo as string).error,
+  ];
+  assert.deepEqual(dice(await pide(deLaWeb("POST", "viajes", { origen: "https://otra.example" }, "{}"))), [
+    403,
+    "forbidden",
+  ]);
+  assert.deepEqual(dice(await pide(deLaWeb("POST", "viajes", { origen: null }, "{}"))), [403, "forbidden"]);
+  assert.deepEqual(dice(await pide(deLaWeb("POST", "viajes", { tipo: "text/plain" }, "{}"))), [415, "bad_type"]);
+  assert.deepEqual(dice(await pide(deLaWeb("GET", "sellos"))), [404, "not_found"]);
+  assert.deepEqual(dice(await pide(deLaWeb("DELETE", "viajes"))), [405, "method"]);
+  // Una web sin casa, o con una llave que no es una llave, lo dice y no llama a nadie.
+  assert.deepEqual(dice(await pide(deLaWeb("GET", "cuenta"), {})), [503, "no_house"]);
+  assert.deepEqual(dice(await pide(deLaWeb("GET", "cuenta"), { ...CASA, ELDORADO_LLAVE: "corta" })), [503, "no_house"]);
+  assert.deepEqual(dice(await pide(deLaWeb("GET", "cuenta"), { ...CASA, ELDORADO_CASA_URL: "ftp://casa" })), [
+    503,
+    "no_house",
+  ]);
+  assert.deepEqual(casa.llegadas, []);
+  assert.equal(casaDe(CASA)?.url, "http://127.0.0.1:4320");
+});
+
+test("si la casa no contesta, o no deja entrar a la web, al viajero se le dice que no se llega", async () => {
+  const caida = (async () => {
+    throw new Error("no hay nadie");
+  }) as unknown as typeof fetch;
+  const r = await aLaCasa(deLaWeb("GET", "cuenta"), CASA, caida);
+  assert.deepEqual([r.estado, r.cuerpo, r.cookie], [502, '{"error":"house_down"}', null]);
+  const sinLlave = casaDeMentira(() => ({ estado: 401, cuerpo: { error: "unauthorized" } }));
+  const s = await aLaCasa(deLaWeb("GET", "cuenta", { cookie: `${COOKIE}=${SESION}` }), CASA, sinLlave.pedir);
+  assert.deepEqual([s.estado, s.cuerpo, s.cookie], [502, '{"error":"house_down"}', null]);
+});
+
+test("cada fallo de la cuenta tiene su frase en los dos idiomas, y la espera se dice en minutos", () => {
+  const { en, es } = TEXTOS;
+  for (const clave of [
+    "bad_email",
+    "bad_password",
+    "exists",
+    "bad_login",
+    "bad_key",
+    "no_session",
+    "no_house",
+    "house_down",
+  ]) {
+    assert.notEqual(en.cuenta.fallo(clave), en.cuenta.fallo("otra cosa"), clave);
+    assert.notEqual(es.cuenta.fallo(clave), es.cuenta.fallo("otra cosa"), clave);
+  }
+  assert.match(en.cuenta.fallo("too_many_attempts", 60), /Wait 1 minute /);
+  assert.match(en.cuenta.fallo("too_many_attempts", 61), /Wait 2 minutes /);
+  assert.match(es.cuenta.fallo("too_many_attempts", 900), /Espera 15 minutos /);
+  assert.match(es.cuenta.fallo("too_many_attempts", 5), /Espera 1 minuto /);
+  assert.equal(es.clave.acaba("0042"), "acaba en 0042");
 });
