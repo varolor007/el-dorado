@@ -20,7 +20,7 @@ import { esDireccion } from "../launcher/consultado.ts";
 import { diasEntre, loQueCambia } from "../launcher/calendario.ts";
 import type { Aviso, Entendido } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
-import { pegasDeFrases } from "./textos.ts";
+import { pegaDeNombreDeFuera, pegasDeFrases } from "./textos.ts";
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -76,6 +76,9 @@ export function puertaCalendario(v: unknown, p: ParaElCalendario): Veredicto {
         `${donde}.name`,
         `el nombre no es un nombre corto, de ${LETRAS_DE_UN_NOMBRE_DE_FUERA} letras como mucho, o unknown`,
       );
+    // El nombre llega a la pantalla tal cual: no puede traer una dirección, un correo ni un teléfono de la página.
+    else if (h.name !== SIN_SABER && pegaDeNombreDeFuera(h.name as string) !== null)
+      rojo(`${donde}.name`, `el nombre ${pegaDeNombreDeFuera(h.name as string)}: es solo el nombre (RC8)`);
     // Los días que pide el destino no son unos días del calendario: van sin fechas, y con su número.
     if (h.topic === "days_needed") {
       if (h.from !== SIN_SABER || h.to !== SIN_SABER)

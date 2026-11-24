@@ -143,6 +143,11 @@ test("un número de las comprobaciones del que cruza, que ya pasó su puerta, se
 
 test("trampa: un texto que no es un texto: un enlace, un correo, dos líneas o demasiado largo", () => {
   assert.match(rojosDe((e) => (e.ways[0].why = "Reserva en http://pagos.example/pay"))[0], /lleva un enlace/);
+  // Una dirección sin su «https», con la terminación que sea, también es un enlace; una abreviatura, no.
+  for (const con of ["Pide el visado en evisa-inventado.eu antes.", "Mira visados-ya.travel para más."])
+    assert.match(rojosDe((e) => (e.ways[0].why = con)).join(" | "), /lleva un enlace/, con);
+  for (const sin of ["Viajas a EE.UU. en junio.", "Sale a las nueve a.m. del hotel. Es pronto."])
+    assert.ok(!rojosDe((e) => (e.ways[0].why = sin)).some((x) => x.includes("lleva un enlace")), sin);
   assert.match(rojosDe((e) => (e.unknowns = ["Escribe a a@b.example"])).join(" | "), /dirección de correo/);
   assert.match(rojosDe((e) => (e.ways[1].loses = "Una línea.\nOtra."))[0], /saltos de línea/);
   assert.match(rojosDe((e) => (e.ways[1].loses = "a".repeat(600)))[0], /letras, y caben/);

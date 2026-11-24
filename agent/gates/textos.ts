@@ -3,12 +3,22 @@
 // que «el más barato» vaya con su «que encontramos», y qué números dice, para buscarlos después en lo que dio la
 // casa. No mide si el texto es bueno: eso lo cubre quien lo lee.
 
-import { EL_MAS_BARATO, LARGO_DE_UN_TEXTO, PROHIBIDAS, QUE_ENCONTRAMOS } from "../data/palabras.ts";
+import {
+  EL_MAS_BARATO,
+  LARGO_DE_UN_TEXTO,
+  PROHIBIDAS,
+  QUE_ENCONTRAMOS,
+  TERMINACIONES_DE_DIRECCION,
+} from "../data/palabras.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
 
 /** Lo que no es letra ni frase: saltos, tabuladores, marcas de control y las que cambian el sentido de la lectura. */
 const DE_CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/u;
-const ENLACE = /https?:|www\.|\b[\p{L}\p{N}-]+\.(?:com|net|org|info|biz|io|co|app|shop|online|site|xyz|example)\b/iu;
+/** Una dirección de la web, con su «https» o sin él: un nombre de dos letras o más, un punto y una terminación. */
+const ENLACE = new RegExp(
+  `https?:|www\\.|\\b[\\p{L}\\p{N}-]{2,}\\.(?:${TERMINACIONES_DE_DIRECCION.split(" ").join("|")})\\b`,
+  "iu",
+);
 const CORREO = /[^\s@]+@[^\s@]+\.[^\s@]+/u;
 /** Un teléfono o una cuenta: nueve cifras o más seguidas, juntas o con espacios, puntos, guiones o paréntesis. */
 const NUMERO_LARGO = /\+?\d(?:[ ().-]{0,2}\d){8,}/u;
@@ -162,6 +172,19 @@ export function numerosDeMas(texto: string, dados: Set<number>, ids: string[] = 
  */
 export const esNombre = (v: unknown): v is string =>
   typeof v === "string" && v.trim() !== "" && v.length <= LETRAS_DE_UN_NOMBRE && !/[\n\r\t<>{}]|https?:|www\./i.test(v);
+
+/**
+ * Por qué un nombre propio que viene de una página no se le puede enseñar al viajero, o null si se puede: una
+ * dirección de la web (con su «https» o sin él), un correo, o un número largo como un teléfono. Un nombre no pasa
+ * por las palabras prohibidas: una fiesta se llama como se llama.
+ */
+export function pegaDeNombreDeFuera(nombre: string): string | null {
+  if (DE_CONTROL.test(nombre)) return "lleva saltos de línea o marcas que no son texto";
+  if (ENLACE.test(nombre)) return "lleva una dirección de la web";
+  if (CORREO.test(nombre)) return "lleva una dirección de correo";
+  if (NUMERO_LARGO.test(nombre)) return "lleva un número largo, como un teléfono";
+  return null;
+}
 
 /** Un nombre que viene de fuera: sin los espacios de alrededor si es un nombre, y null si no lo es. */
 export function nombreDeFuera(texto: string): string | null {
