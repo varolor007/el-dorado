@@ -300,7 +300,9 @@ empieza hasta que lo dé.
   quien las lleva.
 - **Las quejas graves marcan, y las confirma el que mira** (el PM: «ok»). El código ya no descarta por palabras.
 - **Encoger las fotos antes de mirarlas, con una pieza nueva en el agente** (el PM: «ok»). Es su sí expreso a la
-  primera dependencia que el agente lleva para funcionar.
+  primera dependencia que el agente lleva para funcionar (`sharp`). Medido con las 113 fotos de la primera
+  investigación: pesan un 74 % menos y se mira un 55 % menos de imagen. No baja por sí solo los diez minutos de cada
+  mirada, que son del método lanzado como una sesión entera: eso va con el 2.7.
 - **Las cifras de `docs/datos.md`** (el PM: «lo que veas»): se quitan los precios y las notas de alojamientos
   concretos, que son datos de una fuente, y se quedan los recuentos y lo que da cada fuente, que es para lo que está
   el documento.

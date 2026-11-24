@@ -54,7 +54,7 @@ function fuentesInventadas(): Fuentes {
     resumenes: async () => new Map([["Q1", "It guides ships into the bay."]]),
     fotos: async (archivos) => new Map(archivos.map((a) => [a, FOTO])),
     vuelos: async (_viaje, ida, vuelta) => [vueloInventado(ida, vuelta)],
-    bajarFotos: { traer: async () => JPEG, segura: () => true },
+    bajarFotos: { traer: async () => JPEG, segura: () => true, encoger: async (b) => b },
   };
 }
 
@@ -521,6 +521,7 @@ test("si la casa se corta a medio preparar los puestos de mirar, al retomar sigu
       ...fuentesInventadas(),
       bajarFotos: {
         segura: () => true,
+        encoger: async (b) => b,
         traer: async () => {
           if (++cortes > 3) throw new Error("corte");
           return JPEG;

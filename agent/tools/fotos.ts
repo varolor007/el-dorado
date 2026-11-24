@@ -1,7 +1,7 @@
 // Las fotos: elegir cuáles se le pasan al asiento que mira un alojamiento, con un tope, y bajarlas a una carpeta de
 // fuera del repositorio. De la habitación de ese precio van las primeras, que el enchufe ordena por lo que enseñan.
 // Las del alojamiento no dicen de qué son: si no caben todas, van repartidas por toda la lista. El código no mira
-// ninguna: solo las elige por regla y las baja.
+// ninguna: solo las elige por regla, las baja y las encoge antes de que nadie las mire.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -115,9 +115,38 @@ const deInternet: Traer = async (url, maximoBytes) => {
   return leerConTope(respuesta, maximoBytes);
 };
 
-export type Bajada = { ruta: string; archivo: string; url: string; bytes: number };
+/** Una foto ya bajada y encogida: lo que pesa ahora y lo que pesaba al llegar. */
+export type Bajada = { ruta: string; archivo: string; url: string; bytes: number; alLlegar: number };
 export type Fallo = { ruta: string; url: string; motivo: string };
-export type Opciones = { traer?: Traer; aLaVez?: number; maximoBytes?: number; segura?: (url: string) => boolean };
+/** Lo más que mide el lado mayor de una foto que se le da a un asiento, en píxeles, y con qué calidad se guarda. */
+export const FOTO = { lado: 1024, calidad: 80 };
+
+export type Encoger = (bytes: Uint8Array) => Promise<Uint8Array>;
+
+/**
+ * Encoge una foto antes de que nadie la mire: su lado mayor, al tope, y guardada otra vez como JPEG. Una foto de
+ * hotel llega a menudo al doble de lo que hace falta para ver cómo es una habitación, y mirarla grande es lo que más
+ * gasta. De paso, lo que recibe el asiento ya no son los bytes que mandó la fuente, sino una imagen vuelta a hacer:
+ * lo que no se puede leer como imagen, no pasa. Es la única pieza de fuera que el agente lleva para funcionar (el
+ * PM, 24-nov).
+ */
+export async function encogerFoto(bytes: Uint8Array): Promise<Uint8Array> {
+  const { default: sharp } = await import("sharp");
+  const salida = await sharp(bytes, { limitInputPixels: 100_000_000 })
+    .rotate()
+    .resize({ width: FOTO.lado, height: FOTO.lado, fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: FOTO.calidad })
+    .toBuffer();
+  return new Uint8Array(salida);
+}
+
+export type Opciones = {
+  traer?: Traer;
+  aLaVez?: number;
+  maximoBytes?: number;
+  segura?: (url: string) => boolean;
+  encoger?: Encoger;
+};
 
 /** Baja las fotos pedidas a una carpeta de fuera del repositorio. Lo que falla no para lo demás: se apunta. */
 export async function bajarFotos(
@@ -129,6 +158,7 @@ export async function bajarFotos(
   const traer = o.traer ?? deInternet;
   const maximo = o.maximoBytes ?? 10_000_000;
   const segura = o.segura ?? direccionSegura;
+  const encoger = o.encoger ?? encogerFoto;
   const bajadas: Bajada[] = [];
   const fallos: Fallo[] = [];
   const cola = [...pedidas];
@@ -140,12 +170,18 @@ export async function bajarFotos(
         const bytes = await traer(p.url, maximo);
         if (bytes.length === 0) throw new Error("llegó vacía");
         if (bytes.length > maximo) throw new Error("pesa demasiado");
-        const tipo = tipoDeImagen(bytes);
-        if (tipo === null) throw new Error("no es una imagen");
-        const archivo = `${p.ruta}.${tipo}`;
+        if (tipoDeImagen(bytes) === null) throw new Error("no es una imagen");
+        let encogida: Uint8Array;
+        try {
+          encogida = await encoger(bytes);
+        } catch {
+          throw new Error("no se pudo leer como imagen");
+        }
+        // Encogida, siempre es un JPEG, llegara como llegara.
+        const archivo = `${p.ruta}.jpg`;
         mkdirSync(dirname(join(carpeta, archivo)), { recursive: true });
-        writeFileSync(join(carpeta, archivo), bytes);
-        bajadas.push({ ruta: p.ruta, archivo, url: p.url, bytes: bytes.length });
+        writeFileSync(join(carpeta, archivo), encogida);
+        bajadas.push({ ruta: p.ruta, archivo, url: p.url, bytes: encogida.length, alLlegar: bytes.length });
       } catch (e) {
         fallos.push({ ruta: p.ruta, url: p.url, motivo: e instanceof Error ? e.message : String(e) });
       }

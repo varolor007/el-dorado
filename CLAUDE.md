@@ -64,8 +64,9 @@ comprueba el código), sus herramientas, su arquitectura y su frontend.
 ## Cómo se escribe
 
 - El código, en TypeScript sobre Node 22 (Node ejecuta los `.ts` sin compilar), a 120 caracteres por línea, con
-  `npx prettier --write` para el formato. El agente (`agent/`), sin dependencias para funcionar: solo las de
-  desarrollo. La web (`web/`) lleva las suyas, en su propia carpeta.
+  `npx prettier --write` para el formato. El agente (`agent/`), sin dependencias para funcionar, salvo
+  `sharp`, que encoge las fotos antes de mirarlas (el PM, 24-nov): cualquier otra pide su sí. La web (`web/`) lleva
+  las suyas, en su propia carpeta.
 - Los contratos de los asientos, en inglés; lo que ve el cliente en la web, en inglés, como la web de Cortex; el agente
   responde al viajero en su idioma. Todo lo demás, en español.
 - En ningún texto, tampoco en el chat, rayas largas, puntos medios ni el carácter de puntos suspensivos.

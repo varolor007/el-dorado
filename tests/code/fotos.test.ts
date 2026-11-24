@@ -9,9 +9,12 @@ import {
   bajarFotos,
   direccionSegura,
   elegirFotos,
+  encogerFoto,
+  FOTO,
   muestra,
   tipoDeImagen,
   TOPE,
+  type Encoger,
   type Traer,
 } from "../../agent/tools/fotos.ts";
 import { leerDetalle } from "../../agent/tools/fuentes/liteapi.ts";
@@ -19,6 +22,8 @@ import { leerDetalle } from "../../agent/tools/fuentes/liteapi.ts";
 const TEMPORAL = mkdtempSync(join(tmpdir(), "el-dorado-fotos-"));
 after(() => rmSync(TEMPORAL, { recursive: true, force: true }));
 
+/** Para las pruebas de elegir y de bajar, que no van de encoger: la foto se guarda tal cual llega. */
+const TAL_CUAL: Encoger = async (bytes) => bytes;
 const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
 const WEBP = new Uint8Array(
@@ -76,7 +81,7 @@ test("el tipo de una imagen se lee de sus bytes", () => {
   assert.equal(tipoDeImagen(new Uint8Array()), null);
 });
 
-test("las fotos se bajan a su sitio, con la extensión que dicen sus bytes", async () => {
+test("las fotos se bajan a su sitio", async () => {
   const carpeta = join(TEMPORAL, "bien");
   const traer: Traer = async (u) => (u.endsWith("png") ? PNG : JPG);
   const r = await bajarFotos(
@@ -85,14 +90,15 @@ test("las fotos se bajan a su sitio, con la extensión que dicen sus bytes", asy
       { ruta: "photos/hotel-01", url: url("b.png") },
     ],
     carpeta,
-    { traer },
+    { traer, encoger: TAL_CUAL },
   );
   assert.deepEqual(r.fallos, []);
+  // Lo que se guarda es siempre un JPEG, llegara como llegara: es lo que sale de encogerla.
   assert.deepEqual(
     r.bajadas.map((b) => b.archivo),
-    ["photos/hotel-01.png", "photos/room-01.jpg"],
+    ["photos/hotel-01.jpg", "photos/room-01.jpg"],
   );
-  assert.deepEqual(readdirSync(join(carpeta, "photos")).sort(), ["hotel-01.png", "room-01.jpg"]);
+  assert.deepEqual(readdirSync(join(carpeta, "photos")).sort(), ["hotel-01.jpg", "room-01.jpg"]);
   assert.deepEqual([...readFileSync(join(carpeta, "photos", "room-01.jpg"))], [...JPG]);
 });
 
@@ -113,7 +119,10 @@ test("trampa: lo que no es una imagen, lo que pesa demasiado, lo vacío y lo que
       { ruta: "photos/room-05", url: url("buena.jpg") },
     ],
     carpeta,
-    { traer: (u, m) => (u.includes("gorda") ? Promise.resolve(new Uint8Array(m + 1).fill(0xff)) : traer(u, m)) },
+    {
+      encoger: TAL_CUAL,
+      traer: (u, m) => (u.includes("gorda") ? Promise.resolve(new Uint8Array(m + 1).fill(0xff)) : traer(u, m)),
+    },
   );
   assert.deepEqual(
     r.fallos.map((f) => `${f.ruta}: ${f.motivo}`),
@@ -149,7 +158,10 @@ test("trampa: no se baja de direcciones que no son de fiar", async () => {
     llamadas++;
     return JPG;
   };
-  const r = await bajarFotos([{ ruta: "photos/room-01", url: malas[2] }], join(TEMPORAL, "ssrf"), { traer });
+  const r = await bajarFotos([{ ruta: "photos/room-01", url: malas[2] }], join(TEMPORAL, "ssrf"), {
+    traer,
+    encoger: TAL_CUAL,
+  });
   assert.equal(llamadas, 0);
   assert.deepEqual(r.fallos, [{ ruta: "photos/room-01", url: malas[2], motivo: "la dirección no es de fiar" }]);
   assert.equal(existsSync(join(TEMPORAL, "ssrf")), false);
@@ -207,7 +219,7 @@ test("trampa: una foto que no dice lo que pesa, o que miente, se deja de leer al
     const red = redATrozos(gorda, cabeceras);
     try {
       const pedida = [{ ruta: "photos/room-01", url: url("sin-fin.jpg") }];
-      const r = await bajarFotos(pedida, join(TEMPORAL, "tope"), { maximoBytes: 1000 });
+      const r = await bajarFotos(pedida, join(TEMPORAL, "tope"), { maximoBytes: 1000, encoger: TAL_CUAL });
       assert.deepEqual(r.bajadas, []);
       assert.deepEqual(
         r.fallos.map((f) => f.motivo),
@@ -228,7 +240,7 @@ test("una foto que llega a trozos se guarda entera, y la que pesa justo el tope,
   const red = redATrozos([JPG.slice(0, 3), JPG.slice(3, 5), JPG.slice(5)]);
   try {
     const pedida = [{ ruta: "photos/room-01", url: url("a.jpg") }];
-    const r = await bajarFotos(pedida, carpeta, { maximoBytes: JPG.length });
+    const r = await bajarFotos(pedida, carpeta, { maximoBytes: JPG.length, encoger: TAL_CUAL });
     assert.deepEqual(r.fallos, []);
     assert.equal(r.bajadas[0].bytes, JPG.length);
   } finally {
@@ -272,4 +284,47 @@ test("LiteAPI: las fotos de la habitación, la principal y una de cada clase por
     ["3", "4", "2", "5", "1", "6"],
   );
   assert.deepEqual(d.fotos, [`${sitio}/h/10.jpg`, `${sitio}/h/11.jpg`]);
+});
+
+test("una foto se encoge antes de que nadie la mire: su lado mayor al tope, y vuelta a guardar como JPEG", async () => {
+  const { default: sharp } = await import("sharp");
+  const lienzo = (ancho: number, alto: number) =>
+    sharp({ create: { width: ancho, height: alto, channels: 3, background: { r: 180, g: 120, b: 60 } } });
+  const grande = new Uint8Array(await lienzo(3000, 2000).jpeg({ quality: 95 }).toBuffer());
+  const enPng = new Uint8Array(await lienzo(1600, 2400).png().toBuffer());
+  const chica = new Uint8Array(await lienzo(400, 300).jpeg().toBuffer());
+  const medidas = async (bytes: Uint8Array): Promise<[number, number, string]> => {
+    const m = await sharp(bytes).metadata();
+    return [m.width, m.height, m.format];
+  };
+  assert.deepEqual(await medidas(await encogerFoto(grande)), [FOTO.lado, Math.round((FOTO.lado * 2) / 3), "jpeg"]);
+  assert.ok((await encogerFoto(grande)).length < grande.length);
+  // Una foto en vertical y en PNG: el lado mayor es el alto, y sale en JPEG.
+  assert.deepEqual(await medidas(await encogerFoto(enPng)), [Math.round((FOTO.lado * 2) / 3), FOTO.lado, "jpeg"]);
+  // Una foto pequeña no se agranda.
+  assert.deepEqual(await medidas(await encogerFoto(chica)), [400, 300, "jpeg"]);
+
+  // Y al bajarlas, lo que queda en la carpeta es la encogida, con lo que pesaba al llegar apuntado.
+  const carpeta = join(TEMPORAL, "encogidas");
+  const r = await bajarFotos([{ ruta: "photos/room-01", url: url("a.jpg") }], carpeta, { traer: async () => grande });
+  assert.deepEqual(r.fallos, []);
+  assert.equal(r.bajadas[0].alLlegar, grande.length);
+  assert.ok(r.bajadas[0].bytes < grande.length);
+  assert.equal((await medidas(readFileSync(join(carpeta, "photos", "room-01.jpg"))))[0], FOTO.lado);
+});
+
+test("trampa: lo que empieza como una imagen y no lo es no llega a ningún asiento", async () => {
+  const falsa = new Uint8Array([
+    0xff,
+    0xd8,
+    0xff,
+    0xe0,
+    ...new TextEncoder().encode("<script>esto no es una foto</script>"),
+  ]);
+  const r = await bajarFotos([{ ruta: "photos/room-01", url: url("a.jpg") }], join(TEMPORAL, "falsa"), {
+    traer: async () => falsa,
+  });
+  assert.deepEqual(r.bajadas, []);
+  assert.equal(r.fallos[0].motivo, "no se pudo leer como imagen");
+  assert.ok(!existsSync(join(TEMPORAL, "falsa", "photos", "room-01.jpg")));
 });

@@ -558,7 +558,10 @@ test("dos pasadas se comparan campo a campo: igual, vecino, distinto y lo que un
 test("de una búsqueda salen los puestos a ciegas, y lo que entregan se recoge por las dos puertas", async () => {
   const run = join(TEMPORAL, "run-1");
   const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
-  const p = await prepararMirar(BUSQUEDA, run, { pasadas: 2, fotos: { traer: async () => jpg, segura: () => true } });
+  const p = await prepararMirar(BUSQUEDA, run, {
+    pasadas: 2,
+    fotos: { traer: async () => jpg, segura: () => true, encoger: async (b) => b },
+  });
   assert.equal(p.puestos.length, BUSQUEDA.finalistas.length * 2);
   assert.deepEqual(p.avisos, []);
 
