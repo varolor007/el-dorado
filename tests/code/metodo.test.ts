@@ -280,6 +280,13 @@ test("una nota de lo que dice el contrato cita su archivo del contrato, que tamb
   );
 });
 
+test("trampa: todo el material, o todo el contrato, no es una fuente", () => {
+  assert.deepEqual(rojosDe(conNotas(["- The price is low. [in/] [seen]", "- The rules say so. [contract] [seen]"])), [
+    "out/3-notes.md:1: la nota cita in/, que no es de su material",
+    "out/3-notes.md:2: la nota cita contract, que no es de su material",
+  ]);
+});
+
 test("las notas de un texto: dónde empieza cada una y qué la cierra", () => {
   const notas = notasDe(
     ["- One. [seen]", "  - inside", "# A title", "  hanging from nothing", "- Two:", "", "  - a", "- Three"].join("\n"),

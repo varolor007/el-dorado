@@ -188,8 +188,9 @@ function direccionesDelMaterial(puesto: string, sello: Sello): Set<string> {
 function textosDe(valor: unknown, donde: string): { donde: string; texto: string }[] {
   if (typeof valor === "string") return [{ donde, texto: valor }];
   if (Array.isArray(valor)) return valor.flatMap((x, i) => textosDe(x, `${donde}[${i}]`));
+  // El nombre de un campo también es texto de la entrega: una dirección puesta ahí se mira igual.
   if (typeof valor === "object" && valor !== null)
-    return Object.entries(valor).flatMap(([k, x]) => textosDe(x, `${donde}.${k}`));
+    return Object.entries(valor).flatMap(([k, x]) => [{ donde, texto: k }, ...textosDe(x, `${donde}.${k}`)]);
   return [];
 }
 
@@ -283,9 +284,12 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[], fallidas
       for (const f of fuentes.filter((x) => !esDireccion(x)).map((x) => x.split("#")[0])) {
         // Vale un archivo del material, o una carpeta suya cuando la nota habla de todo lo que hay en ella. Y un
         // archivo de su contrato, cuando la nota es de lo que dice el contrato: también lo dio la casa, sellado.
+        // «Todo el material» o «todo el contrato» no es una fuente: se nombra un archivo, o una carpeta de dentro.
         const carpeta = f.replace(/\/+$/, "") + "/";
         const esDelMaterial =
           (f.startsWith("in/") || f.startsWith("contract/")) &&
+          carpeta !== "in/" &&
+          carpeta !== "contract/" &&
           (sello.archivos[f] !== undefined || Object.keys(sello.archivos).some((a) => a.startsWith(carpeta)));
         if (!esDelMaterial) rojos.push({ donde, que: `la nota cita ${f}, que no es de su material` });
       }

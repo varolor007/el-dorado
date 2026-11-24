@@ -994,7 +994,7 @@ test("lo que se le devuelve a un asiento lleva la línea que señala cada rojo, 
         "- The lengths are my judgement:",
         "  - a walk, 60;",
         "  - a museum, 90.",
-        `- ${"x".repeat(900)}`,
+        `- ${"x".repeat(900)} THE END`,
       ].join("\n"),
     );
     writeFileSync(join(carpeta, "out", "2-plan.md"), "First the room.\nThen the gym.");
@@ -1008,7 +1008,9 @@ test("lo que se le devuelve a un asiento lleva la línea que señala cada rojo, 
       { donde: "days[0].stops", que: "un rojo de la puerta del asiento" },
     ]);
     assert.equal(devuelto[0].linea, "- The lengths are my judgement: - a walk, 60; - a museum, 90.");
-    assert.equal(devuelto[1].linea?.length, 400);
+    // Una línea larga se enseña por su principio y por su final, que es donde suele estar lo que falla.
+    assert.ok((devuelto[1].linea?.length ?? 0) <= 400);
+    assert.match(devuelto[1].linea ?? "", /^- x+ \[\.\.\.\] x+ THE END$/);
     assert.equal(devuelto[2].linea, "Then the gym.");
     for (const sinLinea of devuelto.slice(3)) assert.equal("linea" in sinLinea, false);
     assert.deepEqual(

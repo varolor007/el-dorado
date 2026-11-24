@@ -256,6 +256,14 @@ function recoger<T>(
 
 /** Lo más que se le enseña de una línea suya a un asiento al que se le devuelve la entrega. */
 const LO_MAS_DE_UNA_LINEA = 400;
+const CORTE = " [...] ";
+
+/** Una línea larga se enseña por su principio y por su final: lo que falla en una nota suele ir al final. */
+function recortada(linea: string): string {
+  if (linea.length <= LO_MAS_DE_UNA_LINEA) return linea;
+  const mitad = Math.floor((LO_MAS_DE_UNA_LINEA - CORTE.length) / 2);
+  return `${linea.slice(0, mitad)}${CORTE}${linea.slice(-mitad)}`;
+}
 
 /**
  * Lo que se le devuelve a un asiento: cada rojo y, si señala una línea de lo que escribió (`out/<archivo>:<línea>`),
@@ -275,7 +283,7 @@ export function conSuLinea(puesto: Puesto, rojos: Rojo[]): (Rojo & { linea?: str
     if (texto === null) return rojo;
     const nota = archivo === PASOS[2] ? notasDe(texto).find((x) => x.linea === Number(numero)) : undefined;
     const linea = (nota?.texto ?? texto.split("\n")[Number(numero) - 1] ?? "").trim();
-    return linea === "" ? rojo : { ...rojo, linea: linea.slice(0, LO_MAS_DE_UNA_LINEA) };
+    return linea === "" ? rojo : { ...rojo, linea: recortada(linea) };
   });
 }
 
