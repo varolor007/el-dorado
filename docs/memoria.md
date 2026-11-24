@@ -247,7 +247,8 @@ lo lleva). La casa y la web locales quedaron paradas al acabar. **Lo que siguió
 revisan la tanda, cada uno en su copia y sin tocar nada (la mecánica, la seguridad y las biblias); su informe irá a
 `docs/revisiones/tanda-4.md`. Y con lo que contestó el PM, dos sesiones de obra más: que «Volver a intentarlo»
 repita solo el asiento que falló (`claude/eldorado-2-5-reintentar`) y que los avisos de las fechas los cuente el
-que explica, con una frase que pasa la puerta 7 (`claude/eldorado-5-3-avisos-contados`).
+que explica, con una frase que pasa la puerta 7 (`claude/eldorado-5-3-avisos-contados`, ya junta). Y una tercera,
+por la revisión de seguridad: los frenos de la puerta, de entrar y de registrarse (`claude/eldorado-2-8-frenos`).
 
 **Los avisos de las fechas y los papeles (5.3 y 5.4), juntos** (una sesión de obra, revisada el 24-nov). Son los
 dos primeros asientos con `INTERNET.md`: `agent/contracts/calendar/` y `agent/contracts/papers/`, con sus números
@@ -297,6 +298,18 @@ puertas de ahora, la tabla de los papeles de esa prueba pasa entera (sin visado,
 o el pasaporte en vigor; la tarjeta sanitaria, como aviso; lo demás, dudoso por no encontrarlo en una web
 oficial; nada bloquea) y al calendario solo le queda esa frase. Cada investigación entera gasta, por estos dos
 asientos, alrededor de 1,1 dólares de equivalente más, y los papeles se esperan unos 3 minutos antes de buscar.
+
+**Los avisos de las fechas, contados (5.3)** (una sesión de obra, revisada y junta el 24-nov; el PM dejó elegir la
+manera: «lo que consideres»). Al que explica se le da `dates.json` (`fechasParaExplicar` en
+`agent/scripts/explica.ts`: cada hallazgo con sus datos y el `what` del asiento, que para él es un dato y no una
+orden, y cada ventana con lo que evita y alcanza), y al calendario se le espera antes de lanzarlo; si falta,
+explica como siempre. Escribe `dates` en su entrega (su norma EX8); la puerta 7 (`pegasDeLasFechas`) cuenta una
+frase por aviso y por ventana, mira sus números frase a frase, el nombre propio (lo que trae el `what` con
+mayúscula, lo entrecomillado, el nombre de otro aviso) y que no abarate sin precio (`DE_ABARATAR` en
+`agent/data/palabras.ts`). El viaje lleva `frase`, opcional, en cada aviso y cada ventana (`conSusFrases`), todas
+o ninguna, y la web la enseña debajo del nombre. El `what` del calendario nunca llega a la pantalla. Un nombre que
+el modelo invente de la nada, sin comillas, no lo caza el código: lo cubre quien revisa. Sin comprobar con una IA
+de verdad: cuánto se equivoca, y cuántas vueltas le cuesta la EX8.
 
 **El conductor (2.5), junto** (una sesión de obra, revisada el 24-nov). El acta del run (`agent/launcher/acta.ts`,
 `acta.json` en el run) la rehace el código del disco: pasos, trabajos con su vuelta, tiempo y gasto, cada vuelta en

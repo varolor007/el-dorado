@@ -782,6 +782,7 @@ function TusFechas({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
             <li key={i} className={`fecha fecha--${a.clase}`}>
               <span className="fecha__clase">{f.clase[a.clase] ?? a.clase}</span>
               <b>{a.nombre ?? f.tema[a.tema] ?? a.tema}</b>
+              {a.frase !== undefined && <span className="fecha__frase">{a.frase}</span>}
               {a.nombre !== null && <span className="fecha__tema">{f.tema[a.tema] ?? a.tema}</span>}
               {a.desde !== null && a.hasta !== null && (
                 <span className="dato">
@@ -805,6 +806,7 @@ function TusFechas({ t, idioma, viaje }: Comun & { viaje: Viaje }) {
           {c.ventanas.map((v) => (
             <div key={v.entrada} className="fecha fecha--ventana">
               <b>{f.ventana(dia(v.entrada), dia(v.salida), v.seMueve)}</b>
+              {v.frase !== undefined && <span className="fecha__frase">{v.frase}</span>}
               {(
                 [
                   ["evita", v.evita],

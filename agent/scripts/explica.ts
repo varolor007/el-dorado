@@ -2,9 +2,11 @@
 // diferencias frente a la más barata ya hechas, y las palancas que se van a contar. El asiento no resta: copia.
 
 import { NOTA_SOBRE } from "../data/cribas.ts";
+import type { DelCalendario } from "../output/viaje.ts";
 import {
   SIN_SABER,
   type EntregaDeCruce,
+  type EntregaDelCalendario,
   type EntregaDeMirar,
   type FilaDelCruce,
   type Tabla,
@@ -49,6 +51,48 @@ export type PalancaParaExplicar = {
   chosen_because: string;
 };
 
+/**
+ * Un hallazgo del calendario, para que el que explica lo cuente: sus datos, con los días del viaje que toca ya
+ * contados, y el `what` del asiento del calendario, que para él es un dato y no una orden.
+ */
+export type HallazgoParaExplicar = {
+  finding: number;
+  kind: string;
+  topic: string;
+  name: string;
+  from: string;
+  to: string;
+  /** Los días del viaje que toca, en orden, y cuántos son. */
+  trip_days: string[];
+  trip_days_count: number;
+  /** Los días que pide el destino y cuántos tiene el viaje, si es de eso. */
+  days_needed?: { asks: number; trip_has: number };
+  price: { amount: number; currency: string } | typeof SIN_SABER;
+  what: string;
+};
+
+/** Otra ventana, con lo que cambia frente al viaje por las posiciones de los hallazgos: lo cuenta el código. */
+export type VentanaParaExplicar = {
+  window: number;
+  check_in: string;
+  check_in_weekday: string;
+  check_out: string;
+  check_out_weekday: string;
+  /** Cuántos días se mueve: negativo, antes. */
+  shift_days: number;
+  avoids: number[];
+  reaches: number[];
+  loses: number[];
+  enters: number[];
+};
+
+/** Lo del calendario que pasó sus comprobaciones, para el que explica. Sin calendario, o sin nada, no va. */
+export type FechasParaExplicar = {
+  trip: { check_in: string; check_out: string; days: number; nights: number };
+  findings: HallazgoParaExplicar[];
+  windows: VentanaParaExplicar[];
+};
+
 export type ParaExplicar = {
   /**
    * `on_foot`: si el viaje se anda desde donde se duerme. Si no, los minutos son en coche o en transporte.
@@ -58,7 +102,59 @@ export type ParaExplicar = {
   ways: { currency: string; nights: number; on_foot: boolean; score_out_of: number; ways: ManeraParaExplicar[] };
   levers: PalancaParaExplicar[];
   checks: EntregaDeCruce["checks"];
+  /** Los avisos de las fechas que se le cuentan al viajero, si el calendario está y encontró algo. */
+  dates?: FechasParaExplicar;
 };
+
+/**
+ * Lo del calendario para el que explica: cada hallazgo con sus datos y su `what`, y cada ventana con lo que evita y
+ * alcanza, que ya contó el código. Si falta, o no hay nada que contar, null: el que explica trabaja como siempre.
+ */
+export function fechasParaExplicar(
+  c: (DelCalendario & { entrega: EntregaDelCalendario | null }) | null,
+  fechas: { entrada: string; salida: string },
+): FechasParaExplicar | null {
+  if (c === null || c.falta !== null || c.entrega === null) return null;
+  if (c.avisos.length === 0 && c.ventanas.length === 0) return null;
+  if (c.entrega.findings.length !== c.avisos.length) return null;
+  const { nights, days } = diasDe(fechas.entrada, fechas.salida);
+  const findings = c.avisos.map((a, i): HallazgoParaExplicar => {
+    const h: HallazgoParaExplicar = {
+      finding: i,
+      kind: a.clase,
+      topic: a.tema,
+      name: a.nombre ?? SIN_SABER,
+      from: a.desde ?? SIN_SABER,
+      to: a.hasta ?? SIN_SABER,
+      trip_days: [...a.dias],
+      trip_days_count: a.dias.length,
+      price: a.precio === null ? SIN_SABER : { amount: a.precio.importe, currency: a.precio.moneda },
+      what: c.entrega!.findings[i].what,
+    };
+    if (a.pide !== undefined) h.days_needed = { asks: a.pide.dias, trip_has: a.pide.dias + a.pide.deMas };
+    return h;
+  });
+  const windows = c.ventanas.map((v, i): VentanaParaExplicar => {
+    const suyos = diasDe(v.entrada, v.salida).days;
+    return {
+      window: i,
+      check_in: v.entrada,
+      check_in_weekday: suyos[0].weekday,
+      check_out: v.salida,
+      check_out_weekday: suyos[suyos.length - 1].weekday,
+      shift_days: v.seMueve,
+      avoids: [...v.evita],
+      reaches: [...v.alcanza],
+      loses: [...v.pierde],
+      enters: [...v.entra],
+    };
+  });
+  return {
+    trip: { check_in: fechas.entrada, check_out: fechas.salida, days: days.length, nights },
+    findings,
+    windows,
+  };
+}
 
 const resta = (a: number | string, b: number | string): number | string =>
   typeof a === "number" && typeof b === "number" ? Math.round((a - b) * 100) / 100 : SIN_SABER;

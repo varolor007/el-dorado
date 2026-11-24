@@ -53,6 +53,15 @@ export const QUE_ENCONTRAMOS = entera(
     "of (?:the|these) (?:two|three|ways|options)|de (?:las|los|estas|estos) (?:dos|tres|maneras|opciones)",
 );
 
+/**
+ * Las palabras de abaratar o de ahorrar, en los idiomas en que se escribe hoy. En un aviso de las fechas no se dicen
+ * sin un precio que venga en sus datos: lo que no tiene precio no es más barato.
+ */
+export const DE_ABARATAR = entera(
+  "cheap\\p{L}*|less expensive|lower (?:price|fare|rate)s?|sav(?:e|es|ed|ing|ings)|bargains?|discount\\p{L}*|" +
+    "barat\\p{L}*|abarat\\p{L}*|ahorr\\p{L}*|descuentos?|rebaj\\p{L}*|gangas?|más económic\\p{L}*",
+);
+
 /** Lo más largo que puede ser un texto para el viajero, en letras. Una o dos frases caben de sobra. */
 export const LARGO_DE_UN_TEXTO = 500;
 

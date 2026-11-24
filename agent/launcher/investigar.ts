@@ -35,7 +35,7 @@ import { puertaRuta } from "../gates/puerta_ruta.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
 import { anadirOfertas, buscarDondeHaya, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
 import { cuantosSitios, paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
-import { paraExplicar } from "../scripts/explica.ts";
+import { fechasParaExplicar, paraExplicar } from "../scripts/explica.ts";
 import type {
   Entendido,
   EntregaDeCruce,
@@ -629,7 +629,10 @@ function loQueSeExplica(run: string, viaje: Entendido): ReturnType<typeof paraEx
   const { tabla, cruce } = cruceCerrado(run);
   const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const fechas = { entrada: viaje.dates.check_in, salida: viaje.dates.check_out };
-  return paraExplicar(tabla, cruce, miradosDe(run), zonas, fechas);
+  const dado = paraExplicar(tabla, cruce, miradosDe(run), zonas, fechas);
+  // Lo del calendario que pasó sus comprobaciones, para contárselo al viajero. Si falta, se explica como siempre.
+  const deLasFechas = fechasParaExplicar(calendarioDelRun(run), fechas);
+  return deLasFechas === null ? dado : { ...dado, dates: deLasFechas };
 }
 
 function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar): Rojo[] {
@@ -1023,8 +1026,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     if (leer<DelCruce>(run, `cruce-${ronda}.json`).entrega.requests.length === 0) break;
   }
 
-  // 6. El que explica y, con lo suyo, el viaje para la web. Los avisos de las fechas tienen que estar para montarlo:
-  // si el del calendario aún trabaja, ahora sí se le espera.
+  // 6. El que explica y, con lo suyo, el viaje para la web. Los avisos de las fechas tienen que estar antes: los cuenta
+  // el que explica, y van en el viaje. Si el del calendario aún trabaja, ahora sí se le espera.
   if (!hay(run, "viaje.json") && hay(run, "explica.json")) {
     if (calendario !== null) return espera(calendario);
     // Lo que explicó y ya pasó su puerta no se vuelve a juzgar: se lee, y con ello se monta el viaje.
@@ -1032,6 +1035,9 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
   }
   if (!hay(run, "viaje.json")) {
+    // Los avisos de las fechas se le cuentan al viajero con lo que escribe el que explica: si el del calendario aún
+    // trabaja, se le espera antes de lanzarlo.
+    if (calendario !== null) return espera(calendario);
     const dado = loQueSeExplica(run, viaje);
     const piezas: Pieza[] = [
       { ruta: "trip.json", contenido: json(viaje) },
@@ -1039,6 +1045,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       { ruta: "levers.json", contenido: json(dado.levers) },
       { ruta: "checks.json", contenido: json(dado.checks) },
     ];
+    if (dado.dates !== undefined) piezas.push({ ruta: "dates.json", contenido: json(dado.dates) });
     const r = recoger<EntregaDeExplicar>(
       run,
       "explica",
@@ -1046,10 +1053,9 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       piezas,
       (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).rojos,
     );
-    if ("espera" in r) return espera(r.espera, ...(calendario === null ? [] : [calendario]));
+    if ("espera" in r) return espera(r.espera);
     if ("parado" in r) return para("explain", "la explicación (puerta 7)", r.parado);
     guardar(run, "explica.json", { entrega: r.entrega, rojos: [] });
-    if (calendario !== null) return espera(calendario);
     const pegas = montarElViaje(run, viaje, r.entrega);
     if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
   }

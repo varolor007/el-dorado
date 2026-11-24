@@ -428,7 +428,27 @@ export function montarViajeHecho(h: Hecho): Viaje {
     avisos: h.explica.unknowns,
     mirados: h.mirados,
     caminos: h.caminos,
-    calendario: h.calendario,
+    calendario: conSusFrases(h.calendario ?? null, h.explica.dates),
     papeles: h.papeles,
   });
+}
+
+/**
+ * Los avisos de las fechas con la frase que escribió el que explica para cada uno y para cada ventana, por su
+ * posición. Si no las escribió (un viaje de antes, o sin calendario), van como datos, como siempre.
+ */
+export function conSusFrases(c: DelCalendario | null, dichas: EntregaDeExplicar["dates"]): DelCalendario | null {
+  if (c === null || dichas === undefined || c.falta !== null) return c;
+  const deAviso = new Map(dichas.findings.map((d) => [d.finding, d.says]));
+  const deVentana = new Map(dichas.windows.map((d) => [d.window, d.says]));
+  const todas =
+    c.avisos.every((_, i) => deAviso.has(i)) &&
+    c.ventanas.every((_, i) => deVentana.has(i)) &&
+    c.avisos.length + c.ventanas.length > 0;
+  if (!todas) return c;
+  return {
+    ...c,
+    avisos: c.avisos.map((a, i) => ({ ...a, frase: deAviso.get(i)! })),
+    ventanas: c.ventanas.map((v, i) => ({ ...v, frase: deVentana.get(i)! })),
+  };
 }

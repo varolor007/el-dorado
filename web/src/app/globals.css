@@ -2092,6 +2092,12 @@ select.toque {
 .fecha__tema {
   color: var(--tinta-suave);
 }
+/* La frase del que explica: lo que es el aviso y lo que le cambia el viaje, debajo de su nombre. */
+.fecha__frase {
+  color: var(--tinta);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
 .fecha--blocks,
 .fecha--raises {
   border-left-color: var(--ojo);
