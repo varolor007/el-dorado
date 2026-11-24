@@ -236,7 +236,17 @@ la lista y no se ofrece nunca (ningún paso se puede saltar); la web no enseña 
 móvil hay que desplazar la hoja para llegar a los botones. Que lo mire el adversario: la indicación del conductor
 es texto de una IA que entra en el material de otro asiento (una línea, 400 letras). Pendiente del PM: si puede
 hacer más (seguir sin una parte, cambiar un tope) y cuánto gasta; si su frase se enseña tal cual o solo las claves;
-y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje. Sin estrenar con una IA de verdad.
+y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje. **Estrenado con la cuenta del PM
+(24-nov), sobre una copia de la parada real de Lisboa** (la mesa de antes de retomarla): en 33 segundos y unos 19
+céntimos de equivalente vio que los rojos de los tres intentos eran de forma, eligió la vuelta de más y escribió
+una indicación precisa; con ella el que elige los sitios entregó bien a la primera (`sitios-v4`) y la investigación
+siguió sola hasta su viaje. Por el camino, su propia entrega dio rojo en la puerta de todos por citar el método
+común como fuente: desde entonces una nota puede citar un archivo de su contrato (2.4), y para volver a mirar su
+entrega se puso a mano su `conductor.json` en `working`. El acta de ese run dice lo que se fue en vueltas
+repetidas: 5 trabajos, 437 segundos y 2,09 de 7,64 dólares. Falta ver de verdad la otra salida (parar y
+contarlo) y su pantalla en la web con un run de verdad. En esa investigación el que explica ya dijo la nota de la
+casa como nuestra («le damos 6,9 sobre 10 para lo que pedís»), y volvió a caer en «el más barato» a secas, que le
+cuesta una vuelta: su norma EX3 dice ahora que vale cada vez que la nombra.
 
 **El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
 asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`

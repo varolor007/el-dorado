@@ -541,6 +541,9 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   con la parada real de Lisboa y su entrega dio rojo por citar el método común como fuente de lo que dice el
   método. Lo que da la casa a un asiento es su material y su contrato, los dos sellados: los dos valen como fuente
   de una nota. Un archivo que no existe en ninguno de los dos sigue siendo un rojo.
+- **El conductor, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): sobre una
+  copia de la parada real de Lisboa, pidió la vuelta de más y la investigación acabó. Unos 1,8 dólares de
+  equivalente entre el conductor, esa vuelta y lo que quedaba del viaje.
 
 ## Pendientes
 

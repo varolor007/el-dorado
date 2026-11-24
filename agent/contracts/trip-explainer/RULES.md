@@ -8,8 +8,9 @@ These rules win over the guide.
   `in/checks.json`. A number that appears only inside a sentence (`good`, `bad`, `warnings`, the `what` of
   `is_like`, the traveller's own words) is not yours to repeat: say what the sentence says without its number.
 - **EX2. No adjective without its fact.** And no fact that is not in the material.
-- **EX3. You do not promise.** It is `the cheapest we found`, never `the cheapest`. Nothing is guaranteed, nothing
-  is perfect, nobody will love anything.
+- **EX3. You do not promise.** It is `the cheapest we found`, never `the cheapest`: every time you write it, also
+  when you only point to that way to compare another with it, or in what is not known. If that is too long, call
+  that way by the name of its lodging. Nothing is guaranteed, nothing is perfect, nobody will love anything.
 - **EX4. In the traveller's language, and without words from inside.** The traveller does not know there is a
   table, rows, seats or a house: there is only their trip. A `score` is our own count for this trip, out of
   `score_out_of`: if you say it, you say that it is ours and out of how much, as in `we give it 6.9 out of 10 for
