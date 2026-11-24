@@ -631,8 +631,10 @@ Lo que pide la versión 2, a decisión del PM:
 
 - **Recuperar la contraseña y confirmar el correo** (24-nov): piden mandar correos, que es un servicio nuevo. Las
   cuentas en sí ya están decididas (24-nov).
-- **El techo de gasto de una investigación** (24-nov): cuánto es, y cómo se le dice al viajero antes de pulsar. El
-  mecanismo está hecho; la cifra pide medir lo que gasta cada asiento con la IA de verdad. Va con el 11.4.
+- **Decir lo que va a costar antes de pulsar** (24-nov): la web no pregunta por un techo de gasto (lo decidió el PM
+  ese día: cada uno limita su gasto en su cuenta de Claude), pero la hoja pide decir lo que va a costar antes de
+  algo que gaste mucho, y aún no se dice junto al botón. Ya hay con qué: una investigación entera con la cuenta de
+  la casa ronda los 7 dólares de equivalente. Va con el 11.4.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
 - **Dónde se reserva un precio de LiteAPI** (23-nov): no tiene página pública. Hoy se enlazaría a otra agencia cuando
   casa y, si no, a la web del hotel. Antes de la tanda 5.

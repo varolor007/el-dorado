@@ -52,3 +52,14 @@ test("cada punto del plan tiene su número de bloque y un estado conocido, sin r
     }
   }
 });
+
+test("el estado de un bloque del plan sale de los de sus puntos, y no se queda atrás", () => {
+  const atras = [];
+  for (const b of plan.bloques) {
+    const estados = b.puntos.map((p) => p.estado);
+    const sinEmpezar = estados.every((e) => e === "pendiente" || e === "decidir");
+    const debe = estados.every((e) => e === "hecho") ? "hecho" : sinEmpezar ? "pendiente" : "parte";
+    if (b.estado !== debe) atras.push(`el bloque ${b.n} dice «${b.estado}» y por sus puntos es «${debe}»`);
+  }
+  assert.deepEqual(atras, []);
+});
