@@ -26,6 +26,7 @@ import {
   type DeLaWeb,
 } from "../../web/src/lib/casa.ts";
 import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
+import { monedaDelNavegador, paisDelNavegador, sitioDe } from "../../web/src/lib/empezar.ts";
 import { cajaDe, claseDeLugar, lugarDe } from "../../web/src/lib/lugares.ts";
 import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
 import { ir, trayectoEnGoogleMaps } from "../../web/src/lib/formato.ts";
@@ -375,14 +376,19 @@ test("la caja de un sitio solo pasa si son cuatro números del mapa", () => {
 
 test("del buscador solo sale un sitio con nombre, en el mapa y de una clase que valga, con su caja comprobada", () => {
   const parque = { type: "other", osm_key: "boundary", osm_value: "national_park" };
-  assert.deepEqual(lugarDe(resultado({ ...parque, extent: [20, 10.1, 20.1, 10] })), {
+  assert.deepEqual(lugarDe(resultado({ ...parque, extent: [20, 10.1, 20.1, 10], countrycode: "zz" })), {
     nombre: "Sitio Inventado",
     donde: "Comarca Inventada, País Inventado",
+    pais: "ZZ",
     clase: "region",
     lat: 10.05,
     lon: 20.05,
     caja: [20, 10.1, 20.1, 10],
   });
+  // El país, solo si son sus dos letras: sin él, el sitio se propone igual y el país se pregunta después.
+  assert.equal(lugarDe(resultado(parque))?.pais, null);
+  assert.equal(lugarDe(resultado({ ...parque, countrycode: "Zetalandia" }))?.pais, null);
+  assert.equal(lugarDe(resultado({ ...parque, countrycode: 34 }))?.pais, null);
   // Con una caja que no son cuatro números, el sitio se propone sin ella: el mapa va a su punto.
   assert.equal(lugarDe(resultado({ ...parque, extent: [20, "10.1", 20.1, 10] }))?.caja, null);
   assert.equal(lugarDe(resultado(parque))?.caja, null);
@@ -634,4 +640,31 @@ test("el enlace de un trayecto a Google Maps: andando si se anda, y si no, que G
   // Es un enlace y nada más: sin clave y sin nada de quien viaja.
   assert.ok(!/key=|token|email/i.test(trayectoEnGoogleMaps(de, a, false)));
   for (const idioma of IDIOMAS) assert.ok(TEXTOS[idioma].viaje.comoIr.includes("Google Maps"));
+});
+
+test("un sitio del buscador, como lo entiende la casa; y lo que se propone por el navegador", () => {
+  const lugar = { nombre: "Sitio Inventado", donde: "País Inventado", pais: "ZZ", clase: "region" as const };
+  // La caja del buscador va oeste, norte, este y sur; la de la casa, con cada lado por su nombre.
+  assert.deepEqual(sitioDe({ ...lugar, lat: 10.05, lon: 20.05, caja: [20, 10.1, 20.1, 10] }), {
+    nombre: "Sitio Inventado",
+    pais: "ZZ",
+    clase: "region",
+    centro: { lat: 10.05, lon: 20.05 },
+    caja: { west: 20, south: 10, east: 20.1, north: 10.1 },
+  });
+  // Una que cruza el meridiano 180 vale; una que no encierra nada, no: la casa le pondrá la suya.
+  assert.deepEqual(sitioDe({ ...lugar, lat: -15, lon: 179, caja: [170, -10, -170, -20] }).caja, {
+    west: 170,
+    south: -20,
+    east: -170,
+    north: -10,
+  });
+  assert.equal(sitioDe({ ...lugar, lat: 10, lon: 20, caja: [20, 10, 20.1, 10] }).caja, null);
+  assert.equal(sitioDe({ ...lugar, lat: 10, lon: 20, caja: [20, 10.1, 20, 10] }).caja, null);
+  assert.equal(sitioDe({ ...lugar, lat: 10, lon: 20, caja: null }).caja, null);
+  // Por el idioma del navegador sale el país más probable, y por él la moneda que se propone. Sin país, nada.
+  assert.deepEqual([paisDelNavegador("pt-BR"), monedaDelNavegador("pt-BR")], ["BR", "BRL"]);
+  assert.deepEqual([paisDelNavegador("ja"), monedaDelNavegador("ja")], ["JP", "JPY"]);
+  assert.deepEqual([paisDelNavegador("es-419"), monedaDelNavegador("es-419")], [null, null]);
+  assert.deepEqual([paisDelNavegador("esto no es un idioma"), monedaDelNavegador("")], [null, null]);
 });

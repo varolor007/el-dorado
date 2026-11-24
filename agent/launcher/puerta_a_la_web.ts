@@ -335,7 +335,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
       const v = suViaje(p);
-      return { estado: 200, cuerpo: estadoDe(v, marchas.has(v.ficha.id)) };
+      // A su dueño se le devuelve también lo que he entendido, con sus propias palabras: es suyo, y con ello retoma
+      // las preguntas donde las dejó.
+      const entendido = leerJson(join(v.carpeta, "entendido.json"));
+      return { estado: 200, cuerpo: { ...estadoDe(v, marchas.has(v.ficha.id)), understood: entendido } };
     }
     if (que === "entendido" && cual === undefined) {
       if (p.metodo !== "PUT") throw new Fallo(405, "method");

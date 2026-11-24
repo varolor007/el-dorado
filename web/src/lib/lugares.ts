@@ -12,6 +12,8 @@ export type ClaseDeLugar = (typeof CLASES_DE_DESTINO)[number];
 export type Lugar = {
   nombre: string;
   donde: string;
+  /** El país del sitio, por sus dos letras, si el buscador lo dice. */
+  pais: string | null;
   clase: ClaseDeLugar;
   lat: number;
   lon: number;
@@ -136,5 +138,6 @@ export function lugarDe(resultado: unknown): Lugar | null {
   if (typeof p.name !== "string" || p.name.trim() === "" || clase === null) return null;
   if (!numero(lat, 90) || !numero(lon, 180)) return null;
   const donde = [p.state, p.country].filter((x) => typeof x === "string" && x !== p.name).join(", ");
-  return { nombre: p.name, donde, clase, lat, lon, caja: cajaDe(p.extent) };
+  const pais = typeof p.countrycode === "string" && /^[A-Za-z]{2}$/.test(p.countrycode) ? p.countrycode : null;
+  return { nombre: p.name, donde, pais: pais?.toUpperCase() ?? null, clase, lat, lon, caja: cajaDe(p.extent) };
 }

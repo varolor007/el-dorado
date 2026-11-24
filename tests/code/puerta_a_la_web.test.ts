@@ -321,6 +321,9 @@ test("lo entendido se cambia hasta que se confirma, y mientras se investiga no s
         cuerpo: { understood: { ...ENTENDIDO, pace: "calm" } },
       });
       assert.equal(cambiado.estado, 200);
+      // A su dueño se le devuelve lo que he entendido, entero, para retomar las preguntas; a otro, nada.
+      assert.deepEqual((await casa.pide("GET", `/viajes/${id}`)).cuerpo.understood, { ...ENTENDIDO, pace: "calm" });
+      assert.equal((await casa.pide("GET", `/viajes/${id}`, { dueno: "luis" })).estado, 404);
       assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: { ceiling: 5 } })).estado, 202);
       assert.deepEqual(casa.puerta.enMarcha(), [id]);
       // Con la investigación en marcha: ni otra vez el botón, ni cambiar lo entendido sin más.
