@@ -1040,7 +1040,7 @@ const secciones = [
           ["La mesa", "Fuera del repositorio. Una carpeta por viaje, que solo abre su dueño: su ficha (cómo está, sus investigaciones y sus versiones), su diario, que solo crece, y una carpeta por investigación y por versión; una versión no se vuelve a escribir", "hecho"],
           ["Los contratos de los asientos", "En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica", "parte"],
           ["La web", "En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Hecha en seco, con un viaje grabado; falta que hable con la casa, que es lo único con lo que habla", "parte"],
-          ["La puerta de la casa a la web", "Lo que la web puede pedir y lo que la casa cuenta en vivo", "pendiente"],
+          ["La puerta de la casa a la web", "Lo que la web puede pedir y lo que la casa cuenta en vivo. Hecho el lado de la casa, en `agent/launcher/`: la web entra con su llave, cada viaje se da solo a su dueño y lo que sale son claves y números. Falta el lado de la web, que espera a las cuentas", "parte"],
           ["La IA", "Claude, con la clave de cada viajero (tu decisión del 23-nov). El asiento solo puede abrir su puesto", "pendiente"],
           { c: ["Las cuentas", "Registro, sesión, tu clave cifrada y tus viajes. Con qué se guardan, por decidir en su tanda", "decidir"], n: true },
           { c: ["Dónde corre", "La web y la casa, en servidores nuestros. Dónde exactamente, por decidir antes de abrirla a nadie", "decidir"], n: true },

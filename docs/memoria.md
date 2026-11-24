@@ -64,8 +64,12 @@ verdad; `sucesos.json` sigue siendo la versión comprimida para volver a verla).
 `agent/launcher/casa.ts`, `llevar(run, fuentes, lanzador)`): lanza cada asiento que espera, apunta cada trabajo en
 `trabajos.json` con cómo está y lo que gastó, y no lanza nada sin `adelante.json` (el botón del viajero, con su
 techo de gasto) ni por encima de ese techo. Quién piensa en el asiento es el `Lanzador` que se le pasa: en las
-pruebas, uno de mentira (`tests/cases/inventado/asientos.ts`). Lo siguiente: el conductor (2.5) y el lanzador de la
-IA de verdad (2.7), sin lanzarlo. Antes de enchufar la IA de verdad y las cuentas hacen falta dos
+pruebas, uno de mentira (`tests/cases/inventado/asientos.ts`). Y la puerta de la casa a la web, por el lado de la casa (2.8:
+`agent/launcher/puerta_a_la_web.ts`, `puertaALaWeb(opciones)`): un servidor sin dependencias, con la llave de la
+web (`Authorization: Bearer`), el dueño de cada petición en la cabecera `x-eldorado-owner` y lo que pasa en vivo
+por sucesos del servidor (`/viajes/<id>/eventos`). Aún no tiene orden de arranque: se arranca con su lanzador de la
+IA de verdad, que es el 2.7. Lo siguiente, cuando el PM decida: el lanzador de la IA de verdad (2.7), el lado de la
+web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). Antes de enchufar la IA de verdad y las cuentas hacen falta dos
 decisiones del PM: cómo se llama a la IA (una sesión entera, como hoy, o una llamada directa, que toca el método
 común) y con qué se guardan las cuentas y dónde corren la web y la casa (11.1). Lo que hay para decidirlas: la casa
 del ensamblador, en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor, la web

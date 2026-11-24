@@ -3,8 +3,9 @@
 
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
+import type { Gasto, Lanzador } from "../../../agent/launcher/asiento.ts";
 import type { Fuentes } from "../../../agent/launcher/investigar.ts";
 import { puestosDe } from "../../../agent/launcher/puesto.ts";
 import type { Foto } from "../../../agent/output/viaje.ts";
@@ -139,4 +140,45 @@ export function runNuevo(entendido: Entendido = ENTENDIDO): string {
   const run = mkdtempSync(join(tmpdir(), "el-dorado-viaje-"));
   writeFileSync(join(run, "entendido.json"), JSON.stringify(entendido));
   return run;
+}
+
+/** Lo que dice haber gastado un asiento de mentira. */
+export const GASTO: Gasto = { turnos: 3, entrada: 1000, salida: 200, usd: 0.05 };
+const runDe = (carpetaDelPuesto: string): string => resolve(carpetaDelPuesto, "..", "..");
+
+export type DeMentira = {
+  /** Lo que dice haber gastado cada asiento; `undefined` es no decir nada. */
+  gasto?: unknown;
+  /** Lo que le pasa a un asiento en vez de trabajar bien. */
+  falla?: (asiento: string, puesto: string) => "rompe" | "rompe y lo dice" | "calla" | "cuelga" | null;
+};
+
+/** Un lanzador de mentira: cada asiento deja en su puesto lo que entregaría, y dice lo que gastó. */
+export function lanzadorDeMentira(
+  o: DeMentira = {},
+): Lanzador & { ordenes: string[]; cortados: string[]; aLaVez: number } {
+  let trabajando = 0;
+  const lanzador = (async (orden, puesto, corte) => {
+    lanzador.ordenes.push(orden);
+    lanzador.aLaVez = Math.max(lanzador.aLaVez, ++trabajando);
+    try {
+      await new Promise((r) => setImmediate(r));
+      const falla = o.falla?.(puesto.asiento, puesto.id) ?? null;
+      if (falla === "rompe") throw new Error("la IA no contestó");
+      // Un lanzador de verdad dice con su error lo que gastó hasta fallar.
+      if (falla === "rompe y lo dice") throw Object.assign(new Error("la IA se cortó a medias"), { gasto: GASTO });
+      if (falla === "cuelga")
+        await new Promise<void>((r) =>
+          corte?.addEventListener("abort", () => (lanzador.cortados.push(puesto.id), r())),
+        );
+      if (falla === null) trabaja(runDe(puesto.carpeta), puesto.id);
+      return "gasto" in o ? (o.gasto as Gasto) : GASTO;
+    } finally {
+      trabajando--;
+    }
+  }) as Lanzador & { ordenes: string[]; cortados: string[]; aLaVez: number };
+  lanzador.ordenes = [];
+  lanzador.cortados = [];
+  lanzador.aLaVez = 0;
+  return lanzador;
 }

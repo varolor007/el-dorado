@@ -338,6 +338,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   sola vez: el asiento que no entrega para la investigación, salvo si es uno de los que miran, que deja su
   alojamiento sin mirar y se dice. El techo se mira antes de cada tanda de asientos, así que puede pasarse en lo
   que gaste esa tanda.
+- **La puerta de la casa a la web, como el puente del ensamblador y con dueño** (la sesión): un servidor aparte, sin
+  dependencias, al que la web entra con una llave; quién es el viajero se lo dice la web en cada petición, y la
+  casa solo da cada viaje a su dueño. Lo que pasa en vivo va por sucesos del servidor, y quien llega tarde pide
+  desde donde iba. Lo que sale son claves y números, para que la web lo diga en el idioma de quien mira. La clave
+  de IA del viajero entra con el botón y vive solo en la memoria de la casa, como en el ensamblador: la hoja dice
+  «cifrada», que es para cuando haya cuentas donde guardarla, y eso es del PM (11.1).
 
 ## Pendientes
 

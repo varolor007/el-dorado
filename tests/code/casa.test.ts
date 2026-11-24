@@ -3,53 +3,22 @@
 
 import assert from "node:assert/strict";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { test } from "node:test";
 import { ESTADOS_DE_UN_TRABAJO } from "../../agent/data/pasos.ts";
-import type { Gasto, Lanzador } from "../../agent/launcher/asiento.ts";
 import { ADELANTE, adelanteDe, darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import { sigue } from "../../agent/launcher/investigar.ts";
 import { apuntarTrabajo, gastoDe, TRABAJOS, trabajosDe, type Trabajo } from "../../agent/launcher/trabajos.ts";
 import { leerVivo } from "../../agent/launcher/vivo.ts";
-import { fuentesInventadas, leerJson, runNuevo, trabaja, type Objeto } from "../cases/inventado/asientos.ts";
-
-const GASTO: Gasto = { turnos: 3, entrada: 1000, salida: 200, usd: 0.05 };
-const runDe = (carpetaDelPuesto: string): string => resolve(carpetaDelPuesto, "..", "..");
-
-type DeMentira = {
-  /** Lo que dice haber gastado cada asiento; `undefined` es no decir nada. */
-  gasto?: unknown;
-  /** Lo que le pasa a un asiento en vez de trabajar bien. */
-  falla?: (asiento: string, puesto: string) => "rompe" | "rompe y lo dice" | "calla" | "cuelga" | null;
-};
-
-/** Un lanzador de mentira: cada asiento deja en su puesto lo que entregaría, y dice lo que gastó. */
-function lanzadorDeMentira(o: DeMentira = {}): Lanzador & { ordenes: string[]; cortados: string[]; aLaVez: number } {
-  let trabajando = 0;
-  const lanzador = (async (orden, puesto, corte) => {
-    lanzador.ordenes.push(orden);
-    lanzador.aLaVez = Math.max(lanzador.aLaVez, ++trabajando);
-    try {
-      await new Promise((r) => setImmediate(r));
-      const falla = o.falla?.(puesto.asiento, puesto.id) ?? null;
-      if (falla === "rompe") throw new Error("la IA no contestó");
-      // Un lanzador de verdad dice con su error lo que gastó hasta fallar.
-      if (falla === "rompe y lo dice") throw Object.assign(new Error("la IA se cortó a medias"), { gasto: GASTO });
-      if (falla === "cuelga")
-        await new Promise<void>((r) =>
-          corte?.addEventListener("abort", () => (lanzador.cortados.push(puesto.id), r())),
-        );
-      if (falla === null) trabaja(runDe(puesto.carpeta), puesto.id);
-      return "gasto" in o ? (o.gasto as Gasto) : GASTO;
-    } finally {
-      trabajando--;
-    }
-  }) as Lanzador & { ordenes: string[]; cortados: string[]; aLaVez: number };
-  lanzador.ordenes = [];
-  lanzador.cortados = [];
-  lanzador.aLaVez = 0;
-  return lanzador;
-}
+import {
+  fuentesInventadas,
+  GASTO,
+  lanzadorDeMentira,
+  leerJson,
+  runNuevo,
+  trabaja,
+  type Objeto,
+} from "../cases/inventado/asientos.ts";
 
 async function conRun(prueba: (run: string) => Promise<void>): Promise<void> {
   const run = runNuevo();
