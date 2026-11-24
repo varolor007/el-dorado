@@ -142,9 +142,20 @@ lo hecho, lo decidido, lo que falta, lo probado y lo que no, lo que pide una dec
 para el plan y la memoria. Quien orquesta: escribe el encargo (dónde está dicho en la hoja y el plan, qué hay ya,
 qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no lo hizo, lo junta
 (`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
-PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`).
-Ya juntas: la cuenta de la casa (2.9, primera parte, `claude/eldorado-2-9-cuenta-de-la-casa`) y la búsqueda de
-transporte (4.4, `claude/eldorado-4-4-transporte`).
+PM le pide sus firmas. **Las tres primeras, ya juntas (24-nov)**: la cuenta de la casa (2.9, primera parte,
+`claude/eldorado-2-9-cuenta-de-la-casa`), la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y el
+primer vistazo (5.5, `claude/eldorado-5-5-vistazo`). No hay ninguna en marcha.
+
+**El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):
+`agent/scripts/vistazo.ts` (`primerVistazo`, `paraElVistazo`), su freno en `agent/launcher/freno.ts` y sus números
+en `agent/data/vistazo.ts`. La puerta lo da en `POST /vistazo`, sin sesión y con la llave de la web, por la puerta 1
+y sin tocar la mesa. En la web, `web/src/lib/vistazo.ts` y `web/src/piezas/PrimerVistazo.tsx`, antes del botón de
+un viaje nuevo; el mapa pinta los puntos y un rótulo por zona. La pasarela le dice a la casa quién pide con un
+resumen de su dirección, nunca la dirección. Medido con LiteAPI: de 2 a 14 segundos; el primer pedido a un sitio es
+el lento, y entonces va a medias y lo dice. **Falta**: los días baratos para volar (`Fuentes.diasBaratos` pide el
+aeropuerto en lo entendido, y la web no lo manda: hay que darle los que saca la búsqueda de transporte); que el PM
+diga si le valen los números del freno y que el vistazo se vuelva a pedir mientras se contesta; y comprobar en
+Vercel que la dirección del visitante es de fiar. Las zonas son trozos de la caja del destino, sin nombre.
 
 **La búsqueda de transporte (4.4), hecha** (una sesión de obra, revisada y junta el 24-nov):
 `agent/scripts/transporte.ts` y la fuente `aviasales(carpeta)`, que trae también sus lugares (aeropuertos, ciudades y

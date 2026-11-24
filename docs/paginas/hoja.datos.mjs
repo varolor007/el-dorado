@@ -326,6 +326,7 @@ const flujo = [
       x: "en segundos y sin IA: lo que hay y desde cuánto",
       titulo: "El primer vistazo",
       d: "Sin IA y sin gastar: en segundos, sobre el mapa, cuántos alojamientos pasan unos mínimos de partida y desde qué precio para tus noches, por zonas, y los días baratos para volar ese mes. Es lo que ves antes de decidir si investigas, y no pide cuenta: quita fricción y no gasta IA, solo consultas a las fuentes.",
+      n: "Hecho. Las zonas son, de momento, trozos del mapa del destino, sin nombre. Como no pide cuenta, lleva un freno para que nadie gaste el cupo de las fuentes. Los días baratos para volar aún no se enseñan: falta enchufarle los aeropuertos, que ya salen de la búsqueda de transporte.",
     },
     {
       tipo: "tu",

@@ -4,7 +4,7 @@
 
 import { join } from "node:path";
 import { ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN } from "../data/dias.ts";
-import { aviasales } from "../tools/fuentes/aviasales.ts";
+import { aviasales, diasBaratos } from "../tools/fuentes/aviasales.ts";
 import { encendida } from "../tools/fuentes/enchufes.ts";
 import { liteapi } from "../tools/fuentes/liteapi.ts";
 import { ofertasDeZona } from "../tools/fuentes/parallel.ts";
@@ -37,6 +37,20 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
   };
   // Los aeropuertos de la fuente se guardan un día en la mesa, fuera del repositorio: son tres archivos grandes.
   if (encendida("aviasales")) fuentes.transporte = aviasales(join(carpetaDeLaMesa(), "fuentes"));
+  if (encendida("aviasales"))
+    fuentes.diasBaratos = async (viaje, mes, noches) => {
+      const origen = viaje.origin;
+      if (origen === null || origen.airport === null || viaje.destination.airport === null) return [];
+      const trayecto = {
+        origen: origen.airport,
+        destino: viaje.destination.airport,
+        ida: mes,
+        vuelta: null,
+        moneda: viaje.currency.toUpperCase(),
+        mercado: origen.country.toLowerCase(),
+      };
+      return diasBaratos(trayecto, mes, noches);
+    };
   if (encendida("parallel")) fuentes.ofertas = (lugar, e) => ofertasDeZona(lugar, e);
   return fuentes;
 }

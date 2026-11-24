@@ -49,7 +49,14 @@ import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
 import { buscarTransporte, deLasFechas, elTransporte, vuelosMovidos, type Parrilla } from "../scripts/transporte.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
-import type { Estancia, FuenteAlojamiento, FuenteTransporte, OfertaDeZona, Vuelo } from "../tools/fuentes/tipos.ts";
+import type {
+  DiaBarato,
+  Estancia,
+  FuenteAlojamiento,
+  FuenteTransporte,
+  OfertaDeZona,
+  Vuelo,
+} from "../tools/fuentes/tipos.ts";
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
@@ -68,6 +75,8 @@ export type Fuentes = {
   fotos: (archivos: string[]) => Promise<Map<string, Foto>>;
   /** La fuente de transporte: sus aeropuertos y sus precios. Sin ella, el viaje va sin transporte, y se dice. */
   transporte?: FuenteTransporte;
+  /** El precio más barato de cada día de salida de un mes (AAAA-MM), para el primer vistazo. */
+  diasBaratos?: (viaje: Entendido, mes: string, noches: number) => Promise<DiaBarato[]>;
   /** Lo que piden otros vendedores en una zona dicha con palabras. */
   ofertas?: (lugar: string, e: Estancia) => Promise<OfertaDeZona[]>;
   bajarFotos?: OpcionesDeFotos;

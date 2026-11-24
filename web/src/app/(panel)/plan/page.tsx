@@ -5,7 +5,7 @@
 // Lo que se enseña es un viaje tuyo, traído de la casa, si la dirección lo pide (?trip=<id>); si no, el grabado.
 
 import { useEffect, useMemo, useState } from "react";
-import type { Manera, Punto, Ritmo, Suceso } from "../../../../../agent/output/viaje.ts";
+import type { Manera, Punto, Ritmo, Suceso, Vistazo as ElVistazo } from "../../../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../../../agent/output/viaje.ts";
 import { puertaEntendido } from "../../../../../agent/gates/puerta_entendido.ts";
 import { respuestasDe, respuestasDeLoEntendido, type Respuestas } from "../../../../../agent/scripts/empezar.ts";
@@ -81,6 +81,8 @@ export default function Planear() {
     [vivo.entendido],
   );
   const [nuevo, setNuevo] = useState<Respuestas | null>(null);
+  // El primer vistazo de un viaje nuevo, mientras se contestan las preguntas: sus puntos y sus zonas, en el mapa.
+  const [vistazoNuevo, setVistazoNuevo] = useState<ElVistazo | null>(null);
   const [pintado, setPintado] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("mundo");
   const [lejos, setLejos] = useState<Camara | null>(null);
@@ -245,6 +247,39 @@ export default function Planear() {
         ? { encuadre: { oeste: c.west, sur: c.south, este: c.east, norte: c.north }, cerca: 12 }
         : { centro: sitio.centro, cerca: 9 };
   }
+  if (etapa === "preguntas" && vistazoNuevo !== null) {
+    vivos = vistazoNuevo.puntos.map((p) => p.punto);
+    // Las zonas, con su precio más bajo. Para que no se pisen, de las que caen muy juntas se pinta la que más tiene:
+    // juntas, medido sobre el trozo de mapa que se ve, y más en el móvil, que es más estrecho y solo lleva las que
+    // tienen precio.
+    const caja = nuevo?.destino.caja ?? null;
+    const lados =
+      caja === null || caja.west >= caja.east ? null : { x: caja.east - caja.west, y: caja.north - caja.south };
+    const aparte = movil ? 0.4 : 0.12;
+    const puestas: Punto[] = [];
+    const porTamano = [...(vistazoNuevo.zonas ?? [])]
+      .filter((z) => z.pasan > 0 && (!movil || z.desde !== null))
+      .sort((a, b) => b.pasan - a.pasan);
+    for (const z of porTamano) {
+      const cerca = (p: Punto): boolean =>
+        lados !== null &&
+        Math.abs(p.lon - z.punto.lon) / lados.x < aparte &&
+        Math.abs(p.lat - z.punto.lat) / lados.y < aparte * (movil ? 0.8 : 0.5);
+      if (puestas.some(cerca)) continue;
+      puestas.push(z.punto);
+      marcas.push({
+        id: `zona-${z.id}`,
+        punto: z.punto,
+        encima: 3,
+        pieza: (
+          <div className="pin-zona" title={t.primerVistazo.zona(z.pasan)}>
+            {z.desde !== null && <b>{dinero(z.desde, vistazoNuevo.moneda, idioma)}</b>}
+            <span>{t.primerVistazo.zona(z.pasan)}</span>
+          </div>
+        ),
+      });
+    }
+  }
   if (etapa === "casa") {
     // Lo que la casa va contando se pinta donde pasa: la zona que se busca, lo encontrado y lo que se mira.
     const ha = (clase: Suceso["clase"]): Suceso[] => vivo.sucesos.filter((s) => s.clase === clase);
@@ -384,6 +419,7 @@ export default function Planear() {
           inicial={nuevo}
           viaje={comoEsta === "started" ? (pedido ?? null) : null}
           cuenta={cuenta}
+          alVistazo={setVistazoNuevo}
           alEmpezar={(id) => {
             // La investigación ya corre en la casa: se va a la dirección del viaje, que la escucha en vivo.
             const direccion = new URL(window.location.href);

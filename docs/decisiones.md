@@ -465,6 +465,15 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   redondeado a una décima de grado, que basta para los aeropuertos y no dice dónde vive nadie. Lo que deja para el
   PM: con fechas fijas casi nunca hay precio guardado y el viaje sale sin transporte; se puede pedir también la
   semana de alrededor, o esperar al precio en vivo (3.7).
+- **Cómo queda el primer vistazo** (una sesión de obra, revisada por quien orquesta). Las zonas son la caja del
+  destino partida en tres por tres, sin nombre: aún no hay ruta, y vale para cualquier sitio. Para contar se
+  suponen la moneda y el pasaporte (el país de salida; si no, el del navegador; si no, el del destino). El precio
+  se pide solo a cien alojamientos, y se dice. Los mínimos se bajan sin volver a pedir, y no se ensancha la zona.
+  El vistazo se vuelve a pedir mientras se contesta si cambia el grupo. Como no pide cuenta, lleva freno: una
+  memoria de diez minutos, treinta vistazos nuevos cada diez minutos en toda la casa, seis por visitante y tres a
+  la vez. Lo que no cubre: quien llegue a la web puede gastar el tope de todos durante diez minutos (el cupo queda
+  protegido; el servicio, no), y el tope por visitante se fía de quien pone su dirección. Los números son de
+  partida y los confirma el PM.
 
 ## Pendientes
 

@@ -18,7 +18,9 @@ import {
   admitida,
   aLaCasa,
   CABECERA_DE_LA_SESION,
+  CABECERA_DEL_CLIENTE,
   casaDe,
+  clienteDe,
   COOKIE,
   cookieDeSesion,
   deEstaWeb,
@@ -486,6 +488,7 @@ test("la web solo le pasa a la casa lo que su puerta admite, con sus métodos", 
     ["GET", "viajes/2031-01-02-abc123/eventos"],
     ["GET", "viajes/2031-01-02-abc123/version"],
     ["GET", "viajes/2031-01-02-abc123/version/3"],
+    ["POST", "vistazo"],
   ])
     assert.equal(admitida(metodo, ruta.split("/")), "ok", `${metodo} ${ruta}`);
   for (const ruta of [
@@ -505,6 +508,7 @@ test("la web solo le pasa a la casa lo que su puerta admite, con sus métodos", 
     ["DELETE", "viajes"],
     ["POST", "cuenta"],
     ["GET", "viajes/a/empezar"],
+    ["GET", "vistazo"],
   ])
     assert.equal(admitida(metodo, ruta.split("/")), "method", `${metodo} ${ruta}`);
 });
@@ -691,4 +695,29 @@ test("de dónde sales, por lo que hay en un punto: la ciudad o lo más parecido,
   assert.equal(origenDe(en({ name: "x".repeat(200) }))?.nombre.length, 80);
   for (const nada of [null, undefined, {}, en({}), en({ city: "  ", name: 7 }), "un texto"])
     assert.equal(origenDe(nada), null);
+});
+
+test("el primer vistazo pasa a la casa sin sesión, con quién pide resumido, nunca su dirección", async () => {
+  const casa = casaDeMentira(() => ({ estado: 200, cuerpo: { look: { pasan: 1 }, cached: false } }));
+  const cuerpo = '{"understood":{}}';
+  const r = await aLaCasa(deLaWeb("POST", "vistazo", { direccion: "203.0.113.7, 10.0.0.1" }, cuerpo), CASA, casa.pedir);
+  assert.equal(r.estado, 200);
+  const llegada = casa.llegadas[0];
+  assert.equal(llegada.url, "http://127.0.0.1:4320/vistazo");
+  const cliente = llegada.cabeceras[CABECERA_DEL_CLIENTE];
+  assert.match(cliente, /^[A-Za-z0-9_-]{32}$/);
+  assert.equal(cliente, clienteDe("203.0.113.7", CASA.ELDORADO_LLAVE));
+  assert.ok(!JSON.stringify(llegada).includes("203.0.113.7"));
+  assert.equal(llegada.cabeceras[CABECERA_DE_LA_SESION], undefined);
+  // La misma dirección da el mismo resumen; otra, otro; y sin dirección no se dice nadie.
+  assert.notEqual(clienteDe("203.0.113.8", CASA.ELDORADO_LLAVE), cliente);
+  assert.equal(clienteDe(null, CASA.ELDORADO_LLAVE), null);
+  assert.equal(clienteDe("", CASA.ELDORADO_LLAVE), null);
+  // Solo el vistazo lleva quién pide.
+  const otra = casaDeMentira(() => ({ estado: 200, cuerpo: { trips: [] } }));
+  await aLaCasa(deLaWeb("GET", "viajes", { direccion: "203.0.113.7" }), CASA, otra.pedir);
+  assert.equal(otra.llegadas[0].cabeceras[CABECERA_DEL_CLIENTE], undefined);
+  // Y, como todo lo que cambia algo, tiene que venir de esta misma web.
+  const fuera = await aLaCasa(deLaWeb("POST", "vistazo", { origen: "https://otra.example" }, cuerpo), CASA, casa.pedir);
+  assert.equal(fuera.estado, 403);
 });

@@ -12,8 +12,8 @@ import { puestosDe } from "../../../agent/launcher/puesto.ts";
 import type { Foto } from "../../../agent/output/viaje.ts";
 import type { ParaExplicar } from "../../../agent/scripts/explica.ts";
 import type { Entendido, Tabla } from "../../../agent/scripts/formas.ts";
-import type { FuenteAlojamiento } from "../../../agent/tools/fuentes/tipos.ts";
-import { ALOJAMIENTOS, fuenteInventada } from "./inventado.ts";
+import type { DiaBarato, FuenteAlojamiento } from "../../../agent/tools/fuentes/tipos.ts";
+import { ALOJAMIENTOS, fuenteInventada, VISTO } from "./inventado.ts";
 import {
   ENTENDIDO,
   entregaDeCruce,
@@ -38,6 +38,18 @@ export function fuenteDeDosBarrios(): FuenteAlojamiento {
   };
 }
 
+/** Los días baratos para volar de un mes inventado: el 2 es el más barato y el 6, el más caro. */
+export function diasBaratosInventados(mes: string): DiaBarato[] {
+  const dia = (n: string, precio: number): DiaBarato => ({
+    fuente: "inventada",
+    visto: VISTO,
+    dia: `${mes}-${n}`,
+    precio,
+    moneda: "EUR",
+  });
+  return [dia("05", 100), dia("02", 90), dia("06", 160)];
+}
+
 export const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
 const FOTO: Foto = { url: "https://fotos.invalid/faro.jpg", autor: "Ana", licencia: "CC BY 4.0", pagina: null };
 
@@ -48,6 +60,7 @@ export function fuentesInventadas(): Fuentes {
     resumenes: async () => new Map([["Q1", "It guides ships into the bay."]]),
     fotos: async (archivos) => new Map(archivos.map((a) => [a, FOTO])),
     transporte: transporteInventado(),
+    diasBaratos: async (_viaje, mes) => diasBaratosInventados(mes),
     bajarFotos: { traer: async () => JPEG, segura: () => true, encoger: async (b) => b },
   };
 }

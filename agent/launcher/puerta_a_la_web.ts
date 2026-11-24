@@ -7,6 +7,7 @@
 // cuenta y solo se descifra para lanzar su investigación.
 //
 //   GET    /salud                      sin llave: que la casa está
+//   POST   /vistazo                    el primer vistazo de lo entendido: sin sesión, con su freno, y sin guardar nada
 //   POST   /cuentas                    registrarse, con correo y contraseña; deja la sesión abierta
 //   POST   /sesiones                   entrar
 //   DELETE /sesiones                   salir
@@ -42,6 +43,7 @@ import {
   sesionDe,
   type Cuenta,
 } from "./cuentas.ts";
+import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import {
   abrirViaje,
@@ -55,6 +57,9 @@ import {
   viajesDe,
   type ViajeEnLaMesa,
 } from "./mesa.ts";
+import { comprobarVistazo } from "../output/viaje.ts";
+import type { Entendido } from "../scripts/formas.ts";
+import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from "../scripts/vistazo.ts";
 import { porDondeVa } from "./pasos.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
@@ -67,6 +72,11 @@ export const OYENTES_DE_UN_VIAJE = 8;
 export const CABECERA_DE_LA_SESION = "x-eldorado-session";
 /** Cuántas veces se puede fallar al entrar con un correo, y en cuánto tiempo, antes de tener que esperar. */
 export const INTENTOS_DE_ENTRAR = { fallos: 5, minutos: 15 };
+/**
+ * La cabecera donde la web dice quién pide un primer vistazo, resumido (no su dirección tal cual), para que el freno
+ * lleve la cuenta de cada uno. Sin ella, solo cuenta el tope de toda la casa.
+ */
+export const CABECERA_DEL_CLIENTE = "x-eldorado-client";
 
 export type OpcionesDeLaPuerta = {
   mesa: string;
@@ -90,6 +100,9 @@ export type OpcionesDeLaPuerta = {
   /** Cada cuánto mira la casa si hay algo nuevo que contar a quien escucha, y cada cuánto le da señal de vida. */
   cadaMs?: number;
   latidoMs?: number;
+  /** El freno del primer vistazo, si no es el de `agent/data/vistazo.ts`, y lo que espera a cada fuente. */
+  freno?: Partial<Freno>;
+  esperasDelVistazo?: Esperas;
 };
 
 export type Puerta = {
@@ -210,6 +223,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   };
   /** Lo que se dice de una cuenta a la web: lo público suyo y con qué piensa, y nada de la casa. */
   const deCara = (c: Cuenta): Record<string, unknown> => ({ ...publica(c), thinks_with: conQuePiensa(c) });
+  const freno = frenoDelVistazo(o.freno, hoy);
 
   /** Lo que queda de espera, en segundos, para volver a probar con ese correo; cero si se puede. */
   const espera = (quien: string): number => {
@@ -290,6 +304,36 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       throw error;
     }
     throw new Fallo(405, "method");
+  }
+
+  /**
+   * El primer vistazo: no pide sesión, porque no gasta IA, pero sí la llave de la web. Lo entendido pasa la puerta 1
+   * antes de buscar nada, y no se guarda en la mesa. Lo que se le dice a la web es el vistazo y si salió de la memoria.
+   */
+  async function vistazo(metodo: string, cuerpo: unknown, cliente: string | null): Promise<Respuesta> {
+    if (metodo !== "POST") throw new Fallo(405, "method");
+    const dado = objeto(cuerpo) ? cuerpo.understood : undefined;
+    const claro = puertaEntendido(dado, { hoy: hoy().toISOString().slice(0, 10) });
+    if (!claro.verde) throw new Fallo(422, "unclear", { fields: [...new Set(claro.rojos.map((r) => r.donde))] });
+    const e = dado as Entendido;
+    try {
+      const { valor, deMemoria } = await freno.pedir(claveDelVistazo(e), cliente, async () => {
+        let fuentes: Fuentes;
+        try {
+          fuentes = o.fuentes();
+        } catch {
+          throw new FalloDelVistazo("no_sources");
+        }
+        const v = await primerVistazo(e, fuentes, o.esperasDelVistazo);
+        if (comprobarVistazo(v).length > 0) throw new Error("el vistazo no cuadra");
+        return v;
+      });
+      return { estado: 200, cuerpo: { look: valor, cached: deMemoria } };
+    } catch (error) {
+      if (error instanceof Frenado) throw new Fallo(429, "busy", { wait: error.espera });
+      if (error instanceof FalloDelVistazo) throw new Fallo(error.message === "too_slow" ? 504 : 503, error.message);
+      throw error;
+    }
   }
 
   const conLlave = (req: IncomingMessage): boolean => {
@@ -483,6 +527,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (!conLlave(req)) throw new Fallo(401, "unauthorized");
         const metodo = req.method ?? "GET";
         const sesion = req.headers[CABECERA_DE_LA_SESION];
+        if (partes.length === 1 && partes[0] === "vistazo") {
+          const dicho = req.headers[CABECERA_DEL_CLIENTE];
+          const cliente = typeof dicho === "string" && /^[A-Za-z0-9_-]{8,128}$/.test(dicho) ? dicho : null;
+          const r = await vistazo(metodo, await cuerpoDe(req), cliente);
+          return responder(res, r.estado, r.cuerpo);
+        }
         // Registrarse, entrar y salir es lo único que no pide una sesión abierta.
         const sinSesion = await deLaCuenta({ metodo, partes, cuerpo: null, sesion }, () => cuerpoDe(req));
         if (sinSesion !== null) return responder(res, sinSesion.estado, sinSesion.cuerpo);
