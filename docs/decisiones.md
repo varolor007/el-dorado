@@ -427,6 +427,17 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   asiento de la tanda 3. Y un cuidado: con el registro abierto, la suscripción del PM no puede servir a quien se
   registre. Solo la usan las cuentas cuyo correo esté dicho en el entorno de la casa; como el correo no se confirma,
   el PM se registra antes de dar la dirección a nadie. A los demás, su clave o nada.
+- **Todo en el servidor, directamente** (el PM, a la pregunta de dónde: «todo en el servidor directamente; creo que
+  con DaVi no uso ngrok, pero me confirmas»). La web y la casa van juntas en su servidor, y así no hace falta túnel:
+  el túnel solo sirve con la web en Vercel y el motor en otro sitio. Lo de DaVi no se pudo confirmar: su repositorio
+  no está en la sesión, y abrirlo para leer no se permitió. Falta que diga en qué servidor y con qué dirección.
+- **La obra se reparte: esta sesión orquesta y sesiones de obra construyen** (el PM, a las dos opciones que él mismo
+  puso, pasar la sesión a otro modelo o repartir: «dale con esto», sobre la segunda). Cada sesión de obra lleva un
+  punto del plan en su rama, no toca la hoja, el plan ni la memoria, y devuelve una nota; quien orquesta escribe el
+  encargo, revisa lo que traen, lo junta en la rama de todos y lleva las biblias. Cuesta más en total que una sola
+  sesión seguida y tarda menos, y así se lo dijo la sesión. Antes le contestó que no está todo diseñado al detalle:
+  la hoja y el plan bastan para seguir, pero los contratos de los asientos que faltan, el conductor y las tandas 5
+  a 8 se diseñan al construirlos.
 
 ## Pendientes
 

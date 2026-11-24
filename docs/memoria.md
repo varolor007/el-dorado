@@ -132,7 +132,25 @@ que pide dos cosas del PM: la clave de Claude en el entorno, como `ELDORADO_CLAV
 formulario seguro: la red de la sesión no pone claves en los pedidos a Anthropic), y su adelante, que dijo que da
 cuando meta la clave de Geoapify. Se propuso un techo de 5 dólares.
 
-**El PM no va a meter su clave: quiere usar su cuenta de Claude, con el túnel (24-nov, 2.9, por construir).** Como
+**Cómo se trabaja desde el 24-nov: quien orquesta y las sesiones de obra.** El PM pidió repartir la obra («dale
+con esto»): la sesión de siempre orquesta, y cada punto lo construye una sesión de obra, abierta con `create_session`
+desde la rama de todos, en su propia rama (`claude/eldorado-<punto>-<nombre>`), con un modelo más barato. Las reglas
+de una sesión de obra, además de las de `CLAUDE.md`: solo sube a su rama; no toca la hoja, el plan, la memoria ni
+las decisiones (los lleva quien orquesta, para que no choquen); toca lo justo en los archivos que comparten varios
+puntos; no gasta nada; todo generalista; mira la web con capturas; y al acabar manda a quien orquesta una nota con
+lo hecho, lo decidido, lo que falta, lo probado y lo que no, lo que pide una decisión del PM y el texto que propone
+para el plan y la memoria. Quien orquesta: escribe el encargo (dónde está dicho en la hoja y el plan, qué hay ya,
+qué hay que hacer y qué queda fuera), revisa lo que traen como alguien que no lo hizo, lo junta
+(`git fetch origin <rama> && git merge`), pasa la batería, pone al día las biblias y la memoria en ese commit, y al
+PM le pide sus firmas. **En marcha desde el 24-nov**: el primer vistazo (5.5, rama `claude/eldorado-5-5-vistazo`),
+la búsqueda de transporte (4.4, `claude/eldorado-4-4-transporte`) y la cuenta de la casa (2.9, primera parte,
+`claude/eldorado-2-9-cuenta-de-la-casa`). Al retomar: mirar con `list_sessions` (las hijas) cómo van, y leer sus
+notas.
+
+**El PM no va a meter su clave: quiere usar su cuenta de Claude, y todo en su servidor (24-nov, 2.9, en obra).** El
+túnel de abajo ya no hace falta: dijo «todo en el servidor directamente», así que la web y la casa van juntas en
+Docker y se hablan por dentro, y de fuera solo se llega a la web, con su dirección y su candado. Falta que diga en
+qué servidor y con qué dirección; lo de si DaVi usa ngrok no se pudo confirmar. Lo demás sigue valiendo. Como
 el ensamblador (`aurora-web/ensamblador/arranque/`: su `README.md`, `Dockerfile` y `compose.yaml` son la guía): la
 casa en Docker, en su ordenador o en su servidor, con Claude Code y el token de su suscripción
 (`CLAUDE_CODE_OAUTH_TOKEN`, de `claude setup-token`) en un `.env` que no sale de su máquina; el túnel, otro servicio
