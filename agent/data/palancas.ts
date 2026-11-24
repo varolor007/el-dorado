@@ -28,7 +28,7 @@ const espera = (id: string, que: string, what: string): Palanca => ({
 });
 
 export const PALANCAS: Palanca[] = [
-  pide("shift_dates", "las mismas noches, movidas un día o dos", "the same nights, moved a day or two"),
+  pide("shift_dates", "las mismas noches, movidas de uno a tres días", "the same nights, moved one to three days"),
   pide("nights", "una noche más o una menos", "one night more or one night less"),
   pide("other_lodging", "otro de los alojamientos finalistas", "another of the lodgings in the table"),
   pide("other_zone", "dormir en otra zona de las de la ruta", "sleeping in another zone of the route"),
@@ -47,8 +47,13 @@ export const SE_PUEDE_PEDIR = { shift_dates: [-3, -2, -1, 1, 2, 3], nights: [-1,
 /** Cuántas palancas se le cuentan al viajero, como mucho. */
 export const PALANCAS_QUE_SE_CUENTAN = 4;
 
-/** Cuánto se mueven las fechas al probar la palanca de los días, y cuántas noches de más o de menos. */
-export const DIAS_QUE_SE_MUEVEN = [-2, -1, 1, 2];
+/**
+ * Cuánto se mueven las fechas al probar la palanca de los días, y cuántas noches de más o de menos. Tres días a cada
+ * lado, como la búsqueda de transporte (el PM, 24-nov): ocho cambios de partida, cada uno con una petición de
+ * alojamiento para todos los finalistas y, si el viaje lleva transporte y la parrilla no tiene ya esos días, otra de
+ * transporte.
+ */
+export const DIAS_QUE_SE_MUEVEN = [-3, -2, -1, 1, 2, 3];
 export const NOCHES_QUE_SE_MUEVEN = [-1, 1];
 
 /** Dos rondas como mucho, y tantas peticiones por ronda. */

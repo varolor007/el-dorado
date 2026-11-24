@@ -4,6 +4,7 @@
 
 import { MOTIVOS_DE_FUERA } from "../data/dias.ts";
 import { avisosDe } from "../data/palabras.ts";
+import { DIAS_ALREDEDOR } from "../data/transporte.ts";
 
 export type Punto = { lat: number; lon: number };
 
@@ -207,6 +208,11 @@ export type Viaje = {
   porQueFuera: Record<string, (typeof MOTIVOS_DE_FUERA)[number]>;
   alojamientos: Alojamiento[];
   transportes: Transporte[];
+  /**
+   * Si las fechas del viaje no tienen precio de transporte y un día de al lado sí (hasta tres antes o después), el
+   * más barato de esos. Se ofrece: no está en ninguna manera ni en ningún total. Un viaje de antes no lo trae.
+   */
+  transporteAlLado?: Transporte;
   maneras: Manera[];
   palancas: Palanca[];
   avisos: string[];
@@ -346,6 +352,18 @@ export function comprobarViaje(v: Viaje): Pega[] {
   for (const t of v.transportes) {
     pegas.push(...pegasDelPrecio(t.precio, `transportes.${t.id}`));
     if (!TRANSPORTES.includes(t.clase)) pega(`transportes.${t.id}`, "la clase de transporte no es de su lista");
+  }
+  const l = v.transporteAlLado;
+  if (l !== undefined) {
+    pegas.push(...pegasDelPrecio(l.precio, "transporteAlLado"));
+    if (v.transportes.length > 0)
+      pega("transporteAlLado", "las fechas ya tienen transporte: no hace falta el de al lado");
+    const dias = (a: string, b: string): number => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
+    const sale = l.sale.slice(0, 10);
+    const vuelve = (l.vuelve ?? "").slice(0, 10);
+    const cerca = (a: string, b: string): boolean => fecha(a) && Math.abs(dias(b, a)) <= DIAS_ALREDEDOR;
+    if (!cerca(sale, v.entrada) || !cerca(vuelve, v.salida) || (sale === v.entrada && vuelve === v.salida))
+      pega("transporteAlLado", "no es de un día de al lado");
   }
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))

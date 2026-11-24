@@ -3,6 +3,8 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, SE_PUEDE_PEDIR } from "../../agent/data/palancas.ts";
+import { DIAS_ALREDEDOR } from "../../agent/data/transporte.ts";
 import type { Vuelo } from "../../agent/tools/fuentes/tipos.ts";
 import { cambiosDePartida, mover, pedirPalancas } from "../../agent/tools/palancas.ts";
 import { ESTANCIA, fuenteInventada, VISTO } from "../cases/inventado/inventado.ts";
@@ -41,6 +43,12 @@ test("los cambios de partida: las mismas noches movidas, y una noche más o meno
     { palanca: "shift_dates", entrada: 1, salida: 1 },
     { palanca: "nights", entrada: 0, salida: -1 },
   ]);
+});
+
+test("los días se mueven hasta tres a cada lado, como la búsqueda de transporte: ocho cambios de partida", () => {
+  assert.deepEqual(DIAS_QUE_SE_MUEVEN, [-3, -2, -1, 1, 2, 3]);
+  assert.ok(DIAS_QUE_SE_MUEVEN.every((d) => Math.abs(d) <= DIAS_ALREDEDOR && SE_PUEDE_PEDIR.shift_dates.includes(d)));
+  assert.equal(cambiosDePartida(DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN).length, 8);
 });
 
 test("las palancas se piden enteras, para sus fechas: el alojamiento y, si lo hay, el transporte", async () => {
