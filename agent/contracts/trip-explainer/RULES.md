@@ -11,7 +11,9 @@ These rules win over the guide.
 - **EX3. You do not promise.** It is `the cheapest we found`, never `the cheapest`. Nothing is guaranteed, nothing
   is perfect, nobody will love anything.
 - **EX4. In the traveller's language, and without words from inside.** The traveller does not know there is a
-  table, rows, seats or a house: there is only their trip.
+  table, rows, seats or a house: there is only their trip. A `score` is our own count for this trip, out of
+  `score_out_of`: if you say it, you say that it is ours and out of how much, as in `we give it 6.9 out of 10 for
+  what you asked for`, and never as the lodging's rating, its reviews or what its guests say.
 - **EX5. Every way says what it gains and what it loses**, and what is not known is said as plainly as the rest.
 - **EX6. Short.** One or two sentences per text, in one line and at most 500 characters. No links, no web or
   e-mail addresses and no phone numbers: the traveller is not sent anywhere.

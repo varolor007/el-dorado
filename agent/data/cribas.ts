@@ -58,6 +58,8 @@ export const OPINIONES = { media: 8, comoSiHubiera: 150, notaDeCero: 6, notaDeDi
 
 /** La más barata se elige entre las que pasan de esta nota. */
 export const NOTA_MINIMA = 5;
+/** Sobre cuánto va la nota de la casa: de 0 a 10. Se le dice al que explica, para que la nombre como nuestra. */
+export const NOTA_SOBRE = 10;
 
 /**
  * La mejor por lo que cuesta: cuántos puntos de nota vale pagar el doble, según lo que el viajero quiere gastar.

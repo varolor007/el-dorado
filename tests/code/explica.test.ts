@@ -89,6 +89,18 @@ test("lo que escribe un asiento aplicado pasa la puerta", () => {
   );
 });
 
+test("la nota de la casa se dice como nuestra y sobre cuánto va: lo pide el contrato y lo deja la puerta", () => {
+  assert.equal(DADO.ways.score_out_of, 10);
+  const nota = DADO.ways.ways[0].score;
+  assert.equal(typeof nota, "number");
+  assert.deepEqual(
+    rojosDe((e) => (e.ways[0].gains = `${e.ways[0].gains} Le damos un ${nota} sobre 10 para lo que buscáis.`)),
+    [],
+  );
+  assert.match(leer("README.md"), /it is not the rating its guests gave it/);
+  assert.match(leer("RULES.md"), /you say that it is ours and out of how much/);
+});
+
 test("trampa: un número que no está en lo que se le dio", () => {
   assert.deepEqual(
     rojosDe((e) => (e.ways[0].gains = "Sale por unos 370 euros.")),

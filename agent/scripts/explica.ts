@@ -1,6 +1,7 @@
 // Lo que el código le prepara al asiento que explica: las maneras ya cerradas, con sus números y con las
 // diferencias frente a la más barata ya hechas, y las palancas que se van a contar. El asiento no resta: copia.
 
+import { NOTA_SOBRE } from "../data/cribas.ts";
 import {
   SIN_SABER,
   type EntregaDeCruce,
@@ -49,8 +50,12 @@ export type PalancaParaExplicar = {
 };
 
 export type ParaExplicar = {
-  /** `on_foot`: si el viaje se anda desde donde se duerme. Si no, los minutos son en coche o en transporte. */
-  ways: { currency: string; nights: number; on_foot: boolean; ways: ManeraParaExplicar[] };
+  /**
+   * `on_foot`: si el viaje se anda desde donde se duerme. Si no, los minutos son en coche o en transporte.
+   * `score_out_of`: sobre cuánto va la nota de la casa, para que pueda decirla como lo que es y no como la de los
+   * huéspedes.
+   */
+  ways: { currency: string; nights: number; on_foot: boolean; score_out_of: number; ways: ManeraParaExplicar[] };
   levers: PalancaParaExplicar[];
   checks: EntregaDeCruce["checks"];
 };
@@ -154,5 +159,9 @@ export function paraExplicar(
   const noches = diasDe(fechas.entrada, fechas.salida).nights;
   // Una tabla de antes de que dijera si el viaje se anda es de un viaje que se andaba: no había otros.
   const aPie = tabla.on_foot ?? true;
-  return { ways: { currency: tabla.currency, nights: noches, on_foot: aPie, ways }, levers, checks: cruce.checks };
+  return {
+    ways: { currency: tabla.currency, nights: noches, on_foot: aPie, score_out_of: NOTA_SOBRE, ways },
+    levers,
+    checks: cruce.checks,
+  };
 }

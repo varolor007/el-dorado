@@ -12,10 +12,12 @@ every difference included, was computed by the house: you copy it.
 - `trip.json`: what the traveller asked for, with their own words, and `language`: the language they read.
 - `ways.json`: the currency of every amount (`currency`), the nights of the trip (`nights`), whether the trip is
   walked from where the traveller sleeps (`on_foot`: see EX7) and the ways of doing it (`ways`), each with its `id`
-  (`cheapest`, `best_value`, `different`), its lodging, its zone, its totals, its score, `minutes_to_sights` (half
-  of what they will see is within that many minutes: on foot if `on_foot` is `true`, by car or public transport
-  and approximate if it is `false`), whether it can be cancelled, what could not be confirmed, what the lodging is
-  like (its levels, each with what was seen or said), its best and its worst, its warnings, and `versus_cheapest`:
+  (`cheapest`, `best_value`, `different`), its lodging, its zone, its totals, its `score` (our own count of how
+  well that lodging fits this trip, from 0 to `score_out_of`: it is not the rating its guests gave it; see EX4),
+  `minutes_to_sights` (half of what they will see is within that many minutes: on foot if `on_foot` is `true`, by
+  car or public transport and approximate if it is `false`), whether it can be cancelled, what could not be
+  confirmed, what the lodging is like (its levels, each with what was seen or said), its best and its worst, its
+  warnings, and `versus_cheapest`:
   what it costs more, how many minutes closer it is (`minutes_less`) and how much higher its score is. For the
   different way, the lever that tells it apart and why it was chosen.
 - `levers.json`: the savings to tell, each with its `lever_row`, what it applies to (`applies_to`: the lodging the

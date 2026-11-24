@@ -522,6 +522,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   etiqueta va al final de su primera línea o al final de todo. Un renglón de dentro con su propia fuente se mira
   como una nota suelta, para que nada se cuele por ir colgado. No se baja el listón: una nota sin etiqueta, o que
   cita lo que no tiene, sigue siendo un rojo. Y al asiento devuelto se le enseña la línea de cada rojo.
+- **La nota de la casa se dice como nuestra** (la sesión, por el viaje de la primera investigación de verdad). El
+  que explica escribió «su puntuación es 5,7» de un alojamiento al que sus huéspedes dan un 8,7: era la nota de la
+  casa, y se leía como la de los huéspedes. Su contrato lo dice ahora (EX4) y el código le da sobre cuánto va. A
+  propuesta de la sesión, y por decidir por el PM: darle también la nota de los huéspedes, para que diga las dos.
 
 ## Pendientes
 
