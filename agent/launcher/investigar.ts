@@ -68,6 +68,7 @@ import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
 import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun, pasar, viajeDelRun } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { puertaEscucha } from "../gates/puerta_escucha.ts";
+import { notasDe, PASOS } from "../gates/puerta_metodo.ts";
 import {
   confirmar,
   CONFIRMADO,
@@ -221,9 +222,34 @@ function recoger<T>(
   if (vuelta > VUELTAS) return { parado: rojos };
   const devuelto: Pieza = {
     ruta: "returned.json",
-    contenido: json({ what_was_wrong: rojos, delivery: metodo.entrega }),
+    contenido: json({ what_was_wrong: conSuLinea(puesto, rojos), delivery: metodo.entrega }),
   };
   return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1).id };
+}
+
+/** Lo más que se le enseña de una línea suya a un asiento al que se le devuelve la entrega. */
+const LO_MAS_DE_UNA_LINEA = 400;
+
+/**
+ * Lo que se le devuelve a un asiento: cada rojo y, si señala una línea de lo que escribió (`out/<archivo>:<línea>`),
+ * esa línea, que él ya no tiene delante. De una nota va entera, con lo que cuelga de ella.
+ */
+export function conSuLinea(puesto: Puesto, rojos: Rojo[]): (Rojo & { linea?: string })[] {
+  const leidos = new Map<string, string | null>();
+  return rojos.map((rojo) => {
+    const sitio = /^out\/([^/:]+):(\d+)$/.exec(rojo.donde);
+    if (sitio === null) return rojo;
+    const [, archivo, numero] = sitio;
+    if (!leidos.has(archivo)) {
+      const ruta = join(puesto.carpeta, "out", archivo);
+      leidos.set(archivo, existsSync(ruta) ? readFileSync(ruta, "utf8") : null);
+    }
+    const texto = leidos.get(archivo) ?? null;
+    if (texto === null) return rojo;
+    const nota = archivo === PASOS[2] ? notasDe(texto).find((x) => x.linea === Number(numero)) : undefined;
+    const linea = (nota?.texto ?? texto.split("\n")[Number(numero) - 1] ?? "").trim();
+    return linea === "" ? rojo : { ...rojo, linea: linea.slice(0, LO_MAS_DE_UNA_LINEA) };
+  });
 }
 
 /** Las noches del viaje. */

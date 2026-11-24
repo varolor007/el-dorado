@@ -516,6 +516,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   se busca; nunca quién es. Los números de partida (8 búsquedas, 12 páginas, 6 vueltas) los confirma el PM.
 - **El buscador, estrenado con la cuenta del PM** (la sesión, con su sí a las pruebas con su cuenta): una llamada
   mínima por Claude Code, con una búsqueda y una página.
+- **Una nota puede ocupar varias líneas** (la sesión, por lo que enseñó la primera investigación de verdad, que
+  paró en el que elige los sitios tras tres intentos). La puerta de todos sigue pidiendo lo mismo, que cada nota
+  lleve su fuente y su etiqueta, pero lee la nota entera: lo que cuelga de ella con sangría es la misma nota, y la
+  etiqueta va al final de su primera línea o al final de todo. Un renglón de dentro con su propia fuente se mira
+  como una nota suelta, para que nada se cuele por ir colgado. No se baja el listón: una nota sin etiqueta, o que
+  cita lo que no tiene, sigue siendo un rojo. Y al asiento devuelto se le enseña la línea de cada rojo.
 
 ## Pendientes
 

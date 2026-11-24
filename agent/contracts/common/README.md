@@ -16,5 +16,5 @@ Your contract comes first, in this order. Do not start working before you have r
 After the contract comes your material: every file of `in/`, each under its path, and each photo right after its
 path. That is everything you may use: nothing else exists for you. You have no tools: you cannot open other files,
 run code or search the internet. Only if your seat's contract has an `INTERNET.md` do you also have the web: then
-the common contract has a `WEB.md`, which says how. You answer once, and your answer is the only thing you hand in: the house writes it
-down in `out/`, one file per step of the method.
+the common contract has a `WEB.md`, which says how. You answer once, and your answer is the only thing you hand in:
+the house writes it down in `out/`, one file per step of the method.

@@ -191,7 +191,19 @@ con una foto (la vio bien), a menos de un céntimo cada una según Claude Code. 
 en una sola llamada sin herramientas, que la casa lee bien su respuesta y que funciona con un HOME vacío. **La
 primera investigación entera con su cuenta** se lanzó ese día con `de_verdad.ts`, el viaje de Madrid a Lisboa del
 12 al 15 de febrero y una guarda de 25 dólares, desde una copia limpia del código (`git worktree`) y con su mesa
-fuera del repositorio; lo que salga, en el punto de situación.
+fuera del repositorio. **Paró a los 10 minutos, en el que elige los sitios (puerta 9), tras sus tres intentos**, con
+10 llamadas y el equivalente a 5,88 dólares: el de la ruta, 45 y 58 segundos y unos 0,25 cada intento; cada uno de
+los cinco que miran alojamientos, unos 3 minutos y 0,75; el que elige los sitios, unos 2 minutos y 0,55 cada
+intento. Trabajaron seis asientos a la vez sin problema. **Por qué paró: la forma de las notas, no lo que decían.**
+La IA parte una nota en varias líneas (una lista colgando de ella, con la fuente y la etiqueta en la primera línea
+o al final de todo), y la puerta de todos pedía una línea por nota: con esa lectura habrían dado rojo también los
+cinco que miran. Además, el asiento devuelto no veía la línea que señalaba cada rojo, y al arreglar una cosa volvía
+a caer en la otra. **Arreglado de forma general (2.4)**: la puerta lee la nota entera con lo que cuelga de ella
+(`notasDe` en `agent/gates/puerta_metodo.ts`), y cada renglón de dentro que lleve su propia fuente se mira igual;
+el contrato común lo dice más claro y pide el archivo con su extensión; y lo devuelto lleva la línea de cada rojo
+(`conSuLinea` en `agent/launcher/investigar.ts`). Con la puerta nueva, de los diez puestos de ese run solo queda
+en rojo el que lo estaba de verdad (citaba un archivo sin su extensión). El run se retoma donde paró, con el código
+de ahora.
 
 **El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
 asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`

@@ -9,6 +9,7 @@ import {
   ENTREGA,
   ETIQUETAS,
   huella,
+  notasDe,
   PASOS,
   PESO_MAXIMO,
   puertaMetodo,
@@ -214,6 +215,64 @@ test("trampa: una nota dice que lo vio y no dice dónde, o cita un archivo que n
     "out/3-notes.md:3: la nota cita la página https://example.com/hotel, y este asiento no sale a internet",
     "out/3-notes.md:6: la nota cita in/videos, que no es de su material",
   ]);
+});
+
+test("una nota partida en varias líneas se lee entera: lo que cuelga de ella es la misma nota", () => {
+  const rojos = rojosDe(
+    conNotas([
+      "## What the sheet says",
+      "",
+      "- The chosen places are:",
+      "  - the castle and the cathedral;",
+      "  - the old square. [in/sheet.json] [deduced]",
+      "- Other places sit close to it:",
+      "  - The tower (T1)",
+      "  - The museum (T2)",
+      "",
+      "  [in/sheet.json] [seen]",
+      "- A long note that goes on",
+      "  on the next line. [in/photos/room-01.jpg] [seen]",
+      "- A note that goes on right below,",
+      "without indentation. [in/sheet.json#room] [seen]",
+    ]),
+  );
+  assert.deepEqual(rojos, []);
+});
+
+test("trampa: una nota de varias líneas sin etiqueta al final, o con un renglón que cita lo que no tiene", () => {
+  const rojos = rojosDe(
+    conNotas([
+      "- Visit lengths are my judgement:",
+      "  - a walk, 60;",
+      "  - a museum, 90.",
+      "- The gym is large:",
+      "  - new machines; [in/photos/gym-09.jpg] [seen]",
+      "  - and a view. [in/photos/room-01.jpg] [seen]",
+      "- It looks new.",
+      "",
+      "This line comes after a gap: it is not part of the note. [deduced]",
+      "- The last one is fine. [deduced]",
+    ]),
+  );
+  assert.deepEqual(rojos, [
+    "out/3-notes.md:1: la nota no acaba con su etiqueta: seen, deduced o assumed",
+    "out/3-notes.md:4: la nota cita in/photos/gym-09.jpg, que no es de su material",
+    "out/3-notes.md:7: la nota no acaba con su etiqueta: seen, deduced o assumed",
+  ]);
+});
+
+test("las notas de un texto: dónde empieza cada una y qué la cierra", () => {
+  const notas = notasDe(
+    ["- One. [seen]", "  - inside", "# A title", "  hanging from nothing", "- Two:", "", "  - a", "- Three"].join("\n"),
+  );
+  assert.deepEqual(
+    notas.map((x) => [x.linea, x.texto]),
+    [
+      [1, "- One. [seen] - inside"],
+      [5, "- Two: - a"],
+      [8, "- Three"],
+    ],
+  );
 });
 
 test("trampa: las notas son un texto seguido, sin una sola nota con su forma", () => {

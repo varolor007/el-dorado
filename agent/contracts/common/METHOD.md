@@ -8,16 +8,20 @@ in this order.
 1. **Acknowledgement** (`out/1-acknowledgement.md`). List what you received: name every file and folder at the top of
    `in/`, say what each one holds, and say what is missing. If something is missing without which you cannot work, say
    so here, and still hand in a delivery that says what you could not do. If `in/returned.json` is there, an earlier
-   delivery of this seat was returned by the house: the file holds that delivery and what was wrong with it. Do the
-   whole job again, from the material, and do not repeat what was returned.
+   delivery of this seat was returned by the house: the file holds that delivery and what was wrong with it, each
+   thing with the place it points to and, when that place is a line of what you wrote, the line itself. Do the whole
+   job again, from the material, and do not repeat what was returned.
 2. **Plan** (`out/2-plan.md`). Before looking closely, write what you are going to look at, what you expect to find
    and what would change your mind. This keeps you from stopping at the first thing you see.
-3. **Notes** (`out/3-notes.md`). Work through the material and write down what you find, as you find it. Every note
-   is one line that starts with `- ` and ends with its source and its label, each in square brackets:
-   `- Two single beds and a desk by the window. [in/photos/room-01.jpg] [seen]`. The label is `seen` (you read or saw
-   it in the source), `deduced` (it follows from other notes) or `assumed` (you could not check it). A `seen` note
-   names the file of `in/` it comes from, with its path; several files go in the same brackets, separated by commas,
-   and a part of a file after `#`, as in `[in/reviews.json#r12]`. A note about everything in a folder, such as
+3. **Notes** (`out/3-notes.md`). Work through the material and write down what you find, as you find it. Every note is
+   one line that starts with `- ` and ends with its source and its label, each in square brackets:
+   `- Two single beds and a desk by the window. [in/photos/room-01.jpg] [seen]`. Keep each note whole on its line when
+   you can. Lines indented under a note belong to it and share its source and its label, which go at the end of its
+   first line or at the very end of the note. A line that starts with `- ` and has no indentation is always a new note,
+   with its own source and label. The label is `seen` (you read or saw it in the source), `deduced` (it follows from
+   other notes) or `assumed` (you could not check it). A `seen` note names the file of `in/` it comes from, with its
+   path and its extension, as in `[in/reviews.json]`; several files go in the same brackets, separated by commas, and a
+   part of a file after `#`, as in `[in/reviews.json#r12]`. Only a note about everything in a folder, such as
    `- No photo shows a gym. [in/photos] [seen]`, names the folder. A note from a web page you opened names its full
    address instead of a file, and only a seat that goes on the web has such notes. Notes describe; they do not judge
    yet.

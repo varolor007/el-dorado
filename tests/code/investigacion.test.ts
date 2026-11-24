@@ -2,7 +2,7 @@
 // cada asiento y cada puerta, con fuentes inventadas y asientos de mentira. Sin internet y sin gastar.
 
 import assert from "node:assert/strict";
-import { appendFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -10,6 +10,7 @@ import { ESCALERA_DE_MINIMOS, ESCALERA_DE_RADIO, RADIO_MAXIMO } from "../../agen
 import { AVISOS } from "../../agent/data/palabras.ts";
 import { puertaBusqueda } from "../../agent/gates/puerta_busqueda.ts";
 import {
+  conSuLinea,
   DE_MANO,
   empezar,
   estanciaDe,
@@ -940,5 +941,49 @@ test("lo que cuenta la casa lo sabe decir la web: cada clase de suceso tiene su 
   for (const idioma of IDIOMAS) {
     const vivo = TEXTOS[idioma].vivo as unknown as Record<string, unknown>;
     for (const clase of SUCESOS) assert.equal(typeof vivo[clase], "function", `${idioma}: ${clase}`);
+  }
+});
+
+test("lo que se le devuelve a un asiento lleva la línea que señala cada rojo, y una nota va entera", () => {
+  const carpeta = mkdtempSync(join(tmpdir(), "el-dorado-devuelto-"));
+  try {
+    mkdirSync(join(carpeta, "out"));
+    writeFileSync(
+      join(carpeta, "out", "3-notes.md"),
+      [
+        "# Notes",
+        "- The lengths are my judgement:",
+        "  - a walk, 60;",
+        "  - a museum, 90.",
+        `- ${"x".repeat(900)}`,
+      ].join("\n"),
+    );
+    writeFileSync(join(carpeta, "out", "2-plan.md"), "First the room.\nThen the gym.");
+    const puesto = { id: "sitios-v1", asiento: "sights-picker", carpeta, sello: "" };
+    const devuelto = conSuLinea(puesto, [
+      { donde: "out/3-notes.md:2", que: "la nota no acaba con su etiqueta" },
+      { donde: "out/3-notes.md:5", que: "la nota no acaba con su etiqueta" },
+      { donde: "out/2-plan.md:2", que: "otra cosa" },
+      { donde: "out/3-notes.md:40", que: "una línea que no existe" },
+      { donde: "out/no-esta.md:1", que: "un archivo que no existe" },
+      { donde: "days[0].stops", que: "un rojo de la puerta del asiento" },
+    ]);
+    assert.equal(devuelto[0].linea, "- The lengths are my judgement: - a walk, 60; - a museum, 90.");
+    assert.equal(devuelto[1].linea?.length, 400);
+    assert.equal(devuelto[2].linea, "Then the gym.");
+    for (const sinLinea of devuelto.slice(3)) assert.equal("linea" in sinLinea, false);
+    assert.deepEqual(
+      devuelto.map((x) => x.donde),
+      [
+        "out/3-notes.md:2",
+        "out/3-notes.md:5",
+        "out/2-plan.md:2",
+        "out/3-notes.md:40",
+        "out/no-esta.md:1",
+        "days[0].stops",
+      ],
+    );
+  } finally {
+    rmSync(carpeta, { recursive: true, force: true });
   }
 });

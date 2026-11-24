@@ -119,6 +119,43 @@ export function puertaMetodo(puesto: string, sello: Sello, abiertas: string[] = 
   }
 }
 
+/**
+ * Las notas de un texto, cada una con la línea en la que empieza. Una nota empieza con `- ` y llega hasta la
+ * siguiente: lo que cuelga de ella (una lista metida, con más sangría, o un renglón que sigue justo debajo) es la
+ * misma nota, y su fuente y su etiqueta van al final de su primer renglón o al final de todo. Un título, o un
+ * renglón sin sangría tras un hueco, la cierra. Así una nota partida en varias líneas se lee entera, y una sin
+ * etiqueta sigue siendo un rojo. Van también sus renglones, uno a uno: el que lleve su propia fuente y su etiqueta
+ * se mira igual que una nota suelta.
+ */
+export function notasDe(texto: string): { linea: number; texto: string; renglones: string[] }[] {
+  const salida: { linea: number; texto: string; renglones: string[] }[] = [];
+  let abierta: { linea: number; sangria: number; trozos: string[] } | null = null;
+  let hueco = false;
+  const cierra = (): void => {
+    if (abierta !== null)
+      salida.push({ linea: abierta.linea, texto: abierta.trozos.join(" "), renglones: abierta.trozos });
+    abierta = null;
+  };
+  texto.split("\n").forEach((cruda, i) => {
+    const linea = cruda.replace(/\s+$/, "");
+    if (linea === "") {
+      hueco = true;
+      return;
+    }
+    const sangria = linea.length - linea.trimStart().length;
+    const esNota = /^\s*- /.test(linea);
+    const cuelga = abierta !== null && (sangria > abierta.sangria || (!esNota && !hueco && !/^#/.test(linea)));
+    hueco = false;
+    if (cuelga) abierta?.trozos.push(linea.trim());
+    else {
+      cierra();
+      if (esNota) abierta = { linea: i + 1, sangria, trozos: [linea.trim()] };
+    }
+  });
+  cierra();
+  return salida;
+}
+
 /** Las fuentes de una nota, separadas por comas: una coma dentro de una dirección no la parte. */
 function fuentesDe(entreCorchetes: string): string[] {
   return entreCorchetes
@@ -222,25 +259,17 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[]): Veredic
   // 6. Cada nota lleva su etiqueta, y lo visto, el archivo del material de donde sale.
   const notas = join(out, PASOS[2]);
   if (existsSync(notas)) {
-    const lineas = readFileSync(notas, "utf8").split("\n");
     let cuantas = 0;
-    lineas.forEach((linea, i) => {
-      if (!/^\s*- /.test(linea)) return;
-      cuantas++;
-      const donde = `out/${PASOS[2]}:${i + 1}`;
-      const final = /(?:\[([^\]]*)\]\s*)?\[([^\]]*)\]\s*$/.exec(linea);
-      const etiqueta = final?.[2].trim() ?? "";
-      if (!ETIQUETAS.includes(etiqueta)) {
-        rojos.push({ donde, que: "la nota no acaba con su etiqueta: seen, deduced o assumed" });
-        return;
-      }
-      const fuentes = fuentesDe(final?.[1] ?? "");
+    const FINAL = /(?:\[([^\]]*)\]\s*)?\[([^\]]*)\]\s*$/;
+    // Lo que cita un texto que acaba con su etiqueta: lo visto, un archivo del material; una página, una abierta.
+    const mirarFuentes = (donde: string, final: RegExpExecArray): void => {
+      const fuentes = fuentesDe(final[1] ?? "");
       // Una página citada, lleve la etiqueta que lleve, tiene que ser una que se abrió.
       for (const f of fuentes.filter(esDireccion)) {
         const falla = sinAbrir(f);
         if (falla !== null) rojos.push({ donde, que: `la nota ${falla}` });
       }
-      if (etiqueta !== "seen") return;
+      if (final[2].trim() !== "seen") return;
       if (fuentes.length === 0) rojos.push({ donde, que: "la nota dice que lo vio y no dice en qué archivo" });
       for (const f of fuentes.filter((x) => !esDireccion(x)).map((x) => x.split("#")[0])) {
         // Vale un archivo del material, o una carpeta suya cuando la nota habla de todo lo que hay en ella.
@@ -250,6 +279,24 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[]): Veredic
           (sello.archivos[f] !== undefined || Object.keys(sello.archivos).some((a) => a.startsWith(carpeta)));
         if (!esDelMaterial) rojos.push({ donde, que: `la nota cita ${f}, que no es de su material` });
       }
+    };
+    const conEtiqueta = (x: string): RegExpExecArray | null => {
+      const final = FINAL.exec(x);
+      return final !== null && ETIQUETAS.includes(final[2].trim()) ? final : null;
+    };
+    notasDe(readFileSync(notas, "utf8")).forEach(({ linea, texto, renglones }) => {
+      cuantas++;
+      const donde = `out/${PASOS[2]}:${linea}`;
+      // La etiqueta de una nota va al final de su primer renglón o al final de todo lo que cuelga de ella.
+      const propias = renglones.map(conEtiqueta);
+      const delFinal = propias.at(-1) ?? conEtiqueta(texto);
+      if (propias[0] === null && delFinal === null) {
+        rojos.push({ donde, que: "la nota no acaba con su etiqueta: seen, deduced o assumed" });
+        return;
+      }
+      // Cada renglón que lleva su fuente y su etiqueta se mira: uno de dentro no se cuela por ir colgado.
+      const queMirar = propias.at(-1) === null && delFinal !== null ? [...propias, delFinal] : propias;
+      for (const final of queMirar) if (final !== null) mirarFuentes(donde, final);
     });
     if (cuantas === 0 && readFileSync(notas, "utf8").trim() !== "")
       rojos.push({ donde: `out/${PASOS[2]}`, que: "no hay ninguna nota con la forma del método" });
