@@ -3,14 +3,14 @@
 Al día el 24-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 3, cerrada con el visto bueno del PM (24-nov); las fuentes de rutas, a su decisión** (el
+**Estamos aquí: la tanda 4, empezada por sus cimientos (24-nov); las fuentes de rutas, a decisión del PM** (el
 estado, punto a punto, en [plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él
 empezó la 3, **el agente hace el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
 absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje».
 
 **El punto de situación de la tanda 3** (23-nov). La investigación corre entera, de lo entendido al viaje en el mapa,
 y se llevó de punta a punta con un viaje de verdad; ese viaje es el que enseña la web. La lleva
-`agent/launcher/investigar.ts`, paso a paso y desde el disco: `empezar <entendido.json>` abre el run en la mesa y
+`agent/launcher/investigar.ts`, paso a paso y desde el disco: `empezar <entendido.json>` abre el viaje y su run en la mesa y
 `sigue <run>` da los pasos de código que puede hasta que toca esperar a un asiento, para una puerta o está hecho. Los
 asientos los lanza a mano quien lleva el run, con la orden de `ordenes/<puesto>.txt`, hasta que exista el lanzador
 (2.7). Lo que deja en el run: `sitios.json`, `ruta.json`, `busqueda.json`, `mirar.json` y `como_es.json`, `dias.json`,
@@ -55,9 +55,19 @@ mirado, solo leyendo (ni un registro ni una llamada), y escrito en [fuentes.md](
 que recomienda la sesión es Geoapify (lo que se tarda y si se puede ir, a pie, en coche y en transporte público;
 deja guardar; gratis a este tamaño). Lo que cuesta cada manera no lo da ninguna fuente abierta en todo el mundo. **La
 elección es del PM, y se le ha pedido.** Antes de construir sobre la que elija hay que probarla con una clave gratis,
-que da él por el formulario seguro, en destinos de clases distintas. Después viene **la tanda 4: la casa
-en vivo y tu cuenta**, la primera que gasta de una clave. Antes de lanzar un asiento con una clave hay que cerrar lo
-que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
+que da él por el formulario seguro, en destinos de clases distintas.
+
+**La tanda 4, la casa en vivo y tu cuenta, ha empezado** (24-nov), por lo que no necesita al PM. Hecho: la carpeta
+de cada viaje en la mesa, con su estado y sus versiones (1.2, en parte, y 2.1). Lo siguiente, en este orden y con
+una IA de mentira: lo que la casa cuenta en vivo (2.6), el conductor (2.5), lo que lanza los asientos sola (2.2) y
+el lanzador de la IA de verdad (2.7), sin lanzarlo. Antes de enchufar la IA de verdad y las cuentas hacen falta dos
+decisiones del PM: cómo se llama a la IA (una sesión entera, como hoy, o una llamada directa, que toca el método
+común) y con qué se guardan las cuentas y dónde corren la web y la casa (11.1). Lo que hay para decidirlas: la casa
+del ensamblador, en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor, la web
+en Vercel le habla por un túnel con una llave, cuenta lo que pasa en vivo por sucesos del servidor, lanza cada
+asiento como una sesión de Claude Code confinada a su puesto, la clave del cliente vive solo en la memoria del
+motor, y todavía no tiene cuentas. Nada gasta de una clave sin el adelante del PM, y antes de lanzar un asiento con
+una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
 
 El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
 viaje del usuario; dio libertad para llevarlo de punta a punta, con su visto bueno al final de cada tanda. Con eso se
@@ -162,8 +172,12 @@ se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
 - **Las claves de las fuentes**: nunca en el repositorio. En las sesiones de la nube están en el entorno del PM, que
   las dio por el formulario seguro, y su proxy las pone solo (por eso la búsqueda se lanza con `NODE_USE_ENV_PROXY=1`);
   en otra máquina, en las variables `LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y `PARALLEL_API_KEY`.
-- **La mesa**: lo que saca cada búsqueda, fuera del repositorio, en `ELDORADO_MESA` o en la carpeta temporal. En la
-  nube se pierde al cerrar la sesión.
+- **La mesa**: fuera del repositorio, en `ELDORADO_MESA` o en la carpeta temporal. En la nube se pierde al cerrar la
+  sesión. Cada viaje tiene su carpeta, `viajes/<id>/`, y solo la abre su dueño (`agent/launcher/mesa.ts`):
+  `ficha.json` (de quién es, cómo está, sus runs y sus versiones), `entendido.json`, `diario.jsonl` (solo crece),
+  `runs/<n>/` (cada investigación, con lo que deja cada paso: `agent/data/pasos.ts`) y `versiones/<n>/` (cada
+  versión, que no se vuelve a escribir). Por dónde va un run se lee de su carpeta: `agent/launcher/pasos.ts`. Los
+  runs de antes del 24-nov son carpetas sueltas en la mesa, y siguen valiendo.
 - **El puesto de un asiento**: una carpeta dentro del run, en la mesa, con `contract/` (el método común y el contrato
   de su asiento), `in/` (solo lo que puede leer) y `out/` (lo único que escribe). El sello de lo que se le dio queda
   fuera del puesto, en `sellos/`. Quién piensa en el asiento es un lanzador que se le pasa a la casa: en las pruebas,

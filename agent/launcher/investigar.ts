@@ -9,7 +9,7 @@
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. Es la versión de mano de lo que lanza los pasos: la casa de
 // verdad, que los lanza sola y lo cuenta en vivo, llega con su tanda.
 
-import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   CANDIDATOS_QUE_BASTAN,
@@ -20,6 +20,7 @@ import {
   RADIO_MAXIMO,
 } from "../data/cribas.ts";
 import { DEMASIADO_LEJOS } from "../data/dias.ts";
+import { PARADO } from "../data/pasos.ts";
 import { COSAS } from "../data/gustos.ts";
 import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
@@ -52,7 +53,7 @@ import type { Estancia, FuenteAlojamiento, OfertaDeZona, Vuelo } from "../tools/
 import { cambiosDePartida, pedirPalancas, type Cambio, type PrecioMovido } from "../tools/palancas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { ordenDeApertura, recogerAsiento } from "./asiento.ts";
-import { carpetaDeLaMesa, dentroDelRepositorio } from "./mesa.ts";
+import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun, pasar, viajeDelRun } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
@@ -75,9 +76,9 @@ export type Fuentes = {
 /** Cuántas veces vuelve un trabajo en rojo a su asiento antes de pararse: dos, como dice la hoja. */
 export const VUELTAS = 2;
 
-type Parado = { paso: string; rojos: Rojo[] };
-/** Donde queda escrito que un run se paró, y por qué. */
-export const PARADO = "parado.json";
+/** Dónde se paró un run: el paso, por su nombre en `agent/data/pasos.ts`, dicho para quien lo lleva, y por qué. */
+type Parado = { en?: string; paso: string; rojos: Rojo[] };
+export { PARADO };
 
 export type Estado = {
   /** Los puestos que esperan a su asiento. Vacío si no se espera a nadie. */
@@ -93,12 +94,7 @@ type Guardado<T> = { entrega: T; rojos: Rojo[] };
 const ruta = (run: string, nombre: string): string => join(run, nombre);
 const hay = (run: string, nombre: string): boolean => existsSync(ruta(run, nombre));
 const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(ruta(run, nombre), "utf8")) as T;
-/** Guarda de una vez: se escribe aparte y se cambia el nombre, para que un corte no deje un archivo a medias. */
-function guardar(run: string, nombre: string, dato: unknown): void {
-  const aparte = ruta(run, `.${nombre}.a-medias`);
-  writeFileSync(aparte, JSON.stringify(dato, null, 2));
-  renameSync(aparte, ruta(run, nombre));
-}
+const guardar = (run: string, nombre: string, dato: unknown): void => guardarJson(ruta(run, nombre), dato);
 const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
 
 /**
@@ -519,13 +515,13 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };
   const viaje = leer<Entendido>(run, "entendido.json");
   const espera = (...puestos: string[]): Estado => ({ esperan: puestos, hecho: false, parado: null, avisos });
-  const para = (paso: string, rojos: Rojo[]): Estado => {
-    guardar(run, PARADO, { paso, rojos });
-    return { esperan: [], hecho: false, parado: { paso, rojos }, avisos };
+  const para = (en: string, paso: string, rojos: Rojo[]): Estado => {
+    guardar(run, PARADO, { en, paso, rojos });
+    return { esperan: [], hecho: false, parado: { en, paso, rojos }, avisos };
   };
   // Lo entendido se mira antes de gastar nada: un dato mal escrito no llega ni a una fuente ni a un asiento.
   const claro = puertaEntendido(viaje);
-  if (!claro.verde) return para("lo entendido (puerta 1)", claro.rojos);
+  if (!claro.verde) return para("understood", "lo entendido (puerta 1)", claro.rojos);
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
@@ -535,7 +531,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     // Sin sitios en los datos no hay con qué anclar una zona: la ruta no podría pasar su puerta, la escriba quien
     // la escriba. Se para aquí, antes de gastar un asiento.
     if (lugares.length === 0)
-      return para("los sitios que ver", [
+      return para("sights", "los sitios que ver", [
         {
           donde: "sitios",
           que: "los datos abiertos no traen ningún sitio de este destino: no hay con qué hacer la ruta",
@@ -550,7 +546,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       (e) => puertaRuta(e, { viaje, noches, lugares, traslados: [] }).rojos,
     );
     if ("espera" in r) return espera(r.espera);
-    if ("parado" in r) return para("la ruta (puerta 3)", r.parado);
+    if ("parado" in r) return para("route", "la ruta (puerta 3)", r.parado);
     guardar(run, "ruta.json", { entrega: r.entrega, zonas: resolverZonas(r.entrega, lugares) });
   }
 
@@ -559,7 +555,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   // en una base, que sería otro viaje.
   const deLaRuta = leer<DeLaRuta>(run, "ruta.json").entrega;
   if (deLaRuta.bases.length > 1)
-    return para("la ruta", [
+    return para("route", "la ruta", [
       {
         donde: "bases",
         que:
@@ -571,12 +567,12 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   // 3. La búsqueda de alojamiento en las zonas de la ruta, y su puerta.
   if (!hay(run, "busqueda.json")) {
     const rojos = await buscar(run, viaje, f);
-    if (rojos.length > 0) return para("la búsqueda (puerta 4)", rojos);
+    if (rojos.length > 0) return para("search", "la búsqueda (puerta 4)", rojos);
   }
   // Sin ningún alojamiento con precio no hay viaje que cruzar: se para aquí y se dice por qué, antes de gastar más.
   const encontrado = leer<{ busqueda: Busqueda }>(run, "busqueda.json").busqueda;
   if (encontrado.finalistas.length === 0)
-    return para("la búsqueda de alojamiento", [{ donde: "alojamiento", que: sinAlojamiento(encontrado) }]);
+    return para("search", "la búsqueda de alojamiento", [{ donde: "alojamiento", que: sinAlojamiento(encontrado) }]);
 
   // 4. A la vez: mirar cada finalista y elegir los sitios. Después, los días y su puerta.
   if (!hay(run, "dias.json")) {
@@ -602,7 +598,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       piezasDeLosSitios(run, viaje),
       (e) => puertaSitios(e, { sitios: dados.map((s) => s.id), noches, dicho }).rojos,
     );
-    if ("parado" in r) return para("los sitios (puerta 9)", r.parado);
+    if ("parado" in r) return para("pick", "los sitios (puerta 9)", r.parado);
     if ("espera" in r) pendientes.push(r.espera);
     if (pendientes.length > 0 || !("entrega" in r)) return espera(...pendientes);
     // Lo que no pasó sus puertas al mirar no para el viaje: ese alojamiento queda sin mirar, y se dice.
@@ -610,7 +606,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
     for (const a of mirado.alojamientos)
       if (!a.pasadas.some((p) => p.metodo.verde && p.comoEs.verde)) avisos.push(`${a.nombre}: se queda sin mirar`);
     const rojos = await repartirLosDias(run, viaje, r.entrega, f);
-    if (rojos.length > 0) return para("los días (puerta 9)", rojos);
+    if (rojos.length > 0) return para("days", "los días (puerta 9)", rojos);
   }
   // Si la mayor parte de lo elegido se queda fuera por lejos, es que ni cogiendo algo se llega desde una sola base
   // dentro de un día: ese viaje pide dormir en más de un sitio, y eso todavía no se sabe planear. Se para y se dice.
@@ -618,7 +614,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   // Un run de antes de que el reparto dijera sus porqués no los lleva: entonces no hay ninguno que contar.
   const lejos = Object.values(repartido.reparto.porQue ?? {}).filter((m) => m === "far").length;
   if (repartido.paradas.length > 0 && lejos / repartido.paradas.length > DEMASIADO_LEJOS)
-    return para("los días", [
+    return para("days", "los días", [
       {
         donde: "dias",
         que:
@@ -640,7 +636,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       );
       if (validas.length === 0) {
         const descartadas = tabla.rows.filter((x) => x.discarded !== "").length;
-        return para("la tabla", [
+        return para("table", "la tabla", [
           {
             donde: "rows",
             que:
@@ -658,7 +654,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
         (e) => puertaCruce(e, { tabla, viaje }).rojos,
       );
       if ("espera" in r) return espera(r.espera);
-      if ("parado" in r) return para("el cruce (puerta 6)", r.parado);
+      if ("parado" in r) return para("cross", "el cruce (puerta 6)", r.parado);
       guardar(run, `cruce-${ronda}.json`, { entrega: r.entrega, rojos: [] });
     }
     if (leer<DelCruce>(run, `cruce-${ronda}.json`).entrega.requests.length === 0) break;
@@ -668,7 +664,7 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
   if (!hay(run, "viaje.json") && hay(run, "explica.json")) {
     // Lo que explicó y ya pasó su puerta no se vuelve a juzgar: se lee, y con ello se monta el viaje.
     const pegas = montarElViaje(run, viaje, leer<Guardado<EntregaDeExplicar>>(run, "explica.json").entrega);
-    if (pegas.length > 0) return para("el viaje para la web", pegas);
+    if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
   }
   if (!hay(run, "viaje.json")) {
     const dado = loQueSeExplica(run, viaje);
@@ -686,26 +682,34 @@ export async function sigue(run: string, f: Fuentes): Promise<Estado> {
       (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).rojos,
     );
     if ("espera" in r) return espera(r.espera);
-    if ("parado" in r) return para("la explicación (puerta 7)", r.parado);
+    if ("parado" in r) return para("explain", "la explicación (puerta 7)", r.parado);
     guardar(run, "explica.json", { entrega: r.entrega, rojos: [] });
     const pegas = montarElViaje(run, viaje, r.entrega);
-    if (pegas.length > 0) return para("el viaje para la web", pegas);
+    if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
   }
+  // Si el run es de un viaje de la mesa, lo que dejó se guarda como una versión más, una sola vez.
+  const suyo = viajeDelRun(run);
+  if (suyo !== null) guardarVersion(suyo.viaje, suyo.n, suyo.n === 1 ? "first" : "change");
   return { esperan: [], hecho: true, parado: null, avisos };
 }
 
-/** Abre un run en la mesa con lo que he entendido de un viaje, y devuelve su carpeta. */
-export function empezar(entendido: string, cuando: Date = new Date()): string {
+/** A nombre de quién quedan los viajes que se abren desde la terminal, mientras no los abra una cuenta. */
+export const DE_MANO = "by-hand";
+
+/**
+ * Abre en la mesa un viaje con lo que he entendido de él, ya confirmado por quien lo lanza, y su primera
+ * investigación. Devuelve la carpeta de ese run.
+ */
+export function empezar(entendido: string, cuando: Date = new Date(), dueno: string = DE_MANO): string {
   // Lo entendido se mira antes de abrir nada, y con la fecha de hoy: un viaje que ya pasó no se abre.
   const claro = puertaEntendido(JSON.parse(readFileSync(resolve(entendido), "utf8")), {
     hoy: cuando.toISOString().slice(0, 10),
   });
   if (!claro.verde)
     throw new Error(`lo entendido no está claro: ${claro.rojos.map((r) => `${r.donde}: ${r.que}`).join("; ")}`);
-  const run = join(carpetaDeLaMesa(), `${cuando.toISOString().replace(/[:.]/g, "-")}-viaje`);
-  mkdirSync(run, { recursive: true, mode: 0o700 });
-  cpSync(resolve(entendido), join(run, "entendido.json"));
-  return run;
+  const viaje = abrirViaje({ dueno, entendido: JSON.parse(readFileSync(resolve(entendido), "utf8")), cuando });
+  pasar(viaje, "confirmed", cuando);
+  return nuevoRun(viaje, cuando);
 }
 
 async function principal(): Promise<number> {

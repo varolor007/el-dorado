@@ -320,6 +320,14 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   concretos, que son datos de una fuente, y se quedan los recuentos y lo que da cada fuente, que es para lo que está
   el documento.
 
+- **La tanda 4 empieza por sus cimientos** (la sesión, con el visto bueno del PM a la tanda 3): la carpeta de cada
+  viaje en la mesa. Lo que decide la sesión de su forma, siguiendo la mesa del ensamblador: una carpeta por viaje,
+  con su ficha, su diario, que solo crece, una carpeta por investigación y otra por versión; guardar de una vez; y
+  una versión, entera y una sola vez. Distinto del ensamblador, porque lo pide la hoja: cada viaje lleva su dueño y
+  solo él lo abre. Los viajes que se abren desde la terminal quedan a nombre de `by-hand` mientras no haya cuentas.
+  Lo que es de un viaje y no es de la investigación (el estado de cada pieza, de cada parada y de cada precio) llega
+  con los momentos que lo cambian.
+
 ## Pendientes
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
@@ -355,7 +363,8 @@ Lo que pide la versión 2, a decisión del PM:
 - **El viaje de ejemplo de la portada** (23-nov): con datos de verdad de las fuentes, que hay que poder publicar, o
   inventado. Antes de publicar la portada.
 
-- **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de la tanda 4.
+- **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de enchufar las cuentas, en
+  la tanda 4 (11.1). El ensamblador corre en Docker en un servidor, con la web en Vercel, y aún no tiene cuentas.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.
 - **Dónde se reserva un precio de LiteAPI** (23-nov): no tiene página pública. Hoy se enlazaría a otra agencia cuando
   casa y, si no, a la web del hotel. Antes de la tanda 5.

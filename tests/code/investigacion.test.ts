@@ -10,7 +10,25 @@ import { ESCALERA_DE_MINIMOS, ESCALERA_DE_RADIO, RADIO_MAXIMO } from "../../agen
 import { AVISOS } from "../../agent/data/palabras.ts";
 import { puertaBusqueda } from "../../agent/gates/puerta_busqueda.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
-import { estanciaDe, sigue, VUELTAS, type Estado, type Fuentes } from "../../agent/launcher/investigar.ts";
+import {
+  DE_MANO,
+  empezar,
+  estanciaDe,
+  sigue,
+  VUELTAS,
+  type Estado,
+  type Fuentes,
+} from "../../agent/launcher/investigar.ts";
+import {
+  abrirViaje,
+  leerDiario,
+  leerVersion,
+  leerViaje,
+  nuevoRun,
+  pasar,
+  viajesDe,
+} from "../../agent/launcher/mesa.ts";
+import { porDondeVa } from "../../agent/launcher/pasos.ts";
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } from "../../agent/output/viaje.ts";
 import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
@@ -772,5 +790,133 @@ test("si lo elegido no cabe desde una sola base ni cogiendo algo, se para y dice
     assert.ok(!lanzados.some((id) => id.startsWith("cruce") || id.startsWith("explica")));
   } finally {
     rmSync(run, { recursive: true, force: true });
+  }
+});
+
+const estados = (run: string): Record<string, string> =>
+  Object.fromEntries(porDondeVa(run).map((p) => [p.id, p.estado]));
+
+test("por dónde va un run se lee de su carpeta: cada paso, sin empezar, esperando, hecho o parado", async () => {
+  const run = runNuevo();
+  try {
+    assert.deepEqual(
+      Object.entries(estados(run)).filter(([, e]) => e !== "pending"),
+      [["understood", "done"]],
+    );
+    // La primera llamada trae los sitios y deja a la ruta esperando a su asiento.
+    let estado = await sigue(run, fuentesInventadas());
+    assert.deepEqual(estado.esperan, ["ruta-v1"]);
+    assert.equal(estados(run).sights, "done");
+    assert.deepEqual(
+      porDondeVa(run).find((p) => p.id === "route"),
+      { id: "route", quien: "route-planner", puerta: 3, estado: "waiting", esperan: ["ruta-v1"] },
+    );
+    assert.equal(estados(run).search, "pending");
+    // Con la ruta, busca, y deja esperando a la vez a los que miran y al que elige los sitios.
+    trabaja(run, "ruta-v1");
+    estado = await sigue(run, fuentesInventadas());
+    const va = porDondeVa(run);
+    assert.deepEqual([va[2].estado, va[3].estado, va[4].estado, va[5].estado], ["done", "done", "waiting", "waiting"]);
+    assert.deepEqual(va[4].esperan, ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1"]);
+    assert.deepEqual(va[5].esperan, ["sitios-v1"]);
+    assert.deepEqual([...va[4].esperan, ...va[5].esperan].sort(), [...estado.esperan].sort());
+    // Al acabar, todos hechos.
+    const fin = await investiga(run);
+    assert.equal(fin.estado.hecho, true);
+    assert.ok(porDondeVa(run).every((p) => p.estado === "done" && p.esperan.length === 0));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("un run parado dice en qué paso se paró, y los de después no han empezado", async () => {
+  const run = runNuevo();
+  try {
+    const { estado } = await investiga(run, (asiento, entrega) => {
+      if (asiento === "route-planner") entrega.bases = [];
+    });
+    assert.equal(estado.parado?.en, "route");
+    const va = estados(run);
+    assert.equal(va.sights, "done");
+    assert.equal(va.route, "stopped");
+    assert.equal(va.search, "pending");
+    assert.equal(va.trip, "pending");
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("la investigación de un viaje de la mesa deja su versión, una sola, y el viaje queda en el mapa", async () => {
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
+  try {
+    const abierto = abrirViaje({ dueno: "ana", entendido: ENTENDIDO, mesa });
+    pasar(abierto, "confirmed");
+    const run = nuevoRun(abierto);
+    const { estado } = await investiga(run);
+    assert.equal(estado.hecho, true);
+    const leido = leerViaje(abierto.ficha.id, "ana", mesa);
+    assert.equal(leido.ficha.estado, "on_map");
+    assert.equal(leido.ficha.version, 1);
+    assert.deepEqual(
+      leido.ficha.versiones.map((v) => [v.n, v.run, v.motivo]),
+      [[1, 1, "first"]],
+    );
+    // Lo que se enseña es lo que dejó el run, y pasa lo que se comprueba de un viaje antes de enseñarlo.
+    const version = leerVersion(leido);
+    assert.deepEqual(version?.viaje, leerJson(join(run, "viaje.json")));
+    assert.deepEqual(comprobarViaje(version?.viaje as Viaje), []);
+    assert.deepEqual(version?.entendido, ENTENDIDO);
+    // Otra llamada sobre el run hecho no deja otra versión.
+    assert.equal((await sigue(run, fuentesInventadas())).hecho, true);
+    assert.equal(leerViaje(abierto.ficha.id, "ana", mesa).ficha.versiones.length, 1);
+    assert.deepEqual(
+      leerDiario(leido).map((a) => a.que),
+      ["opened", "state", "run", "version"],
+    );
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("un run que se para no deja versión: el viaje sigue investigando, y nunca enseña un viaje a medias", async () => {
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
+  try {
+    const abierto = abrirViaje({ dueno: "ana", entendido: ENTENDIDO, mesa });
+    pasar(abierto, "confirmed");
+    const run = nuevoRun(abierto);
+    const { estado } = await investiga(run, (asiento, entrega) => {
+      if (asiento === "trip-explainer") entrega.ways = [];
+    });
+    assert.equal(estado.parado?.en, "explain");
+    const leido = leerViaje(abierto.ficha.id, "ana", mesa);
+    assert.equal(leido.ficha.estado, "researching");
+    assert.equal(leido.ficha.version, null);
+    assert.equal(leerVersion(leido), null);
+    assert.ok(!existsSync(join(leido.carpeta, "versiones")));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("empezar desde la terminal abre el viaje en la mesa, confirmado, con su primera investigación", () => {
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
+  const antes = process.env.ELDORADO_MESA;
+  process.env.ELDORADO_MESA = mesa;
+  try {
+    const entendido = join(mesa, "entendido.json");
+    writeFileSync(entendido, JSON.stringify(ENTENDIDO));
+    const run = empezar(entendido, new Date("2027-01-01T00:00:00Z"));
+    const [ficha] = viajesDe(DE_MANO, mesa);
+    assert.equal(run, join(mesa, "viajes", ficha.id, "runs", "1"));
+    assert.equal(ficha.estado, "researching");
+    assert.deepEqual(leerJson(join(run, "entendido.json")), ENTENDIDO);
+    // Lo entendido mal escrito no abre nada.
+    writeFileSync(entendido, JSON.stringify({ ...ENTENDIDO, currency: "euros" }));
+    assert.throws(() => empezar(entendido, new Date("2027-01-01T00:00:00Z")), /no está claro/);
+    assert.equal(viajesDe(DE_MANO, mesa).length, 1);
+  } finally {
+    if (antes === undefined) delete process.env.ELDORADO_MESA;
+    else process.env.ELDORADO_MESA = antes;
+    rmSync(mesa, { recursive: true, force: true });
   }
 });

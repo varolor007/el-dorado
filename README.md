@@ -37,7 +37,7 @@ node agent/launcher/buscar.ts --pais <país> --lat <latitud> --lon <longitud> \
 Para llevar una investigación entera, con lo entendido de un viaje escrito en un archivo:
 
 ```bash
-node agent/launcher/investigar.ts empezar <entendido.json>   # abre el run en la mesa y dice su carpeta
+node agent/launcher/investigar.ts empezar <entendido.json>   # abre el viaje y su run en la mesa, y dice la carpeta
 node agent/launcher/investigar.ts sigue <carpeta del run>    # da los pasos que puede, y dice a quién espera
 ```
 
