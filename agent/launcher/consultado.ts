@@ -67,6 +67,16 @@ export function abiertas(c: Consultado): string[] {
   return [...salida];
 }
 
+/** Las páginas que se intentaron abrir y no se abrieron, escritas para compararlas. */
+export function intentadas(c: Consultado): string[] {
+  const salida = new Set<string>();
+  for (const f of c.fallidas) {
+    const comparable = typeof f?.url === "string" ? direccionComparable(f.url) : null;
+    if (comparable !== null) salida.add(comparable);
+  }
+  return [...salida];
+}
+
 const archivoDe = (run: string, id: string): string => join(resolve(run), "consultado", `${id}.json`);
 const runDe = (p: Puesto): string => resolve(p.carpeta, "..", "..");
 

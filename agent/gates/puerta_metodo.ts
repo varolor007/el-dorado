@@ -109,11 +109,16 @@ function piezas(sello: Sello): string[] {
  * que quepa; y si aun así algo no se puede leer, es un rojo, no una excepción: la casa no se rompe por lo que deja
  * un asiento.
  */
-export function puertaMetodo(puesto: string, sello: Sello, abiertas: string[] = []): VeredictoDelMetodo {
+export function puertaMetodo(
+  puesto: string,
+  sello: Sello,
+  abiertas: string[] = [],
+  intentadas: string[] = [],
+): VeredictoDelMetodo {
   try {
     const raros = loQueNoCabe(puesto);
     if (raros.length > 0) return { verde: false, rojos: raros, entrega: null };
-    return mirarElMetodo(puesto, sello, abiertas);
+    return mirarElMetodo(puesto, sello, abiertas, intentadas);
   } catch {
     return { verde: false, rojos: [{ donde: "puesto", que: "el puesto no se pudo leer" }], entrega: null };
   }
@@ -188,16 +193,20 @@ function textosDe(valor: unknown, donde: string): { donde: string; texto: string
   return [];
 }
 
-function mirarElMetodo(puesto: string, sello: Sello, paginas: string[]): VeredictoDelMetodo {
+function mirarElMetodo(puesto: string, sello: Sello, paginas: string[], fallidas: string[]): VeredictoDelMetodo {
   const rojos: Rojo[] = [];
   const out = join(puesto, "out");
   // Sale a internet el asiento que lo dice en su contrato; lo que abrió, lo dice la memoria de lo consultado.
   const conInternet = sello.archivos[`contract/seat/${INTERNET}`] !== undefined;
   const abiertas = new Set(paginas.map(direccionComparable).filter((d): d is string => d !== null));
+  // Las que intentó abrir y no se abrieron: una nota puede nombrarlas para decir que no se abrieron (la casa lo
+  // sabe), pero no son una fuente: ningún dato de la entrega puede citarlas.
+  const sinExito = new Set(fallidas.map(direccionComparable).filter((d): d is string => d !== null));
   const sinAbrir = (pagina: string): string | null => {
     if (!conInternet) return `cita la página ${pagina}, y este asiento no sale a internet`;
     const comparable = direccionComparable(pagina);
-    return comparable !== null && abiertas.has(comparable) ? null : `cita la página ${pagina}, que no se abrió`;
+    if (comparable !== null && (abiertas.has(comparable) || sinExito.has(comparable))) return null;
+    return `cita la página ${pagina}, que ni se abrió ni se intentó abrir`;
   };
 
   // 1. Cada paso dejó su archivo, con algo dentro.

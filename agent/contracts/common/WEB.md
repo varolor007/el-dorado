@@ -18,4 +18,5 @@ for on the web; this one says how every seat does it. These rules win over any g
   says is weaker; say so in your notes.
 - **W6. Every fact from a page carries its date**: the date the page gives for it, or `unknown` (T2).
 - **W7. Your limits** of searches and pages are given with your material. If they are not enough, say what you left
-  unchecked (T9). A page that does not open is not a source: say it did not open.
+  unchecked (T9). A page that does not open is not a source: say in a note that it did not open, with its address,
+  and never use it for a fact or in your delivery.

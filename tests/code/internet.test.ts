@@ -163,7 +163,7 @@ test("la memoria: lo que buscó y abrió queda en el run, fuera del puesto, sin 
   assert.ok(Math.abs((r.gasto?.usd ?? 0) - (0.008 + USD_POR_BUSQUEDA)) < 1e-12);
 });
 
-test("la puerta: la misma página escrita de otra forma vale; una que no se abrió es un rojo", async () => {
+test("la puerta: la misma página escrita de otra forma vale; una que ni se intentó abrir es un rojo", async () => {
   const p = monta("seat-online");
   const notas = [
     "- A visa is needed. [HTTPS://OFICIAL.invalid/requisitos/#visa] [seen]",
@@ -176,17 +176,20 @@ test("la puerta: la misma página escrita de otra forma vale; una que no se abri
     source: "https://inventada.invalid/datos",
     from_material: "https://dada.invalid/x",
     ok: `${ABIERTA}/`,
+    tried: "https://caida.invalid/",
   };
   const { pensar } = busca(respuesta(notas, entrega));
   const r = await lanzarAsiento(p, lanzadorDirecto(pensar, { entrada: 4, salida: 20 }), { segundos: 5 });
   assert.deepEqual(
     r.metodo.rojos.map((x) => `${x.donde}: ${x.que}`),
     [
-      "out/3-notes.md:2: la nota cita la página https://otra.invalid/blog, que no se abrió",
-      "out/3-notes.md:3: la nota cita la página https://nunca.invalid/feria, que no se abrió",
-      "out/3-notes.md:4: la nota cita la página https://nunca.invalid/feria, que no se abrió",
-      "out/3-notes.md:5: la nota cita la página https://caida.invalid/, que no se abrió",
+      "out/3-notes.md:2: la nota cita la página https://otra.invalid/blog, que ni se abrió ni se intentó abrir",
+      "out/3-notes.md:3: la nota cita la página https://nunca.invalid/feria, que ni se abrió ni se intentó abrir",
+      "out/3-notes.md:4: la nota cita la página https://nunca.invalid/feria, que ni se abrió ni se intentó abrir",
+      // La que se intentó abrir y no se abrió se puede nombrar en una nota (la quinta), pero no es una fuente.
       "out/delivery.json.source: el dato cita la página https://inventada.invalid/datos, " +
+        "que no se abrió ni venía en su material",
+      "out/delivery.json.tried: el dato cita la página https://caida.invalid/, " +
         "que no se abrió ni venía en su material",
     ],
   );
