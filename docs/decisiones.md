@@ -345,6 +345,21 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   de IA del viajero entra con el botón y vive solo en la memoria de la casa, como en el ensamblador: la hoja dice
   «cifrada», que es para cuando haya cuentas donde guardarla, y eso es del PM (11.1).
 
+- **La IA se llama con una llamada directa por asiento** (el PM, a la propuesta de la sesión: «lo de la llamada
+  directa me parece bien»). En vez de una sesión entera por asiento, que tardaba de nueve a dieciséis minutos, la
+  casa le manda su contrato y su material y recibe sus seis pasos en una respuesta. Cambia el método común, que
+  estaba firmado: el asiento ya no escribe archivos, los escribe la casa con lo que él contesta. Cuánto baja, por
+  medir.
+- **Registrarse bien, ya, sin llave de entrada** (el PM: «quiero que se pueda registrar uno bien; no nos enredemos
+  ahora con si llave, no llave; pon que se pueda registrar bien ya de la que estás y listo»). La sesión lo hace con
+  correo y contraseña, guardado por la casa en la mesa, sin servicios de fuera: no pide darse de alta en nada ni
+  cuesta nada. Recuperar la contraseña y confirmar el correo piden mandar correos, que es un servicio nuevo: quedan
+  apuntados.
+- **El motor, a un servidor, al final** (el PM: «luego ya subiremos todo el motor a un servidor y se acabó; pero eso
+  ya al final, una vez estén las pruebas hechas»).
+- **La fuente de rutas sigue sin elegir** (el PM preguntó qué otras hay; se le contestó con la lista de
+  [fuentes.md](fuentes.md)).
+
 ## Pendientes
 
 Lo que deja la revisión de la tanda 3, a decisión del PM porque toca la hoja:
@@ -380,8 +395,8 @@ Lo que pide la versión 2, a decisión del PM:
 - **El viaje de ejemplo de la portada** (23-nov): con datos de verdad de las fuentes, que hay que poder publicar, o
   inventado. Antes de publicar la portada.
 
-- **Las cuentas** (23-nov): con qué se guardan y dónde corren la web y la casa. Antes de enchufar las cuentas, en
-  la tanda 4 (11.1). El ensamblador corre en Docker en un servidor, con la web en Vercel, y aún no tiene cuentas.
+- **Recuperar la contraseña y confirmar el correo** (24-nov): piden mandar correos, que es un servicio nuevo. Las
+  cuentas en sí ya están decididas (24-nov).
 - **El techo de gasto de una investigación** (24-nov): cuánto es, y cómo se le dice al viajero antes de pulsar. El
   mecanismo está hecho; la cifra pide medir lo que gasta cada asiento con la IA de verdad. Va con el 11.4.
 - **El precio de El Dorado** y cómo se cobra (23-nov). La IA va aparte, con la clave del viajero.

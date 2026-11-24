@@ -19,11 +19,11 @@ Hoja de El Dorado, versión 2, firmada el 23 de noviembre de 2026.
 
 ## Por decidir
 
-- **Las cuentas:** con qué se guardan, y dónde corren la web y la casa. *(por decidir)*
+- **Recuperar la contraseña y confirmar el correo:** piden mandar correos, que es un servicio nuevo. Las cuentas ya no están por decidir: registro con correo y contraseña, guardado por la casa. *(por decidir)*
 - **El precio** de El Dorado y cómo se cobra. La IA va aparte, con la clave del viajero. *(por decidir)*
 - **Dónde se reserva un precio de LiteAPI:** no tiene página pública. Hoy se enlaza a otra agencia cuando casa y, si no, a la web del hotel. *(por decidir)*
 - **Los vuelos en vivo:** hoy solo hay precios guardados de hace días, y a veces ninguno para las fechas exactas. *(por decidir)*
-- **Abaratar la mirada:** un alojamiento tardaba catorce minutos; el objetivo es menos de uno. Ya van menos fotos, mejor elegidas y encogidas antes de mirarlas (tu sí del 24-nov a la única pieza de fuera que lleva el agente). Falta llamar a la IA sin rodeos. *(por decidir)*
+- **Abaratar la mirada:** un alojamiento tardaba catorce minutos; el objetivo es menos de uno. Ya van menos fotos, mejor elegidas y encogidas antes de mirarlas (tu sí del 24-nov a la única pieza de fuera que lleva el agente). Llamar a la IA sin rodeos está decidido (24-nov): una llamada directa por asiento. Falta construirlo y medir lo que baja. *(por decidir)*
 - **La fuente de rutas:** de dónde salen el tiempo de verdad de un trayecto, si esa manera de ir existe allí y lo que cuesta. Mirado el 24-nov: hay una fuente que encaja para lo que se tarda, y ninguna abierta que dé lo que cuesta en todo el mundo. Falta que elijas. *(por decidir)*
 - **Los dibujos de la guía:** una colección propia o generados para cada viaje. *(por decidir)*
 - **Las fotos de los hoteles en la web** y las de viajeros: con qué derechos se enseñan. *(por decidir)*
@@ -806,9 +806,9 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 | Los contratos de los asientos | En `agent/contracts/`, en inglés: el método común y uno por asiento. Hechos, el método común y los de la ruta, el que mira el alojamiento, el del día a día, el que cruza y el que explica | en parte |
 | La web | En `web/`, en este repositorio: una web propia, como la de DaVi, con la misma familia de piezas que Cortex. Hecha en seco, con un viaje grabado; falta que hable con la casa, que es lo único con lo que habla | en parte |
 | La puerta de la casa a la web | Lo que la web puede pedir y lo que la casa cuenta en vivo. Hecho el lado de la casa, en `agent/launcher/`: la web entra con su llave, cada viaje se da solo a su dueño y lo que sale son claves y números. Falta el lado de la web, que espera a las cuentas | en parte |
-| La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov). El asiento solo puede abrir su puesto | pendiente |
-| Las cuentas | Registro, sesión, tu clave cifrada y tus viajes. Con qué se guardan, por decidir en su tanda | por decidir |
-| Dónde corre | La web y la casa, en servidores nuestros. Dónde exactamente, por decidir antes de abrirla a nadie | por decidir |
+| La IA | Claude, con la clave de cada viajero (tu decisión del 23-nov), con una llamada directa por asiento (tu decisión del 24-nov): la casa le manda su contrato y su material y recibe sus seis pasos en una respuesta, que ella misma escribe en el puesto. El asiento no toca ningún disco | pendiente |
+| Las cuentas | Registro con tu correo y una contraseña, sesión, tu clave cifrada y tus viajes (tu decisión del 24-nov: registrarse bien, sin llave de entrada). Las guarda la casa, en la mesa, sin servicios de fuera | pendiente |
+| Dónde corre | La web y la casa, en servidores nuestros. El motor entero se sube a un servidor al final, con las pruebas hechas (tu decisión del 24-nov) | pendiente |
 
 ## Siempre, en todos los momentos
 

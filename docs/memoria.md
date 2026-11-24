@@ -69,13 +69,12 @@ pruebas, uno de mentira (`tests/cases/inventado/asientos.ts`). Y la puerta de la
 web (`Authorization: Bearer`), el dueño de cada petición en la cabecera `x-eldorado-owner` y lo que pasa en vivo
 por sucesos del servidor (`/viajes/<id>/eventos`). Aún no tiene orden de arranque: se arranca con su lanzador de la
 IA de verdad, que es el 2.7. Lo siguiente, cuando el PM decida: el lanzador de la IA de verdad (2.7), el lado de la
-web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). Antes de enchufar la IA de verdad y las cuentas hacen falta dos
-decisiones del PM: cómo se llama a la IA (una sesión entera, como hoy, o una llamada directa, que toca el método
-común) y con qué se guardan las cuentas y dónde corren la web y la casa (11.1). Lo que hay para decidirlas: la casa
-del ensamblador, en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor, la web
-en Vercel le habla por un túnel con una llave, cuenta lo que pasa en vivo por sucesos del servidor, lanza cada
-asiento como una sesión de Claude Code confinada a su puesto, la clave del cliente vive solo en la memoria del
-motor, y todavía no tiene cuentas. Nada gasta de una clave sin el adelante del PM, y antes de lanzar un asiento con
+web de la puerta y las cuentas (11.1) y, después, el conductor (2.5) y los asientos de empezar (bloque 5). **Lo que decidió el PM el 24-nov, después**: la IA se llama con una llamada
+directa por asiento («lo de la llamada directa me parece bien»); uno se registra bien, con su cuenta, sin llave de
+entrada («pon que se pueda registrar bien ya de la que estás y listo»); y el motor se sube a un servidor al final,
+con las pruebas hechas. La fuente de rutas sigue sin elegir. Para el montaje sirve de guía la casa del ensamblador,
+en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor y la web en Vercel le
+habla por un túnel con una llave. Nada gasta de una clave sin el adelante del PM, y antes de lanzar un asiento con
 una clave hay que cerrar lo que la revisión de seguridad dejó en el 2.7: el asiento, confinado a su salida.
 
 El 23-nov, antes, con la tanda 1 hecha, el PM pidió seguir con el agente entero y su web, y contó cómo se imagina el
