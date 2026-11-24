@@ -159,7 +159,7 @@ export function notasDe(texto: string): { linea: number; texto: string; renglone
 /** Las fuentes de una nota, separadas por comas: una coma dentro de una dirección no la parte. */
 function fuentesDe(entreCorchetes: string): string[] {
   return entreCorchetes
-    .split(/,\s*(?=in\/|https?:\/\/|www\.)/i)
+    .split(/,\s*(?=in\/|contract\/|https?:\/\/|www\.)/i)
     .map((f) => f.trim().replace(/,+$/, ""))
     .filter((f) => f !== "");
 }
@@ -272,10 +272,11 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[]): Veredic
       if (final[2].trim() !== "seen") return;
       if (fuentes.length === 0) rojos.push({ donde, que: "la nota dice que lo vio y no dice en qué archivo" });
       for (const f of fuentes.filter((x) => !esDireccion(x)).map((x) => x.split("#")[0])) {
-        // Vale un archivo del material, o una carpeta suya cuando la nota habla de todo lo que hay en ella.
+        // Vale un archivo del material, o una carpeta suya cuando la nota habla de todo lo que hay en ella. Y un
+        // archivo de su contrato, cuando la nota es de lo que dice el contrato: también lo dio la casa, sellado.
         const carpeta = f.replace(/\/+$/, "") + "/";
         const esDelMaterial =
-          f.startsWith("in/") &&
+          (f.startsWith("in/") || f.startsWith("contract/")) &&
           (sello.archivos[f] !== undefined || Object.keys(sello.archivos).some((a) => a.startsWith(carpeta)));
         if (!esDelMaterial) rojos.push({ donde, que: `la nota cita ${f}, que no es de su material` });
       }

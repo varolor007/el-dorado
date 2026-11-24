@@ -537,6 +537,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   saca primero el código, y la del conductor solo vale para la parada a la que se le llamó. Su frase para el
   viajero no puede llevar números y pasa la puerta de palabras, o no se enseña. Al dueño, el acta va sin el porqué
   de los fallos, que puede llevar lo que se dijo por dentro. «Cambiar lo que pediste» lleva a una búsqueda nueva.
+- **Una nota puede citar un archivo de su contrato** (la sesión, por el estreno del conductor). El conductor acertó
+  con la parada real de Lisboa y su entrega dio rojo por citar el método común como fuente de lo que dice el
+  método. Lo que da la casa a un asiento es su material y su contrato, los dos sellados: los dos valen como fuente
+  de una nota. Un archivo que no existe en ninguno de los dos sigue siendo un rojo.
 
 ## Pendientes
 

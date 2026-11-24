@@ -261,6 +261,25 @@ test("trampa: una nota de varias líneas sin etiqueta al final, o con un rengló
   ]);
 });
 
+test("una nota de lo que dice el contrato cita su archivo del contrato, que también dio la casa", () => {
+  assert.deepEqual(
+    rojosDe(
+      conNotas([
+        "- The contract says to read it first. [contract/README.md] [seen]",
+        "- The sheet and the contract agree. [in/sheet.json, contract/README.md] [seen]",
+      ]),
+    ),
+    [],
+  );
+  assert.deepEqual(
+    rojosDe(conNotas(["- The rules say so. [contract/RULES.md] [seen]", "- Fine. [out/2-plan.md] [seen]"])),
+    [
+      "out/3-notes.md:1: la nota cita contract/RULES.md, que no es de su material",
+      "out/3-notes.md:2: la nota cita out/2-plan.md, que no es de su material",
+    ],
+  );
+});
+
 test("las notas de un texto: dónde empieza cada una y qué la cierra", () => {
   const notas = notasDe(
     ["- One. [seen]", "  - inside", "# A title", "  hanging from nothing", "- Two:", "", "  - a", "- Three"].join("\n"),

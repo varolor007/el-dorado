@@ -22,7 +22,8 @@ in this order.
    other notes) or `assumed` (you could not check it). A `seen` note names the file of `in/` it comes from, with its
    path and its extension, as in `[in/reviews.json]`; several files go in the same brackets, separated by commas, and a
    part of a file after `#`, as in `[in/reviews.json#r12]`. Only a note about everything in a folder, such as
-   `- No photo shows a gym. [in/photos] [seen]`, names the folder. A note from a web page you opened names its full
+   `- No photo shows a gym. [in/photos] [seen]`, names the folder. A note about what your contract says names that
+   file of `contract/`, with its path, in the same way. A note from a web page you opened names its full
    address instead of a file, and only a seat that goes on the web has such notes. Notes describe; they do not judge
    yet.
 4. **Computations** (`out/4-computations.md`). You do not calculate: no sums, no date arithmetic, no currency
