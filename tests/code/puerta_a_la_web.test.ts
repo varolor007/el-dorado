@@ -768,3 +768,57 @@ test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el sigui
     assert.equal((await casa.pide("GET", "/cuenta/gasto/mas")).estado, 404);
   });
 });
+
+test("tu confirmación (5.2): la casa espera tu turno, solo tú confirmas, y la investigación sigue sola", async () => {
+  const dicho = { wants: "con un gimnasio de verdad. no quiero ruido de noche", booked: "", heard: false, answers: [] };
+  const conPalabras = { ...ENTENDIDO, tastes: [], limits: [], said: dicho };
+  await conCasa(async (casa) => {
+    const id = await abre(casa, "ana", conPalabras);
+    // Antes del botón no hay turno que confirmar.
+    assert.deepEqual(await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo: {} }), {
+      estado: 409,
+      cuerpo: { error: "not_now" },
+    });
+    assert.equal((await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: {} })).estado, 202);
+    await casa.puerta.esperar();
+    const espera = (await casa.pide("GET", `/viajes/${id}`)).cuerpo;
+    assert.equal(espera.trip.state, "researching");
+    assert.equal(espera.research.waiting_for_you, true);
+    assert.equal(espera.research.stopped, null);
+    assert.equal(espera.research.steps[0].state, "yours");
+    assert.ok(espera.research.steps.slice(1).every((p: Objeto) => p.state === "pending"));
+    // Lo que ve: sus palabras y las claves; ni qué es cada cosa ni por qué, que lo escribió el asiento.
+    assert.deepEqual(espera.research.heard, {
+      round: 1,
+      can_answer: false,
+      tastes: [{ thing: "gym", weight: "must", quote: "con un gimnasio de verdad" }],
+      limits: [{ quote: "no quiero ruido de noche" }],
+      booked: [],
+      clashes: [],
+      questions: [],
+    });
+    // Otro no lo ve ni lo confirma; y lo que no vale no se apunta.
+    assert.equal((await casa.pide("POST", `/viajes/${id}/confirmar`, { dueno: "luis", cuerpo: {} })).estado, 404);
+    assert.deepEqual(await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo: { tastes: [{ i: 7 }] } }), {
+      estado: 400,
+      cuerpo: { error: "bad_tastes" },
+    });
+    assert.equal((await casa.pide("GET", `/viajes/${id}/confirmar`)).estado, 405);
+
+    const dado = await casa.pide("POST", `/viajes/${id}/confirmar`, {
+      cuerpo: { tastes: [{ i: 0, weight: "like" }], limits: [0] },
+    });
+    assert.deepEqual(dado, { estado: 202, cuerpo: { done: "confirmed" } });
+    await casa.puerta.esperar();
+    const hecho = (await casa.pide("GET", `/viajes/${id}`)).cuerpo;
+    assert.equal(hecho.trip.state, "on_map");
+    assert.deepEqual([hecho.research.waiting_for_you, hecho.research.heard], [false, null]);
+    // Lo entendido de tu viaje es ya lo confirmado: al volver, se ve lo mismo, y no se pregunta otra vez.
+    assert.deepEqual(hecho.understood.tastes, [{ thing: "gym", weight: "like", quote: "con un gimnasio de verdad" }]);
+    assert.equal(hecho.understood.said.heard, true);
+    assert.deepEqual(await casa.pide("POST", `/viajes/${id}/confirmar`, { cuerpo: {} }), {
+      estado: 409,
+      cuerpo: { error: "not_now" },
+    });
+  });
+});

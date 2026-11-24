@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { RONDAS } from "../data/palancas.ts";
 import { CODIGO, PARADO, PASOS, type EstadoDeUnPaso } from "../data/pasos.ts";
+import { escuchaHecha, turnoDelViajero } from "./escuchar.ts";
 import { puestosDe } from "./puesto.ts";
 
 export type PasoDelRun = {
@@ -37,6 +38,7 @@ function rondas(run: string): { tabla: boolean; cruce: boolean } {
 }
 
 function hecho(run: string, id: string, deja: string[]): boolean {
+  if (id === "understood") return escuchaHecha(run);
   if (id === "table") return rondas(run).tabla;
   if (id === "cross") return rondas(run).cruce;
   return deja.every((nombre) => hay(run, nombre));
@@ -49,7 +51,13 @@ export function porDondeVa(run: string): PasoDelRun[] {
   const pasos: PasoDelRun[] = PASOS.map((p) => {
     const suyos = p.quien === CODIGO ? [] : puestos.filter((x) => x.asiento === p.quien);
     const esperan = suyos.filter((x) => !existsSync(join(x.carpeta, "out", "delivery.json"))).map((x) => x.id);
-    const estado: EstadoDeUnPaso = hecho(run, p.id, p.deja) ? "done" : esperan.length > 0 ? "waiting" : "pending";
+    const estado: EstadoDeUnPaso = hecho(run, p.id, p.deja)
+      ? "done"
+      : esperan.length > 0
+        ? "waiting"
+        : p.id === "understood" && turnoDelViajero(run)
+          ? "yours"
+          : "pending";
     return { id: p.id, quien: p.quien, puerta: p.puerta, estado, esperan: estado === "done" ? [] : esperan };
   });
   if (parado !== null) {

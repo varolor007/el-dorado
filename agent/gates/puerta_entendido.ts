@@ -6,9 +6,16 @@
 import { COSAS } from "../data/gustos.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/ruta.ts";
 import { DECIMALES_DEL_ORIGEN } from "../data/transporte.ts";
-import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO, NOCHES_DE_UN_VIAJE, VIAJEROS } from "../data/viaje.ts";
+import {
+  FRASE_DEL_VIAJERO,
+  FRASES_DEL_VIAJERO,
+  LARGO_DE_UNA_PREGUNTA,
+  NOCHES_DE_UN_VIAJE,
+  PREGUNTAS_DE_MAS,
+  VIAJEROS,
+} from "../data/viaje.ts";
 import { RITMOS } from "../output/viaje.ts";
-import { CLASES_DE_DESTINO, CUANTO_MOVERSE, GASTOS, PESOS_DE_GUSTO } from "../scripts/formas.ts";
+import { CLASES_DE_DESTINO, CUANTO_MOVERSE, GASTOS, PESOS_DE_GUSTO, type Dicho } from "../scripts/formas.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
 type Objeto = Record<string, unknown>;
@@ -40,6 +47,39 @@ export function esFecha(v: unknown): v is string {
 }
 
 const UN_DIA = 24 * 60 * 60 * 1000;
+
+/** Lo que escribió el viajero, cada cosa por su lado: de aquí, y solo de aquí, sale cada cita. */
+export const palabrasDe = (d: Dicho): string[] =>
+  [d.wants, d.booked, ...d.answers.map((a) => a.answer)].filter((x) => x.trim() !== "");
+
+/**
+ * Si una cita está de verdad en lo que escribió el viajero, letra a letra: un trozo de una de sus frases, tal cual,
+ * con alguna letra. Una cita no junta dos frases distintas: así no se le hace decir lo que no dijo.
+ */
+export function estaDicho(cita: unknown, d: Dicho): boolean {
+  if (typeof cita !== "string" || cita.trim() === "" || !/\p{L}/u.test(cita)) return false;
+  return palabrasDe(d).some((frase) => frase.includes(cita));
+}
+
+/** Lo que el viajero dijo con sus palabras: un texto en una línea, que puede estar vacío. */
+const esTextoSuyo = (v: unknown): boolean =>
+  typeof v === "string" && v.length <= FRASE_DEL_VIAJERO && !/[\u0000-\u001f]/.test(v);
+
+/** La forma de lo dicho: sus dos cajas, si ya se escuchó, y cada pregunta con su respuesta. */
+export function dichoQueVale(v: unknown): v is Dicho {
+  if (!esObjeto(v) || !esTextoSuyo(v.wants) || !esTextoSuyo(v.booked) || typeof v.heard !== "boolean") return false;
+  const respuestas = Array.isArray(v.answers) && v.answers.length <= PREGUNTAS_DE_MAS ? v.answers : null;
+  return (
+    respuestas !== null &&
+    respuestas.every(
+      (r) =>
+        esObjeto(r) &&
+        esFrase(r.question) &&
+        (r.question as string).length <= LARGO_DE_UNA_PREGUNTA &&
+        esFrase(r.answer),
+    )
+  );
+}
 
 /**
  * Lo que el código comprueba de lo entendido. `hoy`, si se da, es el primer día en que se puede viajar: una entrada
@@ -158,6 +198,22 @@ export function puertaEntendido(v: unknown, o: { hoy?: string } = {}): Veredicto
       if (!esObjeto(l) || !esFrase(l.what) || !esFrase(l.quote))
         rojo(`limits[${i}]`, "un límite lleva qué y sus palabras");
     });
+
+  // Lo que escribió con sus palabras, si va: con su forma, y cada cita de un gusto o de un límite, sacada de ahí.
+  if (v.said !== undefined) {
+    if (!dichoQueVale(v.said)) rojo("said", "lo que escribió el viajero no tiene su forma");
+    else {
+      const dicho = v.said;
+      (Array.isArray(v.tastes) ? v.tastes : []).forEach((g, i) => {
+        if (esObjeto(g) && !estaDicho(g.quote, dicho))
+          rojo(`tastes[${i}].quote`, "la cita no está, letra a letra, en lo que escribió el viajero");
+      });
+      (Array.isArray(v.limits) ? v.limits : []).forEach((l, i) => {
+        if (esObjeto(l) && !estaDicho(l.quote, dicho))
+          rojo(`limits[${i}].quote`, "la cita no está, letra a letra, en lo que escribió el viajero");
+      });
+    }
+  }
 
   // Lo de moverse por un país o una región: puede no ir; si va, cada cosa es un sí, un no o un «no lo ha dicho».
   const m = v.moving;

@@ -15,7 +15,8 @@ export type Paso = {
 export const CODIGO = "code";
 
 export const PASOS: Paso[] = [
-  { id: "understood", quien: CODIGO, puerta: 1, deja: ["entendido.json"] },
+  // El que escucha solo se lanza si el viajero escribió algo; lo que deja, ya confirmado, es `escuchado.json`.
+  { id: "understood", quien: "listener", puerta: 1, deja: ["escuchado.json"] },
   { id: "sights", quien: CODIGO, puerta: null, deja: ["sitios.json"] },
   { id: "route", quien: "route-planner", puerta: 3, deja: ["ruta.json"] },
   { id: "search", quien: CODIGO, puerta: 4, deja: ["busqueda.json"] },
@@ -31,8 +32,11 @@ export const PASOS: Paso[] = [
 /** Donde queda escrito que un run se paró, en qué paso y por qué. Mientras esté, el run sigue parado. */
 export const PARADO = "parado.json";
 
-/** Cómo está un paso de un run: sin empezar, esperando a su asiento, hecho o parado en una puerta. */
-export const ESTADOS_DE_UN_PASO = ["pending", "waiting", "done", "stopped"] as const;
+/**
+ * Cómo está un paso de un run: sin empezar, esperando a su asiento, esperando al viajero (su turno: confirmar lo que
+ * he entendido), hecho o parado en una puerta.
+ */
+export const ESTADOS_DE_UN_PASO = ["pending", "waiting", "yours", "done", "stopped"] as const;
 export type EstadoDeUnPaso = (typeof ESTADOS_DE_UN_PASO)[number];
 
 /** Cómo está un trabajo de la IA, como lo dice la hoja: en cola, trabajando, hecho, parado en su tope o fallido. */

@@ -25,3 +25,7 @@ export const SE_PASA_A: Record<EstadoDelViaje, readonly EstadoDelViaje[]> = {
   on_map: ["researching", "closed"],
   closed: ["researching"],
 };
+
+/** Las preguntas de más que puede hacer el que escucha, como dice la hoja, y lo más que mide cada una. */
+export const PREGUNTAS_DE_MAS = 3;
+export const LARGO_DE_UNA_PREGUNTA = 200;

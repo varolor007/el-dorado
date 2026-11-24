@@ -54,6 +54,13 @@ export type Entendido = {
   /** Lo que ya tiene reservado, con sus palabras. */
   booked: string[];
   /**
+   * Lo que el viajero escribió con sus palabras, tal cual: la caja libre (`wants`), lo que ya tiene reservado
+   * (`booked`) y lo que contestó al que escucha. Es de donde salen sus gustos y sus límites, y de donde tiene que
+   * salir, letra a letra, cada cita. `heard` dice si el que escucha ya lo leyó y el viajero lo confirmó. Solo lo lee
+   * el que escucha: a los demás asientos no les llega. Un viaje de antes de que lo hubiera no lo lleva.
+   */
+  said?: Dicho;
+  /**
    * En un país o una región: si quiere ver más de un sitio, si le vale salir del país y cuánto quiere moverse. Lo
    * que no ha dicho va en null: no se supone. En una ciudad no se pregunta, y no va.
    */
@@ -62,6 +69,29 @@ export type Entendido = {
     leave_country: boolean | null;
     how_much: (typeof CUANTO_MOVERSE)[number] | null;
   };
+};
+
+/** Lo que el viajero escribió, y lo que contestó a cada pregunta del que escucha. */
+export type Dicho = {
+  wants: string;
+  booked: string;
+  heard: boolean;
+  answers: { question: string; answer: string }[];
+};
+
+/** Con qué de lo dicho choca algo que escribió el viajero: un toque de la base, u otras palabras suyas. */
+export const CHOQUES = ["budget", "dates", "travellers", "pace", "moving", "words"] as const;
+
+/** Lo que entrega el que escucha: lo dicho, separado, con cada cosa citando las palabras del viajero. */
+export type EntregaDeEscucha = {
+  seat: "listener";
+  limits: Limite[];
+  tastes: Gusto[];
+  booked: { what: string; quote: string }[];
+  clashes: { with: (typeof CHOQUES)[number]; quote: string; other_quote: string; what: string }[];
+  questions: { ask: string; quote: string; why: string }[];
+  assumed: string[];
+  unknowns: string[];
 };
 
 // 2. Los avisos de las fechas y la tabla de los papeles. Sus asientos llegan con el bloque 5; aquí, su forma.
