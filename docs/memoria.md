@@ -242,8 +242,13 @@ lo entendido; `agent/launcher/escuchar.ts` lleva el primer paso: sin palabras no
 viajero (paso `yours`, `waiting_for_you` y `heard` en lo que cuenta la puerta) sin gastar.
 `POST /viajes/<id>/confirmar` confirma, corrige o contesta, y la casa sigue sola. Lo confirmado queda en
 `escuchado.json` y pasa a lo entendido del run y del viaje. Los demás asientos no ven `said`. En la web,
-`web/src/piezas/Confirmacion.tsx`, dentro de la pantalla en vivo. Pendiente: probarlo con una IA de verdad, y la
-firma del PM a enseñar la pregunta del asiento tal cual la escribe.
+`web/src/piezas/Confirmacion.tsx`, dentro de la pantalla en vivo. **Estrenado con la cuenta del PM y unas palabras
+inventadas (24-nov)**, desde la terminal: entregó a la primera en 56 segundos (unos 16 céntimos de equivalente) y
+pasó la puerta 1, con dos límites, tres gustos, lo reservado, un choque (vuelos ya comprados con fechas que se
+pueden mover) y dos preguntas; el run quedó en el turno del viajero sin gastar más. La orden de la terminal dice
+entonces «Sin acabar. Esperan: nadie»: falta que diga que es el turno del viajero (se arregla al juntar el 2.5,
+que toca ese resumen). Pendiente: verlo entero desde la web, con la confirmación, y la firma del PM a enseñar la
+pregunta del asiento tal cual la escribe.
 
 **El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):
 `agent/scripts/vistazo.ts` (`primerVistazo`, `paraElVistazo`), su freno en `agent/launcher/freno.ts` y sus números
