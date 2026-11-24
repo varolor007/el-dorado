@@ -163,10 +163,20 @@ la guía; lo que hay
 que mirar al instalar (que la imagen se construye, que Claude Code piensa con el disco de solo lectura, que Caddy
 saca su certificado, que lo de en vivo pasa sin cortes, y si el servidor tiene además el cortafuegos del panel de
 Contabo); la copia de la mesa a otro sitio; y que la dirección gratuita (sslip.io) comparte el cupo semanal de
-certificados con todo el que la usa: con un subdominio del PM no pasa. **Lo que queda
-por repartir y pide antes un diseño de quien orquesta**: el que escucha (5.2), que cambia el flujo de empezar; el
-conductor (2.5); el buscador y el lector de webs (3.5), y con ellos el del calendario (5.3) y el de los papeles
-(5.4); y Geoapify dentro de la casa (3.14), que tiene que caber en su cupo gratuito.
+certificados con todo el que la usa: con un subdominio del PM no pasa. **La tercera tanda, en marcha desde el
+24-nov**, con su diseño escrito en el encargo: los caminos de verdad en la casa (3.14,
+`claude/eldorado-3-14-caminos`: una tabla de caminos por viaje, a pie y en coche, con tope de casillas, que usan las
+cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la fuente falta) y el que escucha (5.2,
+`claude/eldorado-5-2-el-que-escucha`: las palabras del viajero aparte, su contrato, la mitad de IA de la puerta 1 y
+la investigación esperando su confirmación). **Lo que queda por repartir y pide antes un diseño**: el conductor
+(2.5), que coge un rojo cuando su asiento ya lo intentó dos veces; y el buscador y el lector de webs (3.5), con el
+del calendario (5.3) y el de los papeles (5.4), que sin herramientas piden que busque la casa.
+
+**La primera llamada con la cuenta del PM, sin hacer todavía (24-nov).** Su token está en el entorno de las
+sesiones, y se abrió una sesión auxiliar (session_016R3jET1bkeCb7Q5twPbPWS) con el guion de dos llamadas mínimas,
+pero no las lanzó: el sistema de permisos pide que el sí al gasto lo dé el PM en esa misma sesión, y no vale que lo
+diga quien orquesta. No se rodeó. Se le ha pedido al PM que la abra y le diga que sí; lo mismo hará falta para la
+primera investigación entera, que se lanza con `de_verdad.ts` y el viaje de Madrid a Lisboa.
 
 **El primer vistazo (5.5), hecho a falta de los vuelos** (una sesión de obra, revisada y junta el 24-nov):
 `agent/scripts/vistazo.ts` (`primerVistazo`, `paraElVistazo`), su freno en `agent/launcher/freno.ts` y sus números
