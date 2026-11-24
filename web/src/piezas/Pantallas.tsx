@@ -131,6 +131,8 @@ function frase(s: Suceso, t: Textos, idioma: string, deNoches: number): Linea | 
       return { n: null, texto: t.vivo.lever() };
     case "done":
       return { n: null, texto: t.vivo.done() };
+    case "stopped":
+      return { n: null, texto: t.vivo.stopped() };
     default:
       return null;
   }

@@ -2,7 +2,7 @@
 // cada asiento y cada puerta, con fuentes inventadas y asientos de mentira. Sin internet y sin gastar.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -29,6 +29,7 @@ import {
   viajesDe,
 } from "../../agent/launcher/mesa.ts";
 import { porDondeVa } from "../../agent/launcher/pasos.ts";
+import { contar, leerVivo, loQueHaPasado, VIVO } from "../../agent/launcher/vivo.ts";
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Suceso, type Viaje } from "../../agent/output/viaje.ts";
 import { buscarConEscalera, buscarDondeHaya, buscarEnZonas } from "../../agent/scripts/busqueda_alojamiento.ts";
@@ -866,6 +867,10 @@ test("la investigación de un viaje de la mesa deja su versión, una sola, y el 
     assert.deepEqual(version?.viaje, leerJson(join(run, "viaje.json")));
     assert.deepEqual(comprobarViaje(version?.viaje as Viaje), []);
     assert.deepEqual(version?.entendido, ENTENDIDO);
+    // La versión se lleva también lo que se contó en vivo, entero: acaba en que el viaje está en el mapa.
+    const contado = readFileSync(join(leido.carpeta, "versiones", "1", VIVO), "utf8");
+    assert.equal(contado, readFileSync(join(run, VIVO), "utf8"));
+    assert.equal(JSON.parse(contado.trim().split("\n").at(-1) ?? "{}").clase, "done");
     // Otra llamada sobre el run hecho no deja otra versión.
     assert.equal((await sigue(run, fuentesInventadas())).hecho, true);
     assert.equal(leerViaje(abierto.ficha.id, "ana", mesa).ficha.versiones.length, 1);
@@ -918,5 +923,137 @@ test("empezar desde la terminal abre el viaje en la mesa, confirmado, con su pri
     if (antes === undefined) delete process.env.ELDORADO_MESA;
     else process.env.ELDORADO_MESA = antes;
     rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+const clases = (sucesos: { clase: string }[]): Record<string, number> => {
+  const cuenta: Record<string, number> = {};
+  for (const x of sucesos) cuenta[x.clase] = (cuenta[x.clase] ?? 0) + 1;
+  return cuenta;
+};
+
+test("la casa cuenta en vivo lo que pasa, a medida que pasa, y nada dos veces", async () => {
+  const run = runNuevo();
+  try {
+    // Con los sitios traídos y la ruta esperando, todavía no hay nada que pintar en el mapa.
+    await sigue(run, fuentesInventadas());
+    assert.deepEqual(leerVivo(run), []);
+    // Con la ruta: las zonas, la búsqueda entera, los finalistas y a quién se está mirando.
+    trabaja(run, "ruta-v1");
+    const estado = await sigue(run, fuentesInventadas());
+    const trasBuscar = leerVivo(run);
+    assert.deepEqual(Object.keys(clases(trasBuscar)), [
+      "zone",
+      "lodgings_found",
+      "lodgings_pass",
+      "lodgings_priced",
+      "finalist",
+      "looking",
+    ]);
+    assert.equal(clases(trasBuscar).finalist, 5);
+    assert.equal(clases(trasBuscar).looking, 5);
+    assert.ok(trasBuscar.filter((x) => x.clase === "finalist").every((x) => x.punto !== undefined && x.nombre));
+    // Llamar otra vez sin que haya pasado nada no cuenta nada.
+    assert.deepEqual(contar(run), []);
+    assert.deepEqual((await sigue(run, fuentesInventadas())).esperan, estado.esperan);
+    assert.equal(leerVivo(run).length, trasBuscar.length);
+
+    const fin = await investiga(run);
+    assert.equal(fin.estado.hecho, true);
+    const vivo = leerVivo(run);
+    // Lo contado en vivo es lo mismo que se guarda para volver a verla, con las horas de verdad y en su orden.
+    const grabado = leerJson(join(run, "sucesos.json")) as unknown as Suceso[];
+    assert.deepEqual(clases(vivo), clases(grabado));
+    assert.deepEqual(comprobarSucesos(vivo), []);
+    assert.equal(vivo.at(-1)?.clase, "done");
+    assert.equal(vivo[0].t, 0);
+    assert.deepEqual(vivo.slice(0, trasBuscar.length), trasBuscar);
+    assert.deepEqual(leerVivo(run, vivo.length - 2), vivo.slice(-2));
+    assert.deepEqual(leerVivo(run, 9999), []);
+    // Lo que hay en el disco ya está todo contado.
+    assert.equal(loQueHaPasado(run).length, vivo.length);
+    assert.deepEqual(contar(run), []);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("un run que se para lo cuenta, con el paso y sin el porqué, que es de quien lo lleva", async () => {
+  const run = runNuevo();
+  try {
+    const { estado } = await investiga(run, (asiento, entrega) => {
+      if (asiento === "route-planner") entrega.bases = [];
+    });
+    assert.equal(estado.parado?.en, "route");
+    const vivo = leerVivo(run);
+    assert.deepEqual(
+      vivo.map((x) => [x.clase, x.ref]),
+      [["stopped", "route"]],
+    );
+    // Ni una palabra de los rojos sale en lo que se cuenta.
+    const escrito = readFileSync(join(run, VIVO), "utf8");
+    for (const rojo of estado.parado?.rojos ?? []) assert.ok(!escrito.includes(rojo.que));
+    assert.deepEqual(Object.keys(JSON.parse(escrito.trim())).sort(), ["clase", "cuando", "ref", "t"]);
+    // Parado sigue, y no se vuelve a contar.
+    await sigue(run, fuentesInventadas());
+    assert.equal(leerVivo(run).length, 1);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("lo contado lleva su hora, no vuelve atrás, y un corte a medio escribir no lo rompe ni lo repite", async () => {
+  const run = runNuevo();
+  try {
+    await sigue(run, fuentesInventadas());
+    trabaja(run, "ruta-v1");
+    writeFileSync(
+      join(run, "ruta.json"),
+      JSON.stringify({ zonas: [{ id: "z1", label: "Centro", centre: { lat: 1, lon: 2 } }] }),
+    );
+    const uno = contar(run, new Date("2031-01-01T10:00:00Z"));
+    assert.deepEqual(uno, [
+      { t: 0, clase: "zone", ref: "z1", punto: { lat: 1, lon: 2 }, radio: undefined, nombre: "Centro" },
+    ]);
+    // Una línea cortada a medias, como la que deja un corte de luz.
+    appendFileSync(join(run, VIVO), '{"t":5,"clase":"lodgings_fo');
+    appendFileSync(join(run, VIVO), "\n");
+    writeFileSync(
+      join(run, "dias.json"),
+      JSON.stringify({ paradas: [{ id: "s1", nombre: "Faro", punto: { lat: 1, lon: 2 } }] }),
+    );
+    const dos = contar(run, new Date("2031-01-01T10:00:30Z"));
+    assert.deepEqual(
+      dos.map((x) => [x.t, x.clase, x.ref]),
+      [
+        [30_000, "sights_found", undefined],
+        [30_000, "sight", "s1"],
+      ],
+    );
+    // Un reloj que va hacia atrás no desordena lo contado; y un sitio fuera del mapa se cuenta sin punto.
+    writeFileSync(
+      join(run, "dias.json"),
+      JSON.stringify({ paradas: [{ id: "s1" }, { id: "s2", punto: { lat: 999, lon: 0 } }] }),
+    );
+    const tres = contar(run, new Date("2031-01-01T09:00:00Z"));
+    assert.deepEqual(
+      tres.map((x) => [x.t, x.clase, x.ref, x.punto]),
+      [[30_000, "sight", "s2", undefined]],
+    );
+    assert.deepEqual(
+      leerVivo(run).map((x) => x.clase),
+      ["zone", "sights_found", "sight", "sight"],
+    );
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("lo que cuenta la casa lo sabe decir la web: cada clase de suceso tiene su frase en los dos idiomas", async () => {
+  const { SUCESOS } = await import("../../agent/output/viaje.ts");
+  const { IDIOMAS, TEXTOS } = await import("../../web/src/lib/textos.ts");
+  for (const idioma of IDIOMAS) {
+    const vivo = TEXTOS[idioma].vivo as unknown as Record<string, unknown>;
+    for (const clase of SUCESOS) assert.equal(typeof vivo[clase], "function", `${idioma}: ${clase}`);
   }
 });

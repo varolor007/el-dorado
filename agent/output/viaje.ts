@@ -189,6 +189,8 @@ export const SUCESOS = [
   "way",
   "lever",
   "done",
+  // La investigación se paró: `ref` dice en qué paso. El porqué no viaja a la web.
+  "stopped",
 ] as const;
 
 export type Suceso = {

@@ -123,6 +123,7 @@ const en = {
     way: (id: string) => `A way to do it: ${id}`,
     lever: () => "A change that saves money",
     done: () => "Your trip is on the map",
+    stopped: () => "The research has stopped here",
   },
   viaje: {
     rotulo: "Your trip",
@@ -465,6 +466,7 @@ const es: Textos = {
     way: (id) => `Una manera de hacerlo: ${id}`,
     lever: () => "Un cambio que ahorra",
     done: () => "Tu viaje está en el mapa",
+    stopped: () => "La investigación se ha parado aquí",
   },
   viaje: {
     rotulo: "Tu viaje",

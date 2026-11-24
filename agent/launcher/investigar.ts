@@ -57,6 +57,7 @@ import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
+import { contar } from "./vivo.ts";
 
 /** Lo de fuera que usa una investigación. Se le pasa: con lo de verdad investiga, y con lo inventado se prueba. */
 export type Fuentes = {
@@ -94,7 +95,11 @@ type Guardado<T> = { entrega: T; rojos: Rojo[] };
 const ruta = (run: string, nombre: string): string => join(run, nombre);
 const hay = (run: string, nombre: string): boolean => existsSync(ruta(run, nombre));
 const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(ruta(run, nombre), "utf8")) as T;
-const guardar = (run: string, nombre: string, dato: unknown): void => guardarJson(ruta(run, nombre), dato);
+/** Guarda algo del run y cuenta lo que con ello haya pasado: lo que se ve en vivo sale de lo que hay en el disco. */
+function guardar(run: string, nombre: string, dato: unknown): void {
+  guardarJson(ruta(run, nombre), dato);
+  contar(run);
+}
 const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
 
 /**
@@ -506,10 +511,21 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
   return [];
 }
 
-/** Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. */
+/**
+ * Da los pasos de código que se puedan dar, hasta que toque esperar a un asiento, pare una puerta o esté hecho. Al
+ * volver, lo que haya pasado queda contado, pase lo que pase: también si un paso se rompe a medias.
+ */
 export async function sigue(run: string, f: Fuentes): Promise<Estado> {
-  const avisos: string[] = [];
   if (dentroDelRepositorio(run)) throw new Error("un run no puede estar dentro del repositorio");
+  try {
+    return await darLosPasos(run, f);
+  } finally {
+    if (existsSync(run)) contar(run);
+  }
+}
+
+async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
+  const avisos: string[] = [];
   // Un run parado sigue parado: quien lo retome lee por qué, y no pasa por encima de una puerta en rojo. Reabrirlo
   // es una decisión de quien lo lleva, que quita `parado.json` cuando ha arreglado la causa.
   if (hay(run, PARADO)) return { esperan: [], hecho: false, parado: leer<Parado>(run, PARADO), avisos };

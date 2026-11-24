@@ -92,8 +92,9 @@ export type Apunte = { cuando: string; que: string } & Record<string, unknown>;
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const DUENO = /^[A-Za-z0-9._:-]{1,128}$/;
-/** Lo que una versión se lleva de su run. */
+/** Lo que una versión se lleva de su run; y lo que se lleva si lo hay: lo que se contó en vivo, con sus horas. */
 const DE_UNA_VERSION = ["viaje.json", "sucesos.json", "entendido.json"];
+const SI_LO_HAY = ["vivo.jsonl"];
 
 const carpetaDeViajes = (mesa: string): string => join(mesa, "viajes");
 const fichaDe = (carpeta: string): string => join(carpeta, "ficha.json");
@@ -267,6 +268,8 @@ export function guardarVersion(v: ViajeEnLaMesa, run: number, motivo: string, cu
   const aparte = join(v.carpeta, "versiones", `.${n}.a-medias`);
   mkdirSync(aparte, { recursive: true, mode: 0o700 });
   for (const nombre of DE_UNA_VERSION) copyFileSync(join(desde, nombre), join(aparte, nombre));
+  for (const nombre of SI_LO_HAY)
+    if (existsSync(join(desde, nombre))) copyFileSync(join(desde, nombre), join(aparte, nombre));
   renameSync(aparte, hasta);
   const version: Version = { n, cuando: cuando.toISOString(), run, motivo };
   v.ficha.versiones.push(version);

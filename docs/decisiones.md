@@ -327,6 +327,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   solo él lo abre. Los viajes que se abren desde la terminal quedan a nombre de `by-hand` mientras no haya cuentas.
   Lo que es de un viaje y no es de la investigación (el estado de cada pieza, de cada parada y de cada precio) llega
   con los momentos que lo cambian.
+- **Lo que se cuenta en vivo sale de lo que hay en el disco** (la sesión): la casa no apunta un suceso al dar un
+  paso, sino que mira la carpeta del run y cuenta lo que aún no está contado. Así un corte no pierde ni repite
+  nada, que es lo mismo que deja retomar un run. Si la investigación se para, se cuenta en qué paso; el porqué, que
+  está escrito para quien la lleva, no viaja a la web: lo que lee el viajero lo dice la web por claves.
 
 ## Pendientes
 

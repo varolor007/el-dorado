@@ -58,9 +58,11 @@ elección es del PM, y se le ha pedido.** Antes de construir sobre la que elija 
 que da él por el formulario seguro, en destinos de clases distintas.
 
 **La tanda 4, la casa en vivo y tu cuenta, ha empezado** (24-nov), por lo que no necesita al PM. Hecho: la carpeta
-de cada viaje en la mesa, con su estado y sus versiones (1.2, en parte, y 2.1). Lo siguiente, en este orden y con
-una IA de mentira: lo que la casa cuenta en vivo (2.6), el conductor (2.5), lo que lanza los asientos sola (2.2) y
-el lanzador de la IA de verdad (2.7), sin lanzarlo. Antes de enchufar la IA de verdad y las cuentas hacen falta dos
+de cada viaje en la mesa, con su estado y sus versiones (1.2, en parte, y 2.1), y lo que la casa cuenta en vivo
+(2.6: `agent/launcher/vivo.ts` deja en el run `vivo.jsonl`, sacado de lo que hay en su carpeta, con la hora de
+verdad; `sucesos.json` sigue siendo la versión comprimida para volver a verla). Lo siguiente, en este orden y con
+una IA de mentira: el conductor (2.5), lo que lanza los asientos sola (2.2) y el lanzador de la IA de verdad (2.7),
+sin lanzarlo. Antes de enchufar la IA de verdad y las cuentas hacen falta dos
 decisiones del PM: cómo se llama a la IA (una sesión entera, como hoy, o una llamada directa, que toca el método
 común) y con qué se guardan las cuentas y dónde corren la web y la casa (11.1). Lo que hay para decidirlas: la casa
 del ensamblador, en `aurora-web/ensamblador/` (se leyó el 24-nov): su motor corre en Docker en un servidor, la web
