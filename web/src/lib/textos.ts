@@ -81,6 +81,7 @@ const en = {
     rotulo: "First look",
     noches: (n: number) => EN.cuenta(n, "night", "nights"),
     adultos: (n: number) => EN.cuenta(n, "adult", "adults"),
+    habitaciones: (n: number) => EN.cuenta(n, "room", "rooms"),
     // Los niños que lleva el viaje, con la edad de cada uno, que es lo que cambia un precio.
     ninos: (edades: number[]) =>
       edades.length === 0
@@ -417,6 +418,7 @@ const es: Textos = {
     rotulo: "Primer vistazo",
     noches: (n) => ES.cuenta(n, "noche", "noches"),
     adultos: (n) => ES.cuenta(n, "adulto", "adultos"),
+    habitaciones: (n) => ES.cuenta(n, "habitación", "habitaciones"),
     ninos: (edades) =>
       edades.length === 0
         ? "sin niños"

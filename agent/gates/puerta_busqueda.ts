@@ -16,6 +16,7 @@ function conOrigen(d: Origen): boolean {
 function precioDeLaEstancia(p: Precio, b: Busqueda): string | null {
   if (p.entrada !== b.estancia.entrada || p.salida !== b.estancia.salida) return "es de otras fechas";
   if (p.adultos !== b.estancia.adultos) return "es para otro número de adultos";
+  if (p.habitaciones !== b.estancia.habitaciones) return "es para otro número de habitaciones";
   if (p.moneda.toUpperCase() !== b.estancia.moneda.toUpperCase())
     return `está en ${p.moneda} y se pidió ${b.estancia.moneda}`;
   if (!(p.total > 0) || p.tasasAparte < 0) return "no es un importe válido";

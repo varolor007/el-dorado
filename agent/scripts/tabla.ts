@@ -95,6 +95,7 @@ export function montarTabla(p: PiezasDeLaTabla): Tabla {
       check_out: e.salida,
       adults: e.adultos,
       children: e.ninos.length,
+      rooms: e.habitaciones,
       lodging_total: cribado.total,
       transport_total: deTransporte,
       total: dinero(cribado.total + (deTransporte ?? 0)),

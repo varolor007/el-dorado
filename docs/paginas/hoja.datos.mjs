@@ -337,7 +337,7 @@ const flujo = [
       tipo: "tu",
       k: "Tú, cinco toques",
       x: "mientras ya busca: de dónde sales, quiénes, si las fechas son fijas, cuánto y qué buscas",
-      d: "Las preguntas base, con toques y sin escribir, en una hoja al lado del mapa: de dónde sales (propuesto por tu ubicación), quiénes vais (con la edad de los niños y el pasaporte de cada uno), si tus fechas son fijas, cuánto quieres gastar y qué buscas. En un país o una región, además: si quieres ver más de una ciudad, si te vale salir del país y cuánto quieres moverte. Y una casilla, «Ya tengo algo reservado». Son una base, no una lista cerrada. Mientras contestas, el código ya busca con lo más probable y corrige si cambias algo.",
+      d: "Las preguntas base, con toques y sin escribir, en una hoja al lado del mapa: de dónde sales (propuesto por tu ubicación), quiénes vais (con la edad de los niños, el pasaporte de cada uno y en cuántas habitaciones dormís), si tus fechas son fijas, cuánto quieres gastar y qué buscas. En un país o una región, además: si quieres ver más de una ciudad, si te vale salir del país y cuánto quieres moverte. Y una casilla, «Ya tengo algo reservado». Son una base, no una lista cerrada. Mientras contestas, el código ya busca con lo más probable y corrige si cambias algo.",
     },
     {
       tipo: "tu",
@@ -427,12 +427,12 @@ const flujo = [
     { grupo: "en código, a la vez" },
     {
       tipo: "codigo",
-      parte: "pide una sola habitación para todo el grupo: con una familia grande casi nada tiene precio, y entonces se dice, pero aún no reparte al grupo en varias habitaciones.",
+      hecho: true,
       detras: true,
       k: "busqueda_alojamiento",
       x: "todos los de cada zona, los mínimos y el precio",
       titulo: "La búsqueda de alojamiento",
-      d: "Sin IA. Trae de la fuente todos los alojamientos de cada zona para esas noches y ese grupo; quita los que no llegan a los mínimos, comprobándolos uno a uno aunque la fuente ya filtre; pone a cada uno el precio de esas noches; elige los finalistas por regla y deja la ficha de datos de cada uno: la habitación de ese precio, con sus metros y sus fotos, las opiniones por temas y lo que piden otros vendedores. La misma entrada da siempre la misma lista. Si el viajero marcó como imprescindible algo que la fuente declara (el gimnasio, la piscina), lo que no lo declara se descarta antes de elegir a quién mirar. Las estrellas se le piden a quien las lleva: una casa o un piso que no las lleva se juzga por su nota y sus opiniones. Y los mínimos van en escalera: si con los de partida no quedan bastantes con precio, como pasa en un pueblo, se baja un escalón, y se dice. Si ni así hay con qué elegir, la zona se ensancha, hasta un tope, y también se dice. Construida el 23-nov: una ciudad, en unos veinte segundos.",
+      d: "Sin IA. Trae de la fuente todos los alojamientos de cada zona para esas noches y ese grupo; quita los que no llegan a los mínimos, comprobándolos uno a uno aunque la fuente ya filtre; pone a cada uno el precio de esas noches; elige los finalistas por regla y deja la ficha de datos de cada uno: la habitación de ese precio, con sus metros y sus fotos, las opiniones por temas y lo que piden otros vendedores. La misma entrada da siempre la misma lista. Si el viajero marcó como imprescindible algo que la fuente declara (el gimnasio, la piscina), lo que no lo declara se descarta antes de elegir a quién mirar. El grupo duerme en las habitaciones que diga el viajero: se pide el precio de todas juntas, y si para ese grupo y esas habitaciones nada tiene precio, se dice. Las estrellas se le piden a quien las lleva: una casa o un piso que no las lleva se juzga por su nota y sus opiniones. Y los mínimos van en escalera: si con los de partida no quedan bastantes con precio, como pasa en un pueblo, se baja un escalón, y se dice. Si ni así hay con qué elegir, la zona se ensancha, hasta un tope, y también se dice. Construida el 23-nov: una ciudad, en unos veinte segundos.",
     },
     {
       tipo: "codigo",
@@ -453,7 +453,7 @@ const flujo = [
     },
     {
       tipo: "puerta",
-      parte: "las fechas y el grupo de cada precio los copia hoy el enchufe de lo que se pidió: hasta que se lean de la respuesta de la fuente, esa parte de la puerta no puede fallar.",
+      parte: "las fechas de cada precio las copia hoy el enchufe de lo que se pidió: hasta que se lean de la respuesta de la fuente, esa parte de la puerta no puede fallar. Los adultos y las habitaciones ya se leen de la respuesta.",
       k: "Puerta 4",
       x: "¿la búsqueda es de fiar?",
       titulo: "Puerta 4: ¿la búsqueda es de fiar?",

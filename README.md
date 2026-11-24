@@ -30,7 +30,8 @@ npm install                 # una vez: solo trae el comprobador de tipos y el fo
 node tests/bateria.mjs      # la batería: las pruebas y los tipos, en segundos, sin internet y sin gastar
 
 node agent/launcher/buscar.ts --pais <país> --lat <latitud> --lon <longitud> \
-  --entrada AAAA-MM-DD --salida AAAA-MM-DD --moneda <tres letras> --nacionalidad <país del pasaporte>
+  --entrada AAAA-MM-DD --salida AAAA-MM-DD --adultos <cuántos> --habitaciones <cuántas> \
+  --moneda <tres letras> --nacionalidad <país del pasaporte>
 ```
 
 Para llevar una investigación entera, con lo entendido de un viaje escrito en un archivo:
@@ -64,7 +65,7 @@ ELDORADO_MESA=<la mesa> npm run dev                                         # y 
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`
 delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). Una fuente se apaga con
-`ELDORADO_APAGAR=parallel`. Más opciones: `--radio`, `--adultos`, `--ninos 4,9`, `--nota`, `--opiniones`,
+`ELDORADO_APAGAR=parallel`. Más opciones: `--radio`, `--ninos 4,9`, `--nota`, `--opiniones`,
 `--estrellas`, `--finalistas`, `--moneda`, `--nacionalidad` y `--mercado`.
 
 ## Los documentos

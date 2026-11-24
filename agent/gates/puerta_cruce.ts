@@ -108,7 +108,8 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
     if (v.total !== r.total) rojo(donde, `su total es ${String(v.total)} y el de la tabla es ${r.total}`);
     if (r.check_in !== m.viaje.dates.check_in || r.check_out !== m.viaje.dates.check_out)
       rojo(donde, "la fila no es de las fechas del viaje");
-    if (r.adults !== m.viaje.travellers.adults || r.children !== m.viaje.travellers.children.length)
+    const grupo = m.viaje.travellers;
+    if (r.adults !== grupo.adults || r.children !== grupo.children.length || r.rooms !== grupo.rooms)
       rojo(donde, "la fila no es del grupo del viaje");
     return r;
   };

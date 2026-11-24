@@ -15,8 +15,10 @@ them and you decide.
 - `table.json`: the table of the trip, made by the house.
   - `rows`: one row per lodging that reached the end, with the transport of the trip if there is one. Each row has
     its totals, its `score` from 0 to 10, what could not be confirmed (`unconfirmed`: the parts of the score that
-    had no data, among `zone`, `what_it_is_like`, `reviews`, `fit_with_the_group` and `conditions`, and every must
-    of the traveller that could not be checked there, as `must:gym`), how close it is to what the
+    had no data, among `zone`, `what_it_is_like`, `reviews`, `fit_with_the_group` and `conditions`; every must
+    of the traveller that could not be checked there, as `must:gym`; and a serious complaint that the house saw in
+    several reviews and nobody confirmed, as `serious:pests`), who it is priced for (`adults`, `children` and
+    `rooms`: the rooms the traveller asked for, and every total is for all of them), how close it is to what the
     traveller is going to see (`walk_minutes`: half of those places are within that many minutes on foot),
     whether it can be cancelled, the `marks` the house gave it (`cheapest`, `best_value`) and, if a sieve
     discarded it, why (`discarded`).

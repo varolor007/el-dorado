@@ -17,6 +17,7 @@ import {
   leerPrecios,
   RADIO_MINIMO,
 } from "../../agent/tools/fuentes/liteapi.ts";
+import { repartirEnHabitaciones } from "../../agent/tools/fuentes/tipos.ts";
 import { cuerpoDeZona, leerOfertas } from "../../agent/tools/fuentes/parallel.ts";
 import { ALOJAMIENTOS, ESTANCIA, MINIMOS, VISTO } from "../cases/inventado/inventado.ts";
 
@@ -120,6 +121,50 @@ test("LiteAPI: de cada alojamiento, la tarifa más barata contando lo que se pag
   assert.equal(precios[0].idHabitacion, "77");
   assert.equal(precios[0].entrada, ESTANCIA.entrada);
   assert.equal(precios[0].adultos, ESTANCIA.adultos);
+});
+
+test("LiteAPI: con varias habitaciones se pide una ocupación por habitación y el precio es la suma de todas", () => {
+  const familia = { ...ESTANCIA, adultos: 3, ninos: [2, 7, 11], habitaciones: 2 };
+  // El reparto de la casa: los adultos, lo más parejo que se pueda; cada niño, a la que va quedando con menos gente.
+  assert.deepEqual(repartirEnHabitaciones(familia), [
+    { adultos: 2, ninos: [7] },
+    { adultos: 1, ninos: [2, 11] },
+  ]);
+  assert.deepEqual(repartirEnHabitaciones({ adultos: 2, ninos: [], habitaciones: 1 }), [{ adultos: 2, ninos: [] }]);
+  // Nunca más habitaciones que adultos: en cada una duerme al menos uno.
+  assert.equal(repartirEnHabitaciones({ adultos: 2, ninos: [4], habitaciones: 5 }).length, 2);
+  assert.deepEqual(cuerpoDePrecios(["x1"], familia).occupancies, [
+    { adults: 2, children: [7] },
+    { adults: 1, children: [2, 11] },
+  ]);
+  const tarifa = (total: number, aparte: number, adultos: number, etiqueta: string) => ({
+    name: "Doble",
+    mappedRoomId: 77,
+    adultCount: adultos,
+    retailRate: { total: [{ amount: total, currency: "EUR" }], taxesAndFees: [{ included: false, amount: aparte }] },
+    cancellationPolicies: { refundableTag: etiqueta },
+  });
+  const json = {
+    data: [
+      {
+        hotelId: "x1",
+        roomTypes: [
+          { rates: [tarifa(250, 4, 2, "RFN"), tarifa(230, 4, 1, "NRFN")] },
+          // Una oferta que no trae las dos habitaciones no es un precio para este grupo.
+          { rates: [tarifa(90, 0, 2, "RFN")] },
+        ],
+      },
+    ],
+  };
+  const [p] = leerPrecios(json, familia, VISTO);
+  assert.equal(p.total, 480);
+  assert.equal(p.tasasAparte, 8);
+  assert.equal(p.habitaciones, 2);
+  // Para cuántos adultos es lo dice la respuesta, no lo que se pidió.
+  assert.equal(p.adultos, 3);
+  // Se puede cancelar solo si se pueden cancelar todas sus habitaciones.
+  assert.equal(p.cancelable, false);
+  assert.equal(leerPrecios(json, ESTANCIA, VISTO)[0].total, 90);
 });
 
 test("LiteAPI: la imagen de relleno de la fuente no es una foto, ni de la habitación ni del alojamiento", () => {

@@ -95,6 +95,7 @@ export async function pedirPalancas(
           p.entrada === entrada &&
           p.salida === hasta &&
           p.adultos === e.adultos &&
+          p.habitaciones === e.habitaciones &&
           p.moneda === e.moneda;
         salida.push({
           ...base,

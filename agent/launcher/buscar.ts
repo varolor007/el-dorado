@@ -60,11 +60,13 @@ async function principal(): Promise<number> {
     radio: numero(a, "radio", 1500),
     entrada: fecha(a, "entrada"),
     salida: fecha(a, "salida"),
-    adultos: numero(a, "adultos", 2),
+    // Quién viaja y en cuántas habitaciones lo dice quien busca: no se supone una pareja en una habitación.
+    adultos: numero(a, "adultos"),
     ninos: (a.ninos ?? "")
       .split(",")
       .filter((x) => x !== "")
       .map(Number),
+    habitaciones: numero(a, "habitaciones"),
     moneda: tresLetras(a, "moneda"),
     nacionalidad: dosLetras(a, "nacionalidad"),
     pais: a.pais.toUpperCase(),

@@ -58,6 +58,7 @@ function CabeceraDelViaje({ t, idioma, viaje, rotulo }: Comun & { viaje: Viaje; 
         <span className="pastilla">{t.vistazo.noches(n)}</span>
         <span className="pastilla">{t.vistazo.adultos(viaje.adultos)}</span>
         {viaje.ninos.length > 0 && <span className="pastilla">{t.vistazo.ninos(viaje.ninos)}</span>}
+        <span className="pastilla">{t.vistazo.habitaciones(viaje.habitaciones)}</span>
       </div>
     </div>
   );
@@ -162,6 +163,8 @@ function Contador(x: {
   texto: string;
   n: number;
   minimo: number;
+  /** Si lo hay, de ahí no se pasa. */
+  maximo?: number;
   menos: string;
   mas: string;
   alCambiar: (n: number) => void;
@@ -180,7 +183,13 @@ function Contador(x: {
       <span className="pastilla" aria-live="polite">
         {x.texto}
       </span>
-      <button type="button" className="toque" aria-label={`${x.mas}: ${x.texto}`} onClick={() => x.alCambiar(x.n + 1)}>
+      <button
+        type="button"
+        className="toque"
+        aria-label={`${x.mas}: ${x.texto}`}
+        disabled={x.maximo !== undefined && x.n >= x.maximo}
+        onClick={() => x.alCambiar(x.n + 1)}
+      >
         +
       </button>
     </span>
@@ -201,6 +210,12 @@ function Quienes({ t, viaje }: { t: Textos; viaje: Viaje }) {
   const p = t.preguntas;
   const [adultos, setAdultos] = useState(viaje.adultos);
   const [edades, setEdades] = useState<(number | null)[]>(viaje.ninos);
+  // Las habitaciones las dice el viajero. En cada una duerme al menos un adulto: no puede haber más que adultos.
+  const [habitaciones, setHabitaciones] = useState(viaje.habitaciones);
+  const cuantosAdultos = (n: number): void => {
+    setAdultos(n);
+    setHabitaciones((h) => Math.min(h, n));
+  };
   const cuantosNinos = (n: number): void => setEdades((e) => (n < e.length ? e.slice(0, n) : [...e, null]));
   const tope = Math.max(EDAD_MAYOR_DE_NINO, ...edades.map((e) => e ?? 0));
   return (
@@ -213,7 +228,7 @@ function Quienes({ t, viaje }: { t: Textos; viaje: Viaje }) {
           minimo={1}
           menos={p.menos}
           mas={p.mas}
-          alCambiar={setAdultos}
+          alCambiar={cuantosAdultos}
         />
         <Contador
           texto={p.ninos(edades.length)}
@@ -222,6 +237,15 @@ function Quienes({ t, viaje }: { t: Textos; viaje: Viaje }) {
           menos={p.menos}
           mas={p.mas}
           alCambiar={cuantosNinos}
+        />
+        <Contador
+          texto={t.vistazo.habitaciones(habitaciones)}
+          n={habitaciones}
+          minimo={1}
+          maximo={adultos}
+          menos={p.menos}
+          mas={p.mas}
+          alCambiar={setHabitaciones}
         />
       </div>
       {edades.length > 0 && (

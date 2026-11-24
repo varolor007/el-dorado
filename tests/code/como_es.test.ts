@@ -161,6 +161,7 @@ test("la ficha de datos del asiento no lleva ni el nombre, ni el precio, ni la n
     season: "unknown",
     adults: 2,
     children: 0,
+    rooms: 1,
   });
   assert.deepEqual(HOJA.room, { id: "h1", name: "Doble", size_m2: 22, beds: ["1 x Double bed"], declared_views: [] });
   assert.deepEqual(HOJA.photos, { room_given: 1, room_total: 1, hotel_given: 2, hotel_total: 2 });

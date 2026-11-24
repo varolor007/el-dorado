@@ -12,6 +12,8 @@ export type Estancia = {
   adultos: number;
   /** La edad de cada niño. */
   ninos: number[];
+  /** En cuántas habitaciones duerme el grupo. Lo dice el viajero. */
+  habitaciones: number;
   moneda: string;
   /** El país del pasaporte del viajero, en dos letras. */
   nacionalidad: string;
@@ -54,6 +56,8 @@ export type Precio = Origen & {
   entrada: string;
   salida: string;
   adultos: number;
+  /** Para cuántas habitaciones es ese total. */
+  habitaciones: number;
   vendedor: string | null;
   enlace: string | null;
 };
@@ -146,4 +150,25 @@ export type DiaBarato = Origen & { dia: string; precio: number; moneda: string }
 export function paraElGrupo(v: Pick<Vuelo, "precio" | "pasajeros">, viajeros: number): number {
   const deUno = v.precio / (v.pasajeros > 0 ? v.pasajeros : 1);
   return Math.round(deUno * viajeros * 100) / 100;
+}
+
+/**
+ * Cómo se reparte un grupo en las habitaciones que dice el viajero: los adultos, lo más parejo que se pueda, y cada
+ * niño, a la habitación que va quedando con menos gente. En cada habitación duerme al menos un adulto, así que no se
+ * piden más habitaciones que adultos. Es la regla de la casa para pedir precio: con quién duerme cada uno lo decide
+ * después quien viaja.
+ */
+export function repartirEnHabitaciones(
+  e: Pick<Estancia, "adultos" | "ninos" | "habitaciones">,
+): { adultos: number; ninos: number[] }[] {
+  const cuantas = Math.max(1, Math.min(Math.round(e.habitaciones) || 1, Math.max(1, e.adultos)));
+  const reparto = Array.from({ length: cuantas }, (_, i) => ({
+    adultos: Math.floor(e.adultos / cuantas) + (i < e.adultos % cuantas ? 1 : 0),
+    ninos: [] as number[],
+  }));
+  for (const edad of e.ninos) {
+    const conMenos = reparto.reduce((a, b) => (b.adultos + b.ninos.length < a.adultos + a.ninos.length ? b : a));
+    conMenos.ninos.push(edad);
+  }
+  return reparto;
 }

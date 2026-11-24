@@ -111,6 +111,10 @@ export function puertaEntendido(v: unknown, o: { hoy?: string } = {}): Veredicto
     const ninos = Array.isArray(t.children) ? t.children : null;
     if (ninos === null || ninos.length > VIAJEROS.ninos || !ninos.every((e) => entero(e, 0, VIAJEROS.edadDeNino)))
       rojo("travellers.children", "los niños van por su edad, de 0 a 17, y no son más de los que caben");
+    // Las habitaciones las dice el viajero. En cada una duerme al menos un adulto: no puede haber más que adultos.
+    const adultos = entero(t.adults, 1, VIAJEROS.adultos) ? (t.adults as number) : VIAJEROS.adultos;
+    if (!entero(t.rooms, 1, adultos))
+      rojo("travellers.rooms", "las habitaciones las dice el viajero: de una a tantas como adultos viajan");
     const pasaportes = Array.isArray(t.passports) ? t.passports : null;
     if (pasaportes === null || !pasaportes.every((p) => letras(p, 2)))
       rojo("travellers.passports", "cada pasaporte son las dos letras de su país");

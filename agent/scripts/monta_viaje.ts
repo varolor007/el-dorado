@@ -220,6 +220,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     salida: b.estancia.salida,
     adultos: b.estancia.adultos,
     ninos: b.estancia.ninos,
+    habitaciones: b.estancia.habitaciones,
     ritmo: d.ritmo,
     paradas: d.paradas,
     dias: reparto.dias,

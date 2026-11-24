@@ -23,6 +23,7 @@ export function viajeInventado(): Viaje {
     entrada: "2027-02-12",
     salida: "2027-02-14",
     adultos: 2,
+    habitaciones: 1,
     ninos: [],
     ritmo: "normal",
     paradas: [

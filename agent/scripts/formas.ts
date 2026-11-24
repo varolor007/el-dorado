@@ -38,7 +38,8 @@ export type Entendido = {
   /** De dónde sale. Sin él no hay transporte que buscar. */
   origin: { name: string; country: string; airport: string | null } | null;
   dates: { check_in: string; check_out: string; flexible: boolean };
-  travellers: { adults: number; children: number[]; passports: string[] };
+  /** Los que viajan, y en cuántas habitaciones duermen: lo dice el viajero, y no se supone. */
+  travellers: { adults: number; children: number[]; rooms: number; passports: string[] };
   budget: (typeof GASTOS)[number];
   /** Lo que busca, con sus palabras o de los toques: «comer bien», «ver lo imprescindible». */
   looking_for: string[];
@@ -179,6 +180,8 @@ export type FilaDelCruce = {
   check_out: string;
   adults: number;
   children: number;
+  /** Las habitaciones que pidió el viajero: el total del alojamiento es para todas. */
+  rooms: number;
   lodging_total: number;
   transport_total: number | null;
   total: number;

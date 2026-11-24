@@ -26,7 +26,7 @@ test("lo entendido del caso inventado pasa, y también viajes de otras clases", 
       v.language = "ja";
       v.currency = "JPY";
       v.origin = null;
-      v.travellers = { adults: 2, children: [1, 6, 11], passports: ["JP"] };
+      v.travellers = { adults: 2, children: [1, 6, 11], rooms: 2, passports: ["JP"] };
       v.destination.kind = "country";
       v.destination.airport = null;
       v.dates.check_out = "2027-03-26";
@@ -34,7 +34,7 @@ test("lo entendido del caso inventado pasa, y también viajes de otras clases", 
     },
     // Una noche, una persona, en el hemisferio sur, con una caja que cruza el meridiano 180.
     (v) => {
-      v.travellers = { adults: 1, children: [], passports: ["NZ"] };
+      v.travellers = { adults: 1, children: [], rooms: 1, passports: ["NZ"] };
       v.destination.centre = { lat: -17.7, lon: 178.1 };
       v.destination.box = { west: 177.0, south: -19.2, east: -178.0, north: -16.0 };
       v.destination.kind = "region";
@@ -150,6 +150,26 @@ test("trampa: un nombre con un salto de línea, una orden o un enlace; una caja 
   assert.deepEqual(
     rojosDe((v) => (v.destination.box.west = "20")),
     ["destination.box"],
+  );
+});
+
+test("trampa: las habitaciones las dice el viajero: ni faltan, ni son cero, ni más que adultos", () => {
+  assert.deepEqual(
+    rojosDe((v) => delete v.travellers.rooms),
+    ["travellers.rooms"],
+  );
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers.rooms = 0)),
+    ["travellers.rooms"],
+  );
+  // Dos adultos no duermen en tres habitaciones: en cada una va al menos uno.
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers.rooms = 3)),
+    ["travellers.rooms"],
+  );
+  assert.deepEqual(
+    rojosDe((v) => (v.travellers.rooms = 2)),
+    [],
   );
 });
 

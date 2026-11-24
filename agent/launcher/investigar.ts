@@ -121,6 +121,7 @@ export function estanciaDe(viaje: Entendido): Estancia {
     salida: viaje.dates.check_out,
     adultos: viaje.travellers.adults,
     ninos: viaje.travellers.children,
+    habitaciones: viaje.travellers.rooms,
     moneda: viaje.currency.toUpperCase(),
     nacionalidad: pasaporte.toUpperCase(),
     pais: viaje.destination.country.toUpperCase(),
@@ -285,8 +286,9 @@ function sinAlojamiento(b: Busqueda): string {
   if (b.dentro.length === 0)
     return `de ${b.devueltos} alojamientos, ninguno llega a los mínimos, ni bajándolos hasta el último escalón`;
   return (
-    `de ${b.dentro.length} alojamientos que pasan los mínimos, ninguno tiene precio para esas noches y ese grupo: ` +
-    "puede ser por las fechas o por los que viajan en una sola habitación"
+    `de ${b.dentro.length} alojamientos que pasan los mínimos, ninguno tiene precio para esas noches y ese grupo ` +
+    `en ${b.estancia.habitaciones} ${b.estancia.habitaciones === 1 ? "habitación" : "habitaciones"}: puede ser por ` +
+    "las fechas, o porque el grupo no cabe así"
   );
 }
 

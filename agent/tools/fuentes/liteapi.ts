@@ -14,6 +14,7 @@ import type {
   Opinion,
   Precio,
 } from "./tipos.ts";
+import { repartirEnHabitaciones } from "./tipos.ts";
 
 const BASE = "https://api.liteapi.travel/v3.0";
 const NOMBRE = "liteapi";
@@ -67,48 +68,68 @@ export function leerLista(json: unknown, visto: string, catalogo?: Map<number, s
   return salida;
 }
 
-/** De cada alojamiento, su tarifa más barata para esas noches. */
+/**
+ * De cada alojamiento, su oferta más barata para esas noches. Una oferta trae una tarifa por habitación pedida: su
+ * total es la suma de todas, y solo vale si trae tantas como habitaciones se pidieron. Para cuántos adultos es lo
+ * dice la propia respuesta, tarifa a tarifa; si no lo dice, lo que se pidió para esa habitación.
+ */
 export function leerPrecios(json: unknown, e: Estancia, visto: string): Precio[] {
   const salida: Precio[] = [];
+  const pedidas = repartirEnHabitaciones(e);
   for (const crudo of lista(objeto(json).data)) {
     const h = objeto(crudo);
     const id = texto(h.hotelId);
     if (id === null) continue;
     let mejor: Precio | null = null;
     for (const tipo of lista(h.roomTypes)) {
-      for (const cruda of lista(objeto(tipo).rates)) {
-        const tarifa = objeto(cruda);
+      const tarifas = lista(objeto(tipo).rates).map(objeto);
+      if (tarifas.length !== pedidas.length) continue;
+      let importe = 0;
+      let aparte = 0;
+      let adultos = 0;
+      let moneda: string | null = null;
+      let entera = true;
+      let cancelable: boolean | null = true;
+      tarifas.forEach((tarifa, n) => {
         const venta = objeto(tarifa.retailRate);
         const total = objeto(lista(venta.total)[0]);
-        const importe = numero(total.amount);
-        if (importe === null) continue;
-        let aparte = 0;
+        const suyo = numero(total.amount);
+        if (suyo === null) entera = false;
+        importe += suyo ?? 0;
+        moneda ??= texto(total.currency);
         for (const t of lista(venta.taxesAndFees)) {
           const tasa = objeto(t);
           if (tasa.included !== true) aparte += numero(tasa.amount) ?? 0;
         }
+        adultos += numero(tarifa.adultCount) ?? pedidas[n].adultos;
+        // Se puede cancelar si se pueden cancelar todas sus habitaciones; si de alguna no se sabe, no se sabe.
         const etiqueta = texto(objeto(tarifa.cancellationPolicies).refundableTag);
-        const candidata: Precio = {
-          fuente: NOMBRE,
-          visto,
-          id,
-          total: importe,
-          tasasAparte: Math.round(aparte * 100) / 100,
-          moneda: texto(total.currency) ?? e.moneda,
-          habitacion: texto(tarifa.name),
-          idHabitacion:
-            tarifa.mappedRoomId === undefined || tarifa.mappedRoomId === null ? null : String(tarifa.mappedRoomId),
-          regimen: texto(tarifa.boardName),
-          cancelable: etiqueta === null ? null : etiqueta === "RFN",
-          entrada: e.entrada,
-          salida: e.salida,
-          adultos: e.adultos,
-          vendedor: NOMBRE,
-          enlace: null,
-        };
-        if (mejor === null || candidata.total + candidata.tasasAparte < mejor.total + mejor.tasasAparte)
-          mejor = candidata;
-      }
+        if (etiqueta === null) cancelable = null;
+        else if (etiqueta !== "RFN" && cancelable !== null) cancelable = false;
+      });
+      if (!entera) continue;
+      const primera = tarifas[0];
+      const candidata: Precio = {
+        fuente: NOMBRE,
+        visto,
+        id,
+        total: Math.round(importe * 100) / 100,
+        tasasAparte: Math.round(aparte * 100) / 100,
+        moneda: moneda ?? e.moneda,
+        habitacion: texto(primera.name),
+        idHabitacion:
+          primera.mappedRoomId === undefined || primera.mappedRoomId === null ? null : String(primera.mappedRoomId),
+        regimen: texto(primera.boardName),
+        cancelable,
+        entrada: e.entrada,
+        salida: e.salida,
+        adultos,
+        habitaciones: tarifas.length,
+        vendedor: NOMBRE,
+        enlace: null,
+      };
+      if (mejor === null || candidata.total + candidata.tasasAparte < mejor.total + mejor.tasasAparte)
+        mejor = candidata;
     }
     if (mejor !== null) salida.push(mejor);
   }
@@ -263,13 +284,15 @@ export function dentroDelRadio(todos: Alojamiento[], e: Estancia): Alojamiento[]
 }
 
 export function cuerpoDePrecios(ids: string[], e: Estancia): Record<string, unknown> {
-  const ocupacion: Record<string, unknown> = { adults: e.adultos };
-  if (e.ninos.length > 0) ocupacion.children = e.ninos;
+  // Una ocupación por habitación, con el grupo repartido como dice la regla de la casa.
+  const ocupaciones = repartirEnHabitaciones(e).map((h) =>
+    h.ninos.length > 0 ? { adults: h.adultos, children: h.ninos } : { adults: h.adultos },
+  );
   return {
     hotelIds: ids,
     checkin: e.entrada,
     checkout: e.salida,
-    occupancies: [ocupacion],
+    occupancies: ocupaciones,
     currency: e.moneda,
     guestNationality: e.nacionalidad,
     timeout: 25,

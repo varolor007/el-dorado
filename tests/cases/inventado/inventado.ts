@@ -22,6 +22,7 @@ export const ESTANCIA: Estancia = {
   salida: "2027-03-08",
   adultos: 2,
   ninos: [],
+  habitaciones: 1,
   moneda: "EUR",
   nacionalidad: "ES",
   pais: "ZZ",
@@ -75,6 +76,7 @@ function precio(
     entrada: ESTANCIA.entrada,
     salida: ESTANCIA.salida,
     adultos: ESTANCIA.adultos,
+    habitaciones: ESTANCIA.habitaciones,
     vendedor: "inventada",
     enlace: null,
   };
@@ -154,6 +156,7 @@ export function precioPara(p: Precio, e: Estancia): Precio {
     entrada: e.entrada,
     salida: e.salida,
     adultos: e.adultos,
+    habitaciones: e.habitaciones,
   };
 }
 

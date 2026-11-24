@@ -14,7 +14,7 @@ const TOPE_DE_LETRAS = 700;
 
 export type HojaDeDatos = {
   lodging_id: string;
-  stay: { check_in: string; check_out: string; season: string; adults: number; children: number };
+  stay: { check_in: string; check_out: string; season: string; adults: number; children: number; rooms: number };
   room: { id: string; name: string; size_m2: number | string; beds: string[]; declared_views: string[] } | string;
   services: string[];
   check_in_from: string;
@@ -58,6 +58,7 @@ export function hojaDeDatos(f: Ficha, e: Estancia, fotos: Eleccion): HojaDeDatos
       season: estacion(f.alojamiento.lat, e.entrada),
       adults: e.adultos,
       children: e.ninos.length,
+      rooms: e.habitaciones,
     },
     room:
       h === null

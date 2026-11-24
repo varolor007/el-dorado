@@ -36,7 +36,7 @@ export const ENTENDIDO: Entendido = {
   },
   origin: { name: "Origen Inventado", country: "YY", airport: "OOO" },
   dates: { check_in: ESTANCIA.entrada, check_out: ESTANCIA.salida, flexible: false },
-  travellers: { adults: 2, children: [], passports: ["YY", "YY"] },
+  travellers: { adults: 2, children: [], rooms: 1, passports: ["YY", "YY"] },
   budget: "medium",
   looking_for: ["comer bien", "ver lo imprescindible"],
   pace: "normal",

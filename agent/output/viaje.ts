@@ -152,6 +152,8 @@ export type Viaje = {
   salida: string;
   adultos: number;
   ninos: number[];
+  /** En cuántas habitaciones duerme el grupo: lo dijo el viajero, y los precios son para esas. */
+  habitaciones: number;
   ritmo: Ritmo;
   paradas: Parada[];
   dias: Dia[];
@@ -300,6 +302,8 @@ export function comprobarViaje(v: Viaje): Pega[] {
     if (!TRANSPORTES.includes(t.clase)) pega(`transportes.${t.id}`, "la clase de transporte no es de su lista");
   }
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
+  if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))
+    pega("habitaciones", "no dice en cuántas habitaciones duerme el grupo");
 
   // Las maneras: tres como mucho, cada una una vez, con piezas que existen y una moneda sola.
   if (v.maneras.length > MANERAS.length) pega("maneras", "hay más de tres maneras");
