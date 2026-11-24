@@ -168,9 +168,13 @@ certificados con todo el que la usa: con un subdominio del PM no pasa. **La terc
 `claude/eldorado-3-14-caminos`: una tabla de caminos por viaje, a pie y en coche, con tope de casillas, que usan las
 cribas, el reparto de los días y la web, y que cae a la cuenta de la casa si la fuente falta) y el que escucha (5.2,
 `claude/eldorado-5-2-el-que-escucha`: las palabras del viajero aparte, su contrato, la mitad de IA de la puerta 1 y
-la investigación esperando su confirmación). **Lo que queda por repartir y pide antes un diseño**: el conductor
-(2.5), que coge un rojo cuando su asiento ya lo intentó dos veces; y el buscador y el lector de webs (3.5), con el
-del calendario (5.3) y el de los papeles (5.4), que sin herramientas piden que busque la casa.
+la investigación esperando su confirmación). Y el buscador y el lector de webs (3.5,
+`claude/eldorado-3-5-buscador`): un asiento dice en su contrato si sale a internet; busca y lee con las herramientas
+de la propia IA (las de la API en la llamada directa; WebSearch y WebFetch en Claude Code); la casa guarda la
+memoria de lo que se buscó y se abrió, y la puerta de todos da rojo a lo que cite una página que no se abrió. **Lo
+que queda por repartir**: cuando esté el 3.5, el del calendario (5.3) y el de los papeles (5.4); y cuando esté el
+5.2, que toca lo mismo, el conductor (2.5): la idea es que el acta del run la escriba el código y que el asiento
+solo coja un rojo que su dueño ya intentó dos veces, para decirle al viajero en claro qué pasó y qué puede hacer.
 
 **La primera llamada con la cuenta del PM, sin hacer todavía (24-nov).** Su token está en el entorno de las
 sesiones, y se abrió una sesión auxiliar (session_016R3jET1bkeCb7Q5twPbPWS) con el guion de dos llamadas mínimas,
