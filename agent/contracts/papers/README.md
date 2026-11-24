@@ -15,7 +15,9 @@ for. You do not calculate: the house works out the dates from the rules the sour
 - `questions.json`: the cells you have to fill, one per row, country and question, each with what the question asks.
   Every cell is there once: none more, none less.
 - `sources.json`: for each country involved, the official domains the house knows. A page on one of them, or on a
-  site under it, is official for that country. A country with an empty list has no known official source.
+  site under it, is official for that country. A country with an empty list has no known official source. `shared`
+  lists the domains that belong to several countries at once (a union's): a page on one of them is a source, but it
+  is not the government of any one country (RP4).
 
 ## What you do not see, and why
 

@@ -7,7 +7,7 @@
 // Si la tabla pasa, lo que bloquea lo dice la tabla (lo cuenta `launcher/papeles.ts`), y lo dudoso sale como aviso. Que
 // cada página citada se abrió de verdad lo mira la puerta de todos.
 
-import { conFuenteOficial, DUDAS, ESTADOS_DE_PAPEL, esOficial, LADOS } from "../data/papeles.ts";
+import { conFuenteOficial, dominioOficial, DUDAS, ESTADOS_DE_PAPEL, LADOS } from "../data/papeles.ts";
 import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO } from "../data/viaje.ts";
 import { direccionComparable, esDireccion } from "../launcher/consultado.ts";
 import { celdasDe, filasDe } from "../launcher/papeles.ts";
@@ -71,7 +71,7 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
     // Las fuentes: cada una, una página https, de su lado, con lo que dice y con la fecha que da.
     const fuentes = Array.isArray(c.sources) ? c.sources : null;
     if (fuentes === null) rojo(`${donde}.sources`, "falta, o no es una lista");
-    const validas: { url: string; lado: string; estado: string }[] = [];
+    const validas: { url: string; lado: string; estado: string; dominio: string; propio: boolean }[] = [];
     const urls = new Set<string>();
     (fuentes ?? []).forEach((f, j) => {
       const aqui = `${donde}.sources[${j}]`;
@@ -85,13 +85,15 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
       if (f.status === "doubtful" || !(ESTADOS_DE_PAPEL as readonly unknown[]).includes(f.status))
         return rojo(`${aqui}.status`, "lo que dice la fuente no es un estado de su lista");
       const suPais = f.side === "destination" ? pais : fila.passport;
-      const oficial = esOficial(f.url, suPais);
+      const deLaLista = dominioOficial(f.url, suPais);
+      const oficial = deLaLista !== null;
       const fechada = esFecha(f.seen);
       if (!fechada) rojo(`${aqui}.seen`, "no lleva la fecha que da la página, YYYY-MM-DD (RP2)");
       // En una casilla dudosa puede ir lo que se encontró y no vale; en las demás, no (RP2).
       if (!oficial && estado !== "doubtful")
         rojo(`${aqui}.url`, `no es de un dominio oficial de nuestra lista para ${suPais} (RP2)`);
-      if (oficial && fechada) validas.push({ url: comparable, lado: f.side as string, estado: f.status as string });
+      if (deLaLista !== null && fechada)
+        validas.push({ url: comparable, lado: f.side as string, estado: f.status as string, ...deLaLista });
     });
 
     // Lo que dice la casilla es lo que dicen sus fuentes, y lo dudoso dice por qué.
@@ -115,8 +117,16 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
       if (estado === "in_order") {
         if (!conFuenteOficial(destino) && pais === destino)
           rojo(`${donde}.status`, `no tenemos fuente oficial de ${pais}: no puede salir en regla, es dudosa (RP4)`);
-        else if (validas.length < 2 && !validas.some((x) => x.lado === "destination"))
-          rojo(`${donde}.status`, "en regla pide dos fuentes, o una del gobierno del destino (RP4)");
+        // Dos fuentes son dos sitios distintos: dos páginas del mismo dominio son una. Y el gobierno del destino es
+        // un dominio propio de ese país: uno común a varios (los de la Unión) cuenta como fuente, no como su gobierno.
+        else if (
+          new Set(validas.map((x) => x.dominio)).size < 2 &&
+          !validas.some((x) => x.lado === "destination" && x.propio)
+        )
+          rojo(
+            `${donde}.status`,
+            "en regla pide dos fuentes de sitios distintos, o una de un dominio propio del gobierno del destino (RP4)",
+          );
       }
     }
 

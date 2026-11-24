@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { DOMINIOS_OFICIALES, dominiosDe, esOficial, PREGUNTAS } from "../../agent/data/papeles.ts";
+import { DOMINIOS_OFICIALES, dominiosDe, esOficial, PREGUNTAS, UNION_EUROPEA } from "../../agent/data/papeles.ts";
 import { topesDeInternet, TOPES_DE_INTERNET } from "../../agent/data/internet.ts";
 import { puertaPapeles } from "../../agent/gates/puerta_papeles.ts";
 import { sigue } from "../../agent/launcher/investigar.ts";
@@ -170,7 +170,7 @@ test("lo que ve el de los papeles: pasaportes, edades, el destino y los días, y
     JSON.parse((piezas.find((p) => p.ruta === ruta) as { contenido: string }).contenido);
   assert.equal(de("questions.json").length, celdasDe(VIAJE).length);
   assert.ok(de("questions.json").every((q: Objeto) => typeof q.asks === "string" && q.asks.length > 0));
-  assert.deepEqual(de("sources.json"), { ZZ: [], YY: [] });
+  assert.deepEqual(de("sources.json"), { ZZ: [], YY: [], shared: [] });
   assert.deepEqual(de("trip.json").countries, ["ZZ"]);
   // Los comunes de la Unión valen para un país de la Unión, no para cualquiera.
   assert.ok(dominiosDe("PT").includes("europa.eu"));
@@ -327,6 +327,59 @@ test("las trampas de la puerta 2: cada fallo puesto a propósito, cazado", async
     Object.assign(c, { status: "doubtful", doubt: "no_official_source", sources: [], valid_for: "unknown" });
   for (const c of sinFuente.cells) Object.assign(c, { before_arrival: "unknown", cost: "unknown" });
   assert.deepEqual(rojos(sinFuente), []);
+});
+
+test("en regla: dos sitios distintos, o uno propio del gobierno del destino; a la pantalla, lo oficial", async () => {
+  await conDominios(async () => {
+    const visa = (e: Objeto): Objeto => e.cells.find((c: Objeto) => c.question === "visa" && c.traveller === "t1");
+    const delVisado = (e: Objeto): string[] => rojos(e).filter((x) => x.includes(".status") && x.includes("RP4"));
+    // Dos páginas del mismo sitio del ministerio del viajero son una sola fuente.
+    const dosDelMismo = buena();
+    visa(dosDelMismo).sources = [fuente("home", "in_order", "consejos"), fuente("home", "in_order", "visados")];
+    assert.equal(delVisado(dosDelMismo).length, 1);
+    // Un dominio común a varios países (como los de la Unión) es fuente, pero no el gobierno del destino.
+    DOMINIOS_OFICIALES.EU.push("comun.example");
+    UNION_EUROPEA.push("ZZ");
+    try {
+      const comun = buena();
+      visa(comun).sources = [{ ...fuente("destination", "in_order"), url: "https://comun.example/entrada" }];
+      assert.equal(delVisado(comun).length, 1);
+      // Con otra fuente de otro sitio, sí: son dos.
+      visa(comun).sources.push(fuente("home", "in_order", "consejos"));
+      assert.deepEqual(delVisado(comun), []);
+      const dado = Object.fromEntries(
+        piezasDeLosPapeles(VIAJE, "2031-06-01").map((x) => [
+          x.ruta,
+          JSON.parse((x as { contenido: string }).contenido),
+        ]),
+      );
+      assert.deepEqual(dado["sources.json"].shared, ["europa.eu", "comun.example"]);
+    } finally {
+      DOMINIOS_OFICIALES.EU.pop();
+      UNION_EUROPEA.pop();
+    }
+    // Una sola del gobierno del destino, en su dominio propio, basta.
+    const una = buena();
+    visa(una).sources = [fuente("destination", "in_order")];
+    assert.deepEqual(delVisado(una), []);
+    // En una casilla dudosa puede ir lo que se encontró en otro sitio; a la pantalla no llega como fuente.
+    const dudosa = buena();
+    Object.assign(visa(dudosa), {
+      status: "doubtful",
+      doubt: "not_found",
+      sources: [
+        { url: "https://visados-rapidos.example/zz", side: "destination", status: "to_do", seen: "2031-03-02" },
+        fuente("home", "in_order", "consejos"),
+      ],
+    });
+    assert.deepEqual(rojos(dudosa), []);
+    const tabla = paraEnsenarPapeles(dudosa as never, VIAJE, "2031-06-01");
+    const delViajero = tabla.casillas.find((c) => c.pregunta === "visa" && c.viajero === 0)!;
+    assert.deepEqual(
+      delViajero.fuentes.map((f) => f.url),
+      [`${CASA}/consejos`],
+    );
+  });
 });
 
 test("si un papel bloquea, se para antes de gastar en buscar, y sigue si el viajero lo decide", async () => {

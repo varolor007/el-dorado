@@ -97,6 +97,26 @@ export function dominiosDe(pais: string): string[] {
   return [...(DOMINIOS_OFICIALES[p] ?? []), ...(UNION_EUROPEA.includes(p) ? DOMINIOS_OFICIALES.EU : [])];
 }
 
+/**
+ * El dominio de nuestra lista del que es una dirección, para ese país, y si es propio suyo o común a varios (los de
+ * la Unión); null si no es de ninguno, o si no es https. Dos páginas del mismo dominio son una sola fuente, y un
+ * dominio común no es el gobierno de ningún país.
+ */
+export function dominioOficial(url: string, pais: string): { dominio: string; propio: boolean } | null {
+  let maquina: string;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return null;
+    maquina = u.hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+  const propios = DOMINIOS_OFICIALES[pais.toUpperCase()] ?? [];
+  const suyo = (d: string): boolean => maquina === d || maquina.endsWith("." + d);
+  const dominio = dominiosDe(pais).find(suyo);
+  return dominio === undefined ? null : { dominio, propio: pais.toUpperCase() !== "EU" && propios.some(suyo) };
+}
+
 /** Si tenemos algún dominio oficial propio de ese país: sin él, nada de ese país puede salir «en regla». */
 export const conFuenteOficial = (pais: string): boolean => (DOMINIOS_OFICIALES[pais.toUpperCase()] ?? []).length > 0;
 

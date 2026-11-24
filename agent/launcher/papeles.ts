@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PARADO } from "../data/pasos.ts";
 import {
+  dominioOficial,
   dominiosDe,
   HASTA_EL_TRANSPORTE,
   PREGUNTAS,
@@ -91,9 +92,14 @@ export function piezasDeLosPapeles(viaje: Entendido, hoy: string): Pieza[] {
     dates: { check_in, check_out, nights: diasEntre(check_in, check_out) },
   };
   const questions = celdasDe(viaje).map((c) => ({ ...c, asks: QUE_PREGUNTA[c.question] }));
-  const sources = Object.fromEntries(
-    [...new Set([...paises, ...filas.map((f) => f.passport)])].map((pais) => [pais, dominiosDe(pais)]),
+  const deCada = [...new Set([...paises, ...filas.map((f) => f.passport)])].map(
+    (pais) => [pais, dominiosDe(pais)] as const,
   );
+  // Los comunes a varios países (los de la Unión) se dicen aparte: son fuente, pero no el gobierno de ninguno.
+  const comunes = [
+    ...new Set(deCada.flatMap(([pais, lista]) => lista.filter((d) => !dominioOficial(`https://${d}/`, pais)?.propio))),
+  ];
+  const sources = { ...Object.fromEntries(deCada), shared: comunes };
   return [
     { ruta: "trip.json", contenido: json(trip) },
     { ruta: "travellers.json", contenido: json(filas) },
@@ -130,6 +136,7 @@ export function paraEnsenarPapeles(e: EntregaDeLosPapeles, viaje: Entendido, hoy
     edad: f.age === "adult" ? null : f.age,
     cuantos: f.count,
   }));
+  const fila = (id: string): Fila | undefined => filas.find((f) => f.id === id);
   const casillas: CasillaDePapel[] = e.cells.map((c) => {
     const antes = c.before_arrival === "unknown" ? null : moverFecha(entrada, -c.before_arrival.days);
     return {
@@ -138,7 +145,13 @@ export function paraEnsenarPapeles(e: EntregaDeLosPapeles, viaje: Entendido, hoy
       pregunta: c.question,
       estado: c.status as EstadoDePapel,
       duda: c.doubt === "unknown" ? null : c.doubt,
-      fuentes: c.sources.map((s) => ({ url: s.url, lado: s.side, estado: s.status, visto: s.seen })),
+      // A la pantalla solo llegan las fuentes oficiales de nuestra lista: lo que se encontró en otro sitio y no
+      // vale (en una casilla dudosa puede ir) se queda en el run, y no se enseña como un enlace junto a un requisito.
+      fuentes: c.sources
+        .filter((s) =>
+          dominioOficial(s.url, s.side === "destination" ? c.country : (fila(c.traveller)?.passport ?? "")),
+        )
+        .map((s) => ({ url: s.url, lado: s.side, estado: s.status, visto: s.seen })),
       hasta: c.valid_for === "unknown" ? null : validoHasta(c.valid_for, entrada, salida),
       antesDe: antes,
       tarde: antes !== null && antes < hoy,
