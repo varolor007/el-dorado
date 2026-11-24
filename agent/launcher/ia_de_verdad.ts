@@ -4,10 +4,14 @@
 // escribió.
 //
 // Con qué modelo se piensa lo dice el entorno (ELDORADO_MODELO), nunca este repositorio; y cuánto se esfuerza, si
-// se quiere decir (ELDORADO_ESFUERZO). El asiento no tiene herramientas: ni abre archivos ni sale a internet.
+// se quiere decir (ELDORADO_ESFUERZO). El asiento no tiene herramientas: ni abre archivos ni sale a internet. Solo el
+// que lo dice en su contrato recibe el buscador y el lector de webs de la propia API, con sus topes; de lo que
+// devuelven se saca lo que buscó y lo que abrió de verdad.
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { Parte, Pensar, Peticion, Respuesta } from "./ia.ts";
+import { LO_MAS_DE_UNA_PAGINA, VUELTAS_CON_INTERNET } from "../data/internet.ts";
+import type { Busqueda, Consultado, Pagina } from "./consultado.ts";
+import type { Internet, Parte, Pensar, Peticion, Respuesta } from "./ia.ts";
 
 /** Lo más que puede medir una respuesta. Va por partes, para que una larga no se corte por esperar. */
 export const MAXIMO_DE_UNA_RESPUESTA = 64_000;
@@ -46,6 +50,74 @@ export function mensajesDe(p: Peticion): Anthropic.MessageParam[] {
   return [{ role: "user", content: p.partes.map(bloque) }];
 }
 
+/**
+ * El buscador y el lector de webs de la API, con sus topes por llamada. Son los mismos en cada vuelta: cambiar las
+ * herramientas a media conversación invalida lo que la IA ya pensó.
+ */
+export function herramientasDe(internet: Internet): Anthropic.ToolUnion[] {
+  return [
+    { type: "web_search_20260209", name: "web_search", max_uses: internet.busquedas },
+    {
+      type: "web_fetch_20260209",
+      name: "web_fetch",
+      max_uses: internet.paginas,
+      max_content_tokens: LO_MAS_DE_UNA_PAGINA,
+    },
+  ];
+}
+
+const texto = (x: unknown): string | null => (typeof x === "string" && x.trim() !== "" ? x : null);
+
+/**
+ * Lo que buscó y lo que abrió, sacado de lo que devolvió la API: cada búsqueda con su pregunta y sus resultados, y
+ * cada página con su resultado. Una página cuenta como abierta solo si su resultado dice que se leyó; un pedido sin
+ * resultado, o con un fallo, no.
+ */
+export function consultadoDe(bloques: Anthropic.ContentBlock[]): Consultado {
+  const pedidos = new Map<string, { nombre: string; entrada: Record<string, unknown> }>();
+  for (const b of bloques)
+    if (b.type === "server_tool_use")
+      pedidos.set(b.id, { nombre: b.name, entrada: (b.input ?? {}) as Record<string, unknown> });
+  const busquedas: Busqueda[] = [];
+  const paginas: Pagina[] = [];
+  const fallidas: Consultado["fallidas"] = [];
+  const contestados = new Set<string>();
+  for (const b of bloques) {
+    if (b.type === "web_search_tool_result") {
+      contestados.add(b.tool_use_id);
+      const consulta = texto(pedidos.get(b.tool_use_id)?.entrada.query) ?? "unknown";
+      if (Array.isArray(b.content))
+        busquedas.push({
+          consulta,
+          resultados: b.content.map((r) => ({ url: r.url, titulo: texto(r.title) })),
+          fallo: null,
+        });
+      else busquedas.push({ consulta, resultados: [], fallo: b.content.error_code });
+    } else if (b.type === "web_fetch_tool_result") {
+      contestados.add(b.tool_use_id);
+      const pedida = texto(pedidos.get(b.tool_use_id)?.entrada.url);
+      const c = b.content;
+      if (c.type === "web_fetch_result") {
+        const url = pedida ?? c.url;
+        paginas.push({
+          url,
+          final: c.url !== url ? c.url : null,
+          titulo: texto(c.content?.title),
+          cuando: texto(c.retrieved_at),
+        });
+      } else fallidas.push({ url: pedida ?? "unknown", porque: c.error_code });
+    }
+  }
+  // Lo que se pidió y no llegó a contestarse no se abrió, pero se pidió: cuenta para el tope.
+  for (const [id, p] of pedidos) {
+    if (contestados.has(id)) continue;
+    if (p.nombre === "web_search")
+      busquedas.push({ consulta: texto(p.entrada.query) ?? "unknown", resultados: [], fallo: "no result" });
+    if (p.nombre === "web_fetch") fallidas.push({ url: texto(p.entrada.url) ?? "unknown", porque: "no result" });
+  }
+  return { busquedas, paginas, fallidas };
+}
+
 /** Cómo acabó, dicho como lo entiende la casa. */
 function finDe(parada: Anthropic.Message["stop_reason"]): Respuesta["fin"] {
   if (parada === "refusal") return "refusal";
@@ -71,7 +143,9 @@ const clienteDe = (clave: string): ClienteDeIA => new Anthropic({ apiKey: clave 
 
 /**
  * Quien piensa de verdad en un asiento: una llamada a Claude con la clave de un viajero. El contrato va como
- * instrucciones del sistema; la orden y el material, en un mensaje. Sin herramientas.
+ * instrucciones del sistema; la orden y el material, en un mensaje. Sin herramientas, salvo el asiento que sale a
+ * internet: ese recibe el buscador y el lector de webs, y si la IA para a media vuelta para seguir buscando, se le
+ * deja seguir, con lo de antes, hasta sus vueltas.
  */
 export function pensarConClaude(
   clave: string,
@@ -79,31 +153,65 @@ export function pensarConClaude(
   cliente: (clave: string) => ClienteDeIA = clienteDe,
 ): Pensar {
   return async (p, corte) => {
+    const herramientas = p.internet ? herramientasDe(p.internet) : null;
+    const pregunta = mensajesDe(p);
+    const dicho: Anthropic.ContentBlock[] = [];
+    let entrada = 0;
+    let salida = 0;
+    let busquedas: number | undefined;
+    let turnos = 0;
+    let fin: Respuesta["fin"] = "end";
     try {
-      const respuesta = await cliente(clave)
-        .messages.stream(
-          {
-            model: con.modelo,
-            max_tokens: MAXIMO_DE_UNA_RESPUESTA,
-            thinking: { type: "adaptive" },
-            ...(con.esfuerzo === null ? {} : { output_config: { effort: con.esfuerzo } }),
-            system: p.contrato,
-            messages: mensajesDe(p),
-          },
-          { signal: corte },
-        )
-        .finalMessage();
-      const uso = respuesta.usage;
-      return {
-        // Lo que piensa por dentro no es su respuesta: solo cuenta el texto que dice.
-        texto: respuesta.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join(""),
-        fin: finDe(respuesta.stop_reason),
-        entrada: uso.input_tokens + (uso.cache_creation_input_tokens ?? 0) + (uso.cache_read_input_tokens ?? 0),
-        salida: uso.output_tokens,
-      };
+      for (;;) {
+        turnos++;
+        const respuesta = await cliente(clave)
+          .messages.stream(
+            {
+              model: con.modelo,
+              max_tokens: MAXIMO_DE_UNA_RESPUESTA,
+              thinking: { type: "adaptive" },
+              ...(con.esfuerzo === null ? {} : { output_config: { effort: con.esfuerzo } }),
+              system: p.contrato,
+              ...(herramientas === null ? {} : { tools: herramientas }),
+              // Para seguir tras una pausa se le manda lo que ya dijo, tal cual, y nada más.
+              messages:
+                dicho.length === 0
+                  ? pregunta
+                  : [...pregunta, { role: "assistant", content: dicho as Anthropic.ContentBlockParam[] }],
+            },
+            { signal: corte },
+          )
+          .finalMessage();
+        const uso = respuesta.usage;
+        entrada += uso.input_tokens + (uso.cache_creation_input_tokens ?? 0) + (uso.cache_read_input_tokens ?? 0);
+        salida += uso.output_tokens;
+        const cobradas = uso.server_tool_use?.web_search_requests;
+        if (typeof cobradas === "number") busquedas = (busquedas ?? 0) + cobradas;
+        dicho.push(...respuesta.content);
+        if (respuesta.stop_reason !== "pause_turn") {
+          fin = finDe(respuesta.stop_reason);
+          break;
+        }
+        // Sin herramientas no hay pausa que valga; con ellas, se sigue hasta sus vueltas.
+        if (herramientas === null || turnos >= VUELTAS_CON_INTERNET) {
+          fin = "unfinished";
+          break;
+        }
+      }
     } catch (e) {
       throw falloDe(e);
     }
+    return {
+      // Lo que piensa por dentro no es su respuesta: solo cuenta el texto que dice.
+      texto: dicho.flatMap((b) => (b.type === "text" ? [b.text] : [])).join(""),
+      fin,
+      entrada,
+      salida,
+      ...(turnos > 1 ? { turnos } : {}),
+      ...(herramientas === null
+        ? {}
+        : { consultado: consultadoDe(dicho), ...(busquedas === undefined ? {} : { busquedas }) }),
+    };
   };
 }
 

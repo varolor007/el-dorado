@@ -12,12 +12,19 @@
 // Claude Code de la máquina en la que corra la casa, cuyas variables (CLAUDE_*, ANTHROPIC_*) no le llegan.
 //
 // Con qué modelo se piensa lo dice el entorno de la casa (ELDORADO_MODELO), nunca este repositorio.
+//
+// El asiento que dice en su contrato que sale a internet recibe dos herramientas de Claude Code y ninguna más: su
+// buscador (WebSearch) y su lector de webs (WebFetch). Claude Code da las vueltas que le hagan falta, y la casa
+// cuenta cada búsqueda y cada página según las pide: a la primera que pase de su tope, lo corta. De lo que dice en
+// stream-json se saca lo que buscó y lo que abrió de verdad.
 
 import { spawn } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { StringDecoder } from "node:string_decoder";
 import { join } from "node:path";
-import type { Pensar, Respuesta } from "./ia.ts";
+import type { Busqueda, Consultado, Pagina } from "./consultado.ts";
+import type { Internet, Pensar, Respuesta } from "./ia.ts";
 import { mensajesDe, type ConQue } from "./ia_de_verdad.ts";
 
 /** Cómo le llega a la casa el token de la suscripción, y cómo se lo pasa a Claude Code. */
@@ -34,6 +41,8 @@ const DE_LA_RED = new Set([
   "SSL_CERT_FILE",
   "SSL_CERT_DIR",
 ]);
+/** Las dos herramientas de Claude Code que recibe un asiento con internet: el buscador y el lector de webs. */
+export const HERRAMIENTAS_DE_INTERNET = ["WebSearch", "WebFetch"] as const;
 /** Lo que puede tardar una vuelta, si no se dice otra cosa, y lo que se le deja para acabar cuando se le corta. */
 export const TOPE_DE_UNA_VUELTA_MS = 20 * 60_000;
 const GRACIA_AL_CORTAR_MS = 5_000;
@@ -68,9 +77,11 @@ export function entornoDeClaudeCode(
 
 /**
  * Las opciones con las que se lanza: sin herramientas (y sin ellas no hay más que una vuelta) y sin nada de lo
- * instalado en la máquina. No se usa `--max-turns`: la versión instalada no la lista en su ayuda.
+ * instalado en la máquina. No se usa `--max-turns`: la versión instalada no la lista en su ayuda. Con internet, el
+ * buscador y el lector de webs, dados y permitidos de antemano, y nada más: los topes los lleva la casa.
  */
-export function opcionesDe(con: ConQue, instrucciones: string): string[] {
+export function opcionesDe(con: ConQue, instrucciones: string, internet = false): string[] {
+  const herramientas = HERRAMIENTAS_DE_INTERNET.join(",");
   return [
     "-p",
     "--input-format",
@@ -84,8 +95,7 @@ export function opcionesDe(con: ConQue, instrucciones: string): string[] {
     "--model",
     con.modelo,
     ...(con.esfuerzo === null ? [] : ["--effort", con.esfuerzo]),
-    "--tools",
-    "",
+    ...(internet ? ["--tools", herramientas, "--allowedTools", herramientas] : ["--tools", ""]),
     "--no-session-persistence",
     "--safe-mode",
     "--strict-mcp-config",
@@ -133,17 +143,95 @@ function finDe(parada: unknown): Respuesta["fin"] {
   return parada === "max_tokens" ? "max_tokens" : "end";
 }
 
+const objeto = (x: unknown): Record<string, unknown> | null =>
+  typeof x === "object" && x !== null && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
+const textoDe = (x: unknown): string | null => (typeof x === "string" && x.trim() !== "" ? x : null);
+
+/** Cada herramienta que pidió, en un suceso de stream-json: su seña, su nombre y lo que le pasó. */
+export function pedidosEn(suceso: unknown): { id: string; nombre: string; entrada: Record<string, unknown> }[] {
+  const s = objeto(suceso);
+  if (s?.type !== "assistant") return [];
+  const contenido = objeto(s.message)?.content;
+  if (!Array.isArray(contenido)) return [];
+  return contenido.flatMap((b) => {
+    const x = objeto(b);
+    if (x?.type !== "tool_use" || typeof x.id !== "string" || typeof x.name !== "string") return [];
+    return [{ id: x.id, nombre: x.name, entrada: objeto(x.input) ?? {} }];
+  });
+}
+
+/** Las direcciones con su título que hay dentro de lo que devolvió el buscador, se diga como se diga. */
+function resultadosEn(x: unknown, salida: Busqueda["resultados"] = [], hondo = 0): Busqueda["resultados"] {
+  if (hondo > 6) return salida;
+  if (Array.isArray(x)) for (const y of x) resultadosEn(y, salida, hondo + 1);
+  const o = objeto(x);
+  if (o !== null) {
+    const url = textoDe(o.url);
+    if (url !== null && /^https?:\/\//i.test(url)) salida.push({ url, titulo: textoDe(o.title) });
+    else for (const y of Object.values(o)) resultadosEn(y, salida, hondo + 1);
+  }
+  return salida;
+}
+
+/**
+ * Lo que buscó y lo que abrió, sacado de los sucesos de stream-json: cada herramienta que pidió y lo que le volvió.
+ * Una página cuenta como abierta solo si volvió sin fallo y, si dice su código, con uno de los que dicen que se leyó
+ * (un 2xx): una que lleva a otra parte, o que no contestó, no se abrió.
+ */
+export function consultadoDeClaudeCode(sucesos: unknown[]): Consultado {
+  const pedidos = new Map<string, { nombre: string; entrada: Record<string, unknown> }>();
+  for (const s of sucesos) for (const p of pedidosEn(s)) pedidos.set(p.id, p);
+  const vueltas = new Map<string, { error: boolean; detalle: Record<string, unknown> | null }>();
+  for (const s of sucesos) {
+    const o = objeto(s);
+    if (o?.type !== "user") continue;
+    const contenido = objeto(o.message)?.content;
+    if (!Array.isArray(contenido)) continue;
+    for (const b of contenido) {
+      const x = objeto(b);
+      if (x?.type !== "tool_result" || typeof x.tool_use_id !== "string") continue;
+      vueltas.set(x.tool_use_id, { error: x.is_error === true, detalle: objeto(o.tool_use_result) });
+    }
+  }
+  const busquedas: Busqueda[] = [];
+  const paginas: Pagina[] = [];
+  const fallidas: Consultado["fallidas"] = [];
+  for (const [id, p] of pedidos) {
+    const vuelta = vueltas.get(id);
+    if (p.nombre === "WebSearch") {
+      const consulta = textoDe(p.entrada.query) ?? "unknown";
+      if (vuelta === undefined || vuelta.error)
+        busquedas.push({ consulta, resultados: [], fallo: vuelta === undefined ? "no result" : "error" });
+      else busquedas.push({ consulta, resultados: resultadosEn(vuelta.detalle?.results), fallo: null });
+    } else if (p.nombre === "WebFetch") {
+      const url = textoDe(p.entrada.url) ?? "unknown";
+      const codigo = vuelta?.detalle?.code;
+      if (vuelta === undefined) fallidas.push({ url, porque: "no result" });
+      else if (vuelta.error) fallidas.push({ url, porque: "error" });
+      else if (typeof codigo === "number" && (codigo < 200 || codigo > 299))
+        fallidas.push({ url, porque: `code ${codigo}` });
+      else {
+        const final = textoDe(vuelta.detalle?.url);
+        paginas.push({ url, final: final !== null && final !== url ? final : null, titulo: null, cuando: null });
+      }
+    }
+  }
+  return { busquedas, paginas, fallidas };
+}
+
 /**
  * Lee lo que dijo Claude Code en stream-json: una línea por suceso, y la que vale es la última del resultado. De ahí
  * salen la respuesta, cómo acabó, lo que leyó y escribió y lo que dice que costó. Lo que no se entiende, o un
  * resultado que es un fallo, se lanza, con el porqué y sin el token.
  */
-export function leerSalida(salida: string, token?: string): Respuesta {
+export function leerSalida(salida: string, token?: string, internet = false): Respuesta {
   let resultado: Record<string, unknown> | null = null;
+  const sucesos: unknown[] = [];
   for (const linea of salida.split(/\r?\n/)) {
     if (linea.trim() === "") continue;
     try {
       const suceso: unknown = JSON.parse(linea);
+      sucesos.push(suceso);
       if (typeof suceso === "object" && suceso !== null && (suceso as { type?: unknown }).type === "result")
         resultado = suceso as Record<string, unknown>;
     } catch {
@@ -164,12 +252,37 @@ export function leerSalida(salida: string, token?: string): Respuesta {
     string,
     unknown
   >;
+  // Lo consultado va siempre que tuvo internet, y también si pidió una herramienta sin tenerlo: la casa lo dirá.
+  const pidio = sucesos.some((x) => pedidosEn(x).length > 0);
+  const turnos = resultado.num_turns;
   return {
     texto: dicho,
     fin: finDe(resultado.stop_reason),
     entrada: numero(uso.input_tokens) + numero(uso.cache_creation_input_tokens) + numero(uso.cache_read_input_tokens),
     salida: numero(uso.output_tokens),
     usd,
+    ...(typeof turnos === "number" && Number.isInteger(turnos) && turnos > 1 ? { turnos } : {}),
+    ...(internet || pidio ? { consultado: consultadoDeClaudeCode(sucesos) } : {}),
+  };
+}
+
+/**
+ * Cuenta, según llegan, las herramientas que pide: si pide una que no se le dio, o una búsqueda o una página de más,
+ * dice por qué hay que cortarlo. Si no, null.
+ */
+export function contadorDeTopes(internet: Internet | null): (suceso: unknown) => string | null {
+  let busquedas = 0;
+  let paginas = 0;
+  return (suceso) => {
+    for (const p of pedidosEn(suceso)) {
+      if (internet === null) return `Claude Code pidió una herramienta, ${p.nombre}, y este asiento no tiene ninguna`;
+      if (p.nombre === "WebSearch") busquedas++;
+      else if (p.nombre === "WebFetch") paginas++;
+      else return `Claude Code pidió una herramienta que no se le dio: ${p.nombre}`;
+      if (busquedas > internet.busquedas) return `Claude Code pasó de su tope de ${internet.busquedas} búsquedas`;
+      if (paginas > internet.paginas) return `Claude Code pasó de su tope de ${internet.paginas} páginas`;
+    }
+    return null;
   };
 }
 
@@ -206,7 +319,11 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
         let porQueSeCorto: string | null = null;
         const trozos: Buffer[] = [];
         let peso = 0;
-        const hijo = spawn(binario, opcionesDe(o.con, instrucciones), {
+        const internet = p.internet ?? null;
+        const contar = contadorDeTopes(internet);
+        let pendiente = "";
+        const decodificador = new StringDecoder("utf8");
+        const hijo = spawn(binario, opcionesDe(o.con, instrucciones, internet !== null), {
           cwd: vacia,
           env,
           stdio: ["pipe", "pipe", "ignore"],
@@ -234,6 +351,19 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
           peso += trozo.length;
           if (peso > LO_MAS_QUE_SE_LEE) return cortar("Claude Code dijo más de lo que se lee");
           trozos.push(trozo);
+          // Lo que pide se cuenta según llega, línea a línea: a la que pasa de su tope se le corta en cuanto la pide.
+          const lineas = (pendiente + decodificador.write(trozo)).split("\n");
+          pendiente = lineas.pop() ?? "";
+          for (const linea of lineas) {
+            let suceso: unknown;
+            try {
+              suceso = JSON.parse(linea);
+            } catch {
+              continue;
+            }
+            const motivo = contar(suceso);
+            if (motivo !== null) return cortar(motivo);
+          }
         });
         // Si deja de leer su entrada antes de tiempo, lo que cuenta es cómo acaba, no el fallo al escribirle.
         hijo.stdin.on("error", () => undefined);
@@ -250,7 +380,7 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
           acaba();
           if (porQueSeCorto !== null) return falla(new Error(porQueSeCorto));
           try {
-            resuelve(leerSalida(Buffer.concat(trozos).toString("utf8"), token));
+            resuelve(leerSalida(Buffer.concat(trozos).toString("utf8"), token, internet !== null));
           } catch (e) {
             const motivo = e instanceof Error ? e.message : "Claude Code no dio su resultado";
             falla(new Error(codigo === 0 ? motivo : `${motivo}; salió con ${codigo ?? "una señal"}`));

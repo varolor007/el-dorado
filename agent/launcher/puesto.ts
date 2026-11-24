@@ -13,12 +13,14 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { huella, type Sello } from "../gates/puerta_metodo.ts";
+import { huella, INTERNET, type Sello } from "../gates/puerta_metodo.ts";
 import { dentroDelRepositorio } from "./mesa.ts";
 
 const CONTRATOS = resolve(import.meta.dirname, "..", "contracts");
 /** Lo que es de la casa y no viaja al puesto: la orden que abre el asiento. */
 const SOLO_DE_LA_CASA = new Set(["LAUNCH.md"]);
+/** Lo común que solo lleva el asiento que sale a internet: cómo se usa la web. */
+const SOLO_CON_INTERNET = new Set(["WEB.md"]);
 
 /** Una pieza del material: su ruta dentro de `in/` y su contenido, o el archivo del que se copia. */
 export type Pieza = { ruta: string; contenido: string | Uint8Array } | { ruta: string; copiaDe: string };
@@ -32,10 +34,10 @@ function rutaSegura(ruta: string): boolean {
   return ruta.split("/").every((parte) => parte !== "" && parte !== "." && parte !== "..");
 }
 
-function copiarCarpeta(desde: string, hasta: string): void {
+function copiarCarpeta(desde: string, hasta: string, fuera: Set<string> = new Set()): void {
   mkdirSync(hasta, { recursive: true });
   for (const nombre of readdirSync(desde)) {
-    if (!SOLO_DE_LA_CASA.has(nombre)) copyFileSync(join(desde, nombre), join(hasta, nombre));
+    if (!SOLO_DE_LA_CASA.has(nombre) && !fuera.has(nombre)) copyFileSync(join(desde, nombre), join(hasta, nombre));
   }
 }
 
@@ -60,7 +62,12 @@ export function montarPuesto(run: string, id: string, asiento: string, piezas: P
     rmSync(carpeta, { recursive: true, force: true });
   }
 
-  copiarCarpeta(join(contratos, "common"), join(carpeta, "contract", "common"));
+  const conInternet = existsSync(join(contratos, asiento, INTERNET));
+  copiarCarpeta(
+    join(contratos, "common"),
+    join(carpeta, "contract", "common"),
+    conInternet ? new Set() : SOLO_CON_INTERNET,
+  );
   copiarCarpeta(join(contratos, asiento), join(carpeta, "contract", "seat"));
   // El orden de lectura va en lo alto del contrato: es lo primero que abre el asiento.
   copyFileSync(join(contratos, "common", "README.md"), join(carpeta, "contract", "README.md"));

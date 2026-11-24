@@ -18,7 +18,9 @@ in this order.
    it in the source), `deduced` (it follows from other notes) or `assumed` (you could not check it). A `seen` note
    names the file of `in/` it comes from, with its path; several files go in the same brackets, separated by commas,
    and a part of a file after `#`, as in `[in/reviews.json#r12]`. A note about everything in a folder, such as
-   `- No photo shows a gym. [in/photos] [seen]`, names the folder. Notes describe; they do not judge yet.
+   `- No photo shows a gym. [in/photos] [seen]`, names the folder. A note from a web page you opened names its full
+   address instead of a file, and only a seat that goes on the web has such notes. Notes describe; they do not judge
+   yet.
 4. **Computations** (`out/4-computations.md`). You do not calculate: no sums, no date arithmetic, no currency
    conversion, no averages. If you need a number that is not in `in/`, write here exactly what the house should
    compute, and go on without it. If you need none, write `None needed.`

@@ -211,7 +211,7 @@ test("trampa: una nota dice que lo vio y no dice dónde, o cita un archivo que n
   assert.deepEqual(rojos, [
     "out/3-notes.md:1: la nota dice que lo vio y no dice en qué archivo",
     "out/3-notes.md:2: la nota cita in/photos/hotel-09.jpg, que no es de su material",
-    "out/3-notes.md:3: la nota cita https://example.com/hotel, que no es de su material",
+    "out/3-notes.md:3: la nota cita la página https://example.com/hotel, y este asiento no sale a internet",
     "out/3-notes.md:6: la nota cita in/videos, que no es de su material",
   ]);
 });
