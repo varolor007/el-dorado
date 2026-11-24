@@ -7,7 +7,7 @@
 
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONDUCTOR } from "../data/conductor.ts";
+import { CONDUCTOR, REINTENTOS } from "../data/conductor.ts";
 import { RONDAS } from "../data/palancas.ts";
 import { PARADO } from "../data/pasos.ts";
 import { MANERAS, type Punto, type Suceso } from "../output/viaje.ts";
@@ -132,14 +132,37 @@ export function loQueHaPasado(run: string): Pasado[] {
       pasado.push({ clase: "conductor", ref: conductor.estado });
   }
 
-  // Si el run está parado, se dice dónde. El porqué es para quien lo lleva: no viaja en lo que se cuenta.
+  // Cada vez que el viajero pidió otra vuelta: de qué paso, y cuál de sus pulsaciones es. Nunca el asiento.
+  const reintentos = lista(leerLista(run, REINTENTOS));
+  for (const r of reintentos) pasado.push({ clase: "retry", ref: texto(r.en), n: Number(r.n) || undefined });
+
+  // Si el run está parado, se dice dónde. El porqué es para quien lo lleva: no viaja en lo que se cuenta. Una parada
+  // tras una vuelta pedida por el viajero es otra, aunque sea en el mismo paso: lleva cuántas se pidieron.
+  // Mientras la vuelta pedida no ha empezado, la parada sigue siendo la de antes.
+  const ultimo = reintentos.at(-1);
+  const trabajados = new Set(lista(leerLista(run, "trabajos.json")).map((t) => texto(t.puesto)));
+  const pendiente =
+    ultimo !== undefined &&
+    (typeof ultimo.puesto === "string" ? !trabajados.has(ultimo.puesto) : ultimo.aplicado !== true);
+  const pedidas = reintentos.length - (pendiente ? 1 : 0);
   const parado = existsSync(join(run, PARADO)) ? leer(run, PARADO) : null;
-  if (parado !== null && viaje === null) pasado.push({ clase: "stopped", ref: texto(parado.en) });
+  if (parado !== null && viaje === null)
+    pasado.push({ clase: "stopped", ref: texto(parado.en), ...(pedidas > 0 ? { n: pedidas } : {}) });
   return pasado;
 }
 
+function leerLista(run: string, nombre: string): unknown[] {
+  try {
+    const dato: unknown = JSON.parse(readFileSync(join(run, nombre), "utf8"));
+    return Array.isArray(dato) ? dato : [];
+  } catch {
+    return [];
+  }
+}
+
 /** Por qué se reconoce un suceso ya contado: su clase y a qué se refiere. Lo demás puede cambiar sin ser otro. */
-const clave = (s: Pasado): string => `${s.clase}|${s.ref ?? ""}|${s.clase === "day" ? (s.n ?? "") : ""}`;
+const CON_SU_NUMERO = new Set<string>(["day", "retry", "stopped"]);
+const clave = (s: Pasado): string => `${s.clase}|${s.ref ?? ""}|${CON_SU_NUMERO.has(s.clase) ? (s.n ?? "") : ""}`;
 
 /** Lo contado de un run, en su orden, desde el suceso número `desde`. Una línea cortada a medias no cuenta. */
 export function leerVivo(run: string, desde = 0): Suceso[] {

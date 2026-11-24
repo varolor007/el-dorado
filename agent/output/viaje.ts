@@ -362,6 +362,9 @@ export const SUCESOS = [
   // El conductor mira una parada: `ref` es `looking` mientras mira, `retry` si da una vuelta más a ese paso y `told`
   // si lo cuenta.
   "conductor",
+  // El viajero pidió otra vuelta del paso que paró la investigación: `ref` dice el paso, y `n`, cuál de sus
+  // pulsaciones es. Una parada que venga después lleva ese mismo `n`.
+  "retry",
 ] as const;
 
 export type Suceso = {

@@ -348,6 +348,20 @@ contarlo) y su pantalla en la web con un run de verdad. En esa investigación el
 casa como nuestra («le damos 6,9 sobre 10 para lo que pedís»), y volvió a caer en «el más barato» a secas, que le
 cuesta una vuelta: su norma EX3 dice ahora que vale cada vez que la nombra.
 
+**Volver a intentarlo retoma donde paró (2.5)** (una sesión de obra, revisada y junta el 24-nov; el PM, a la
+propuesta: «si es un asiento, sin problema»). `agent/launcher/reintentar.ts`: `reintentar` apunta la pulsación en
+`reintentos.json` y monta la vuelta siguiente del puesto que paró el run, con el run aún parado (el mismo
+material; con lo devuelto, si entregó en rojo); `aplicarReintento`, que llama `llevar`, quita la parada mientras
+esa vuelta no ha empezado. Así un corte en medio no deja nada a medias. La ruta es `POST /viajes/<id>/reintentar`:
+solo su dueño, nunca en marcha, con la misma cuenta o clave. La casa dice `resumes` en la parada, y la web elige
+con eso entre retomar y empezar otra vez. Tope: `REINTENTOS_POR_RUN = 3`; en el tope queda cambiar lo pedido. Tras
+un reintento del viajero no se llama al conductor. Si la paró la casa, sigue donde se cortó. En vivo, el suceso
+`retry`; en el acta, cada pulsación y lo que costó. No se rodea el filtro del modelo: se repite tal cual, y solo
+cuando lo pide el viajero. Sin hacer: en el techo de gasto empieza otra vez (del PM); «nada que elegir» y «un
+viaje que aún no se sabe hacer» no ofrecen repetir. Visto de paso por la sesión de obra, sin arreglar: la web
+avisa de una clave repetida en los pines cuando dos maneras duermen en el mismo sitio, y con muchas pestañas sobre
+un viaje la escucha en vivo se queda quieta sin decirlo.
+
 **El buscador y el lector de webs (3.5), juntos y estrenados** (una sesión de obra, revisada el 24-nov). Un
 asiento sale a internet si la carpeta de su contrato lleva `INTERNET.md`: solo entonces recibe `common/WEB.md`
 (W1 a W7), sus topes (`agent/data/internet.ts`: 8 búsquedas y 12 páginas de partida, que se pueden cambiar asiento

@@ -586,6 +586,8 @@ Lo que deja la obra del 24-nov, a decisión del PM:
 
 - **Los números del buscador de webs**: 8 búsquedas, 12 páginas y 6 vueltas por asiento, de partida. Y si el lector
   se cierra por dominios en algún asiento (los oficiales, en el de los papeles).
+- **«Volver a intentarlo»**: tres veces como mucho por investigación, de partida; y qué hace cuando se llegó al
+  techo de gasto (hoy empieza otra vez, con todo su gasto; con la web de hoy, sin techo, no pasa).
 - **Hasta dónde llega el conductor**: hoy, una vuelta de más y dentro del techo. Si algún día puede seguir sin una
   parte del viaje (y cuáles) o cambiar un tope. Si su frase se enseña al viajero tal cual, pasada su puerta de
   palabras, o solo las claves. Y si «Cambiar lo que pediste» debe reabrir las preguntas del mismo viaje.

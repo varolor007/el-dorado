@@ -174,6 +174,7 @@ const en = {
     lever: () => "A change that saves money",
     done: () => "Your trip is on the map",
     stopped: () => "The research has stopped here",
+    retry: (paso: string) => (paso === "" ? "You asked to try this step again" : `You asked to try again: ${paso}`),
     conductor: (ref: string) =>
       (
         ({
@@ -483,6 +484,7 @@ const en = {
         unclear: `This is not clear yet: ${campos.join(", ")}.`,
         already_running: "This trip is already being researched.",
         not_now: "This trip cannot be started now.",
+        too_many: "This step has been tried again as many times as it can. You can change what you asked.",
         too_many_trips: "You have too many trips. Open one you already have.",
         no_session: "Your session has ended. Sign in again.",
       };
@@ -526,6 +528,7 @@ const en = {
       house_broke: "Something went wrong on my side.",
     } as Record<string, string>,
     queHacer: "What you can do",
+    soloEstePaso: "Trying again repeats only this step. What is already done stays as it is, and is not paid again.",
     salidas: {
       retry: "Try again",
       change_request: "Change what you asked",
@@ -886,6 +889,7 @@ const es: Textos = {
     lever: () => "Un cambio que ahorra",
     done: () => "Tu viaje está en el mapa",
     stopped: () => "La investigación se ha parado aquí",
+    retry: (paso) => (paso === "" ? "Has pedido otro intento de este paso" : `Has pedido otro intento: ${paso}`),
     conductor: (ref) =>
       (
         ({
@@ -1178,6 +1182,7 @@ const es: Textos = {
         unclear: `Esto aún no está claro: ${campos.join(", ")}.`,
         already_running: "Este viaje ya se está investigando.",
         not_now: "Este viaje no se puede empezar ahora.",
+        too_many: "Este paso ya se ha vuelto a intentar todas las veces que caben. Puedes cambiar lo que pediste.",
         too_many_trips: "Tienes demasiados viajes. Abre uno de los que ya tienes.",
         no_session: "Tu sesión ha terminado. Entra otra vez.",
       };
@@ -1219,6 +1224,7 @@ const es: Textos = {
       house_broke: "Algo ha fallado por mi parte.",
     },
     queHacer: "Lo que puedes hacer",
+    soloEstePaso: "Volver a intentarlo repite solo este paso. Lo ya hecho se queda como está, y no se paga otra vez.",
     salidas: {
       retry: "Volver a intentarlo",
       change_request: "Cambiar lo que pediste",
