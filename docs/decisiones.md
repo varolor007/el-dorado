@@ -758,7 +758,8 @@ Lo que deja el 25-nov, a decisión del PM:
   fuente de opiniones. Sus topes de partida: el de moverse y el que conoce el destino, diez búsquedas y dieciséis
   páginas; el de las entradas, doce y veinte por llamada, ocho sitios por llamada y veinticuatro en total; diez
   minutos de espera a las entradas antes de repartir los días sin ellas; y, del destino, cuántas cosas por clase y
-  160 letras por cosa. Que otro idioma, o cambiar lo que buscas, vuelve a lanzar al que conoce el destino. Los
+  160 letras por cosa. Que cambiar lo que buscas vuelve a lanzar al que conoce el destino, que no lo lee (otro idioma
+  no se puede cambiar hoy: la casa lo rechaza). Los
   números de partida que pusieron sus sesiones: dos comidas de pago al día y cuatro por taxi; 1.200 metros y tres
   sitios por día para comer; el día de holgura de una página vista y los 31 días de un abono. Qué precio se coge si
   valen varios: hoy, el más barato en las entradas y el más caro en los billetes. Si la llegada al aeropuerto se
@@ -769,7 +770,10 @@ Lo que deja el 25-nov, a decisión del PM:
   un niño: fuera de las edades del precio de niño paga el de adulto, y con un precio de niño sin edades no se sabe.
   Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
   veía precios. Lo que te pierdes en autobús, que la hoja nombra y sigue sin hacer. Si en «Allí» se puede escribir
-  un mensaje: hoy solo se lee. Y verlo con IA de verdad, que es un gasto.
+  un mensaje: hoy solo se lee. El botón que mira las entradas de un sitio añadido: ocho sitios como mucho, con el tope
+  de los mensajes, tres al día. Que un mensaje para un día no vuelve a mirar las entradas. El orden en que se miran
+  cuando pasan del tope: los imprescindibles y los que tienen puerta, primero. Que una página de datos abiertos no
+  vale como fuente de un precio que da el asiento. Y verlo con IA de verdad, que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.
