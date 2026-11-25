@@ -21,7 +21,7 @@ import {
   irEntre,
 } from "../lib/formato.ts";
 import type { Ir } from "../lib/formato.ts";
-import { enGoogleMaps, noches, trayectoEnGoogleMaps } from "../lib/formato.ts";
+import { enGoogleMaps, noches, reloj, trayectoEnGoogleMaps } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 
@@ -359,7 +359,7 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
       <ol className="sucesos" aria-live="polite">
         {lineas.map(({ s, i, f }, orden) => (
           <li key={i} className={orden === 0 ? "suceso suceso--ultimo" : "suceso"}>
-            <span className="dato">{(s.t / 1000).toFixed(1)} s</span>
+            <span className="dato">{reloj(s.t)}</span>
             <p>
               {f!.n !== null && <b>{f!.n} </b>}
               {f!.texto}

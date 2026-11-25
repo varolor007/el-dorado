@@ -41,6 +41,15 @@ export function duracion(minutos: number): string {
   return h === 0 ? `${m} min` : m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
+/**
+ * El reloj de un suceso de la investigación, desde que empezó: «38 s» mientras no llega al minuto y «4:03» desde
+ * ahí. Una investigación de verdad dura un cuarto de hora: en segundos sueltos no cabía en su columna.
+ */
+export function reloj(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 /** Las coordenadas, como en una carta: 38.7107° N, 9.1390° W. */
 export function coordenadas(p: Punto): string {
   const lat = `${Math.abs(p.lat).toFixed(4)}° ${p.lat >= 0 ? "N" : "S"}`;

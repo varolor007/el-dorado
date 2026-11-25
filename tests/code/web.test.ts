@@ -32,7 +32,7 @@ import { grabadoQueVale } from "../../web/src/lib/grabado.ts";
 import { monedaDelNavegador, paisDelNavegador, sitioDe } from "../../web/src/lib/empezar.ts";
 import { cajaDe, claseDeLugar, lugarDe, origenDe } from "../../web/src/lib/lugares.ts";
 import { MANERAS_DE_IR } from "../../agent/data/moverse.ts";
-import { ir, trayectoEnGoogleMaps } from "../../web/src/lib/formato.ts";
+import { ir, reloj, trayectoEnGoogleMaps } from "../../web/src/lib/formato.ts";
 import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
 import { SUCESOS_INVENTADOS, viajeInventado } from "../cases/inventado/viaje.ts";
 
@@ -750,4 +750,15 @@ test("la web no se deja meter en un marco de otra página, y lo dice en sus cabe
   assert.equal(de["Content-Security-Policy"], "frame-ancestors 'none'");
   assert.equal(de["X-Frame-Options"], "DENY");
   assert.equal(de["X-Content-Type-Options"], "nosniff");
+});
+
+test("el reloj de un suceso cabe en su columna: segundos hasta el minuto y, desde ahí, minutos y segundos", () => {
+  assert.equal(reloj(0), "0 s");
+  assert.equal(reloj(38_040), "38 s");
+  assert.equal(reloj(59_400), "59 s");
+  assert.equal(reloj(59_600), "1:00");
+  assert.equal(reloj(243_100), "4:03");
+  assert.equal(reloj(18 * 60_000 + 7_000), "18:07");
+  assert.equal(reloj(-5), "0 s");
+  for (const ms of [0, 999, 61_000, 3_599_000, 5_400_000]) assert.ok(reloj(ms).length <= 6, reloj(ms));
 });

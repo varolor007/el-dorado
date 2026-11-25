@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
-import { gastoDeIA } from "../lib/formato.ts";
+import { gastoDeIA, reloj } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { confirmarLoEntendido, empezarLaInvestigacion, reintentarElPaso, type EnLaCasa } from "../lib/viajeVivo.ts";
 import { Confirmacion } from "./Confirmacion.tsx";
@@ -149,7 +149,7 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
       <ol className="sucesos" aria-live="polite">
         {lineas.map(({ s, n, f }, orden) => (
           <li key={n} className={orden === 0 ? "suceso suceso--ultimo" : "suceso"}>
-            <span className="dato">{(s.t / 1000).toFixed(1)} s</span>
+            <span className="dato">{reloj(s.t)}</span>
             <p>
               {f!.n !== null && <b>{f!.n} </b>}
               {f!.texto}
