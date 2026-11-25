@@ -118,7 +118,14 @@ export async function buscarElTransporte(
   const c = comparadoDe(v);
   if (c.entendido.origin === null) throw new FalloDelTransporte("no_origin");
   if (fuente === undefined) throw new FalloDelTransporte("no_source");
-  const hecha = await buscarOtraVez(c, fuente, pedido, { desde: cuando.toISOString().slice(0, 10) });
+  let hecha: Awaited<ReturnType<typeof buscarOtraVez>>;
+  try {
+    hecha = await buscarOtraVez(c, fuente, pedido, { desde: cuando.toISOString().slice(0, 10) });
+  } catch (error) {
+    // El intento cuenta para su freno aunque la fuente falle: también se le preguntó.
+    apuntar(v, "transport_search", { busqueda: null, version: c.n, fallo: true }, cuando);
+    throw error;
+  }
   mkdirSync(carpetaDe(v), { recursive: true, mode: 0o700 });
   const n = (numeros(v).at(-1) ?? 0) + 1;
   const guardada: BusquedaGuardada = { ...hecha, n, version: c.n, cuando: cuando.toISOString() };

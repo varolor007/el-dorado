@@ -11,7 +11,15 @@ import { test } from "node:test";
 import { CAMBIOS, CLASES_DE_CAMBIO } from "../../agent/data/momentos.ts";
 import { HORARIOS } from "../../agent/data/transporte.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
-import { abrirViaje, leerVersion, leerViaje, nuevoRun, pasar, type ViajeEnLaMesa } from "../../agent/launcher/mesa.ts";
+import {
+  abrirViaje,
+  leerDiario,
+  leerVersion,
+  leerViaje,
+  nuevoRun,
+  pasar,
+  type ViajeEnLaMesa,
+} from "../../agent/launcher/mesa.ts";
 import {
   buscarElTransporte,
   FalloDelTransporte,
@@ -283,6 +291,16 @@ test("elegir pide una búsqueda de la versión que ves y una opción suya; sin f
       "bad_search",
     );
     await assert.rejects(buscarElTransporte(v, undefined, {}, ahora()), /no_source/);
+    // La trampa de la revisión: una búsqueda que falla después de preguntar a la fuente (aquí, un aeropuerto que la
+    // fuente no tiene) también cuenta para su freno. La que falla en la fuente se guarda sin opciones, y cuenta.
+    const intentos = (): number => leerDiario(v).filter((a) => a.que === "transport_search").length;
+    const antes = intentos();
+    const fuente = transporteInventado();
+    await assert.rejects(buscarElTransporte(v, fuente, { arrival: "QQQ" }, ahora()), PedidoQueNoVale);
+    assert.ok(fuente.pedidos.length > 0, "se le preguntó a la fuente");
+    assert.equal(intentos(), antes + 1);
+    assert.equal((await buscarElTransporte(v, transporteInventado({ falla: true }), {}, ahora())).opciones.length, 0);
+    assert.equal(intentos(), antes + 2);
     // Lo que se elige sale de lo guardado: el precio es el que dijo la fuente.
     assert.equal(loQuePideLaOpcion(v, b.n, b.opciones[0].id).pedido.flight.precio, b.opciones[0].vuelo.precio);
   } finally {
