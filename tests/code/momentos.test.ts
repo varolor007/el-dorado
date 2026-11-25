@@ -9,6 +9,7 @@ import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { CAMBIOS, CLASES_DE_CAMBIO, DEL_RUN, LEE, LO_QUE_DEJA, REHECHO } from "../../agent/data/momentos.ts";
 import { CODIGO, PASOS } from "../../agent/data/pasos.ts";
+import { imprescindiblesDeLaRuta } from "../../agent/gates/puerta_ruta.ts";
 import { LA_CASA, QUIEN_RESPONDE, quienResponde } from "../../agent/data/responde.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import { gastoPorAsiento } from "../../agent/launcher/gasto.ts";
@@ -598,6 +599,28 @@ test("lo entendido del viaje es siempre el de la versión que se enseña: al reh
     assert.equal(delViaje().dates.check_in, ENTENDIDO.dates.check_in);
     volverA(w, 2, ahora());
     assert.equal(delViaje().dates.check_in, "2027-03-12");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo que no es suyo no se cuela por el prototipo: elecciones, gustos y pedidos de transporte", async () => {
+  const { comprobarPedido, PedidoQueNoVale } = await import("../../agent/scripts/otro_transporte.ts");
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const viaje = leerVersion(v)?.viaje as Viaje;
+    for (const raro of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      const crudo = JSON.parse(`{"${raro}": 1}`);
+      assert.throws(() => comprobarElecciones(viaje, crudo), EleccionQueNoVale, raro);
+      assert.throws(() => comprobarElecciones(viaje, { tastes: [{ thing: raro, weight: "like" }] }), EleccionQueNoVale);
+      assert.throws(() => comprobarPedido(crudo), PedidoQueNoVale, raro);
+      // Un gusto que se llama así no es de una cosa del alojamiento.
+      const conEl = { ...ENTENDIDO, tastes: [...ENTENDIDO.tastes, { thing: raro, weight: "like", quote: "" }] };
+      assert.deepEqual(clasesDelCambio(ENTENDIDO, conEl as Entendido), ["taste"]);
+      // Y uno imprescindible que se llama así es de la ruta: la puerta de la ruta lo pide.
+      const imprescindible = { ...ENTENDIDO, tastes: [{ thing: raro, weight: "must", quote: "" }] } as Entendido;
+      assert.deepEqual(imprescindiblesDeLaRuta(imprescindible), [raro]);
+    }
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }

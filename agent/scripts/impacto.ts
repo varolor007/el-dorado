@@ -50,7 +50,7 @@ export function clasesDelCambio(antes: Entendido, despues: Entendido): ClaseDeCa
   if (antes.currency !== despues.currency) hay.add("currency");
   if (antes.language !== despues.language) hay.add("language");
   if (antes.pace !== despues.pace) hay.add("pace");
-  const deAlojamiento = (g: Gusto): boolean => g.thing in COSAS;
+  const deAlojamiento = (g: Gusto): boolean => Object.hasOwn(COSAS, g.thing);
   if (!igual(ordenado(antes.tastes.filter(deAlojamiento)), ordenado(despues.tastes.filter(deAlojamiento))))
     hay.add("lodging_taste");
   const otros = (g: Gusto): boolean => !deAlojamiento(g);

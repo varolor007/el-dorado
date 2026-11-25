@@ -48,7 +48,7 @@ const objeto = (v: unknown): v is Record<string, unknown> => typeof v === "objec
 /** Mira lo que manda la web y devuelve el pedido con su forma; lo que no vale lanza `PedidoQueNoVale` con su campo. */
 export function comprobarPedido(crudo: unknown): PedidoDeTransporte {
   if (!objeto(crudo)) throw new PedidoQueNoVale("move");
-  const fuera = Object.keys(crudo).filter((k) => !(k in SIN_MOVER));
+  const fuera = Object.keys(crudo).filter((k) => !Object.hasOwn(SIN_MOVER, k));
   if (fuera.length > 0) throw new PedidoQueNoVale(fuera[0]);
   const dias = (campo: "out" | "back"): number => {
     const x = crudo[campo] ?? 0;

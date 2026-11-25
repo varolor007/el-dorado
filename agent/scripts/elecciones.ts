@@ -64,7 +64,7 @@ function ids(crudo: unknown, campo: string, validos: Set<string>): string[] {
  */
 export function comprobarElecciones(v: Viaje, crudo: unknown): Elecciones {
   if (!objeto(crudo)) throw new EleccionQueNoVale("choices");
-  const fuera = Object.keys(crudo).filter((k) => !(k in SIN_ELEGIR));
+  const fuera = Object.keys(crudo).filter((k) => !Object.hasOwn(SIN_ELEGIR, k));
   if (fuera.length > 0) throw new EleccionQueNoVale(fuera[0]);
   const de = <T>(campo: string, validos: readonly T[]): T | null => {
     const x = crudo[campo];
@@ -106,7 +106,7 @@ export function comprobarElecciones(v: Viaje, crudo: unknown): Elecciones {
       throw new EleccionQueNoVale("tastes");
     const vistas = new Set<string>();
     tastes = crudo.tastes.map((g: unknown) => {
-      if (!objeto(g) || typeof g.thing !== "string" || !(g.thing in COSAS) || vistas.has(g.thing))
+      if (!objeto(g) || typeof g.thing !== "string" || !Object.hasOwn(COSAS, g.thing) || vistas.has(g.thing))
         throw new EleccionQueNoVale("tastes");
       if (!PESOS_DE_GUSTO.includes(g.weight as never)) throw new EleccionQueNoVale("tastes");
       vistas.add(g.thing);
