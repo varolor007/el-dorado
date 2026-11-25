@@ -31,7 +31,7 @@ import {
 import type { Entendido } from "../scripts/formas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { capaDelRun, guardarEnElRun, pieza, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
-import { abiertas, leerConsultadoEnSusVueltas } from "./consultado.ts";
+import { abiertas, direccionComparable, leerConsultadoEnSusVueltas } from "./consultado.ts";
 import { puestosDe, type Pieza } from "./puesto.ts";
 
 export const ENTRADAS = "entradas.json";
@@ -112,6 +112,16 @@ function abiertosParaElAsiento(a: DatosAbiertos): Record<string, unknown> {
   };
 }
 
+/** Si una página la abrió de verdad alguna tanda del de las entradas, en cualquiera de sus vueltas. */
+function abiertasDelRun(run: string, tandas: number): (url: string) => boolean {
+  const todas = new Set<string>();
+  for (let i = 0; i < tandas; i++) {
+    const puesto = puestoDeLaTanda(run, tandas === 1 ? "entradas" : `entradas-${i + 1}`);
+    if (puesto !== null) for (const d of abiertas(leerConsultadoEnSusVueltas(puesto))) todas.add(d);
+  }
+  return (url) => todas.has(direccionComparable(url) ?? "");
+}
+
 /** El puesto de una tanda, el último de sus vueltas: el que acaba de entregar. */
 function puestoDeLaTanda(run: string, base: string) {
   const suyos = puestosDe(run).filter((p) => new RegExp(`^${base}-v\\d+$`).test(p.id));
@@ -155,12 +165,14 @@ export function capaDeLasEntradasDe(run: string | null): CapaDeIA<EntregaDeLasEn
     tandas: (m) => tandasDeSitios(m.elegidos).map((sitios) => piezasDeLasEntradas(m, sitios)),
     puerta: (e, m, tanda) => puertaDeLasEntradas(e, m, tanda, run),
     // Lo que no se miró va con lo que dicen los datos abiertos, y con su porqué: pasó del tope o su tanda falló.
+    // Con el run, lo que abrió de verdad cada tanda, en todas sus vueltas: dónde reservar y su web, solo si las abrió.
     ensenar: (entregas, m) =>
       paraEnsenarEntradas(
         entregas,
         m.elegidos.map((s) => s.id),
         m.abiertos,
         porQueSinMirar(m.elegidos, entregas),
+        run === null ? undefined : abiertasDelRun(run, tandasDeSitios(m.elegidos).length),
       ),
     sinElla: sinEntradas,
   };

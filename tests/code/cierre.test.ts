@@ -1330,6 +1330,7 @@ function conEntradaQueSeReserva(): { viaje: Viaje; parada: string } {
         horarios: null,
         reservar: { haceFalta: true, donde: "https://pension.inventada.example/entradas", fuente },
         web: "https://sitio.inventado.example/",
+        webDeLosAbiertos: false,
         mirado: true,
         sinMirar: null,
       },
@@ -1376,6 +1377,12 @@ test("el enlace a las entradas: donde se reserva, o si no su web oficial; nunca 
     url: "https://sitio.inventado.example/",
     clase: "official_site",
   });
+  // La web que solo dicen los datos abiertos, o la de un viaje de antes que no lo sabe, no es un enlace a las entradas.
+  viaje.entradas!.sitios[0].webDeLosAbiertos = true;
+  assert.equal(enlaceDeLaEntrada(viaje, parada), null);
+  delete viaje.entradas!.sitios[0].webDeLosAbiertos;
+  assert.equal(enlaceDeLaEntrada(viaje, parada), null);
+  viaje.entradas!.sitios[0].webDeLosAbiertos = false;
   viaje.entradas!.sitios[0].web = "https://sitio.inventado.example/?token=secreto";
   assert.equal(enlaceDeLaEntrada(viaje, parada), null);
   // Sin enlace, la parada va igual en el orden: hay que reservarla.

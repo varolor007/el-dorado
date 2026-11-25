@@ -24,6 +24,7 @@ import type {
 } from "../../../agent/output/viaje.ts";
 import type { ReactNode } from "react";
 import { abreElDia, entradaDe } from "../../../agent/scripts/capas.ts";
+import { formaNormal } from "../../../agent/tools/enlaces.ts";
 import {
   abreTusDias,
   billeteSuelto,
@@ -67,7 +68,7 @@ const vistoEl = (visto: string, idioma: string): string =>
 /** El enlace a la página de un dato, con su web y el día en que se vio. */
 function Fuente({ t, idioma, f }: Comun & { f: FuenteDeUnDato }) {
   return (
-    <a className="enlace" href={f.url} target="_blank" rel="noopener noreferrer nofollow">
+    <a className="enlace" href={formaNormal(f.url) ?? undefined} target="_blank" rel="noopener noreferrer nofollow">
       {t.alli.fuente(sitioDe(f.url), vistoEl(f.visto, idioma))}
     </a>
   );
@@ -460,7 +461,12 @@ export function FichaDeLaEntrada({
         <div className="entrada__parte">
           <span className="dato">{t.alli.reservar(e.reservar.haceFalta)}</span>
           {e.reservar.donde !== null && (
-            <a className="enlace" href={e.reservar.donde} target="_blank" rel="noopener noreferrer nofollow">
+            <a
+              className="enlace"
+              href={formaNormal(e.reservar.donde) ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+            >
               {t.alli.reservarAqui}
             </a>
           )}
@@ -468,8 +474,8 @@ export function FichaDeLaEntrada({
         </div>
       )}
       {e.web !== null && (
-        <a className="enlace" href={e.web} target="_blank" rel="noopener noreferrer nofollow">
-          {t.alli.web}
+        <a className="enlace" href={formaNormal(e.web) ?? undefined} target="_blank" rel="noopener noreferrer nofollow">
+          {e.webDeLosAbiertos === false ? t.alli.web : t.alli.webDeLosAbiertos}
         </a>
       )}
       {!e.mirado && <SinMirar t={t} porQue={e.sinMirar ?? null} />}

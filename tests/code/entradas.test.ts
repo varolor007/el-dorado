@@ -602,13 +602,44 @@ test("al viaje: manda lo que leyó el asiento; lo que no sabe, lo que dicen los 
     horarios: null,
     reservar: null,
     web: null,
+    webDeLosAbiertos: true,
     mirado: false,
     sinMirar: "over_limit",
   });
   const q1Abierto = entradaAbierta("Q1", ABIERTOS[0]);
   assert.equal(q1Abierto.mirado, false);
+  assert.equal(q1Abierto.webDeLosAbiertos, true);
   assert.equal(abreElDia(q1Abierto.horarios, "2031-03-09"), false);
   assert.equal(q1Abierto.precios, null);
+});
+
+test("al viaje: la web de los datos abiertos se dice como tal, y dónde reservar es solo una página que abrió", () => {
+  const WEB = ABIERTOS[0].web!;
+  const con = (cambia: (e: any) => void, abrio?: (url: string) => boolean) => {
+    const e = structuredClone(buena()) as any;
+    cambia(e);
+    return paraEnsenarEntradas([e], [], ABIERTOS, {}, abrio).sitios[0];
+  };
+  // La que dice el asiento y abrió: su web, y dónde se reserva.
+  const suya = con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS));
+  assert.equal(suya.web, PAGINA_DE_LAS_ENTRADAS);
+  assert.equal(suya.webDeLosAbiertos, false);
+  assert.equal(suya.reservar?.donde, PAGINA_DE_LAS_ENTRADAS);
+  // La que no sabe, o la que copia de los datos abiertos sin abrirla: la de los datos abiertos, dicha como tal.
+  for (const cambia of [
+    (e: any) => (e.sights[0].official_site = "unknown"),
+    (e: any) => (e.sights[0].official_site = WEB),
+  ])
+    assert.deepEqual([con(cambia).web, con(cambia).webDeLosAbiertos], [WEB, true]);
+  // Trampa: dónde reservar, la web de los datos abiertos sin abrirla, no llega como «reservar aquí».
+  assert.equal(con((e) => (e.sights[0].booking.where = WEB)).reservar?.donde, null);
+  // Con lo consultado del run: si la abrió, vale; si no, ni la que no es de los datos abiertos.
+  const abrioLaWeb = (url: string) => url === WEB;
+  assert.equal(con((e) => (e.sights[0].official_site = WEB), abrioLaWeb).webDeLosAbiertos, false);
+  assert.equal(con((e) => (e.sights[0].booking.where = WEB), abrioLaWeb).reservar?.donde, WEB);
+  const nada = () => false;
+  assert.equal(con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS), nada).webDeLosAbiertos, true);
+  assert.equal(con(() => {}, nada).reservar?.donde, null);
 });
 
 // ---------- el ritmo y la puerta 9
@@ -744,6 +775,9 @@ test("la investigación inventada: el sitio que cierra no va ese día, y la web 
     ]);
     assert.deepEqual(Object.keys(viajeDado.travellers).sort(), ["adults", "children"]);
     assert.ok(existsSync(join(run, "abiertos.json")));
+    // Dónde se reserva, la página que abrió en el run: llega al viaje.
+    const conReserva = v.entradas!.sitios.filter((s) => s.mirado && s.reservar?.haceFalta);
+    assert.ok(conReserva.length > 0 && conReserva.every((s) => s.reservar!.donde === PAGINA_DE_LAS_ENTRADAS));
   } finally {
     rmSync(run, { recursive: true, force: true });
   }

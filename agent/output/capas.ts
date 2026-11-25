@@ -155,7 +155,10 @@ export type DelDestino = { cosas: CosaDelDestino[]; falta: FaltaDeUnaCapa | null
 /**
  * La entrada de un sitio elegido, por el id de su parada: lo que cuesta (null, no se sabe), sus horarios (null, no se
  * sabe), si hay que reservar y dónde, y su web oficial. `mirado` es falso si solo se sabe lo que dicen los datos
- * abiertos, y `sinMirar` dice por qué (14.7); un viaje de antes no lo lleva.
+ * abiertos, y `sinMirar` dice por qué (14.7); un viaje de antes no lo lleva. Dónde se reserva es siempre una página
+ * que el asiento abrió. `webDeLosAbiertos` es falso solo si su web es una página que abrió el asiento: si no, es la
+ * que dicen los datos abiertos, que edita cualquiera, y no se enseña como la oficial ni se da al cerrar. Un viaje de
+ * antes no lo lleva, y entonces tampoco.
  */
 export type EntradaDeUnSitio = {
   parada: string;
@@ -163,6 +166,7 @@ export type EntradaDeUnSitio = {
   horarios: Horario[] | null;
   reservar: { haceFalta: boolean; donde: string | null; fuente: FuenteDeUnDato } | null;
   web: string | null;
+  webDeLosAbiertos?: boolean;
   mirado: boolean;
   sinMirar?: SinMirar | null;
 };
@@ -410,6 +414,8 @@ export function pegasDeLasEntradas(e: DeLasEntradas, paradas: readonly string[])
       pegasDeLaFuente(x.reservar?.fuente, `${donde}.reservar`, pegas);
     }
     if (x.web !== null && !enlaceDeCapa(x.web)) pegas.push({ donde, que: "su web no es una dirección https" });
+    if (x.webDeLosAbiertos !== undefined && typeof x.webDeLosAbiertos !== "boolean")
+      pegas.push({ donde, que: "no dice si su web es la de los datos abiertos" });
     if (typeof x.mirado !== "boolean") pegas.push({ donde, que: "no dice si se miró" });
     if (x.sinMirar != null && (x.mirado || !SIN_MIRAR.includes(x.sinMirar)))
       pegas.push({ donde, que: "su porqué de no mirarse no es de la lista, o sí se miró" });
