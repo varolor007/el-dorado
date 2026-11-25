@@ -16,6 +16,10 @@ import { pegasDelTexto } from "../gates/textos.ts";
 import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
 import { DIAS_ALREDEDOR } from "../data/transporte.ts";
 import { enlaceSinClaves } from "../tools/enlaces.ts";
+import { pegasDeLasCapas, type DeLasEntradas, type DeMoverse, type DelDestino, type Presupuesto } from "./capas.ts";
+
+// Las capas del destino (bloque 14): su forma en el viaje va en su propio archivo, y se exporta también desde aquí.
+export * from "./capas.ts";
 
 export type Punto = { lat: number; lon: number };
 
@@ -506,6 +510,14 @@ export type Viaje = {
   calendario?: DelCalendario;
   /** La tabla de los papeles, con sus fuentes y sus plazos, o por qué falta. Un viaje de antes no la trae. */
   papeles?: DeLosPapeles;
+  /** Cómo moverse allí y lo que cuesta, o por qué falta (14.2). Un viaje de antes no lo trae. */
+  moverse?: DeMoverse;
+  /** Lo que conviene saber del destino, o por qué falta (14.3). Un viaje de antes no lo trae. */
+  saber?: DelDestino;
+  /** Lo que cuesta y cuándo abre cada sitio elegido, o por qué falta (14.4). Un viaje de antes no lo trae. */
+  entradas?: DeLasEntradas;
+  /** El presupuesto entero, por manera, con de dónde sale cada parte (14.5). Un viaje de antes no lo trae. */
+  presupuesto?: Presupuesto;
   /** El viaje cerrado: los precios de ese día, el orden y los enlaces. Solo la versión cerrada lo lleva. */
   cierre?: Cierre;
 };
@@ -861,6 +873,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
   if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
   if (v.calendario !== undefined) pegas.push(...pegasDelCalendario(v.calendario, v.entrada, v.salida));
   if (v.papeles !== undefined) pegas.push(...pegasDeLosPapeles(v.papeles));
+  pegas.push(...pegasDeLasCapas(v, v));
   if (v.cierre !== undefined) pegas.push(...pegasDelCierre(v.cierre, v));
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))

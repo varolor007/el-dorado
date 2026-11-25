@@ -148,7 +148,8 @@ export default function Planear() {
     if (en !== null) setEtapa(en === "look" ? "vistazo" : en === "live" ? "vivo" : "viaje");
     if (pedido.get("day") !== null) setDia(Number(pedido.get("day")) - 1);
     const pedida = pedido.get("tab");
-    if (pedida === "days" || pedida === "stay" || pedida === "money" || pedida === "notes") setPestana(pedida);
+    if (pedida === "days" || pedida === "stay" || pedida === "money" || pedida === "there" || pedida === "notes")
+      setPestana(pedida);
     if (pedida === "book" && grabado.viaje.cierre) setPestana("book");
     if (pedido.get("stay") !== null) setFicha(grabado.viaje.alojamientos[Number(pedido.get("stay")) - 1]?.id ?? null);
   }, [grabado]);

@@ -7,6 +7,28 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 La tanda 6, por momentos, está construida, revisada y arreglada, y el PM siguió adelante. Después de las capas va
 la tanda 7, el ensayo, que gasta y no empieza sin su adelante** (el estado, punto a punto, en [plan.md](plan.md)).
 
+**El suelo de las capas (14.1), junto** (25-nov). Quien toque una capa, que lea esto. Las formas, en
+`agent/output/capas.ts` (el viaje lleva `moverse`, `saber`, `entradas` y `presupuesto`, cada uno opcional; lo que no
+se sabe es `null`; cada dato lleva su `fuente`, con la página y el día; una capa puede faltar entera, con su porqué:
+`no_contract`, `failed`, `rejected` o `late`). Lo común, en `agent/data/capas.ts`, `agent/scripts/capas.ts` (sin
+Node: `abreElDia`, `diasQueCierra`, `entradaDe`) y `agent/launcher/capas.ts`. Cada capa, en sus archivos:
+`agent/data/capa_<x>.ts`, `agent/scripts/capa_<x>.ts`, `agent/launcher/capa_<x>.ts` y
+`tests/cases/inventado/<x>.ts`, con `<x>` moverse, destino o entradas; el presupuesto, en `agent/data/`,
+`agent/scripts/` y `agent/launcher/presupuesto.ts`. La casa las lleva todas con `deUnaCapa`, en `investigar.ts`:
+`getting_around` y `local_knowledge` por detrás desde la ruta (`capasDeDetras`), `tickets` cuando entrega el que
+elige los sitios, con los días esperándolo hasta su tope (600 segundos), y `budget`, de código, antes de montar el
+viaje. Sin contrato en `agent/contracts/<asiento>/` (`getting-around`, `local-knowledge`, `tickets`) una capa no se
+lanza; las pruebas usan contratos de prueba (`tests/cases/inventado/contratos/`) mientras no esté el de verdad.
+**Cómo se enchufa una capa**: escribir su contrato (con `README.md`, `DELIVERY.md` e `INTERNET.md`); afinar su
+entrega y `paraEnsenar...` en `agent/scripts/capa_<x>.ts`, sin cambiar la forma del viaje; poner su puerta en
+`agent/gates/` y cambiarla en una línea de `agent/launcher/capa_<x>.ts`; afinar su asiento de mentira; y sus pruebas
+en su archivo. No se tocan los archivos comunes ni `investigar.ts`. El impacto de cada cambio, en
+`agent/data/momentos.ts`: otras fechas rehacen las entradas; otra ruta, todo; un viajero más, solo el presupuesto;
+otro idioma o lo que buscas, al que conoce el destino; otro alojamiento u otro vuelo conservan las capas. En la web,
+`web/src/piezas/Alli.tsx` y la pestaña «Allí». Sus topes de partida, del PM, en `agent/data/internet.ts` y en los
+datos de cada capa. Sabido: una prueba de antes, «cada viaje, solo para su dueño», falla alguna vez si el
+identificador del viaje sale sin letras.
+
 **Las capas del destino, firmadas y en obra** (25-nov; bloque 14, tanda 6 bis). Al repasar lo que falta para que
 el agente sea funcional, el PM vio que faltan capas: el viaje no sabe lo que cuesta cada entrada ni cuándo abre,
 cómo se mueve uno allí y lo que cuesta, ni lo que conviene saber del destino, y su total solo suma dormir y llegar.

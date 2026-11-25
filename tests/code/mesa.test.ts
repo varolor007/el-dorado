@@ -274,19 +274,27 @@ test("los pasos de una investigación: cada uno, con quién lo da, y ninguno rep
       "papers",
       "look",
       "pick",
+      "tickets",
       "days",
       "table",
       "cross",
       "explain",
       "calendar",
+      "getting_around",
+      "local_knowledge",
+      "budget",
       "trip",
     ],
   );
   assert.equal(new Set(PASOS.map((p) => p.id)).size, PASOS.length);
-  // Cada asiento de la investigación tiene su contrato en el repositorio, y cada paso deja algo.
+  // Cada asiento de la investigación tiene su contrato en el repositorio, y cada paso deja algo. Los de las capas del
+  // destino (bloque 14), mientras sus sesiones los escriben, tienen el de prueba del caso inventado.
+  const deLasCapas = (quien: string): boolean =>
+    existsSync(join(RAIZ, "tests", "cases", "inventado", "contratos", quien));
   for (const p of PASOS) {
     assert.ok(p.deja.length > 0, p.id);
-    if (p.quien !== "code") assert.ok(existsSync(join(RAIZ, "agent", "contracts", p.quien, "README.md")), p.quien);
+    const suyo = existsSync(join(RAIZ, "agent", "contracts", p.quien, "README.md"));
+    if (p.quien !== "code") assert.ok(suyo || deLasCapas(p.quien), p.quien);
   }
   assert.deepEqual([...ESTADOS_DE_UN_PASO], ["pending", "waiting", "yours", "done", "stopped"]);
 });

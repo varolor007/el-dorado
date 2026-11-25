@@ -331,7 +331,28 @@ const en = {
   } as Record<string, string>,
   carril: { planear: "Plan", viajes: "Trips", clave: "AI key", cuenta: "Account", portada: "El Dorado, home" },
   cargando: "Unfolding the map",
-  pestanas: { days: "Days", stay: "Sleep", money: "Money", notes: "Notes" },
+  pestanas: { days: "Days", stay: "Sleep", money: "Money", there: "There", notes: "Notes" },
+  // Las capas del destino (bloque 14): la pestaña «Allí» y los huecos de la parada y de las cuentas. Su pantalla de
+  // verdad llega con 14.6; hasta entonces, solo lo que se sabe y lo que no.
+  alli: {
+    titulo: "There",
+    moverse: "Getting around",
+    saber: "Good to know",
+    entradas: "Tickets and opening hours",
+    presupuesto: "The whole budget",
+    todaviaNo: "Not known yet.",
+    cuantas: (n: number) => EN.cuenta(n, "thing found", "things found"),
+    // Por qué falta una capa, por su clave (`FALTAS_DE_UNA_CAPA`).
+    falta: {
+      no_contract: "Not known yet.",
+      failed: "Could not be found this time.",
+      rejected: "What was found did not pass its checks, so it is not shown.",
+      late: "It took too long, so the trip was laid out without it.",
+    } as Record<string, string>,
+    conEntrada: "Ticket and hours known",
+    total: (dinero: string) => `With what is known: ${dinero}`,
+    faltan: (n: number) => (n === 0 ? "Nothing missing." : `${EN.cuenta(n, "thing", "things")} not known yet.`),
+  },
   cifras: {
     // Lo que cubre el total de la manera elegida: las noches o, si lleva transporte, también cómo se llega.
     total: (noches: number, transporte: string | null) =>
@@ -512,6 +533,10 @@ const en = {
       explain: "Writing why",
       calendar: "Looking at your dates",
       papers: "Checking your papers",
+      tickets: "Looking at tickets and hours",
+      getting_around: "Looking at how to get around",
+      local_knowledge: "Looking at what is good to know",
+      budget: "Adding up the whole budget",
       trip: "Drawing your trip",
     } as Record<string, string>,
     gastado: (gastado: string, techo: string | null) =>
@@ -946,6 +971,10 @@ const en = {
       papers: "your papers",
       ways: "the ways to do it and their totals",
       guide: "your guide, if you had it",
+      getting_around: "how to get around there",
+      local_knowledge: "what is good to know",
+      tickets: "the tickets and opening hours",
+      budget: "the whole budget",
     } as Record<string, string>,
     pasos: {
       understood: "what we understood",
@@ -960,6 +989,10 @@ const en = {
       cross: "the ways to do it",
       explain: "what each way wins and loses",
       calendar: "the date warnings",
+      tickets: "the tickets and opening hours",
+      getting_around: "how to get around there",
+      local_knowledge: "what is good to know",
+      budget: "the whole budget",
       trip: "your trip on the map",
     } as Record<string, string>,
     // Un cambio que se paró sin dar su versión: tu viaje sigue como estaba.
@@ -1520,7 +1553,25 @@ const es: Textos = {
   menciones: { one: "en una opinión", a_few: "en unas pocas opiniones", several: "en varias opiniones" },
   carril: { planear: "Planear", viajes: "Viajes", clave: "Clave", cuenta: "Cuenta", portada: "El Dorado, portada" },
   cargando: "Desplegando el mapa",
-  pestanas: { days: "Días", stay: "Dormir", money: "Cuentas", notes: "Avisos" },
+  pestanas: { days: "Días", stay: "Dormir", money: "Cuentas", there: "Allí", notes: "Avisos" },
+  alli: {
+    titulo: "Allí",
+    moverse: "Moverse",
+    saber: "Conviene saber",
+    entradas: "Entradas y horarios",
+    presupuesto: "El presupuesto entero",
+    todaviaNo: "Todavía no se sabe.",
+    cuantas: (n) => ES.cuenta(n, "cosa encontrada", "cosas encontradas"),
+    falta: {
+      no_contract: "Todavía no se sabe.",
+      failed: "Esta vez no se pudo encontrar.",
+      rejected: "Lo que se encontró no pasó sus comprobaciones, así que no se enseña.",
+      late: "Tardó demasiado, y el viaje se repartió sin ello.",
+    },
+    conEntrada: "Entrada y horario, sabidos",
+    total: (dinero) => `Con lo que se sabe: ${dinero}`,
+    faltan: (n) => (n === 0 ? "No falta nada." : `${ES.cuenta(n, "cosa", "cosas")} todavía sin saber.`),
+  },
   cifras: {
     total: (noches, transporte) =>
       transporte === null ? `por ${tusNochesEs(noches)}` : `${tusNochesEs(noches)} y ${transporteEs(transporte)}`,
@@ -1693,6 +1744,10 @@ const es: Textos = {
       explain: "Escribiendo por qué",
       calendar: "Mirando tus fechas",
       papers: "Mirando tus papeles",
+      tickets: "Mirando entradas y horarios",
+      getting_around: "Mirando cómo moverte",
+      local_knowledge: "Mirando lo que conviene saber",
+      budget: "Sumando el presupuesto entero",
       trip: "Dibujando tu viaje",
     },
     gastado: (gastado, techo) =>
@@ -2119,6 +2174,10 @@ const es: Textos = {
       papers: "tus papeles",
       ways: "las maneras de hacerlo y sus totales",
       guide: "tu guía, si la tenías",
+      getting_around: "cómo moverte allí",
+      local_knowledge: "lo que conviene saber",
+      tickets: "las entradas y los horarios",
+      budget: "el presupuesto entero",
     },
     pasos: {
       understood: "lo que hemos entendido",
@@ -2133,6 +2192,10 @@ const es: Textos = {
       cross: "las maneras de hacerlo",
       explain: "lo que gana y pierde cada manera",
       calendar: "los avisos de las fechas",
+      tickets: "las entradas y los horarios",
+      getting_around: "cómo moverte allí",
+      local_knowledge: "lo que conviene saber",
+      budget: "el presupuesto entero",
       trip: "tu viaje en el mapa",
     },
     parado: {

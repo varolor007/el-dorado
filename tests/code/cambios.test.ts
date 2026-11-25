@@ -103,7 +103,7 @@ test("un gasto menor, solo la tabla y lo que sale de ella; un gusto del alojamie
   const r = respuestasDeLoEntendido(ESCUCHADO, TOQUES);
   const menos = conElCambio(ESCUCHADO, { ...r, gasto: "tight" }, TOQUES).entendido!;
   assert.deepEqual(clasesDelCambio(ESCUCHADO, menos), ["budget"]);
-  assert.deepEqual(pasos(["budget"]), ["table", "cross", "explain", "trip"]);
+  assert.deepEqual(pasos(["budget"]), ["table", "cross", "explain", "budget", "trip"]);
   assert.deepEqual(CAMBIOS.budget.pasos, ["table"]);
   // Otro peso a un gusto de una cosa del alojamiento.
   const peso = conElCambio(ESCUCHADO, r, TOQUES, [
@@ -125,7 +125,7 @@ test("un gasto menor, solo la tabla y lo que sale de ella; un gusto del alojamie
   assert.ok(!nuevo.tastes.some((g) => g.thing === "light"));
   // El gusto que no es del alojamiento (el faro) no se toca desde aquí.
   assert.ok(nuevo.tastes.some((g) => g.thing === "the lighthouse"));
-  assert.deepEqual(pasos(["lodging_taste"]), ["table", "cross", "explain", "trip"]);
+  assert.deepEqual(pasos(["lodging_taste"]), ["table", "cross", "explain", "budget", "trip"]);
 });
 
 test("otro destino no es un cambio de un viaje: es un viaje nuevo", () => {

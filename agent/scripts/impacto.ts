@@ -3,7 +3,14 @@
 // costaría, estimado de lo que gastó cada asiento en las investigaciones de esa cuenta. Todo por claves, para que la
 // web lo diga antes de rehacer nada. Sin nada de Node: la web lo puede usar igual.
 
-import { CAMBIOS, CLASES_DE_CAMBIO, LEE, PIEZAS_DE_UN_PASO, PIEZAS_DE_UNA_CLASE } from "../data/momentos.ts";
+import {
+  CAMBIOS,
+  CLASES_DE_CAMBIO,
+  LEE,
+  PIEZAS_DE_UN_PASO,
+  PIEZAS_DE_UNA_CLASE,
+  PIEZAS_DEL_VIAJE,
+} from "../data/momentos.ts";
 import type { ClaseDeCambio, IdDePaso, PiezaDelViaje } from "../data/momentos.ts";
 import { COSAS } from "../data/gustos.ts";
 import { CODIGO, PASOS } from "../data/pasos.ts";
@@ -179,8 +186,6 @@ export function impactoDe(clases: readonly ClaseDeCambio[], estimado: EstimadoPo
   const piezas = new Set<PiezaDelViaje>(
     clases.flatMap((c) => PIEZAS_DE_UNA_CLASE[c] ?? pasosQueSeRehacen([c]).flatMap((id) => PIEZAS_DE_UN_PASO[id])),
   );
-  const pieces = (
-    ["lodging", "transport", "days", "prices", "date_warnings", "papers", "ways", "guide"] as const
-  ).filter((p) => piezas.has(p));
+  const pieces = PIEZAS_DEL_VIAJE.filter((p) => piezas.has(p));
   return { changes: [...clases], redo, keep, maybe, pieces, ...costesDe(redo, maybe, estimado) };
 }

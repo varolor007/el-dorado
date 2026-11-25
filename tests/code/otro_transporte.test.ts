@@ -65,7 +65,7 @@ test("las clases del transporte: otro vuelo, la tabla y el que cruza; un país n
   const otroVuelo = impactoDe(["flight"]);
   assert.deepEqual(
     otroVuelo.redo.map((x) => x.step),
-    ["table", "cross", "explain", "trip"],
+    ["table", "cross", "explain", "budget", "trip"],
   );
   // Ni se busca el alojamiento ni se mira otra vez: las noches son las mismas.
   for (const paso of ["search", "look", "route", "sights", "pick"] as const) assert.ok(otroVuelo.keep.includes(paso));

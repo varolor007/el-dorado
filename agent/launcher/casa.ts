@@ -11,7 +11,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { ASIENTOS_A_LA_VEZ, TOPE_DE_UN_ASIENTO, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
+import { ASIENTOS_A_LA_VEZ, TOPE_DE_UN_ASIENTO, topeDe, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { escribirActa } from "./acta.ts";
 import { lanzarAsiento, type Gasto, type Lanzador, type Tope } from "./asiento.ts";
@@ -153,7 +153,8 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
     if (puesto === undefined) throw new Error(`falta el puesto ${id}`);
     const base = { puesto: id, asiento: puesto.asiento, desde: ahora().toISOString(), hasta: null, gasto: null };
     apuntarTrabajo(run, { ...base, estado: "working", fallo: null });
-    const r = await lanzarAsiento(puesto, lanzador, tope);
+    // Cada asiento, con su tope: el de las entradas lleva uno más corto, porque los días lo esperan (14.4).
+    const r = await lanzarAsiento(puesto, lanzador, topeDe(puesto.asiento, tope));
     const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
     const estado = r.fueraDeTope ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
     const fallo = estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega");

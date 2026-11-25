@@ -71,8 +71,9 @@ async function investiga(
   let estado = await sigue(run, fuentes());
   for (let i = 0; i < 30 && estado.esperan.length + (estado.porDetras ?? []).length > 0; i++) {
     // Lo que corre por detrás se lanza a la vez que lo que espera, y una sola vez, como hace la casa.
-    // El del calendario y el de los papeles corren por detrás desde el principio: van aparte, aunque se les espere.
-    const deFondo = (id: string): boolean => /^(calendario|papeles)-/.test(id);
+    // El del calendario y el de los papeles corren por detrás desde el principio, y el de moverse y el que conoce el
+    // destino desde que hay ruta: van aparte, aunque se les espere.
+    const deFondo = (id: string): boolean => /^(calendario|papeles|moverse|saber)-/.test(id);
     const todos = [...estado.esperan, ...(estado.porDetras ?? [])].filter((id) => !deDetras.includes(id));
     const atras = todos.filter(deFondo);
     const nuevos = todos.filter((id) => !deFondo(id) && !lanzados.includes(id));
@@ -221,12 +222,14 @@ test("la investigación inventada, entera: de lo entendido al viaje, por cada as
     const { estado, lanzados, deDetras } = await investiga(run);
     assert.deepEqual(estado.parado, null);
     assert.equal(estado.hecho, true);
-    // Los asientos, en su orden: la ruta; a la vez, mirar los cinco finalistas y elegir los sitios; cruzar; explicar.
+    // Los asientos, en su orden: la ruta; a la vez, mirar los cinco finalistas y elegir los sitios; con los sitios
+    // elegidos, las entradas; cruzar; explicar.
     assert.equal(lanzados[0], "ruta-v1");
     assert.deepEqual(lanzados.slice(1, 7).sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
-    assert.deepEqual(lanzados.slice(7), ["cruce-1-v1", "explica-v1"]);
-    // El del calendario, por detrás, desde el principio, a la vez que la ruta.
-    assert.deepEqual([...deDetras].sort(), ["calendario-v1", "papeles-v1"]);
+    assert.deepEqual(lanzados.slice(7), ["entradas-v1", "cruce-1-v1", "explica-v1"]);
+    // El del calendario, por detrás, desde el principio, a la vez que la ruta; el de moverse y el que conoce el
+    // destino, por detrás desde que hay ruta.
+    assert.deepEqual([...deDetras].sort(), ["calendario-v1", "moverse-v1", "papeles-v1", "saber-v1"]);
 
     const viaje = leerJson(join(run, "viaje.json")) as Viaje;
     const sucesos = leerJson(join(run, "sucesos.json")) as unknown as Suceso[];

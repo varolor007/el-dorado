@@ -60,15 +60,17 @@ test("con el adelante lleva la investigación entera, sola, y apunta cada trabaj
     assert.deepEqual(r.parado, null);
     assert.equal(r.hecho, true);
     assert.equal(r.sinAdelante, false);
-    // Los asientos, en su orden: el del calendario por detrás y, a la vez, los papeles; la ruta; a la vez, los que
-    // miran y el que elige; cruzar; explicar. Cada uno, una vez.
-    assert.deepEqual(r.lanzados.slice(0, 3), ["calendario-v1", "papeles-v1", "ruta-v1"]);
-    assert.deepEqual(r.lanzados.slice(3, 9).sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
-    assert.deepEqual(r.lanzados.slice(9), ["cruce-1-v1", "explica-v1"]);
-    assert.equal(new Set(r.lanzados).size, 11);
-    assert.equal(lanzador.ordenes.length, 11);
+    // Los asientos, en su orden: el del calendario por detrás y, a la vez, los papeles; la ruta; por detrás, el de
+    // moverse y el que conoce el destino; a la vez, los que miran y el que elige; las entradas; cruzar; explicar.
+    // Cada uno, una vez.
+    assert.deepEqual(r.lanzados.slice(0, 5), ["calendario-v1", "papeles-v1", "ruta-v1", "moverse-v1", "saber-v1"]);
+    assert.deepEqual(r.lanzados.slice(5, 11).sort(), ["a1-p1", "a2-p1", "a3-p1", "a4-p1", "a5-p1", "sitios-v1"]);
+    assert.deepEqual(r.lanzados.slice(11), ["entradas-v1", "cruce-1-v1", "explica-v1"]);
+    assert.equal(new Set(r.lanzados).size, 14);
+    assert.equal(lanzador.ordenes.length, 14);
     assert.ok(lanzador.ordenes.every((orden) => orden === lanzador.ordenes[0] && orden.includes("six parts")));
-    assert.ok(lanzador.aLaVez > 1 && lanzador.aLaVez <= 6);
+    // Seis a la vez como mucho, y lo que va por detrás (el calendario, los papeles, moverse y el destino), aparte.
+    assert.ok(lanzador.aLaVez > 1 && lanzador.aLaVez <= 6 + 4);
     // Cada trabajo queda apuntado: hecho, con sus horas y con lo que gastó. El total es la suma.
     const trabajos = trabajosDe(run);
     assert.deepEqual(
@@ -77,8 +79,8 @@ test("con el adelante lleva la investigación entera, sola, y apunta cada trabaj
     );
     assert.ok(trabajos.every((t) => t.estado === "done" && t.fallo === null && t.desde !== null && t.hasta !== null));
     assert.deepEqual(trabajos[0].gasto, GASTO);
-    assert.deepEqual(r.gasto, { turnos: 33, entrada: 11000, salida: 2200, usd: r.gasto.usd, sabido: true });
-    assert.ok(Math.abs(r.gasto.usd - 0.55) < 1e-9);
+    assert.deepEqual(r.gasto, { turnos: 42, entrada: 14000, salida: 2800, usd: r.gasto.usd, sabido: true });
+    assert.ok(Math.abs(r.gasto.usd - 0.7) < 1e-9);
     assert.ok(existsSync(join(run, "viaje.json")));
     assert.equal(leerJson(join(run, "viaje.json")).calendario.avisos.length, 1);
     assert.equal(leerVivo(run).at(-1)?.clase, "done");
@@ -86,7 +88,7 @@ test("con el adelante lleva la investigación entera, sola, y apunta cada trabaj
     const otra = await llevar(run, fuentesInventadas(), lanzador);
     assert.equal(otra.hecho, true);
     assert.deepEqual(otra.lanzados, []);
-    assert.equal(lanzador.ordenes.length, 11);
+    assert.equal(lanzador.ordenes.length, 14);
   });
 });
 
@@ -95,26 +97,29 @@ test("no se lanza nada por encima del techo de gasto que aceptó el viajero, y s
     darElAdelante(run, 0.17);
     const lanzador = lanzadorDeMentira();
     const r = await llevar(run, fuentesInventadas(), lanzador);
-    // Los papeles y el calendario gastaron 0,10 y la ruta 0,05: cabía la tanda siguiente. Con ella se pasó del
-    // techo, y el que cruza ya no se lanza.
+    // Los papeles y el calendario gastaron 0,10 y la ruta 0,05: cabía lo que va por detrás desde la ruta (el de
+    // moverse y el que conoce el destino) y la tanda siguiente. Con ella se pasó del techo, y ni el de las entradas
+    // ni el que cruza se lanzan.
     assert.equal(r.hecho, false);
-    assert.equal(r.parado?.en, "cross");
+    assert.equal(r.parado?.en, "tickets");
     assert.equal(r.parado?.paso, "el gasto");
     assert.match(r.parado?.rojos[0].que ?? "", /llegó al techo de 0\.17 USD/);
-    assert.equal(r.lanzados.length, 9);
-    assert.ok(!r.lanzados.some((id) => id.startsWith("cruce") || id.startsWith("explica")));
+    assert.equal(r.lanzados.length, 11);
+    assert.ok(
+      !r.lanzados.some((id) => id.startsWith("entradas") || id.startsWith("cruce") || id.startsWith("explica")),
+    );
     assert.ok(!existsSync(join(run, "viaje.json")));
     assert.deepEqual(
       leerVivo(run)
         .filter((x) => x.clase === "stopped")
         .map((x) => x.ref),
-      ["cross"],
+      ["tickets"],
     );
     // Parado sigue: otra llamada no lanza a nadie.
     const otra = await llevar(run, fuentesInventadas(), lanzador);
     assert.equal(otra.parado?.paso, "el gasto");
     assert.deepEqual(otra.lanzados, []);
-    assert.equal(lanzador.ordenes.length, 9);
+    assert.equal(lanzador.ordenes.length, 11);
   });
 });
 
@@ -191,9 +196,9 @@ test("si uno de los que miran falla, el viaje se hace igual: ese alojamiento que
     // Lo que gastó hasta fallar cuenta en el total, que por eso se sabe entero.
     assert.deepEqual(trabajosDe(run).find((t) => t.puesto === "a3-p1")?.gasto, GASTO);
     assert.equal(r.gasto.sabido, true);
-    assert.equal(r.gasto.turnos, 33);
-    assert.equal(Object.values(estados(run)).filter((e) => e === "done").length, 10);
-    assert.equal(lanzador.ordenes.length, 11);
+    assert.equal(r.gasto.turnos, 42);
+    assert.equal(Object.values(estados(run)).filter((e) => e === "done").length, 13);
+    assert.equal(lanzador.ordenes.length, 14);
     // Se dice, aunque se dijera en una vuelta de antes; y en lo que se cuenta en vivo, ese alojamiento se empezó a
     // mirar y no se acabó.
     const suyo = leerJson(join(run, "mirar.json")).quienes.find((q: Objeto) => q.puesto === "a3-p1");
@@ -213,8 +218,9 @@ test("trabajan a la vez tantos asientos como se diga, y no más", async () => {
     const lanzador = lanzadorDeMentira();
     const r = await llevar(run, fuentesInventadas(), lanzador, { aLaVez: 2 });
     assert.equal(r.hecho, true);
-    assert.ok(lanzador.aLaVez <= 3);
-    assert.equal(lanzador.ordenes.length, 11);
+    // Dos, y lo que va por detrás, que no cuenta.
+    assert.ok(lanzador.aLaVez <= 2 + 4);
+    assert.equal(lanzador.ordenes.length, 14);
   });
 });
 
@@ -309,10 +315,11 @@ test("si uno que mira falla sin decir lo que gastó y hay techo, la casa se para
     const lanzador = lanzadorDeMentira({ falla: (_asiento, puesto) => (puesto === "a3-p1" ? "rompe" : null) });
     const r = await llevar(run, fuentesInventadas(), lanzador);
     assert.equal(r.hecho, false);
-    assert.equal(r.parado?.en, "cross");
+    assert.equal(r.parado?.en, "tickets");
     assert.equal(r.parado?.paso, "el gasto");
     assert.equal(r.gasto.sabido, false);
-    // Los papeles y el del calendario, por detrás; la ruta; los cinco que miran y el que elige.
-    assert.equal(lanzador.ordenes.length, 9);
+    // Los papeles y el del calendario, por detrás; la ruta; el de moverse y el que conoce el destino, por detrás; los
+    // cinco que miran y el que elige. El de las entradas ya no se lanza.
+    assert.equal(lanzador.ordenes.length, 11);
   });
 });

@@ -703,7 +703,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 Lo que deja el 25-nov, a decisión del PM:
 
 - **De las capas del destino** (firmadas el 25-nov): si se recomiendan sitios concretos donde comer, que pide una
-  fuente de opiniones; y sus números, que salen de la obra y se miden en el ensayo.
+  fuente de opiniones. Sus topes de partida: el de moverse y el que conoce el destino, diez búsquedas y dieciséis
+  páginas; el de las entradas, doce y veinte por llamada, ocho sitios por llamada y veinticuatro en total; diez
+  minutos de espera a las entradas antes de repartir los días sin ellas; y, del destino, cuántas cosas por clase y
+  160 letras por cosa. Que otro idioma, o cambiar lo que buscas, vuelve a lanzar al que conoce el destino. Y una
+  regla de antes que ahora pesa más: con un techo de gasto puesto, un asiento que se corta por su tope sin decir lo
+  que gastó para la investigación; con las entradas, eso quiere decir que no se reparten los días sin ellas.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.

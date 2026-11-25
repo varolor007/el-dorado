@@ -16,6 +16,10 @@ import type { ParaExplicar } from "../../../agent/scripts/explica.ts";
 import type { Entendido, Tabla } from "../../../agent/scripts/formas.ts";
 import type { FuenteAlojamiento } from "../../../agent/tools/fuentes/tipos.ts";
 import { ALOJAMIENTOS, fuenteInventada } from "./inventado.ts";
+import { abiertosInventados, contratosDePrueba } from "./capas.ts";
+import { entregaDelDestino, PAGINA_DEL_DESTINO } from "./destino.ts";
+import { entregaDeLasEntradas, PAGINA_DE_LAS_ENTRADAS } from "./entradas.ts";
+import { entregaDeMoverse, PAGINA_DE_MOVERSE } from "./moverse.ts";
 import {
   ENTENDIDO,
   entregaDeCruce,
@@ -51,6 +55,9 @@ export function fuentesInventadas(): Fuentes {
     fotos: async (archivos) => new Map(archivos.map((a) => [a, FOTO])),
     transporte: transporteInventado(),
     bajarFotos: { traer: async () => JPEG, segura: () => true, encoger: async (b) => b },
+    // Las capas del destino (bloque 14): sus contratos de prueba, si aún no están los de verdad, y los datos abiertos.
+    abiertos: abiertosInventados(),
+    contratos: contratosDePrueba(),
   };
 }
 
@@ -213,8 +220,12 @@ export function respuestaPara(hoja: Objeto): Objeto {
 }
 
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
-export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
-  if (asiento === "calendar") return entregaDelCalendario(dado("trip.json"), false);
+export function entregaCon(asiento: string, dado: (nombre: string) => any, conPagina = false): Objeto {
+  if (asiento === "calendar") return entregaDelCalendario(dado("trip.json"), conPagina);
+  // Las capas del destino: cada una, en su archivo.
+  if (asiento === "getting-around") return entregaDeMoverse(dado("trip.json"), dado("route.json"), conPagina);
+  if (asiento === "local-knowledge") return entregaDelDestino(dado("trip.json"), dado("route.json"), conPagina);
+  if (asiento === "tickets") return entregaDeLasEntradas(dado("trip.json"), dado("sights.json"), conPagina);
   if (asiento === "papers") return entregaDeLosPapeles(dado("questions.json"), dado("travellers.json"));
   if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
   if (asiento === "route-planner") return entregaDeRuta();
@@ -233,11 +244,21 @@ export function entregaCon(asiento: string, dado: (nombre: string) => any): Obje
   return entregaDeExplicar(paraExplicar);
 }
 
-function entregaDe(asiento: string, puesto: string): Objeto {
-  return entregaCon(asiento, (nombre) =>
-    existsSync(join(puesto, "in", nombre)) ? leerJson(join(puesto, "in", nombre)) : null,
+function entregaDe(asiento: string, puesto: string, conPagina = false): Objeto {
+  return entregaCon(
+    asiento,
+    (nombre) => (existsSync(join(puesto, "in", nombre)) ? leerJson(join(puesto, "in", nombre)) : null),
+    conPagina,
   );
 }
+
+/** Las páginas que abre cada asiento de mentira con internet cuando trabaja en su puesto. */
+const PAGINAS_DE_MENTIRA: Record<string, string> = {
+  calendar: PAGINA_DEL_TIEMPO,
+  "getting-around": PAGINA_DE_MOVERSE,
+  "local-knowledge": PAGINA_DEL_DESTINO,
+  tickets: PAGINA_DE_LAS_ENTRADAS,
+};
 
 /** Los seis textos de un asiento aplicado, por el nombre de su archivo, con la entrega que se le diga. */
 export function seisPasos(piezas: string[], entrega: Objeto): Record<string, string> {
@@ -259,15 +280,19 @@ export function trabaja(
 ): void {
   const puesto = puestosDe(run).find((p) => p.id === id);
   if (puesto === undefined) throw new Error(`no existe el puesto ${id}`);
-  const entrega =
-    puesto.asiento === "calendar"
-      ? entregaDelCalendario(leerJson(join(puesto.carpeta, "in", "trip.json")), true)
-      : entregaDe(puesto.asiento, puesto.carpeta);
+  const pagina = PAGINAS_DE_MENTIRA[puesto.asiento];
+  const entrega = entregaDe(puesto.asiento, puesto.carpeta, pagina !== undefined);
   // Un asiento con internet abre sus páginas: la casa lo apunta en lo consultado del run.
-  if (puesto.asiento === "calendar")
+  if (pagina !== undefined)
     guardarConsultado(puesto, {
-      busquedas: [{ consulta: "weather Villa Inventada", resultados: [], fallo: null }],
-      paginas: [{ url: PAGINA_DEL_TIEMPO, final: null, titulo: null, cuando: null }],
+      busquedas: [
+        {
+          consulta: `${puesto.asiento === "calendar" ? "weather" : puesto.asiento} Villa Inventada`,
+          resultados: [],
+          fallo: null,
+        },
+      ],
+      paginas: [{ url: pagina, final: null, titulo: null, cuando: null }],
       fallidas: [],
     });
   estropea(puesto.asiento, entrega);
