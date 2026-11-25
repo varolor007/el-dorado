@@ -23,15 +23,40 @@ export function viajeDeLaVersion(v: ViajeEnLaMesa, n: number | null = v.ficha.ve
 }
 
 /**
- * Lo que traen de la versión de la que salen las elecciones de una versión nueva, si el momento que la hizo las pasó
- * en lo que pide (`pedido.choices`, como un mensaje para un día, 8.6): lo que quitaste no vuelve solo. Se queda solo
- * lo que sigue siendo del viaje nuevo; si con ello los días no valen, solo lo que quitaste y el ritmo.
+ * La versión de la que salen las elecciones de otra que aún no tiene las suyas: la de un cierre sale de la versión que
+ * se cerró; la de un cambio, de la versión de la que partió. Null si es la primera.
+ */
+function deDondeSale(v: ViajeEnLaMesa, n: number): number | null {
+  const version = v.ficha.versiones.find((x) => x.n === n);
+  if (version === undefined) return null;
+  const de =
+    version.cierre !== undefined
+      ? v.ficha.versiones.find((x) => x.run === version.run && x.cierre === undefined)?.n
+      : (version.de ?? rehechoDe(join(v.carpeta, "runs", String(version.run)))?.version);
+  return de !== undefined && de < n ? de : null;
+}
+
+/**
+ * Lo que traen las elecciones de una versión nueva de la versión de la que salen, sea cual sea el cambio: lo que
+ * quitaste no vuelve solo, y el cierre y la guía salen de ella. Si el momento que la hizo pasó las suyas en lo que
+ * pide (`pedido.choices`, como un mensaje para un día, 8.6), mandan esas. Se queda solo lo que sigue siendo del viaje
+ * nuevo; si con ello los días no valen, solo lo que quitaste y el ritmo.
  */
 function heredadas(v: ViajeEnLaMesa, n: number, viaje: Viaje): Elecciones {
   const version = v.ficha.versiones.find((x) => x.n === n);
-  const pedido = version === undefined ? null : rehechoDe(join(v.carpeta, "runs", String(version.run)))?.pedido;
-  const crudo = (pedido as { choices?: Partial<Elecciones> } | null)?.choices;
-  if (crudo === undefined || crudo === null || typeof crudo !== "object") return SIN_ELEGIR;
+  const pedido =
+    version === undefined || version.cierre !== undefined
+      ? null
+      : rehechoDe(join(v.carpeta, "runs", String(version.run)))?.pedido;
+  const pasadas = (pedido as { choices?: Partial<Elecciones> } | null)?.choices;
+  const origen = deDondeSale(v, n);
+  const crudo: Partial<Elecciones> | null =
+    pasadas !== undefined && pasadas !== null && typeof pasadas === "object"
+      ? pasadas
+      : origen === null
+        ? null
+        : leerElecciones(v, origen);
+  if (crudo === null) return SIN_ELEGIR;
   const suyas = new Set(viaje.paradas.map((p) => p.id));
   const dias = viaje.dias.length;
   const de = <T>(x: T | undefined, validos: readonly T[]): T | null =>

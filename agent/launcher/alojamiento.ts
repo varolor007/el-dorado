@@ -44,7 +44,7 @@ import { sinPalabras } from "./escuchar.ts";
 import { apuntar, guardarJson, leerVersion, viajesDe, type ViajeEnLaMesa } from "./mesa.ts";
 import { materialDe, type Quien, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
-import { rehechoDe } from "./rehacer.ts";
+import { loPedidoDe, rehechoDe } from "./rehacer.ts";
 import { acaboSinEntregar, apuntarTrabajo, gastoDe, trabajosDe } from "./trabajos.ts";
 
 const ASIENTO = "lodging-viewer";
@@ -57,10 +57,12 @@ const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
 /** La clave con que va lo de este momento en el `pedido` de un run que rehace: los demás momentos llevan la suya. */
 export const DEL_ALOJAMIENTO = "lodging";
 
-/** Lo que pidió el viajero desde la ficha de un alojamiento, si el run rehace por eso; null si no. */
+/**
+ * Lo que pidió el viajero desde la ficha de un alojamiento: lo de este run o, si no lo trae, lo que sigue valiendo de
+ * las versiones de antes (`loPedidoDe`); null si nada.
+ */
 export function pedidoDeAlojamientoDe(run: string): PedidoDeAlojamiento | null {
-  const pedido = rehechoDe(run)?.pedido as Record<string, unknown> | null | undefined;
-  const suyo = pedido?.[DEL_ALOJAMIENTO];
+  const suyo = loPedidoDe(run, DEL_ALOJAMIENTO);
   return typeof suyo === "object" && suyo !== null ? (suyo as PedidoDeAlojamiento) : null;
 }
 

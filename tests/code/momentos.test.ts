@@ -450,10 +450,13 @@ test("tus elecciones viven en la casa, por versión: se guardan encima, y solo c
     assert.deepEqual(leidas.removed, []);
     assert.equal(v.ficha.versiones.length, 1);
     assert.throws(() => guardarElecciones(v, { way: "no" }), EleccionQueNoVale);
-    // Una versión nueva empieza sin elegir; al volver a la de antes, vuelven sus elecciones.
+    // Una versión nueva trae lo que elegiste en la de la que sale (lo que quitas no vuelve solo), y se guarda aparte:
+    // lo que eliges en ella no toca las de la de antes.
     await rehacerYLlevar(mesa, v.ficha.id, ["lodging_taste"]);
     const w = leerViaje(v.ficha.id, "ana", mesa);
-    assert.deepEqual(leerElecciones(w), SIN_ELEGIR);
+    assert.equal(leerElecciones(w).way, "different");
+    assert.equal(leerElecciones(w).pace, "calm");
+    guardarElecciones(w, { way: "cheapest" }, ahora());
     volverA(w, 1, ahora());
     assert.equal(leerElecciones(w).way, "different");
     pasar(w, "researching", ahora());
