@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { CAMBIOS, TOPE_DE_CAMBIOS } from "../../agent/data/momentos.ts";
+import { CAMBIOS, TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../../agent/data/momentos.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import { pararRun } from "../../agent/launcher/investigar.ts";
 import { apuntar, leerVersion, leerViaje, nuevoRun, pasar } from "../../agent/launcher/mesa.ts";
@@ -545,5 +545,21 @@ test("un cambio a medias que nadie lleva tras un corte: se para, y el viaje qued
     assert.deepEqual(r.cuerpo.research.change, { from: 1, run: 2, changes: ["budget"] });
     assert.equal((await pide("POST", `/viajes/${id}/reintentar`)).estado, 202);
     await esperarA(pide, id, 2);
+  });
+});
+
+test("la puerta: empezar otra vez una primera investigación parada mira el tope de investigaciones", async () => {
+  await conLaPuerta(async ({ pide, mesa }) => {
+    const id = (await pide("POST", "/viajes", { understood: ESCUCHADO })).cuerpo.trip.id as string;
+    const dueno = leerJson(join(mesa, "viajes", id, "ficha.json")).dueno as string;
+    const v = leerViaje(id, dueno, mesa);
+    pasar(v, "confirmed", ahora());
+    // Tantas investigaciones paradas como caben en un viaje.
+    for (let i = 0; i < TOPES_DE_UN_VIAJE.runs; i++)
+      pararRun(nuevoRun(v, ahora()), "route", "una prueba", [{ donde: "house", que: "parado a propósito" }]);
+    const otras = { ...ESCUCHADO, dates: { ...ESCUCHADO.dates, check_in: "2027-03-12", check_out: "2027-03-15" } };
+    const r = await pide("POST", `/viajes/${id}/cambiar`, { understood: otras, go_ahead: true });
+    assert.deepEqual([r.estado, r.cuerpo.error], [409, "too_many_versions"]);
+    assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, TOPES_DE_UN_VIAJE.runs);
   });
 });

@@ -145,7 +145,7 @@ import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from ".
 import { porDondeVa } from "./pasos.ts";
 import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
-import { TOPE_DE_CAMBIOS } from "../data/momentos.ts";
+import { TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import { queTrae } from "../scripts/cambios.ts";
 import { guardarJson } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
@@ -1307,6 +1307,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         abandonarElCierre(v);
         ({ run, n } = rehacer(v, { clases, entendido: despues, cuando: hoy() }));
       } else {
+        // Empezar otra vez es una investigación más del viaje: con el mismo tope que rehacer.
+        if (v.ficha.runs.length >= TOPES_DE_UN_VIAJE.runs) throw new FalloAlRehacer("too_many_versions");
         abandonarElCierre(v);
         guardarJson(join(v.carpeta, "entendido.json"), despues);
         run = nuevoRun(v, hoy());
