@@ -54,7 +54,9 @@ export function tandasDeSitios(elegidos: Sitio[]): Sitio[][] {
 
 /**
  * Lo que dicen los datos abiertos de los sitios elegidos, una vez por run. Sin la fuente, o si falla, no se sabe nada
- * de ninguno, y se dice: el asiento lo busca igual en su web.
+ * de ninguno, y se dice: el asiento lo busca igual en su web. Un fallo entero (no contesta ninguna) se guarda con sus
+ * avisos, pero no como la respuesta: se vuelven a pedir la próxima vez, mientras su asiento no haya salido con ellos.
+ * Una vez que salió, su material no cambia: su puerta lo mira con lo mismo que se le dio.
  */
 export async function traerLosAbiertos(
   run: string,
@@ -62,8 +64,12 @@ export async function traerLosAbiertos(
   traer?: TraerAbiertos,
 ): Promise<DatosAbiertos[]> {
   const ruta = join(run, ABIERTOS);
-  if (existsSync(ruta)) return (JSON.parse(readFileSync(ruta, "utf8")) as { abiertos: DatosAbiertos[] }).abiertos;
+  if (existsSync(ruta)) {
+    const guardado = JSON.parse(readFileSync(ruta, "utf8")) as { abiertos: DatosAbiertos[]; fallo?: boolean };
+    if (guardado.fallo !== true || puestosDe(run).some((p) => p.asiento === ASIENTO)) return guardado.abiertos;
+  }
   let abiertos: DatosAbiertos[] = [];
+  let fallo = false;
   const avisos: string[] = [];
   if (traer === undefined) avisos.push("sin datos abiertos de los sitios: no hay fuente");
   else
@@ -75,8 +81,9 @@ export async function traerLosAbiertos(
       );
     } catch (error) {
       avisos.push(`sin datos abiertos de los sitios: ${error instanceof Error ? error.message : String(error)}`);
+      fallo = true;
     }
-  guardarEnElRun(run, ABIERTOS, { abiertos, avisos });
+  guardarEnElRun(run, ABIERTOS, fallo ? { abiertos, avisos, fallo } : { abiertos, avisos });
   return abiertos;
 }
 

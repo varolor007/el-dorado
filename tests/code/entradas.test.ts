@@ -36,7 +36,11 @@ import {
   leerOverpass,
   leerWikidata,
   OVERPASS_POR_DEFECTO,
+  TOPE_DE_OVERPASS,
+  TOPE_DE_WIKIDATA,
+  traerDeFuera,
 } from "../../agent/tools/abiertos.ts";
+import { montarPuesto } from "../../agent/launcher/puesto.ts";
 import { leerHorarioDeOsm } from "../../agent/tools/horarios.ts";
 import type { Respuesta, Sitio } from "../../agent/tools/sitios.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson, runNuevo, trabaja } from "../cases/inventado/asientos.ts";
@@ -381,6 +385,73 @@ test("los datos abiertos: si ninguna instancia contesta, se dice, y la web de Wi
   await abiertosDe(CUATRO, { ...ninguna, overpass: ["http://inseguro.example/api/interpreter"] });
   assert.equal(ninguna.consultas.length, 0);
   assert.match(ninguna.avisos.join(" "), /ninguna dirección de Overpass/);
+});
+
+test("los datos abiertos: nada que lleve a la propia máquina o a una red de dentro, y sin redirecciones", async () => {
+  for (const deDentro of [
+    "https://localhost/api/interpreter",
+    "https://127.0.0.1/api/interpreter",
+    "https://10.0.0.7/api/interpreter",
+    "https://[::1]/api/interpreter",
+    "https://overpass.internal/api/interpreter",
+    "https://overpass.svc/api/interpreter",
+    "https://overpass/api/interpreter",
+    "https://overpass.inventado.example:8443/api/interpreter",
+  ])
+    assert.deepEqual(instanciasDeOverpass(deDentro), { instancias: [], malas: 1 }, deDentro);
+  // Al pedir: un nombre de fuera que lleva dentro no se llama; y nunca se sigue una redirección.
+  const llamadas: { url: string; redirect: unknown }[] = [];
+  const pedir = (async (url: string, init: RequestInit) => {
+    llamadas.push({ url, redirect: init.redirect });
+    return new Response("", { status: 302, headers: { location: "https://169.254.169.254/" } });
+  }) as unknown as typeof fetch;
+  await assert.rejects(
+    traerDeFuera(PRIMERA, 1000, async () => ["93.184.216.34", "10.1.2.3"], pedir),
+    /dentro de la red/,
+  );
+  await assert.rejects(
+    traerDeFuera("https://127.0.0.1/x", 1000, async () => [], pedir),
+    /de fuera/,
+  );
+  assert.equal(llamadas.length, 0);
+  const r = await traerDeFuera(PRIMERA, 1000, async () => ["93.184.216.34"], pedir);
+  assert.equal(r.estado, 302);
+  assert.deepEqual(llamadas, [{ url: PRIMERA, redirect: "manual" }]);
+  // Si no se puede saber a dónde lleva (sale por un intermediario), se sigue, como en el cierre.
+  await traerDeFuera(PRIMERA, 1000, async () => Promise.reject(new Error("sin DNS")), pedir);
+  assert.equal(llamadas.length, 2);
+  // Una redirección no es una respuesta: Wikidata falla y Overpass pasa a la siguiente.
+  const salta = fuentesAbiertas({ wikidataFalla: true, uno: "bien" });
+  const traer = salta.traer;
+  salta.traer = async (url: string) =>
+    url.startsWith(PRIMERA) || url.startsWith("https://query.wikidata.org/")
+      ? { estado: 302, cuerpo: "", esperar: null }
+      : traer(url);
+  const con = await abiertosDe([sitio("Q3", "Iglesia")], { ...salta, intentos: 1 });
+  assert.equal(con[0].horario, "Mo-Fr 09:00-17:00");
+});
+
+test("los datos abiertos: Wikidata, con sus intentos y sus esperas, dentro de su tope", async () => {
+  let reloj = 0;
+  const pedidos: string[] = [];
+  const o = {
+    ahora: () => reloj,
+    dormir: async (ms: number) => void (reloj += ms),
+    overpass: [PRIMERA],
+    avisar: () => {},
+    traer: async (url: string) => {
+      pedidos.push(url);
+      reloj += 20_000;
+      // Wikidata siempre dice que se espere un minuto; Overpass, que está caída.
+      return url.startsWith("https://query.wikidata.org/")
+        ? { estado: 503, cuerpo: "", esperar: 60 }
+        : { estado: 504, cuerpo: "", esperar: null };
+    },
+  };
+  await assert.rejects(abiertosDe([sitio("Q3", "Iglesia")], o));
+  // Antes, tres intentos y dos esperas de un minuto: unos cinco minutos. Ahora, todo cabe en los dos topes.
+  assert.ok(reloj <= TOPE_DE_WIKIDATA + TOPE_DE_OVERPASS, String(reloj));
+  assert.equal(pedidos.filter((u) => u.startsWith("https://query.wikidata.org/")).length, 1);
 });
 
 test("los datos abiertos: si una fuente falla, se sigue con las otras; si fallan todas, se dice", async () => {
@@ -918,6 +989,34 @@ test("si hay más sitios que el tope: imprescindibles y con puerta primero, siem
   ]);
   assert.deepEqual(losDiasSinEntradas(paraEnsenarEntradas([], ids.slice(0, 24), [])), []);
   assert.equal(tandasDeSitios(ordenParaMirar(go, sitios, abiertos)).flat().length, 24);
+});
+
+test("un fallo entero de los datos abiertos no se guarda como su respuesta: se vuelven a pedir", async () => {
+  const run = runNuevo();
+  try {
+    const sitio = { id: "Q1", nombre: "Faro Inventado", punto: { lat: 10, lon: 20 } } as Sitio;
+    let veces = 0;
+    const traer = async (sitios: Sitio[]) => {
+      if (++veces === 1) throw new Error("los datos abiertos contestan 503");
+      return sitios.map((s) => ({ sitio: s.id, horario: "24/7", dePago: null, web: null, fuentes: [] }));
+    };
+    assert.deepEqual(await traerLosAbiertos(run, [sitio], traer), []);
+    assert.match(leerJson(join(run, ARCHIVO_DE_LOS_ABIERTOS)).avisos.join(" "), /contestan 503/);
+    // La siguiente vez se piden otra vez, y lo que contestan sí se guarda: ya no se vuelven a pedir.
+    assert.equal((await traerLosAbiertos(run, [sitio], traer))[0].horario, "24/7");
+    assert.equal((await traerLosAbiertos(run, [sitio], traer))[0].horario, "24/7");
+    assert.equal(veces, 2);
+    // Si su asiento ya salió con la lista vacía, no se cambia lo que se le dio.
+    const otro = runNuevo();
+    veces = 0;
+    await traerLosAbiertos(otro, [sitio], traer);
+    montarPuesto(otro, "entradas-v1", "tickets", []);
+    assert.deepEqual(await traerLosAbiertos(otro, [sitio], traer), []);
+    assert.equal(veces, 1);
+    rmSync(otro, { recursive: true, force: true });
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
 });
 
 test("lo que avisan los datos abiertos queda con los avisos del run, no solo en la consola", async () => {
