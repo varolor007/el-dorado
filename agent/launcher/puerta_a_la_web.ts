@@ -125,7 +125,7 @@ import {
 } from "./mesa.ts";
 import type { Viaje } from "../output/viaje.ts";
 import { CAMBIOS_DE_ALOJAMIENTO, PREGUNTA } from "../data/alojamiento.ts";
-import { comprobarGustos, comprobarPedido, PedidoQueNoVale } from "../scripts/alojamiento.ts";
+import { comprobarGustos, comprobarPedido, conTuAlojamiento, PedidoQueNoVale } from "../scripts/alojamiento.ts";
 import {
   clasesDelPedido,
   conTusGustos,
@@ -714,6 +714,21 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           throw new Fallo(400, "bad_days");
         }
       }
+      // El alojamiento, el que mandas o el que elegiste y quedó guardado (8.2), se mira antes de abrir el cierre: si
+      // no vale (de otra moneda, por ejemplo), no se gasta un intento del día en un cierre que va a fallar.
+      const alojamiento = pedido.lodging ?? tuyas.lodging;
+      if (alojamiento !== null && alojamiento !== undefined) {
+        try {
+          if (typeof alojamiento !== "string") throw new Error("bad_lodging");
+          conTuAlojamiento(
+            viaje,
+            viaje.maneras.find((m) => m.id === manera)!,
+            alojamiento,
+          );
+        } catch {
+          throw new Fallo(400, "bad_lodging");
+        }
+      }
       // El transporte, el que mandas o el que elegiste y quedó guardado (8.3); sin ninguno, el de la manera.
       const transporte = pedido.transport === undefined ? tuyas.transport : pedido.transport;
       if (transporte !== null && transporte !== undefined) {
@@ -732,7 +747,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         elegir(v, cierre.carpeta, manera, hoy(), {
           dias,
           ritmo,
-          alojamiento: pedido.lodging ?? tuyas.lodging,
+          alojamiento,
           transporte,
         });
       } catch (error) {

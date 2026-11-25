@@ -4,7 +4,7 @@
 // gastar.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -615,6 +615,23 @@ test("la puerta: tus gustos, lo que costaría, otra búsqueda y una pregunta, so
     const m = nuevo.maneras.find((x) => x.id === "cheapest") ?? nuevo.maneras[0];
     const otroAlojamiento = nuevo.alojamientos.find((a) => a.id !== m.alojamiento && a.descartado == null);
     if (otroAlojamiento !== undefined) {
+      // La trampa de la revisión: uno de otra moneda no se guarda y, si ya estaba guardado, no abre un cierre vacío.
+      const enDisco = join(mesa, "viajes", id, "versiones", String(w.ficha.version), "viaje.json");
+      const tal = readFileSync(enDisco, "utf8");
+      const otraMoneda = JSON.parse(tal) as Viaje;
+      otraMoneda.alojamientos.find((a) => a.id === otroAlojamiento.id)!.precio.moneda = "XXX";
+      writeFileSync(enDisco, JSON.stringify(otraMoneda));
+      const deOtra = { choices: { way: m.id, lodging: otroAlojamiento.id } };
+      const noSeGuarda = await pide("PUT", `/viajes/${id}/elecciones`, ana, deOtra);
+      assert.deepEqual([noSeGuarda.estado, noSeGuarda.cuerpo.field], [400, "lodging"]);
+      const raiz = join(mesa, "viajes", id, "cierres");
+      const cierres = (): number => (existsSync(raiz) ? readdirSync(raiz).length : 0);
+      const antes = cierres();
+      const noCierra = await pide("POST", `/viajes/${id}/cerrar`, ana, deOtra.choices);
+      assert.deepEqual([noCierra.estado, noCierra.cuerpo.error], [400, "bad_lodging"]);
+      assert.equal(cierres(), antes, "no se abre un cierre que va a fallar");
+      assert.ok(!readFileSync(join(mesa, "viajes", id, "diario.jsonl"), "utf8").includes('"closing"'));
+      writeFileSync(enDisco, tal);
       const choices = { way: m.id, lodging: otroAlojamiento.id };
       assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { choices })).estado, 200);
       assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, {})).estado, 202);
