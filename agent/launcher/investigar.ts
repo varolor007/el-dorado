@@ -655,7 +655,7 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
   return tabla;
 }
 
-function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuesto: Presupuesto): Pieza[] {
+function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuesto?: Presupuesto): Pieza[] {
   const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
   const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const palancas = PALANCAS.map((p) => ({
@@ -671,9 +671,11 @@ function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuest
     { ruta: "lodgings.json", contenido: json(alojamientosParaCruzar(busqueda, miradosDe(run))) },
     { ruta: "route.json", contenido: json(zonas) },
     { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
-    // El presupuesto entero de cada fila, de código (14.7): sus cifras son las únicas que puede decir de él.
-    { ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "row")) },
   ];
+  // El presupuesto entero de cada fila, de código (14.7), si sus capas ya acabaron: sus cifras son las únicas que
+  // puede decir de él. Sin él, no dice ninguna.
+  if (presupuesto !== undefined)
+    piezas.push({ ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "row")) });
   if (ronda > 1)
     piezas.push({ ruta: "previous.json", contenido: json(leer<DelCruce>(run, `cruce-${ronda - 1}.json`).entrega) });
   return piezas;
@@ -1220,9 +1222,14 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
           },
         ]);
       }
-      // El presupuesto entero va delante del que cruza (14.7): sus capas tienen que estar.
-      if (deAlli.length > 0) return espera(...deAlli);
-      const presupuesto = presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
+      // El que cruza no espera a nadie: las capas van por detrás y sin frenar el viaje, y las tres maneras se comparan
+      // por dormir y llegar. Si el de moverse y el que conoce el destino ya acabaron (se recoge aquí lo que hayan
+      // entregado), lleva el presupuesto entero delante (14.7); si no, va sin él, y su puerta no le deja decir ninguna
+      // cifra del presupuesto entero (CR10).
+      const presupuesto =
+        capasDeDetras(run, viaje, f).length > 0
+          ? undefined
+          : presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
       // Con un mensaje para un día, si con esta tabla decide lo mismo que antes y con el mismo material, el que cruza
       // no se vuelve a lanzar.
       const delCruce = piezasDelCruce(run, viaje, ronda, presupuesto);

@@ -10,9 +10,10 @@ them and you decide.
 
 ## What you receive, in `in/`
 
-- `budget.json`: the whole budget of each row of the table, worked out by the house (`rows`: its total with what is
-  known, how many things are not known, what is in another currency, and part by part), and the meals apart, per
-  person and per day. See CR10.
+- `budget.json`, only when the house already has it: the whole budget of each row of the table, worked out by the
+  house (`rows`: its total with what is known, how many things are not known, what is in another currency, and part
+  by part), and the meals apart, per person and per day. You do not need it to decide: the ways are compared by
+  lodging and getting there. Without it, you say nothing of the whole budget. See CR10.
 
 - `trip.json`: what the traveller asked for: the dates and whether they can move them, who travels, how much they
   want to spend, what they are looking for, and their tastes and limits with their own words.

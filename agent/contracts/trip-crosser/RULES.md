@@ -21,4 +21,4 @@ These rules win over the guide.
 - **CR10. You may tell the whole budget only with the numbers of `in/budget.json`.** The total of a row is lodging
   and getting there; the whole budget adds tickets, getting around and getting from where you land to where you
   sleep. A sentence about the whole budget copies its numbers from `in/budget.json`, never from anywhere else, and
-  never sums them.
+  never sums them. Without `in/budget.json`, you write no number of the whole budget.
