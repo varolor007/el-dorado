@@ -68,7 +68,8 @@ export function TusVersiones({ t, idioma, id, versiones }: Comun & { id: string;
 
 /**
  * El impacto de un cambio, antes de rehacerlo. Si rehacerlo gasta IA, se dice antes y se pide tu adelante; si no,
- * se rehace con un toque. Lo que costaría es una estimación de lo que han gastado tus viajes, o se dice que no se sabe.
+ * se rehace con un toque. Lo que costaría es una estimación de lo que han gastado tus viajes, o se dice que no se sabe;
+ * y si hay algo que quizá haya que rehacer con IA, también lo más que puede costar.
  * `alAdelante` es lo que hace el momento que lo enseña al pulsar; sin él, no hay botón.
  */
 export function ElImpacto({
@@ -133,11 +134,18 @@ export function ElImpacto({
       )}
       <p className="dato impacto__cuesta">
         {!impacto.spends
-          ? m.noGasta
+          ? impacto.most === undefined
+            ? m.noGasta
+            : m.noGastaSeguro
           : impacto.cost.usd === null
             ? m.noSeSabe
             : m.cuesta(conCentimos(impacto.cost.usd, moneda, idioma))}
       </p>
+      {impacto.maybe.length > 0 && impacto.most !== undefined && (
+        <p className="dato impacto__cuesta impacto__hasta">
+          {impacto.most.usd === null ? m.hastaNoSeSabe : m.hasta(conCentimos(impacto.most.usd, moneda, idioma))}
+        </p>
+      )}
       {(alAdelante !== undefined || alAhoraNo !== undefined) && (
         <div className="pie-columna">
           {alAdelante !== undefined && (

@@ -25,6 +25,7 @@ import { avisosDeSiempre } from "../scripts/monta_viaje.ts";
 import { diasDe } from "../scripts/ruta.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { guardarJson, leerDiario, type ViajeEnLaMesa } from "./mesa.ts";
+import type { Pieza } from "./puesto.ts";
 import { leerElecciones, viajeDeLaVersion } from "./momentos.ts";
 import { rehacer, rehechoDe } from "./rehacer.ts";
 
@@ -39,8 +40,10 @@ export type DeLosSitios = {
   /** Las clases que se buscaron por los mensajes de este viaje, y el run que buscó las últimas. */
   buscados?: string[];
   buscadosEn?: string;
-  /** Los sitios que se dan a elegir además de los de siempre, porque los pidió un mensaje. */
+  /** Los sitios que se dan a elegir además de los de siempre, porque los pidió un mensaje: de todos, sin repetir. */
   anadidos?: string[];
+  /** Los que añadió el mensaje del run `buscadosEn`, y solo esos: lo que encontró ese mensaje. */
+  anadidosEn?: string[];
 };
 
 const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(join(run, nombre), "utf8")) as T;
@@ -141,7 +144,9 @@ export async function ampliarLosSitios(
     }
   }
   const tope = SITIOS_DE_UNA_CLASE * pedido.look_for.length;
-  const yaDados = new Set(sitiosParaElegir(d.sitios, noches(viaje)).map((s) => s.id));
+  // Ya se dan los de siempre y lo que añadieron los mensajes de antes: eso no se vuelve a añadir ni a contar.
+  const antes = d.anadidos ?? [];
+  const yaDados = new Set(sitiosParaElegir(d.sitios, noches(viaje), new Map(), antes).map((s) => s.id));
   const vistos = new Set<string>();
   const elegibles = traidos.filter((s) => !yaDados.has(s.id) && !vistos.has(s.id) && vistos.add(s.id)).slice(0, tope);
   const porId = new Set(d.sitios.map((s) => s.id));
@@ -156,10 +161,11 @@ export async function ampliarLosSitios(
     ...d,
     sitios: [...d.sitios, ...nuevos],
     resumenes,
-    avisos: [...(d.avisos ?? []), ...avisos],
+    avisos: [...new Set([...(d.avisos ?? []), ...avisos])],
     buscados: [...new Set([...(d.buscados ?? []), ...pedido.look_for])],
     buscadosEn: basename(run),
-    anadidos: [...(d.anadidos ?? []), ...elegibles.map((s) => s.id)],
+    anadidos: [...new Set([...antes, ...elegibles.map((s) => s.id)])],
+    anadidosEn: elegibles.map((s) => s.id),
   } satisfies DeLosSitios);
   return avisos;
 }
@@ -175,8 +181,13 @@ export function mensajeParaElegir(run: string): Record<string, unknown> | null {
     days: p.days.map((x, i) => ({ day: i + 1, date: x.fecha, stops: x.paradas })),
     removed: p.removed,
     looked_for: d?.buscadosEn === basename(run) ? p.look_for : [],
-    new_sights: d?.anadidos ?? [],
+    new_sights: loQueEncontro(run, d),
   };
+}
+
+/** Los sitios que encontró el mensaje de un run, y solo los suyos: ni los de los mensajes de antes. */
+function loQueEncontro(run: string, d: DeLosSitios | null): string[] {
+  return d !== null && d.buscadosEn === basename(run) ? (d.anadidosEn ?? []) : [];
 }
 
 /** Lo que mira la puerta 9 de la entrega con un mensaje: lo que quitaste, y los números que puede decir. */
@@ -217,34 +228,74 @@ function copiarPuestos(desde: string, hasta: string, base: string): number {
   return ids.length;
 }
 
+/** Los archivos de una carpeta, con su ruta dentro de ella. */
+function archivosDe(carpeta: string, dentro = ""): string[] {
+  return readdirSync(join(carpeta, dentro), { withFileTypes: true }).flatMap((x) =>
+    x.isDirectory() ? archivosDe(carpeta, join(dentro, x.name)) : [join(dentro, x.name)],
+  );
+}
+
+/**
+ * Si lo que se le daría ahora a un asiento es lo mismo que se le dio la primera vez en el run de antes: pieza a pieza,
+ * con su contenido, ni una más ni una menos. Lo que leyó entonces es de donde salen sus frases: si algo de eso cambió
+ * (lo que se tarda a tus paradas, por ejemplo), lo que escribió puede nombrar lo que ya no es, aunque pase su puerta.
+ */
+export function mismoMaterial(desde: string, base: string, piezas: readonly Pieza[]): boolean {
+  const dado = join(desde, "puestos", `${base}-v1`, "in");
+  if (!existsSync(dado)) return false;
+  const antes = archivosDe(dado).sort();
+  const ahora = piezas.map((p) => p.ruta).sort();
+  if (JSON.stringify(antes) !== JSON.stringify(ahora)) return false;
+  return piezas.every((p) => {
+    const entonces = readFileSync(join(dado, p.ruta));
+    const hoy = "copiaDe" in p ? readFileSync(p.copiaDe) : Buffer.from(p.contenido);
+    return entonces.equals(hoy);
+  });
+}
+
 const sinPuestos = (run: string, base: string): boolean =>
   !existsSync(join(run, "puestos")) ||
   !readdirSync(join(run, "puestos")).some((x) => new RegExp(`^${base}-v\\d+$`).test(x));
 
 /**
  * Antes de lanzar al que cruza en una ronda de un run que sale de un mensaje: si con la tabla nueva deciden lo mismo
- * que con la de antes (los mismos alojamientos, con sus totales, sus notas y sus marcas, y lo mismo en cada palanca)
- * y lo que entregó entonces sigue pasando su puerta con ella, se queda con ello: se copian sus puestos y no se lanza.
- * Devuelve si lo conservó.
+ * que con la de antes (los mismos alojamientos, con sus totales, sus notas y sus marcas, y lo mismo en cada palanca),
+ * lo que se le daría ahora es lo mismo que se le dio entonces (`piezas`, también lo que se tarda a tus paradas) y lo
+ * que entregó sigue pasando su puerta con ella, se queda con ello: se copian sus puestos y no se lanza. Devuelve si
+ * lo conservó.
  */
-export function conservarElCruce(run: string, ronda: number, tabla: Tabla, viaje: Entendido): boolean {
+export function conservarElCruce(
+  run: string,
+  ronda: number,
+  tabla: Tabla,
+  viaje: Entendido,
+  piezas: readonly Pieza[],
+): boolean {
   const desde = deDondeSale(run);
   const base = `cruce-${ronda}`;
   if (desde === null || !hay(desde, `${base}.json`) || !hay(desde, `tabla-${ronda}.json`) || !sinPuestos(run, base))
     return false;
   if (loQueDecide(leer<Tabla>(desde, `tabla-${ronda}.json`)) !== loQueDecide(tabla)) return false;
+  if (!mismoMaterial(desde, base, piezas)) return false;
   const entrega = leer<{ entrega: EntregaDeCruce }>(desde, `${base}.json`).entrega;
   if (!puertaCruce(entrega, { tabla, viaje }).verde) return false;
   return copiarPuestos(desde, run, base) > 0;
 }
 
 /**
- * Antes de lanzar al que explica en un run que sale de un mensaje: si cada ronda del que cruza se conservó tal cual y
- * lo que explicó entonces sigue pasando la puerta 7 con lo que se le daría ahora, se queda con ello.
+ * Antes de lanzar al que explica en un run que sale de un mensaje: si cada ronda del que cruza se conservó tal cual,
+ * lo que se le daría ahora (`piezas`) es lo mismo que se le dio entonces y lo que explicó sigue pasando la puerta 7
+ * con ello, se queda con ello. La puerta 7 no mide si una frase nombra lo que cambió: por eso, el material igual.
  */
-export function conservarLaExplicacion(run: string, dado: ParaExplicar, viaje: Entendido): boolean {
+export function conservarLaExplicacion(
+  run: string,
+  dado: ParaExplicar,
+  viaje: Entendido,
+  piezas: readonly Pieza[],
+): boolean {
   const desde = deDondeSale(run);
   if (desde === null || !hay(desde, "explica.json") || !sinPuestos(run, "explica")) return false;
+  if (!mismoMaterial(desde, "explica", piezas)) return false;
   for (let ronda = 1; ronda <= RONDAS; ronda++) {
     const antes = hay(desde, `cruce-${ronda}.json`);
     if (antes !== hay(run, `cruce-${ronda}.json`)) return false;
@@ -272,7 +323,7 @@ export type MensajeDeCara = {
   from: number;
   version: number | null;
   state: "working" | "done" | "stopped";
-  /** Las clases que se buscaron en los datos abiertos, y cuántos sitios nuevos se dieron a elegir. */
+  /** Las clases que se buscaron en los datos abiertos, y cuántos sitios nuevos dio a elegir este mensaje. */
   looked_for: string[];
   found: number;
   /** Lo que explicó el del día a día de lo que cambió, si pasó la puerta de palabras; si no, null. */
@@ -304,7 +355,7 @@ export function mensajeDeCara(v: ViajeEnLaMesa, corre: boolean): MensajeDeCara |
       version,
       state,
       looked_for: p.look_for,
-      found: d?.anadidos?.length ?? 0,
+      found: loQueEncontro(run, d).length,
       changed,
     };
   }

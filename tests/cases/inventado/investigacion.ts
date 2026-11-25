@@ -139,10 +139,16 @@ export function entregaDeSitios(
     said: string;
     removed: string[];
     new_sights: string[];
+    days?: { stops: string[] }[];
   } | null,
+  dados: readonly { id: string }[] = [],
 ): EntregaDeSitios & { changed?: string } {
   const base = entregaDeSitiosDePartida();
   if (mensaje == null) return base;
+  // Lo que se le dio y la partida no conoce (lo añadido por un mensaje de antes): sigue si estaba en tus días.
+  const conocidos = new Set([...base.go, ...base.skip].map((x) => x.id).concat(mensaje.new_sights));
+  const enTusDias = new Set((mensaje.days ?? []).flatMap((d) => d.stops));
+  const deAntes = dados.map((d) => d.id).filter((id) => !conocidos.has(id) && !mensaje.removed.includes(id));
   const fuera = new Set([...mensaje.removed, ...(/museo|museum/i.test(mensaje.said) ? ["Q3"] : [])]);
   const go = [
     ...base.go.filter((g) => !fuera.has(g.id)),
@@ -154,9 +160,20 @@ export function entregaDeSitios(
       book_ahead: "unknown" as const,
       must: false,
     })),
+    ...deAntes
+      .filter((id) => enTusDias.has(id))
+      .map((id) => ({
+        id,
+        why: "Ya estaba en tus días, y sigue.",
+        minutes: 60,
+        best_time: "any" as const,
+        book_ahead: "unknown" as const,
+        must: false,
+      })),
   ];
   const skip = [
     ...base.skip.filter((x) => !fuera.has(x.id)),
+    ...deAntes.filter((id) => !enTusDias.has(id)).map((id) => ({ id, why: "Lo dejo para otra vez." })),
     ...base.go.filter((g) => fuera.has(g.id)).map((g) => ({ id: g.id, why: "Lo dejo fuera por lo que me dijiste." })),
     ...base.skip.filter((x) => fuera.has(x.id)).map((x) => ({ id: x.id, why: x.why })),
   ];

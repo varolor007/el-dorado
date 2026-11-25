@@ -1071,13 +1071,15 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
           },
         ]);
       }
-      // Con un mensaje para un día, si con esta tabla decide lo mismo que antes, el que cruza no se vuelve a lanzar.
-      conservarElCruce(run, ronda, tabla, viaje);
+      // Con un mensaje para un día, si con esta tabla decide lo mismo que antes y con el mismo material, el que cruza
+      // no se vuelve a lanzar.
+      const delCruce = piezasDelCruce(run, viaje, ronda);
+      conservarElCruce(run, ronda, tabla, viaje, delCruce);
       const r = recoger<EntregaDeCruce>(
         run,
         `cruce-${ronda}`,
         "trip-crosser",
-        piezasDelCruce(run, viaje, ronda),
+        delCruce,
         (e) => puertaCruce(e, { tabla, viaje }).rojos,
       );
       if ("espera" in r) return espera(r.espera);
@@ -1107,8 +1109,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       { ruta: "checks.json", contenido: json(dado.checks) },
     ];
     if (dado.dates !== undefined) piezas.push({ ruta: "dates.json", contenido: json(dado.dates) });
-    // Y si el que cruza se quedó con lo de antes, el que explica también, mientras pase su puerta con lo de ahora.
-    conservarLaExplicacion(run, dado, viaje);
+    // Y si el que cruza se quedó con lo de antes, el que explica también, si se le da lo mismo y pasa su puerta.
+    conservarLaExplicacion(run, dado, viaje, piezas);
     const r = recoger<EntregaDeExplicar>(
       run,
       "explica",

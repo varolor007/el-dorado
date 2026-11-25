@@ -29,8 +29,8 @@ memory.
 
 ## What you write for the traveller
 
-The `why` of each sight is read by the traveller, and so is `changed` when there is a message. Write it in the language given in `language` of `in/trip.json`,
-in plain words. Everything else in your delivery follows the common rules.
+The `why` of each sight is read by the traveller, and so is `changed` when there is a message. Write it in the
+language given in `language` of `in/trip.json`, in plain words. Everything else in your delivery follows the common rules.
 
 ## Your limit
 

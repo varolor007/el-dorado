@@ -5,11 +5,12 @@
 import { CLASES_DE_UN_MENSAJE, LARGO_DE_UN_MENSAJE, PALABRAS_DE_UNA_CLASE, UN_MENSAJE } from "../data/dia_a_dia.ts";
 import { CODIGO } from "../data/pasos.ts";
 import { RAICES } from "../data/sitios.ts";
-import type { Punto, Viaje } from "../output/viaje.ts";
+import { cuentasDeUnDia, type NoCabe } from "../gates/puerta_dias.ts";
+import type { Dia, Punto, Viaje } from "../output/viaje.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import type { TusDias } from "./cierre.ts";
 import { SIN_ELEGIR, type Elecciones } from "./elecciones.ts";
-import { impactoDe, type EstimadoPorAsiento, type Impacto } from "./impacto.ts";
+import { costesDe, impactoDe, type EstimadoPorAsiento, type Impacto } from "./impacto.ts";
 
 /** Lo que pide un mensaje tuyo a la casa, tal cual queda en `rehecho.json` (`pedido`). */
 export type PedidoDeUnDia = {
@@ -132,7 +133,7 @@ export const SOLO_SI_CAMBIA = ["cross", "explain"] as const;
 /**
  * El impacto de un mensaje tuyo, antes de mandarlo: el del día a día otra vez y, si pides algo que no estaba, los
  * sitios de los datos abiertos (código). El que cruza y el que explica, solo si cambia lo que deciden: van en
- * `maybe`, y lo que costaría cuenta solo lo que seguro se lanza.
+ * `maybe`: lo que costaría (`cost`) cuenta lo que seguro se lanza, y lo más que puede ser (`most`), también a ellos.
  */
 export function impactoDeUnDia(estimado: EstimadoPorAsiento = {}, buscaSitios = false): Impacto {
   const base = impactoDe(["day"], estimado);
@@ -144,8 +145,24 @@ export function impactoDeUnDia(estimado: EstimadoPorAsiento = {}, buscaSitios = 
     ...base.redo.filter((x) => solo.has(x.step)),
   ];
   const keep = base.keep.filter((id) => !(buscaSitios && id === "sights"));
-  const asientos = [...new Set(redo.map((x) => x.who).filter((w) => w !== CODIGO))];
-  const unknown = asientos.filter((a) => estimado[a] === undefined);
-  const usd = unknown.length > 0 ? null : Math.round(asientos.reduce((s, a) => s + estimado[a].usd, 0) * 100) / 100;
-  return { ...base, redo, keep, maybe, spends: asientos.length > 0, cost: { usd, unknown } };
+  return { changes: base.changes, redo, keep, maybe, pieces: base.pieces, ...costesDe(redo, maybe, estimado) };
+}
+
+/**
+ * Tus días, con tus elecciones, por las mismas cuentas de la puerta 9: de cada fecha que no cabe, por qué (sus horas
+ * no caben en un día entero, o un salto no cabe en un día). Lo que mueves o añades entra aunque no quepa, porque es
+ * tu elección: no se impide, se dice en ese día, y al cerrar queda sin confirmar.
+ */
+export function noCabenTusDias(
+  v: Viaje,
+  dias: readonly Pick<Dia, "fecha" | "paradas" | "metros">[],
+): Record<string, NoCabe[]> {
+  const porId = new Map(v.paradas.map((p) => [p.id, p]));
+  const c = caminosDe(v.caminos);
+  const salida: Record<string, NoCabe[]> = {};
+  for (const d of dias) {
+    const { noCabe } = cuentasDeUnDia(d, porId, c);
+    if (noCabe.length > 0) salida[d.fecha] = noCabe;
+  }
+  return salida;
 }

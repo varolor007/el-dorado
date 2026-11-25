@@ -34,7 +34,13 @@ entrega de antes pasa su puerta con lo de ahora, se copian sus puestos y no se l
 `web/src/piezas/DiaADia.tsx`, al pie de tus días. Vuelve a los datos abiertos solo por palabras de una lista, en
 inglés y en español. Sin hacer: el del calendario con un mensaje (el de antes se conserva). Sin ver con IA ni con
 fuentes de verdad. Al juntarlo con el 8.2, la puerta de la web y la hoja de estilos chocaban en trozos que
-compartían líneas: se rehicieron a mano, función a función.
+compartían líneas: se rehicieron a mano, función a función. **Tras la revisión** (25-nov): `Impacto.most` es lo más
+que puede costar con lo de `maybe` (`costesDe`, en `agent/scripts/impacto.ts`, para cualquier impacto), y la pieza
+del impacto lo dice debajo de lo seguro. La ruta `dia` acepta `ceiling`. `sitios.json` lleva `anadidosEn` (lo de
+ese mensaje); `found` y `new_sights` cuentan solo eso. `conservarElCruce` y `conservarLaExplicacion` piden además
+el mismo material, pieza a pieza (`mismoMaterial`): un mensaje que cambia paradas mueve los minutos de la tabla, y
+vuelven los dos. La puerta 9 cuenta cada día con `cuentasDeUnDia`, y la web y el cierre la usan con tus días
+(`noCabenTusDias`; `day_does_not_fit` entre lo sin confirmar): se avisa y no se impide.
 
 **El transporte, a ratos (8.3), junto** (25-nov). La búsqueda otra vez es código (`agent/scripts/otro_transporte.ts`
 y `agent/launcher/otro_transporte.ts`; los números, en `agent/data/transporte.ts`), guardada en

@@ -407,6 +407,7 @@ export const SIN_CONFIRMAR = [
   "link_unchecked",
   "papers_doubtful",
   "papers_late",
+  "day_does_not_fit",
 ] as const;
 export type SinConfirmar = { que: (typeof SIN_CONFIRMAR)[number]; ref: string | null };
 

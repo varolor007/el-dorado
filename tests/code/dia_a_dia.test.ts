@@ -10,12 +10,14 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { LARGO_DE_UN_MENSAJE, MENSAJES_DE_UN_VIAJE, PALABRAS_DE_UNA_CLASE } from "../../agent/data/dia_a_dia.ts";
 import { RAICES } from "../../agent/data/sitios.ts";
-import { puertaSitios } from "../../agent/gates/puerta_dias.ts";
-import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
+import { puertaDias, puertaSitios } from "../../agent/gates/puerta_dias.ts";
+import { adelanteDe, darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
+  ampliarLosSitios,
   conservarElCruce,
   FalloDeUnDia,
   mensajeDeCara,
+  mensajeParaElegir,
   pedirUnDia,
   prepararUnDia,
 } from "../../agent/launcher/dia_a_dia.ts";
@@ -31,9 +33,12 @@ import {
   loQueNoEstaba,
   masCercaDeCadaDia,
   MensajeQueNoVale,
+  noCabenTusDias,
   raicesDeLasClases,
 } from "../../agent/scripts/dia_a_dia.ts";
+import { conTusDias, sinConfirmarDe } from "../../agent/scripts/cierre.ts";
 import { diasElegidos, SIN_ELEGIR } from "../../agent/scripts/elecciones.ts";
+import { impactoDe } from "../../agent/scripts/impacto.ts";
 import type { Tabla } from "../../agent/scripts/formas.ts";
 import { consultaDeSitios, type Sitio } from "../../agent/tools/sitios.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson } from "../cases/inventado/asientos.ts";
@@ -88,6 +93,11 @@ async function mandarYLlevar(
 }
 
 const viajeDe = (v: ViajeEnLaMesa, n: number | null = v.ficha.version): Viaje => leerVersion(v, n)?.viaje as Viaje;
+
+/** El material que se le dio a un puesto, pieza a pieza, como se le daría otra vez. */
+function materialDe(puesto: string): { ruta: string; contenido: string }[] {
+  return Object.entries(foto(join(puesto, "in"))).map(([ruta, contenido]) => ({ ruta, contenido }));
+}
 
 /** Lo que hay en una carpeta, archivo a archivo: para ver que una versión no se ha tocado. */
 function foto(carpeta: string): Record<string, string> {
@@ -154,12 +164,30 @@ test("el impacto de un mensaje: el del día a día seguro; el que cruza y el que
   );
   assert.equal(i.cost.usd, 0.1);
   assert.equal(i.spends, true);
+  // La trampa: el que cruza y el que explica pueden lanzarse. Lo más que puede costar los cuenta, y se dice.
+  assert.deepEqual(i.most, { usd: 0.35, unknown: [] });
+  const sinSaber = impactoDeUnDia({ "sights-picker": { usd: 0.1, de: 2 } });
+  assert.equal(sinSaber.cost.usd, 0.1);
+  assert.deepEqual(sinSaber.most, { usd: null, unknown: ["trip-crosser", "trip-explainer"] });
   // Si pides algo que no estaba, los sitios se buscan seguro: es código, y no cuesta.
   const conSitios = impactoDeUnDia(estimado, true);
   assert.equal(conSitios.redo[0].step, "sights");
   assert.ok(!conSitios.maybe.some((x) => x.step === "sights") && !conSitios.keep.includes("sights"));
   assert.equal(conSitios.cost.usd, 0.1);
   assert.equal(impactoDeUnDia({}).cost.usd, null);
+});
+
+test("lo más que puede costar vale para cualquier impacto con algo que quizá haya que rehacer", () => {
+  // Otro transporte puede tirar los papeles: lo seguro no los cuenta, y lo más que puede ser, sí.
+  const uno = { usd: 0.1, de: 1 };
+  const estimado = { papers: { usd: 0.3, de: 1 }, "lodging-viewer": uno, "trip-crosser": uno, "trip-explainer": uno };
+  const transporte = impactoDe(["transport"], estimado);
+  assert.ok(transporte.maybe.some((x) => x.step === "papers"));
+  assert.equal(transporte.cost.usd, 0.3);
+  assert.deepEqual(transporte.most, { usd: 0.6, unknown: [] });
+  // Sin nada de IA en lo que quizá haya que rehacer, no hay un segundo coste que decir.
+  assert.equal(impactoDe(["pace"]).most, undefined);
+  assert.equal(impactoDe(["lodging"]).most, undefined);
 });
 
 // ---------- la puerta 9 con un mensaje
@@ -288,6 +316,35 @@ test("«un día de playa»: se vuelve a los datos abiertos por lo que no estaba,
   }
 });
 
+test("cada mensaje cuenta lo suyo: lo añadido antes no se repite ni se cuenta otra vez", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const LAGO: Sitio = { ...PLAYA, id: "Q12", nombre: "Lago Inventado", clase: "nature", clases: ["nature"] };
+    // La trampa: con lo nuevo, la fuente devuelve otra vez la playa que ya se añadió.
+    const todo: Fuentes = {
+      ...fuentesInventadas(),
+      sitiosDeClases: async (_viaje, clases) => (clases.includes("beach") ? [PLAYA] : [PLAYA, LAGO]),
+    };
+    const uno = await mandarYLlevar(mesa, v.ficha.id, "un día de playa", todo);
+    assert.equal(mensajeDeCara(uno.v, false)?.found, 1);
+    const dos = await mandarYLlevar(mesa, v.ficha.id, "un lago", todo);
+    const sitios = leerJson(join(dos.run, "sitios.json"));
+    assert.deepEqual(sitios.anadidos, ["Q11", "Q12"]);
+    assert.equal(mensajeDeCara(dos.v, false)?.found, 1);
+    assert.deepEqual(mensajeParaElegir(dos.run)?.new_sights, ["Q12"]);
+    // Un mensaje que no busca nada no ha encontrado nada, aunque los de antes sí.
+    const tres = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo", todo);
+    assert.equal(mensajeDeCara(tres.v, false)?.found, 0);
+    assert.deepEqual(mensajeParaElegir(tres.run)?.new_sights, []);
+    assert.deepEqual(leerJson(join(tres.run, "sitios.json")).anadidos, ["Q11", "Q12"]);
+    // Lo que se avisó una vez no se repite en cada mensaje.
+    const avisos = leerJson(join(tres.run, "sitios.json")).avisos as string[];
+    assert.equal(new Set(avisos).size, avisos.length);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
 test("el que cruza solo se conserva si la tabla decide lo mismo y lo que entregó sigue pasando su puerta", async () => {
   const { mesa, v } = await viajeEnElMapa();
   try {
@@ -295,16 +352,45 @@ test("el que cruza solo se conserva si la tabla decide lo mismo y lo que entreg�
     const base = join(v.carpeta, "runs", "1");
     const tabla = leerJson(join(base, "tabla-1.json")) as Tabla;
     // Otro total: lo que decide cambia, y se vuelve a lanzar.
+    const material = materialDe(join(base, "puestos", "cruce-1-v1"));
     const otra = { ...tabla, rows: tabla.rows.map((x, i) => (i === 0 ? { ...x, total: x.total + 1 } : x)) };
-    assert.equal(conservarElCruce(run, 1, otra, ENTENDIDO), false);
+    assert.equal(conservarElCruce(run, 1, otra, ENTENDIDO, material), false);
     assert.ok(!existsSync(join(run, "puestos", "cruce-1-v1")));
-    // La misma: se queda con lo que hizo, con sus horas.
-    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO), true);
+    // La trampa: decide lo mismo, pero lo que se le daría ahora no es lo que leyó (lo que se tarda a tus paradas,
+    // o una pieza de más): se vuelve a lanzar.
+    const lejos = { ...tabla, rows: tabla.rows.map((x) => ({ ...x, minutes_to_sights: 99 })) };
+    const conOtraTabla = material.map((x) =>
+      x.ruta === "table.json" ? { ...x, contenido: JSON.stringify(lejos) } : x,
+    );
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, conOtraTabla), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, [...material, { ruta: "x.json", contenido: "{}" }]), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material.slice(1)), false);
+    assert.ok(!existsSync(join(run, "puestos", "cruce-1-v1")));
+    // La misma, con lo mismo: se queda con lo que hizo, con sus horas.
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material), true);
     const copia = join(run, "puestos", "cruce-1-v1", "out", "delivery.json");
     const deAntes = statSync(join(base, "puestos", "cruce-1-v1", "out", "delivery.json")).mtimeMs;
     assert.ok(Math.abs(statSync(copia).mtimeMs - deAntes) < 1);
     // Y una vez que hay puestos, no se copia otra vez encima.
-    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material), false);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("el que explica no se conserva si lo que leería no es lo que leyó: lo que se tarda a tus paradas", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    // Sin el museo, lo que se tarda de cada alojamiento a tus paradas cambia: el que explica lo lee en las maneras.
+    const r = await mandarYLlevar(mesa, v.ficha.id, "menos museos");
+    const antes = leerJson(join(v.carpeta, "runs", "1", "puestos", "explica-v1", "in", "ways.json"));
+    const ahora = leerJson(join(r.run, "puestos", "explica-v1", "in", "ways.json"));
+    const minutos = (w: any) => (w.ways as { minutes_to_sights: unknown }[]).map((x) => x.minutes_to_sights);
+    assert.notDeepEqual(minutos(ahora), minutos(antes));
+    assert.ok(r.asientos.includes("trip-explainer"));
+    // Lo que se le dio es lo de ahora, no lo de antes.
+    const tabla = leerJson(join(r.run, "tabla-1.json")) as Tabla;
+    assert.ok(minutos(ahora).every((m) => tabla.rows.some((x) => x.minutes_to_sights === m)));
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
@@ -417,9 +503,25 @@ test("la puerta: lo que costaría sin cambiar nada; con tu botón, sale; y cómo
     assert.equal((await pide("POST", `/viajes/${id}/dia`, otro, { said: "menos museos" })).estado, 404);
     assert.equal((await pide("GET", `/viajes/${id}/dia`, otro)).estado, 404);
 
-    // Con tu botón: sale, y se cuenta cómo va.
-    const sale = await pide("POST", `/viajes/${id}/dia`, ana, { said: "un día de playa", day: 0, go: true });
+    // Un techo de gasto que no vale no sale, como en los demás momentos que gastan, y no abre nada.
+    for (const ceiling of [0, -1, "5", {}])
+      assert.deepEqual(
+        await pide("POST", `/viajes/${id}/dia`, ana, { said: "un día de playa", day: 0, go: true, ceiling }),
+        { estado: 400, cuerpo: { error: "bad_ceiling" } },
+        String(ceiling),
+      );
+    assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);
+
+    // Con tu botón y tu techo: sale con él, y se cuenta cómo va.
+    const sale = await pide("POST", `/viajes/${id}/dia`, ana, {
+      said: "un día de playa",
+      day: 0,
+      go: true,
+      ceiling: 2,
+    });
     assert.equal(sale.estado, 202);
+    const delRun = join(mesa, "viajes", id, "runs", String(sale.cuerpo.run));
+    assert.equal(adelanteDe(delRun)?.techo, 2);
     await puerta.esperar();
     const va = (await pide("GET", `/viajes/${id}/dia`, ana)).cuerpo.message;
     assert.equal(va.state, "done");
@@ -432,6 +534,82 @@ test("la puerta: lo que costaría sin cambiar nada; con tu botón, sale; y cómo
   } finally {
     await puerta.cerrar?.();
     puerta.servidor.close();
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo añadido por un mensaje de antes, detrás del corte, ya se da: no se vuelve a añadir", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const { run } = pedirUnDia(v, { said: "un día de playa", cuando: ahora() });
+    // Más sitios de los que caben antes del corte, y la playa detrás, añadida por un mensaje de antes.
+    const relleno = Array.from({ length: 130 }, (_, i) => ({ ...SITIOS[9], id: `R${i}`, enlaces: 1 }));
+    const d = leerJson(join(run, "sitios.json"));
+    writeFileSync(
+      join(run, "sitios.json"),
+      JSON.stringify({ ...d, sitios: [...relleno, PLAYA], anadidos: ["Q11"], buscadosEn: "1", avisos: ["uno"] }),
+    );
+    const resumenes = async () => new Map<string, string>();
+    const avisos = await ampliarLosSitios(run, ENTENDIDO, { sitiosDeClases: async () => [PLAYA], resumenes });
+    assert.deepEqual(avisos, []);
+    const luego = leerJson(join(run, "sitios.json"));
+    assert.deepEqual(luego.anadidos, ["Q11"]);
+    assert.deepEqual(luego.anadidosEn, []);
+    assert.equal(luego.sitios.filter((s: Sitio) => s.id === "Q11").length, 1);
+    assert.deepEqual(mensajeParaElegir(run)?.new_sights, []);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("tus días pasan las cuentas de la puerta 9: el que no cabe se dice, y queda sin confirmar al cerrar", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const viaje = viajeDe(v);
+    const porQue = (x: Viaje) => ({
+      paradas: x.paradas,
+      dias: x.dias,
+      fuera: x.fuera,
+      porQue: x.porQueFuera,
+      sitios: x.paradas.map((p) => p.id),
+      caminos: x.caminos,
+    });
+    // Los días de la casa caben: pasan la puerta 9, y no hay nada que decir ni que dejar sin confirmar.
+    assert.deepEqual(noCabenTusDias(viaje, viaje.dias), {});
+    assert.ok(!sinConfirmarDe(viaje, [], [], "ok").some((s) => s.que === "day_does_not_fit"));
+    // La trampa: con visitas más largas, mueves todo al primer día. El reparto lo pone, quepa o no, porque es tu
+    // elección; y la casa, sin moverlo, lo reparte en días que caben.
+    const largo: Viaje = { ...viaje, paradas: viaje.paradas.map((p) => ({ ...p, minutos: 120 })) };
+    assert.deepEqual(noCabenTusDias(largo, conTusDias(largo, diasElegidos(largo, SIN_ELEGIR)).dias), {});
+    const moved = Object.fromEntries(viaje.paradas.map((p) => [p.id, 0]));
+    const tuyos = conTusDias(largo, diasElegidos(largo, { ...SIN_ELEGIR, moved }));
+    const primero = tuyos.dias[0].fecha;
+    assert.deepEqual(noCabenTusDias(tuyos, tuyos.dias), { [primero]: ["hours"] });
+    // Las mismas cuentas que la puerta: ella rechaza ese día y solo ese.
+    const rojos = puertaDias(porQue(tuyos)).rojos;
+    assert.ok(rojos.length > 0 && rojos.every((r) => r.donde === "dias[0]"), JSON.stringify(rojos));
+    // Al cerrar con ellos, ese día queda sin confirmar, por su fecha.
+    assert.deepEqual(
+      sinConfirmarDe(tuyos, [], [], "ok").filter((s) => s.que === "day_does_not_fit"),
+      [{ que: "day_does_not_fit", ref: primero }],
+    );
+    // Un salto que no cabe en un día: una parada muy lejos, puesta en el mismo día que otra.
+    const lejos = {
+      ...viaje.paradas[1],
+      punto: { lat: viaje.paradas[1].punto.lat + 4, lon: viaje.paradas[1].punto.lon },
+    };
+    const conLejos: Viaje = {
+      ...viaje,
+      caminos: undefined,
+      paradas: viaje.paradas.map((p) => (p.id === lejos.id ? lejos : p)),
+    };
+    const dia = { fecha: viaje.dias[0].fecha, paradas: [viaje.paradas[0].id, lejos.id] };
+    const conSalto = conTusDias(conLejos, [dia]);
+    assert.ok(noCabenTusDias(conSalto, conSalto.dias)[dia.fecha]?.includes("jump"));
+    assert.ok(
+      puertaDias(porQue(conSalto)).rojos.some((r) => r.donde === "dias[0]" && /no cabe dentro de un día/.test(r.que)),
+    );
+  } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
 });
