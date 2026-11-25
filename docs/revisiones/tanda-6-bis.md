@@ -14,7 +14,8 @@ contestó bien Wikidata; el servicio de lectura de OpenStreetMap casi nunca cont
 Se ha mirado en la web con una casa de mentira (la puerta de verdad, el caso inventado y asientos que no piensan), con
 una fuente de rutas inventada que alarga lo que se anda, para que haya tramos que no se andan, y con el viaje de
 verdad del ensayo, que es de antes de las capas y lo dice. Sus pantallas, en ancho y en móvil, en claro y en oscuro,
-van en la página de la revisión, que se publica al cerrarla.
+están en la página de la revisión
+(https://claude.ai/artifact/JnxABFxPan41bg2yWJHGhY).
 
 Antes de los adversarios, al juntar las ramas y mirarlas en la web, quien orquesta encontró esto:
 

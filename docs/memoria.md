@@ -3,10 +3,17 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (1.035 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
-cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
-no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: las capas del destino (bloque 14), construidas, revisadas y arregladas el 25-nov, en la tanda 6
+bis (1.035 pruebas, en verde aquí y en GitHub). Esperan el visto bueno del PM. Después va la tanda 7, el ensayo, que
+gasta y no empieza sin su adelante** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**La revisión de la tanda 6 bis** (25-nov; entera en [revisiones/tanda-6-bis.md](revisiones/tanda-6-bis.md); sus
+pantallas, en https://claude.ai/artifact/JnxABFxPan41bg2yWJHGhY). Tres
+adversarios en su copia, y cuatro sesiones de arreglos. Tres bloqueantes, arreglados: un adulto con un precio de
+otras edades, el taxi distinto en «Allí» y en las cuentas, y una dirección que pasaba las puertas sin haberse
+abierto. Lo que queda sabido y sin arreglar, y lo que es del PM, en ese informe y en «Pendientes». Para el ensayo
+hay tres cosas que mirar de verdad: que los tres asientos nuevos cumplan su contrato, que Overpass conteste desde
+donde corra la casa (`ELDORADO_OVERPASS`), y lo que dice el lanzador de lo gastado.
 
 **Cómo se mira la web de las capas sin gastar** (borrador de la sesión que orquesta, fuera del repositorio): una casa
 de mentira con la puerta de verdad (`puertaALaWeb`, `fuentesInventadas` y `lanzadorDeMentira`), y con una fuente de

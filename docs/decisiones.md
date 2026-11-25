@@ -754,6 +754,17 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   vuelta en marcha aún podía escribir. Con la cuenta de Claude de la casa no cambia casi nada: cortada no dice lo
   que costó y no tiene precio con que calcularlo, así que con un techo se para como antes. Lo prudente en los dos
   casos dudosos: sin cota, no se sigue a ciegas. La web sigue sin poner techo, así que hoy no para ningún viaje.
+- **La revisión de la tanda 6 bis** (la sesión, por la regla de la obra): tres adversarios en su copia. Tres
+  bloqueantes, arreglados: un adulto podía coger un precio que solo vale para unas edades; el taxi salía por persona
+  en «Allí» y por coche en las cuentas; y una dirección escrita de forma rara pasaba las puertas sin haberse abierto.
+  Lo que decidieron la sesión y las sesiones de arreglos al comprobar sus hallazgos queda en
+  `revisiones/tanda-6-bis.md`. Seis cosas, con su porqué: a un adulto, del que no se sabe la edad, solo se le pone un
+  precio que no dice edades, y si todos las dicen no se sabe, porque suponer una edad es aproximar; un niño sin
+  precio suyo paga el de adulto también en los billetes, para que haya una sola regla; un tramo que solo se hace en
+  coche no suma un billete y falta en la cuenta, sin inventar lo que cuesta el coche; el que cruza no espera a las
+  capas, porque la hoja dice que van sin frenar el viaje; en un idioma sin lista de palabras las frases de un asiento
+  no llegan a la pantalla, como se decidió para la guía; y la web que dicen los datos abiertos no se llama oficial ni
+  vale para reservar, porque la edita cualquiera.
 
 ## Pendientes
 
