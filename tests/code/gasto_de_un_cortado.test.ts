@@ -15,7 +15,7 @@ import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/c
 import { cotaDeLoSinContar, lanzadorDirecto, parcialDe, type Peticion } from "../../agent/launcher/ia.ts";
 import { MAXIMO_DE_UNA_RESPUESTA, pensarConClaude, type ClienteDeIA } from "../../agent/launcher/ia_de_verdad.ts";
 import { montarPuesto } from "../../agent/launcher/puesto.ts";
-import { gastoDe, gastoParaElTecho, trabajosDe } from "../../agent/launcher/trabajos.ts";
+import { apuntarTrabajo, gastoDe, gastoParaElTecho, trabajosDe } from "../../agent/launcher/trabajos.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
 import { fuentesInventadas, GASTO, lanzadorDeMentira, leerJson, runNuevo } from "../cases/inventado/asientos.ts";
 
@@ -367,5 +367,80 @@ test("un asiento que no es una capa, cortado aunque diga lo gastado: sin cota, y
     assert.equal(t?.cota, undefined);
     assert.equal(gastoParaElTecho(run), null);
     assert.notEqual(r.hecho, true);
+  });
+});
+
+// Los hallazgos de la revisión sobre el mismo mecanismo: la misma regla en todos los caminos, y lo que corre a la vez.
+
+const CAPAS = ["getting-around", "local-knowledge", "tickets"];
+
+test("una capa que la casa cierra por cortada lleva la misma regla: cuenta su cota", async () => {
+  await conRun(async (run) => {
+    darElAdelante(run, 5);
+    await llevar(run, fuentesInventadas(), lanzadorDeMentira(), { tope });
+    // Como si la casa se hubiera cortado con la capa trabajando: en el disco, «working» y sin gasto.
+    const t = trabajosDe(run).find((x) => x.puesto === "moverse-v1");
+    assert.ok(t !== undefined);
+    apuntarTrabajo(run, { ...t, estado: "working", gasto: null, hasta: null });
+    rmSync(join(run, "puestos", "moverse-v1", "out", "delivery.json"), { force: true });
+    await llevar(run, fuentesInventadas(), lanzadorDeMentira(), { tope, cota: () => 0.4 });
+    const cerrado = trabajosDe(run).find((x) => x.puesto === "moverse-v1");
+    assert.equal(cerrado?.estado, "failed");
+    assert.equal(cerrado?.cota, 0.4);
+    assert.notEqual(gastoParaElTecho(run), null);
+  });
+});
+
+test("una capa que entrega sin decir lo que gastó lleva la misma regla: con su cota, el viaje sigue", async () => {
+  const calla: Lanzador = (orden, puesto, corte) => {
+    const base = lanzadorDeMentira();
+    return base(orden, puesto, corte).then((g) => (CAPAS.includes(puesto.asiento) ? undefined : g));
+  };
+  await conRun(async (run) => {
+    darElAdelante(run, 5);
+    const r = await llevar(run, fuentesInventadas(), calla, { tope, cota: () => 0.4 });
+    assert.equal(r.hecho, true);
+    const t = trabajosDe(run).find((x) => x.puesto === "moverse-v1");
+    assert.equal(t?.estado, "done");
+    assert.equal(t?.gasto, null);
+    assert.equal(t?.cota, 0.4);
+  });
+  // Sin cota, como cualquier asiento que no dice lo que gastó: con techo, no se sigue a ciegas.
+  await conRun(async (run) => {
+    darElAdelante(run, 5);
+    const r = await llevar(run, fuentesInventadas(), calla, { tope });
+    assert.match(r.parado?.rojos[0].que ?? "", /no se sigue a ciegas/);
+  });
+});
+
+test("lo que va gastando lo que trabaja cuenta: en el techo, las capas en marcha se cortan y se para", async () => {
+  const ENMARCHA: Gasto = { turnos: 1, entrada: 9000, salida: 100, usd: 0.5 };
+  const base = lanzadorDeMentira();
+  // Las capas dicen lo que llevan y siguen trabajando; solo acaban si se las corta.
+  const lanzador: Lanzador = (orden, puesto, corte, alContar) =>
+    CAPAS.includes(puesto.asiento)
+      ? new Promise((_, rechaza) => {
+          corte?.addEventListener("abort", () => rechaza(errorDeUnCortado("se cortó", ENMARCHA, 0.1)));
+          setTimeout(() => alContar?.(ENMARCHA, 0.1), 20);
+        })
+      : base(orden, puesto, corte, alContar);
+  await conRun(async (run) => {
+    darElAdelante(run, 1);
+    const antes = Date.now();
+    // Con un tope largo: si se cortan, es por el techo.
+    const r = await llevar(run, fuentesInventadas(), lanzador, { tope: { segundos: 30 } });
+    await esperarLoDeDetras(run);
+    assert.ok(Date.now() - antes < 10_000, "no las cortó el techo");
+    assert.equal(r.parado?.paso, "el gasto");
+    const capas = trabajosDe(run).filter((t) => CAPAS.includes(t.asiento));
+    assert.ok(capas.length >= 2);
+    for (const t of capas) {
+      assert.equal(t.estado, "stopped");
+      assert.match(t.fallo ?? "", /techo/);
+      assert.equal(t.gasto?.cortado, true);
+    }
+    assert.ok(!r.lanzados.includes("explica-v1"));
+    // Lo contado no pasa del techo más lo que dijeron las capas cortadas.
+    assert.ok((gastoParaElTecho(run) ?? Infinity) >= 1);
   });
 });

@@ -60,7 +60,7 @@ export type Parcial = Pick<Respuesta, "entrada" | "salida" | "usd" | "turnos" | 
  * Quien llama a la IA de verdad. Si no llega a contestar, lanza un error; si se le corta o falla a medias, el error
  * lleva en `parcial` lo que llevaba contado.
  */
-export type Pensar = (p: Peticion, corte?: AbortSignal) => Promise<Respuesta>;
+export type Pensar = (p: Peticion, corte?: AbortSignal, alContar?: (lleva: Parcial) => void) => Promise<Respuesta>;
 
 const cuentaQueVale = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n >= 0;
 
@@ -263,12 +263,23 @@ export function precioDe(entorno: Record<string, string | undefined>): Precio {
  * respuesta no vale. Sin precio, lo que gastó lo tiene que decir quien piensa.
  */
 export function lanzadorDirecto(pensar: Pensar, precio: Precio | null): Lanzador {
-  return async (_orden, puesto, corte) => {
+  return async (_orden, puesto, corte, alContar) => {
     const peticion = peticionDe(puesto);
     const run = runDe(puesto);
     let r: Respuesta;
     try {
-      r = await pensar(peticion, corte);
+      // Lo que va diciendo quien piensa, en dólares, para quien lleva la cuenta del techo (14.7). Sin dólares, nada.
+      const lleva =
+        alContar === undefined
+          ? undefined
+          : (parcial: Parcial): void => {
+              try {
+                alContar(gastoDe(parcial, precio), cotaDeLoSinContar(parcial.sinContar, precio));
+              } catch {
+                // Sin precio ni coste dicho no hay dólares que decir.
+              }
+            };
+      r = await pensar(peticion, corte, lleva);
     } catch (e) {
       const mensaje = e instanceof Error ? e.message : String(e);
       const parcial = parcialDe(e);

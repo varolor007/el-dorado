@@ -22,7 +22,7 @@ import { guardarJson } from "./mesa.ts";
 import { porDondeVa } from "./pasos.ts";
 import { puestosDe } from "./puesto.ts";
 import { aplicarReintento } from "./reintentar.ts";
-import { acaboSinEntregar, apuntarTrabajo, gastoDe, gastoParaElTecho, trabajosDe } from "./trabajos.ts";
+import { acaboSinEntregar, apuntarTrabajo, gastoDe, gastoParaElTecho, trabajosDe, type EnMarcha } from "./trabajos.ts";
 
 export const ADELANTE = "adelante.json";
 
@@ -112,6 +112,35 @@ function cotaDe(asiento: string, cota: AlLlevar["cota"]): number | null {
   return typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : null;
 }
 
+/**
+ * La cota de un trabajo de una capa del destino, acabe como acabe (entregando, fallando, cortado o cerrado por la
+ * casa): si es de un cortado que dijo lo gastado hasta ahí, lo que pudo quedar fuera, que dice su lanzador; si no dijo
+ * nada de lo que gastó, lo más que pudo gastar, si se sabe acotar (14.7). Un asiento que no es una capa no lleva
+ * cota: sin saber todo lo que gastó, con techo no se sigue a ciegas, como siempre.
+ */
+function cotaDelTrabajo(asiento: string, gasto: Gasto | null, delLanzador: number | null, o: AlLlevar): number | null {
+  if (!ASIENTOS_DE_LAS_CAPAS.has(asiento)) return null;
+  if (gasto?.cortado === true) return delLanzador;
+  return gasto === null ? cotaDe(asiento, o.cota) : null;
+}
+
+/**
+ * Lo que trabaja ahora en esta casa, por run y por puesto (14.7): lo que su lanzador dice que lleva gastado, para
+ * mirar el techo también con lo que está en marcha, y cómo cortarlo si es una capa y se llega al techo.
+ */
+type Vivo = EnMarcha & { capa: boolean; corte: AbortController; dicho: boolean };
+const vivos = new Map<string, Map<string, Vivo>>();
+const vivosDe = (run: string): Map<string, Vivo> => {
+  const clave = resolve(run);
+  let m = vivos.get(clave);
+  if (m === undefined) vivos.set(clave, (m = new Map()));
+  return m;
+};
+/** Lo que llevan dicho los que trabajan en un run, para el techo. */
+function enMarchaDe(run: string): Map<string, EnMarcha> {
+  return new Map([...vivosDe(run)].filter(([, v]) => v.dicho).map(([id, v]) => [id, { usd: v.usd, cota: v.cota }]));
+}
+
 /** Unos cuantos a la vez, y no más: cada uno empieza cuando queda sitio. */
 async function porTandas<T>(cosas: T[], aLaVez: number, hacer: (cosa: T) => Promise<void>): Promise<void> {
   const cola = [...cosas];
@@ -130,7 +159,7 @@ function pasoDe(run: string, puesto: string): string {
  * Lo que quedó a medias si la casa se cortó con asientos trabajando: el que llegó a entregar está hecho, y el que
  * no, falló. Un puesto se lanza una sola vez: no se vuelve a lanzar por encima de lo que dejó escrito.
  */
-function cerrarLosCortados(run: string, ahora: () => Date): void {
+function cerrarLosCortados(run: string, ahora: () => Date, o: AlLlevar): void {
   const puestos = puestosDe(run);
   for (const t of trabajosDe(run)) {
     if (t.estado !== "queued" && t.estado !== "working") continue;
@@ -138,11 +167,14 @@ function cerrarLosCortados(run: string, ahora: () => Date): void {
     if (deFondo.has(claveDe(run, t.puesto))) continue;
     const puesto = puestos.find((p) => p.id === t.puesto);
     const entregado = puesto !== undefined && existsSync(join(puesto.carpeta, "out", "delivery.json"));
+    // Con la misma regla que lo que acaba en esta casa: una capa así cuenta su cota, si la hay (14.7).
+    const cota = t.cota ?? cotaDelTrabajo(t.asiento, t.gasto, null, o);
     apuntarTrabajo(run, {
       ...t,
       estado: entregado ? "done" : "failed",
       hasta: ahora().toISOString(),
       fallo: entregado ? null : "la casa se cortó mientras trabajaba",
+      ...(cota === null ? {} : { cota }),
     });
   }
 }
@@ -166,7 +198,7 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
   const lanzados: string[] = [];
   // Lo que avisa cada vuelta se junta: quien llama una vez no pierde lo que se dijo por el camino.
   const avisos: string[] = [];
-  cerrarLosCortados(run, ahora);
+  cerrarLosCortados(run, ahora, o);
   // Si el viajero pidió otra vuelta del paso que paró el run, es ahora cuando se quita la parada y se sigue.
   aplicarReintento(run);
 
@@ -175,25 +207,32 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
     if (puesto === undefined) throw new Error(`falta el puesto ${id}`);
     const base = { puesto: id, asiento: puesto.asiento, desde: ahora().toISOString(), hasta: null, gasto: null };
     apuntarTrabajo(run, { ...base, estado: "working", fallo: null });
-    // Cada asiento, con su tope: el de las entradas lleva uno más corto, porque los días lo esperan (14.4).
-    const r = await lanzarAsiento(puesto, lanzador, topeDe(puesto.asiento, tope));
-    const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
-    const estado = r.fueraDeTope ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
-    const fallo = estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega");
-    // Una capa cortada: cuenta para el techo lo gastado hasta el corte más lo que pudo quedar fuera, que dice su
-    // lanzador; y si no dijo nada, lo más que pudo gastar, si se sabe acotar (14.7). Un asiento que no es una capa
-    // no lleva cota: sin saber todo lo que gastó, con techo no se sigue a ciegas, como siempre.
+    // Mientras trabaja, lo que su lanzador dice que lleva cuenta para el techo; si con ello se llega, las capas que
+    // sigan trabajando se cortan: son opcionales, y el viaje sale sin ellas (14.7).
     const capa = ASIENTOS_DE_LAS_CAPAS.has(puesto.asiento);
-    const cota =
-      estado === "done"
-        ? null
-        : r.gasto?.cortado === true
-          ? capa
-            ? r.cota
-            : null
-          : r.gasto === null
-            ? cotaDe(puesto.asiento, o.cota)
-            : null;
+    const vivo: Vivo = { usd: 0, cota: null, capa, corte: new AbortController(), dicho: false };
+    vivosDe(run).set(id, vivo);
+    const alContar = (g: Gasto, c: number | null): void => {
+      Object.assign(vivo, { usd: g.usd, cota: c, dicho: true });
+      const techo = adelanteDe(run)?.techo ?? null;
+      const contado = techo === null ? null : gastoParaElTecho(run, enMarchaDe(run));
+      if (techo === null || contado === null || contado < techo) return;
+      for (const v of vivosDe(run).values()) if (v.capa) v.corte.abort();
+    };
+    let r: Awaited<ReturnType<typeof lanzarAsiento>>;
+    try {
+      // Cada asiento, con su tope: el de las entradas lleva uno más corto, porque los días lo esperan (14.4).
+      r = await lanzarAsiento(puesto, lanzador, topeDe(puesto.asiento, tope), { corte: vivo.corte.signal, alContar });
+    } finally {
+      vivosDe(run).delete(id);
+      if (vivosDe(run).size === 0) vivos.delete(resolve(run));
+    }
+    const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
+    const cortado = r.fueraDeTope || r.cortadoDeFuera;
+    const estado = cortado ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
+    const fallo = estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega");
+    // Una capa cuenta para el techo su cota, acabe como acabe (14.7).
+    const cota = cotaDelTrabajo(puesto.asiento, r.gasto, r.cota, o);
     apuntarTrabajo(run, {
       ...base,
       estado,
@@ -208,7 +247,7 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
   const sePuedeGastar = (): boolean => {
     const adelante = adelanteDe(run);
     if (adelante === null) return false;
-    const contado = gastoParaElTecho(run);
+    const contado = gastoParaElTecho(run, enMarchaDe(run));
     return adelante.techo === null || (contado !== null && contado < adelante.techo);
   };
 
@@ -287,7 +326,7 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
 
     // Ni por encima de lo que aceptó gastar. Si de algo no se sabe lo que costó, no se sigue a ciegas; de una capa
     // del destino cortada, se cuenta lo más que pudo gastar (14.7).
-    const contado = gastoParaElTecho(run);
+    const contado = gastoParaElTecho(run, enMarchaDe(run));
     if (adelante.techo !== null && contado === null)
       return para("el gasto", [{ donde: "spend", que: "de un asiento no se sabe lo que gastó: no se sigue a ciegas" }]);
     if (adelante.techo !== null && contado !== null && contado >= adelante.techo)

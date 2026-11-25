@@ -152,7 +152,7 @@ export function pensarConClaude(
   con: ConQue,
   cliente: (clave: string) => ClienteDeIA = clienteDe,
 ): Pensar {
-  return async (p, corte) => {
+  return async (p, corte, alContar) => {
     const herramientas = p.internet ? herramientasDe(p.internet) : null;
     const pregunta = mensajesDe(p);
     const dicho: Anthropic.ContentBlock[] = [];
@@ -190,8 +190,20 @@ export function pensarConClaude(
           { signal: corte },
         );
         const esta = enMarcha;
+        // Lo que lleva contado hasta ahora, con lo de esta vuelta, para quien lleva el techo (14.7).
+        const dice = (m: EnMarcha | null): void =>
+          alContar?.(parcialDeLaCuenta({ entrada, salida, busquedas, turnos }, m, herramientas !== null));
         if (typeof (flujo as { on?: unknown }).on === "function")
-          flujo.on("streamEvent", (suceso) => apuntarSuceso(esta, suceso));
+          flujo.on("streamEvent", (suceso) => {
+            apuntarSuceso(esta, suceso);
+            const tipo = (suceso as { type?: unknown }).type;
+            if (
+              tipo === "message_start" ||
+              tipo === "message_delta" ||
+              (tipo === "content_block_start" && esta.herramienta)
+            )
+              dice(esta);
+          });
         const respuesta = await flujo.finalMessage();
         enMarcha = null;
         const uso = respuesta.usage;
@@ -200,6 +212,7 @@ export function pensarConClaude(
         const cobradas = uso.server_tool_use?.web_search_requests;
         if (typeof cobradas === "number") busquedas = (busquedas ?? 0) + cobradas;
         dicho.push(...respuesta.content);
+        dice(null);
         if (respuesta.stop_reason !== "pause_turn") {
           fin = finDe(respuesta.stop_reason);
           break;
