@@ -39,6 +39,10 @@
 //   POST   /viajes/<id>/dia            un mensaje tuyo para tus días ({ "said", "day" }): lo que costaría, sin
 //                                       cambiar nada; con { "go": true }, tu botón, y el del día a día se pone a ello
 //   GET    /viajes/<id>/dia            cómo va tu último mensaje: lo que dijiste, por dónde va y lo que cambió
+//   GET    /viajes/<id>/cambiar        para cambiar lo que pediste (8.5): lo entendido del que partes, cómo se
+//                                       rehace y lo que se ha quedado atrás (un cierre o una guía)
+//   POST   /viajes/<id>/cambiar        cambia lo que pediste ({ "understood", "go_ahead", "ceiling" }): rehace solo
+//                                       lo que deja de valer, con tu adelante si gasta; otro destino es otro viaje
 
 import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -140,6 +144,9 @@ import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from ".
 import { porDondeVa } from "./pasos.ts";
 import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
+import { TOPE_DE_CAMBIOS } from "../data/momentos.ts";
+import { queTrae } from "../scripts/cambios.ts";
+import { guardarJson } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
 
@@ -1172,6 +1179,119 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return error;
   }
 
+  /**
+   * Cómo se cambia lo que pediste en un viaje (8.5): rehaciendo desde la versión que se enseña (`redo`), o, si su
+   * primera investigación se paró sin dar ninguna, empezándola otra vez con lo cambiado (`again`). Null si ahora no
+   * se puede: algo en marcha, un viaje sin confirmar o una investigación que corre o espera tu turno.
+   */
+  function comoSeCambia(v: ViajeEnLaMesa): { modo: "redo" | "again"; antes: Entendido } | null {
+    if (marchas.has(v.ficha.id) || guias.has(v.ficha.id)) return null;
+    const estado = v.ficha.estado;
+    const run = ultimoRun(v);
+    const parado = run !== null && existsSync(join(run, PARADO));
+    const conVersion = v.ficha.version !== null && leerVersion(v) !== null;
+    if (conVersion && (estado === "on_map" || estado === "closed" || (estado === "researching" && parado)))
+      return { modo: "redo", antes: leerVersion(v)?.entendido as Entendido };
+    if (!conVersion && estado === "researching" && parado) {
+      const antes = leerJson(join(v.carpeta, "entendido.json"));
+      return antes === null ? null : { modo: "again", antes: antes as unknown as Entendido };
+    }
+    return null;
+  }
+
+  /** Lo que se ha quedado atrás tras un cambio: el último cierre y la última guía, si son de otra versión. */
+  function seQuedaronAtras(v: ViajeEnLaMesa): { closed: number | null; guide: number | null } {
+    const vista = v.ficha.versiones.find((x) => x.n === v.ficha.version);
+    const cerrada =
+      vista?.cierre !== undefined ? null : (v.ficha.versiones.filter((x) => x.cierre !== undefined).at(-1) ?? null);
+    const guia = guiaDeCara(v, guias.has(v.ficha.id));
+    return {
+      closed: cerrada?.n ?? null,
+      guide: guia !== null && guia.state === "ready" && guia.behind ? guia.version : null,
+    };
+  }
+
+  /** Para cambiar lo que pediste: de qué lo entendido partes, cómo se rehace y lo que se ha quedado atrás. */
+  function paraCambiar(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const como = comoSeCambia(v);
+    if (como === null) throw new Fallo(409, "not_now");
+    return { estado: 200, cuerpo: { mode: como.modo, understood: como.antes, behind: seQuedaronAtras(v) } };
+  }
+
+  /**
+   * Cambiar lo que pediste (8.5): las fechas, quién viaja, lo que quieres gastar o un gusto. Lo entendido de después
+   * pasa la puerta 1 y se compara con el de la versión que se enseña; el impacto lo dice el código, sin IA. Si
+   * rehacer gasta, hace falta tu adelante (`go_ahead`), con su techo si lo das; si no gasta, se rehace sin más. Se
+   * rehace solo lo que dejó de valer (`rehacer`), cada paso por su dueño y por sus puertas, y deja una versión nueva;
+   * la de antes se queda. Otro destino no es un cambio: es un viaje nuevo, y este no se toca. Con una primera
+   * investigación parada, sin versión, se empieza otra vez con lo cambiado, y siempre con tu adelante.
+   */
+  function cambiarLoPedido(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id)) throw new Fallo(409, "already_running");
+    const como = comoSeCambia(v);
+    if (como === null) throw new Fallo(409, "not_now");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    if (!objeto(pedido.understood)) throw new Fallo(400, "bad_request");
+    const claro = puertaEntendido(pedido.understood, { hoy: hoy().toISOString().slice(0, 10) });
+    if (!claro.verde) throw new Fallo(422, "unclear", { fields: [...new Set(claro.rojos.map((r) => r.donde))] });
+    const despues = pedido.understood as Entendido;
+    const { clases, viajeNuevo } = queTrae(como.antes, despues);
+    if (viajeNuevo) throw new Fallo(409, "new_trip");
+    if (clases.length === 0) throw new Fallo(409, "nothing_changed");
+    const impacto = como.modo === "redo" ? impactoDe(clases, gastoPorAsiento(p.dueno, o.mesa)) : null;
+    const gasta = impacto === null || impacto.spends;
+    if (gasta && pedido.go_ahead !== true) throw new Fallo(409, "go_ahead_needed", { impact: impacto });
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    const conQue = conQuePiensa(p.cuenta);
+    const clave = conQue === "key" ? claveDe(p.dueno, o.secreto, o.mesa) : null;
+    if (gasta && conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    if (gasta && conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    if (apuntadoDesde(v, "change", TOPE_DE_CAMBIOS.horas) >= TOPE_DE_CAMBIOS.deUnViaje)
+      throw new Fallo(429, "too_many_changes");
+    let run: string;
+    let n: number;
+    try {
+      if (como.modo === "redo") {
+        // Un cambio que se paró deja el viaje investigando: se vuelve a la versión que se enseña, y se parte de ella.
+        if (v.ficha.estado === "researching") {
+          pasar(v, "on_map", hoy());
+          if (v.ficha.versiones.find((x) => x.n === v.ficha.version)?.cierre !== undefined) pasar(v, "closed", hoy());
+        }
+        // El cierre que esperaba tu sí era de la versión de antes: queda abandonado, y ya no se sigue.
+        abandonarElCierre(v);
+        ({ run, n } = rehacer(v, { clases, entendido: despues, cuando: hoy() }));
+      } else {
+        abandonarElCierre(v);
+        guardarJson(join(v.carpeta, "entendido.json"), despues);
+        run = nuevoRun(v, hoy());
+        n = v.ficha.runs.length;
+      }
+    } catch (error) {
+      if (error instanceof FalloAlRehacer) throw new Fallo(409, error.message);
+      throw error;
+    }
+    if (gasta) darElAdelante(run, techo, hoy());
+    apuntar(v, "change", { modo: como.modo, cambio: clases, run: n }, hoy());
+    apuntar(v, "button", { boton: "change", techo }, hoy());
+    // Sin gasto no se lanza ningún asiento; si alguno lo pidiera, sin IA no hay con qué, y se para.
+    const sinIA: Lanzador = async () => {
+      throw new Error("este cambio no lanza asientos");
+    };
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : conQue === "key" && clave !== null && o.lanzador !== undefined
+          ? o.lanzador(clave)
+          : sinIA;
+    marchar(id, run, lanzador);
+    return { estado: 202, cuerpo: { run: n, mode: como.modo, impact: impacto } };
+  }
+
   function atender(p: Peticion): Respuesta {
     const [raiz, id, que, cual] = p.partes;
     if (raiz !== "viajes" || p.partes.length > 4) throw NO_HAY();
@@ -1276,6 +1396,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       return tusGustos(p);
     }
     if (que === "alojamiento") return delAlojamiento(p, cual);
+    if (que === "cambiar" && cual === undefined) {
+      if (p.metodo === "GET") return paraCambiar(p);
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return cambiarLoPedido(p);
+    }
     if (que === "guia" && cual === undefined) {
       if (p.metodo === "POST") return pedirLaGuia(p);
       if (p.metodo !== "GET") throw new Fallo(405, "method");

@@ -63,7 +63,6 @@ import {
   type Parrilla,
 } from "../scripts/transporte.ts";
 import { pedidoDelTransporte } from "../scripts/otro_transporte.ts";
-import { rehechoDe } from "./rehacer.ts";
 import type { TablaDeCaminos } from "../tools/caminos.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
 import { paraElGrupo } from "../tools/fuentes/tipos.ts";
@@ -102,6 +101,7 @@ import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
 import { buscarConLoPedido, conLosGustosPedidos, reutilizarMiradas } from "./alojamiento.ts";
 import {
   celdasDe,
+  filasDe,
   PAPELES,
   papelesDelRun,
   paraElViajero,
@@ -112,6 +112,7 @@ import {
   type DeLosPapelesGuardado,
 } from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
+import { rehechoDe } from "./rehacer.ts";
 import { acaboSinEntregar } from "./trabajos.ts";
 import { contar } from "./vivo.ts";
 import {
@@ -761,7 +762,10 @@ function delCalendario(run: string, base: Entendido, f: Fuentes): string | null 
  * falta: sin saber, no se puede decir que nada bloquee, y decide el viajero.
  */
 function deLosPapeles(run: string, base: Entendido): string | null {
-  if (hay(run, PAPELES)) return null;
+  if (hay(run, PAPELES)) {
+    recontarLosViajeros(run, base);
+    return null;
+  }
   const viaje = sinPalabras(base);
   const hoy = hoyEnLaCasa();
   // Sin nada que preguntar (todos viajan por el país de su pasaporte), la tabla queda vacía y no se lanza a nadie.
@@ -796,6 +800,22 @@ function deLosPapeles(run: string, base: Entendido): string | null {
       cuando: new Date().toISOString(),
     } satisfies DeLosPapelesGuardado);
   return null;
+}
+
+/**
+ * En un run que rehace otro y se queda con la tabla de los papeles (8.5): sus filas son las mismas (si no, se habría
+ * rehecho), pero cuántos viajan en cada una puede haber cambiado, con un viajero más o uno menos. Se vuelve a contar
+ * con lo entendido de ahora; lo que entregó el asiento no se toca.
+ */
+function recontarLosViajeros(run: string, base: Entendido): void {
+  if (!(rehechoDe(run)?.conserva.includes("papers") ?? false)) return;
+  const p = leer<DeLosPapelesGuardado>(run, PAPELES);
+  const viajeros = filasDe(sinPalabras(base)).map((f) => ({
+    pasaporte: f.passport,
+    edad: f.age === "adult" ? null : f.age,
+    cuantos: f.count,
+  }));
+  if (JSON.stringify(viajeros) !== JSON.stringify(p.viajeros)) guardar(run, PAPELES, { ...p, viajeros });
 }
 
 /** Los avisos de las fechas del run, como los enseña la web: sin lo que entregó el asiento. */

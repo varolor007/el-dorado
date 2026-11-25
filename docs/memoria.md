@@ -3,9 +3,9 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), el alojamiento (8.2), el día a
-día (8.6) y el transporte (8.3), hechos y juntos; los cambios (8.5), por juntar; las tandas 4 y 5, con el visto bueno
-del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, construida y junta el 25-nov: su cimiento (8.1), el alojamiento (8.2), el
+transporte (8.3), los cambios (8.5) y el día a día (8.6); falta su revisión por los tres adversarios y su punto de
+situación al PM; las tandas 4 y 5, con su visto bueno** (el estado, punto a punto, en [plan.md](plan.md)).
 
 **El alojamiento, a ratos (8.2), junto** (25-nov). Desde la ficha (`web/src/piezas/Alojamiento.tsx`). Elegir otro
 de los que ya hay es una elección (`lodging`), y el total lo rehace el código (`conTuAlojamiento`, en
@@ -54,6 +54,21 @@ y el transporte elegidos, cada uno en su parte del total (`delElegido`, con su p
 puerta, el pedido que no vale del transporte entra con otro nombre, porque el del alojamiento se llama igual. Mirado
 en la web con el viaje del ensayo, que no lleva vuelo: dice por qué, y al buscar otra vez la fuente no dio nada para
 esas fechas, y se dice. Sus opciones no se han visto con datos de verdad, ni nada de esto con IA.
+
+**Cambios (8.5), junto** (25-nov). `agent/scripts/cambios.ts` arma lo entendido de después con las preguntas de
+empezar ya contestadas (`conElCambio`), sin tocar lo que sacó el que escucha, y dice lo que trae (`queTrae`: las
+clases, y si es un viaje nuevo). `GET` y `POST /viajes/<id>/cambiar` (`{understood, go_ahead, ceiling}`) siguen la
+receta del 8.1: si gasta y no hay `go_ahead`, 409 `go_ahead_needed` con el impacto; sin gasto se rehace sin adelante;
+otro destino, 409 `new_trip`; nada cambiado, 409 `nothing_changed`. Con un cambio que se paró se parte de la versión
+que se enseña, y una primera investigación parada empieza otra vez con lo cambiado. `passports` sale de las filas de
+la tabla de los papeles (`filasDeLosPapeles`, en `agent/scripts/impacto.ts`), `CAMBIOS.travellers` pasa a `search`,
+y los papeles conservados se recuentan en `investigar.ts` (`recontarLosViajeros`). El tope de partida, en
+`TOPE_DE_CAMBIOS` (`agent/data/momentos.ts`). Un gusto que se toca lleva como cita su toque, sumado a `said.wants`,
+para que la puerta 1 lo encuentre. En la web, `web/src/piezas/Cambios.tsx` (y `QuienesViajan`, sacado de
+`Empezar.tsx`), `?at=change` y los avisos de lo que quedó atrás. Sin hacer: un viajero más vuelve a mirar a todos
+los finalistas. Mirado en la web con el viaje del ensayo, sin dar el adelante: el botón en tu viaje, tus respuestas
+ya contestadas y, al añadir una cosa a lo que buscas, lo que cambiaría (rehace la ruta, la búsqueda y las miradas:
+unos cinco dólares de equivalente, por lo que gastó ese viaje). Sin ver con IA de verdad.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

@@ -76,6 +76,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}/dia$`), ["GET", "POST"]],
   [new RegExp(`^viajes/${ID}/transporte$`), ["GET", "POST"]],
   [new RegExp(`^viajes/${ID}/transporte/elegir$`), ["POST"]],
+  [new RegExp(`^viajes/${ID}/cambiar$`), ["GET", "POST"]],
 ];
 
 /** Si la web le pasa esa petición a la casa: "ok", o por qué no. */

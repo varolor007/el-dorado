@@ -3,7 +3,6 @@
 // La investigación de un viaje tuyo, contada por la casa mientras pasa: por qué paso va, lo que se ha ido
 // encontrando y lo que lleva gastado de tu clave. Si se para, lo dice, y no gasta más hasta que tú lo pidas.
 
-import Link from "next/link";
 import { useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA, reloj } from "../lib/formato.ts";
@@ -119,10 +118,11 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
                         {t.casa.salidas.retry}
                       </button>
                     )}
+                    {/* Una página entera: la del mapa lee ?at=change al abrirse (8.5). */}
                     {salidas.includes("change_request") && (
-                      <Link className="boton boton--hueco" href="/plan">
+                      <a className="boton boton--hueco" href={`/plan?trip=${estado.trip.id}&at=change`}>
                         {t.casa.salidas.change_request}
-                      </Link>
+                      </a>
                     )}
                   </div>
                 </>

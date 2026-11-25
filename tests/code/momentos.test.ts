@@ -88,13 +88,15 @@ test("el impacto, como en la hoja: fechas nuevas rehacen casi todo; un viajero m
   const fechas = impactoDe(["dates"]);
   assert.deepEqual(fechas.keep, ["understood"]);
   assert.ok(fechas.pieces.includes("prices") && fechas.pieces.includes("date_warnings"));
-  // Un viajero más: la búsqueda y los papeles, y lo que sale de ellos; ni los días ni los avisos de las fechas.
+  // Un viajero más: la búsqueda, y lo que sale de ella; ni los días ni los avisos de las fechas, ni los papeles.
   const uno = impactoDe(["travellers"]);
   assert.deepEqual(
     uno.redo.map((x) => x.step),
-    ["search", "papers", "look", "table", "cross", "explain", "trip"],
+    ["search", "look", "table", "cross", "explain", "trip"],
   );
   assert.ok(uno.pieces.includes("lodging") && uno.pieces.includes("prices"));
+  // Los papeles, solo si cambian sus filas (8.5): otro pasaporte, u otra edad.
+  assert.ok(!uno.pieces.includes("papers"));
   assert.ok(!uno.pieces.includes("days") && !uno.pieces.includes("date_warnings"));
   // Un gusto de donde duermes: solo el alojamiento y las maneras; nada de buscar otra vez ni de mirar.
   const gusto = impactoDe(["lodging_taste"]);
@@ -124,7 +126,9 @@ test("las clases de un cambio salen de comparar lo entendido de antes con el de 
     "dates",
   ]);
   const tres = con({ travellers: { ...ENTENDIDO.travellers, adults: 3, passports: ["YY", "YY", "YY"] } });
-  assert.deepEqual(clasesDelCambio(ENTENDIDO, tres), ["travellers", "passports"]);
+  assert.deepEqual(clasesDelCambio(ENTENDIDO, tres), ["travellers"]);
+  const otro = con({ travellers: { ...ENTENDIDO.travellers, adults: 3, passports: ["YY", "YY", "XX"] } });
+  assert.deepEqual(clasesDelCambio(ENTENDIDO, otro), ["travellers", "passports"]);
   // Un gusto de una cosa del alojamiento, y uno que no lo es.
   const gym = ENTENDIDO.tastes.map((g) => (g.thing === "gym" ? { ...g, weight: "like" as const } : g));
   assert.deepEqual(clasesDelCambio(ENTENDIDO, con({ tastes: gym })), ["lodging_taste"]);
@@ -528,7 +532,7 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     assert.equal(porClase.cost.usd, 0.35);
     const tres = { ...ENTENDIDO, travellers: { ...ENTENDIDO.travellers, adults: 3, passports: ["YY", "YY", "YY"] } };
     const porLoEntendido = (await pide("POST", `/viajes/${id}/impacto`, ana, { understood: tres })).cuerpo.impact;
-    assert.deepEqual(porLoEntendido.changes, ["travellers", "passports"]);
+    assert.deepEqual(porLoEntendido.changes, ["travellers"]);
     assert.equal((await pide("POST", `/viajes/${id}/impacto`, ana, { changes: ["todo"] })).cuerpo.error, "bad_change");
     assert.equal((await pide("POST", `/viajes/${id}/impacto`, otro, { changes: ["lodging"] })).estado, 404);
     assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);

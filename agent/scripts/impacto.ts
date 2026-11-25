@@ -43,7 +43,9 @@ export function clasesDelCambio(antes: Entendido, despues: Entendido): ClaseDeCa
   const td = despues.travellers;
   if (ta.adults !== td.adults || !igual(ta.children, td.children)) hay.add("travellers");
   if (ta.rooms !== td.rooms) hay.add("rooms");
-  if (!igual(ta.passports, td.passports)) hay.add("passports");
+  // Los papeles van por filas: cada pasaporte con cada edad, sin contar cuántos viajan así. Un viajero más con un
+  // pasaporte y una edad que ya estaban no cambia la tabla: solo la habitación y el precio, como dice la hoja.
+  if (!igual(filasDeLosPapeles(antes), filasDeLosPapeles(despues))) hay.add("passports");
   if (antes.budget !== despues.budget) hay.add("budget");
   if (antes.currency !== despues.currency) hay.add("currency");
   if (antes.language !== despues.language) hay.add("language");
@@ -60,6 +62,23 @@ export function clasesDelCambio(antes: Entendido, despues: Entendido): ClaseDeCa
   for (const campo of campos)
     if (!conocidos.has(campo) && !igual((antes as never)[campo], (despues as never)[campo])) hay.add("other");
   return CLASES_DE_CAMBIO.filter((c) => hay.has(c));
+}
+
+/**
+ * Las filas de la tabla de los papeles de lo entendido, en su orden y sin cuántos viajan en cada una: lo mismo que
+ * `filasDe` en `agent/launcher/papeles.ts` (una prueba lo mira), sin nada de Node. Si no cambian, la tabla que llenó
+ * el de los papeles sigue valiendo para las mismas casillas.
+ */
+export function filasDeLosPapeles(e: Entendido): { passport: string; age: "adult" | number }[] {
+  const { adults, children, passports } = e.travellers;
+  const deMas = (passports[0] ?? e.origin?.country ?? "").toUpperCase();
+  const edades: ("adult" | number)[] = [...Array.from({ length: adults }, () => "adult" as const), ...children];
+  const filas: { passport: string; age: "adult" | number }[] = [];
+  edades.forEach((age, i) => {
+    const passport = (passports[i] ?? deMas).toUpperCase();
+    if (!filas.some((f) => f.passport === passport && f.age === age)) filas.push({ passport, age });
+  });
+  return filas;
 }
 
 const ORDEN = PASOS.map((p) => p.id as IdDePaso);

@@ -656,6 +656,20 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **El reloj de la investigación en vivo** (la sesión, al mirar las capturas): cada suceso dice «38 s» hasta el
   minuto y «4:03» desde ahí. En segundos con un decimal no cabía en su columna en una investigación de verdad,
   que dura un cuarto de hora.
+- **Los cuatro momentos de la tanda 6, con lo más prudente** (las sesiones de obra del 8.2, 8.3, 8.5 y 8.6; cada
+  cosa, a firma del PM). Del alojamiento: buscar otra vez no vuelve a mirar a quien ya se miró, y de los nuevos mira
+  a dos como mucho; la zona y los mínimos que pide el viajero no se ensanchan ni se bajan solos; una pregunta por un
+  alojamiento la contesta el que mira, con su prueba, y pasa su puerta antes de enseñarse. Del transporte: otro vuelo
+  los mismos días es una clase nueva de cambio (`flight`), que no rehace las miradas; otro día es un cambio de
+  fechas; un aeropuerto en otro país rehace los papeles con él (`new_country`); el vuelo y su precio salen siempre
+  de lo guardado por la casa, nunca de lo que mande la web. De los cambios: otro destino es un viaje nuevo, y este
+  se queda intacto; lo que escribió el viajero no se toca, y el que escucha no se vuelve a lanzar; un viajero más
+  con un pasaporte y una edad que ya estaban no rehace los papeles: se recuentan. Del día a día: lo que quitas no
+  vuelve solo; se vuelve a los datos abiertos solo por lo que no estaba; y el que cruza y el que explica no se
+  lanzan otra vez si lo que deciden no cambia, y eso lo mide el código con sus mismas puertas.
+- **Al juntar los cuatro momentos, cerrar lleva a la vez el alojamiento y el transporte elegidos** (la sesión, al
+  juntar): cada uno cambia su parte del total de la manera, con su prueba. Las dos ramas lo habían hecho cada una
+  por su lado.
 
 ## Pendientes
 
@@ -668,9 +682,21 @@ Lo que deja el 25-nov, a decisión del PM:
   (12.3), y la edad máxima de un precio al cerrar.
 - **Del viaje a ratos (8.1)**: cuántas versiones e investigaciones caben en un viaje (veinte y treinta), y cuánto
   se guarda y hasta cuándo; si de un viaje cerrado se puede volver a una versión abierta (hoy, sí); si vale la
-  tabla de lo que rehace cada cambio, sobre todo el gasto, los límites y lo ya reservado; y tres cosas que hoy
-  gastan más de lo que dice la hoja: un mensaje para un día son tres turnos y no uno, otro alojamiento mira a todos
-  los finalistas nuevos y no solo a uno, y un viajero más rehace también los papeles y las miradas.
+  tabla de lo que rehace cada cambio, sobre todo el gasto, los límites y lo ya reservado. De las tres cosas que
+  gastaban más de lo que dice la hoja, dos quedan arregladas con sus momentos (un mensaje para un día es un turno
+  cuando no cambia lo que se decide, y otro alojamiento mira a dos nuevos como mucho) y una a medias: un viajero
+  más ya no rehace los papeles, pero sí vuelve a mirar a todos los finalistas.
+- **De los cuatro momentos de la tanda 6** (25-nov). Sus números de partida: del alojamiento, dos nuevos que se
+  miran, y diez preguntas y diez cambios por viaje al día; del transporte, mover tres días, doce opciones, doce
+  búsquedas por viaje al día y «sin madrugar» desde las 9; de los cambios, seis por viaje al día; del día a día,
+  tres mensajes por viaje al día, de 300 letras. Lo que gasta más de lo que dice su fila de la hoja: otro vuelo los
+  mismos días son dos turnos de IA y no uno (el que cruza y el que explica), otro día rehace casi todo, y añadir
+  una cosa a lo que buscas rehace la ruta, la búsqueda y las miradas. Si vale que otro destino sea un viaje nuevo,
+  que la hoja pone entre los cambios. Si vale que un gusto que tocas quede como cita entre tus palabras. Si el del
+  día a día sale al buscador, que la hoja dice que sí y hoy no. El del calendario con un mensaje para un día, que
+  no se relanza. Que el del día a día recibe tus palabras tal cual. Que volver a los datos abiertos por palabras
+  solo entiende inglés y español. Los vuelos en vivo (3.7), las dos escalas y el tren. El estilo con fotos y que el
+  que mira salga a otras webs. Y verlo todo con IA de verdad, que es un gasto.
 - **Lo que deja la revisión de la tanda 5, porque toca la hoja** (entero en `revisiones/tanda-5.md`): la puerta 8
   avisa de una llegada que no cuadra, de un enlace que no responde y de un precio caducado, y no impide cerrar,
   cuando su fila dice más; en qué idiomas se vende, y con ello en cuáles sale la guía; que un cierre que espera el
