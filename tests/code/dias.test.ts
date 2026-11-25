@@ -34,9 +34,9 @@ test("el contrato nombra los minutos, las horas y lo de reservar que el código 
     assert.ok(entrega.includes("`" + valor + "`"), String(valor));
 });
 
-test("las normas del que elige los sitios van de la DI1 a la DI8, y el contrato dice lo que no ve", () => {
+test("las normas del que elige los sitios van de la DI1 a la DI9, y el contrato dice lo que no ve", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(DI\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["DI1", "DI2", "DI3", "DI4", "DI5", "DI6", "DI7", "DI8"]);
+  assert.deepEqual(codigos, ["DI1", "DI2", "DI3", "DI4", "DI5", "DI6", "DI7", "DI8", "DI9"]);
   // Lo que pide la puerta, lo dice el contrato: el largo de un porqué y de dónde salen sus números.
   assert.ok(leer("RULES.md").includes(`at most ${LARGO_DE_UN_TEXTO} characters`));
   assert.match(leer("RULES.md"), /A\s+number in a `why` is a number of the `name` or the `about`/);

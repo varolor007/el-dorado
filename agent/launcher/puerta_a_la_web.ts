@@ -32,6 +32,9 @@
 //                                       precio haya subido mucho ({ "prices": "go_on" })
 //   GET    /viajes/<id>/cierre         por dónde va el último cierre, de qué versión es y, si espera tu sí, lo que
 //                                       ha cambiado
+//   POST   /viajes/<id>/dia            un mensaje tuyo para tus días ({ "said", "day" }): lo que costaría, sin
+//                                       cambiar nada; con { "go": true }, tu botón, y el del día a día se pone a ello
+//   GET    /viajes/<id>/dia            cómo va tu último mensaje: lo que dijiste, por dónde va y lo que cambió
 
 import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -121,6 +124,8 @@ import { comprobarVistazo } from "../output/viaje.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from "../scripts/vistazo.ts";
 import { porDondeVa } from "./pasos.ts";
+import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
+import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
 
@@ -1003,6 +1008,62 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 202, cuerpo: { question: n } };
   }
 
+  /**
+   * Un mensaje tuyo para tus días (8.6), solo su dueño, con el viaje en el mapa o cerrado y sin nada en marcha. Sin
+   * `go`, lo que costaría, sin cambiar nada: el del día a día otra vez, los sitios si pides algo que no estaba, y el
+   * que cruza y el que explica solo si cambia lo que deciden. Con `go: true` es tu botón: se abre la investigación
+   * que lo rehace, con tu adelante, y la lleva la casa como cualquier otra.
+   */
+  function unMensajeParaElDia(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id)) throw new Fallo(409, "already_running");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    const al = { said: pedido.said, day: pedido.day, cuando: hoy() };
+    const conQue = conQuePiensa(p.cuenta);
+    if (pedido.go !== true) {
+      try {
+        const previsto = prepararUnDia(v, al);
+        const impact = impactoDeUnDia(gastoPorAsiento(p.dueno, o.mesa), previsto.look_for.length > 0);
+        return { estado: 200, cuerpo: { impact, look_for: previsto.look_for } };
+      } catch (error) {
+        throw falloDeUnDia(error);
+      }
+    }
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: ReturnType<typeof pedirUnDia>;
+    try {
+      hecho = pedirUnDia(v, al);
+    } catch (error) {
+      throw falloDeUnDia(error);
+    }
+    // El cierre que esperaba tu sí era de la versión de antes: queda abandonado.
+    abandonarElCierre(v);
+    darElAdelante(hecho.run, null, hoy());
+    apuntar(v, "day_message", { run: hecho.n, day: hecho.pedido.day }, hoy());
+    apuntar(v, "button", { boton: "day", run: hecho.n }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, hecho.run, lanzador);
+    return { estado: 202, cuerpo: { run: hecho.n, look_for: hecho.pedido.look_for } };
+  }
+
+  /** Por qué no se manda un mensaje, con su estado: tus palabras, el momento, el tope o que no se puede rehacer. */
+  function falloDeUnDia(error: unknown): unknown {
+    if (error instanceof MensajeQueNoVale) return new Fallo(400, error.message);
+    if (error instanceof FalloDeUnDia)
+      return new Fallo(
+        error.message === "too_many_messages" ? 429 : error.message === "bad_day" ? 400 : 409,
+        error.message,
+      );
+    if (error instanceof FalloAlRehacer) return new Fallo(409, error.message);
+    return error;
+  }
+
   function atender(p: Peticion): Respuesta {
     const [raiz, id, que, cual] = p.partes;
     if (raiz !== "viajes" || p.partes.length > 4) throw NO_HAY();
@@ -1102,6 +1163,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
       const v = suViaje(p);
       return { estado: 200, cuerpo: { guide: guiaDeCara(v, guias.has(v.ficha.id)) } };
+    }
+    if (que === "dia" && cual === undefined) {
+      if (p.metodo === "POST") return unMensajeParaElDia(p);
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      return { estado: 200, cuerpo: { message: mensajeDeCara(v, marchas.has(v.ficha.id)) } };
     }
     if (que === "guia" && cual === "documento") {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

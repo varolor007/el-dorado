@@ -34,7 +34,7 @@ import { puertaExplica } from "../gates/puerta_explica.ts";
 import { puertaRuta } from "../gates/puerta_ruta.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
 import { anadirOfertas, buscarDondeHaya, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
-import { cuantosSitios, paradasDe, sitiosParaElegir } from "../scripts/dias.ts";
+import { cuantosSitios, paradasDe } from "../scripts/dias.ts";
 import { fechasParaExplicar, paraExplicar } from "../scripts/explica.ts";
 import type {
   Entendido,
@@ -112,11 +112,21 @@ import {
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { acaboSinEntregar } from "./trabajos.ts";
 import { contar } from "./vivo.ts";
+import {
+  ampliarLosSitios,
+  conservarElCruce,
+  conservarLaExplicacion,
+  materialDelMensaje,
+  mensajeParaElegir,
+  sitiosQueSeDan,
+} from "./dia_a_dia.ts";
 
 /** Lo de fuera que usa una investigación. Se le pasa: con lo de verdad investiga, y con lo inventado se prueba. */
 export type Fuentes = {
   alojamiento: FuenteAlojamiento;
   sitios: (viaje: Entendido) => Promise<Sitio[]>;
+  /** Los sitios de unas clases nuestras, para lo que pidió el viajero en un mensaje y no estaba (8.6). */
+  sitiosDeClases?: (viaje: Entendido, clases: string[]) => Promise<Sitio[]>;
   resumenes: (sitios: Sitio[]) => Promise<Map<string, string>>;
   fotos: (archivos: string[]) => Promise<Map<string, Foto>>;
   /** La fuente de transporte: sus aeropuertos y sus precios. Sin ella, el viaje va sin transporte, y se dice. */
@@ -425,7 +435,6 @@ function alLadoDe(run: string): Vuelo | null {
 }
 
 function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
-  const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
   const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
   const route = {
     shape: entrega.shape,
@@ -436,11 +445,11 @@ function piezasDeLosSitios(run: string, viaje: Entendido): Pieza[] {
     { ruta: "trip.json", contenido: json(viaje) },
     { ruta: "route.json", contenido: json(route) },
     { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
-    {
-      ruta: "sights.json",
-      contenido: json(sitiosParaElegir(sitios, nochesDe(viaje), new Map(Object.entries(resumenes)))),
-    },
+    // Los de siempre y, si un mensaje tuyo pidió algo que no estaba, también eso (8.6).
+    { ruta: "sights.json", contenido: json(sitiosQueSeDan(run, viaje)) },
     { ruta: "warnings.json", contenido: "[]" },
+    // Con un mensaje tuyo, lo que dijiste y tus días como estaban: el del día a día elige otra vez con ello.
+    ...((m) => (m === null ? [] : [{ ruta: "message.json", contenido: json(m) }]))(mensajeParaElegir(run)),
   ];
 }
 
@@ -515,7 +524,7 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
   const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
   const caminos = caminosDelRun(run);
   const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre, {}, caminos);
-  const dados = sitiosParaElegir(sitios, nochesDe(viaje)).map((s) => s.id);
+  const dados = sitiosQueSeDan(run, viaje).map((s) => s.id);
   const puerta = puertaDias({
     paradas,
     dias: reparto.dias,
@@ -673,7 +682,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
   // otra vez, porque los que la pasaron al repartir no son estos.
-  const dados = sitiosParaElegir(leer<DeLosSitios>(run, "sitios.json").sitios, nochesDe(viaje)).map((s) => s.id);
+  const dados = sitiosQueSeDan(run, viaje).map((s) => s.id);
   const deLosDias = puertaDias({
     paradas: hecho.paradas,
     dias: hecho.dias,
@@ -972,16 +981,18 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       // A quien ya trabajó y no entregó no se le espera más: su alojamiento se queda sin mirar, y se dice.
       pendientes.push(...deMirar.filter((p) => !entregado(p) && !acaboSinEntregar(run, p.id)).map((p) => p.id));
     }
-    const { sitios, resumenes } = leer<DeLosSitios>(run, "sitios.json");
-    const dados = sitiosParaElegir(sitios, nochesDe(viaje), new Map(Object.entries(resumenes)));
+    // Un mensaje tuyo que pide algo que no estaba: antes de elegir, el código vuelve a los datos abiertos (8.6).
+    avisos.push(...(await ampliarLosSitios(run, viaje, f)));
+    const dados = sitiosQueSeDan(run, viaje);
     const dicho = Object.fromEntries(dados.map((s) => [s.id, `${s.name} ${s.about}`]));
     const noches = diasDe(viaje.dates.check_in, viaje.dates.check_out).nights;
+    const mensaje = materialDelMensaje(run);
     const r = recoger<EntregaDeSitios>(
       run,
       "sitios",
       "sights-picker",
       piezasDeLosSitios(run, viaje),
-      (e) => puertaSitios(e, { sitios: dados.map((s) => s.id), noches, dicho }).rojos,
+      (e) => puertaSitios(e, { sitios: dados.map((s) => s.id), noches, dicho, mensaje }).rojos,
     );
     if ("parado" in r) return para("pick", "los sitios (puerta 9)", r.parado);
     if ("espera" in r) pendientes.push(r.espera);
@@ -1032,6 +1043,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
           },
         ]);
       }
+      // Con un mensaje para un día, si con esta tabla decide lo mismo que antes, el que cruza no se vuelve a lanzar.
+      conservarElCruce(run, ronda, tabla, viaje);
       const r = recoger<EntregaDeCruce>(
         run,
         `cruce-${ronda}`,
@@ -1066,6 +1079,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       { ruta: "checks.json", contenido: json(dado.checks) },
     ];
     if (dado.dates !== undefined) piezas.push({ ruta: "dates.json", contenido: json(dado.dates) });
+    // Y si el que cruza se quedó con lo de antes, el que explica también, mientras pase su puerta con lo de ahora.
+    conservarLaExplicacion(run, dado, viaje);
     const r = recoger<EntregaDeExplicar>(
       run,
       "explica",

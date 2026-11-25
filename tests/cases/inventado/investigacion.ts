@@ -129,8 +129,41 @@ export function entregaDeRuta(): EntregaDeRuta {
   };
 }
 
-/** Lo que elegiría un asiento aplicado: siete sitios que merecen la pena, por orden, y tres que no, con su porqué. */
-export function entregaDeSitios(): EntregaDeSitios {
+/**
+ * Lo que elegiría un asiento aplicado: siete sitios que merecen la pena, por orden, y tres que no, con su porqué. Con
+ * un mensaje del viajero (`in/message.json`, 8.6): lo que quitó, fuera; si pide menos museos, el museo, fuera; lo que
+ * se encontró para él, dentro; y lo que cambió, dicho.
+ */
+export function entregaDeSitios(
+  mensaje?: {
+    said: string;
+    removed: string[];
+    new_sights: string[];
+  } | null,
+): EntregaDeSitios & { changed?: string } {
+  const base = entregaDeSitiosDePartida();
+  if (mensaje == null) return base;
+  const fuera = new Set([...mensaje.removed, ...(/museo|museum/i.test(mensaje.said) ? ["Q3"] : [])]);
+  const go = [
+    ...base.go.filter((g) => !fuera.has(g.id)),
+    ...mensaje.new_sights.map((id) => ({
+      id,
+      why: "Lo que pediste en tu mensaje, en los datos abiertos de la ciudad.",
+      minutes: 60,
+      best_time: "any" as const,
+      book_ahead: "unknown" as const,
+      must: false,
+    })),
+  ];
+  const skip = [
+    ...base.skip.filter((x) => !fuera.has(x.id)),
+    ...base.go.filter((g) => fuera.has(g.id)).map((g) => ({ id: g.id, why: "Lo dejo fuera por lo que me dijiste." })),
+    ...base.skip.filter((x) => fuera.has(x.id)).map((x) => ({ id: x.id, why: x.why })),
+  ];
+  return { ...base, go, skip, changed: "He vuelto a elegir con lo que me has dicho: lo que quitaste sigue fuera." };
+}
+
+function entregaDeSitiosDePartida(): EntregaDeSitios {
   const ir = (id: string, why: string, minutes: number, must = false): EntregaDeSitios["go"][number] => ({
     id,
     why,

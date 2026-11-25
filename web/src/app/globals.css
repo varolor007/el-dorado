@@ -2581,3 +2581,64 @@ select.toque {
   border-radius: var(--radio-chico);
   background: var(--velo);
 }
+
+/* El día a día a ratos (8.6): tu mensaje para tus días, lo que cambia y cómo va. */
+.mensaje {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--raya);
+}
+.mensaje__caja {
+  resize: vertical;
+  min-height: 3.2em;
+  line-height: 1.4;
+  font-family: inherit;
+}
+.mensaje__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mensaje__estado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+}
+.mensaje__estado > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+.mensaje__pulso {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--oro);
+  animation: guia-pulso 1.6s var(--suave) infinite;
+}
+.mensaje__hecho {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+  overflow-wrap: anywhere;
+}
+.mensaje__hecho p {
+  margin: 0 0 6px;
+  line-height: 1.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mensaje__pulso {
+    animation: none;
+  }
+}

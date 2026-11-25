@@ -15,11 +15,20 @@ import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 
 /**
  * Lo que tuvo delante el asiento: los sitios que se le dieron a elegir, las noches del viaje y lo que se le dijo de
- * cada sitio (su nombre y lo que cuenta su artículo), que es de donde puede sacar un número.
+ * cada sitio (su nombre y lo que cuenta su artículo), que es de donde puede sacar un número. Con un mensaje del
+ * viajero (8.6), lo que había quitado, que no vuelve solo, y los números que puede decir al explicar lo que cambió:
+ * los de sus días.
  */
-export type MaterialDeSitios = { sitios: string[]; noches: number; dicho?: Record<string, string> };
+export type MaterialDeSitios = {
+  sitios: string[];
+  noches: number;
+  dicho?: Record<string, string>;
+  mensaje?: { quitadas: string[]; numeros: number[] };
+};
 
 const LO_QUE_LLEVA = ["seat", "go", "skip", "missing", "unknowns"];
+/** Con un mensaje del viajero, la entrega lleva además lo que cambió y por qué, para él. */
+const CON_UN_MENSAJE = [...LO_QUE_LLEVA, "changed"];
 
 type Objeto = Record<string, unknown>;
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -31,8 +40,9 @@ export function puertaSitios(entrega: unknown, m: MaterialDeSitios): Veredicto {
   const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
   if (!esObjeto(entrega)) return { verde: false, rojos: [{ donde: "delivery", que: "la entrega no es un objeto" }] };
 
-  for (const campo of LO_QUE_LLEVA) if (!(campo in entrega)) rojo(campo, "falta en la entrega");
-  for (const campo of Object.keys(entrega)) if (!LO_QUE_LLEVA.includes(campo)) rojo(campo, "no es de la entrega");
+  const lleva = m.mensaje === undefined ? LO_QUE_LLEVA : CON_UN_MENSAJE;
+  for (const campo of lleva) if (!(campo in entrega)) rojo(campo, "falta en la entrega");
+  for (const campo of Object.keys(entrega)) if (!lleva.includes(campo)) rojo(campo, "no es de la entrega");
   if (entrega.seat !== "sights-picker") rojo("seat", "la entrega no es del asiento que elige los sitios");
   for (const nombre of ["go", "skip", "missing", "unknowns"])
     if (nombre in entrega && !Array.isArray(entrega[nombre])) rojo(nombre, "no es una lista");
@@ -83,6 +93,22 @@ export function puertaSitios(entrega: unknown, m: MaterialDeSitios): Veredicto {
       rojo(`missing[${i}]`, "no dice qué echa en falta o por qué");
   });
   if (!lista(entrega.unknowns).every(esTexto)) rojo("unknowns", "cada cosa que no se sabe va en una frase");
+
+  // Con un mensaje: lo que el viajero quitó no vuelve solo, y lo que cambió se le explica con palabras que pasan la
+  // puerta de palabras, sin un número que no sea de sus días ni de lo que lleva una visita.
+  if (m.mensaje !== undefined) {
+    const vuelven = lista(entrega.go).flatMap((g) =>
+      esObjeto(g) && m.mensaje?.quitadas.includes(g.id as string) ? [g.id] : [],
+    );
+    for (const id of vuelven) rojo("go", `el sitio ${String(id)} lo quitó el viajero: no vuelve solo`);
+    if (!esTexto(entrega.changed)) rojo("changed", "no dice qué ha cambiado y por qué");
+    else {
+      for (const pega of pegasDelTexto(entrega.changed, { sinNumerosLargos: true })) rojo("changed", pega);
+      const dados = new Set(m.mensaje.numeros);
+      for (const g of lista(entrega.go)) if (esObjeto(g) && typeof g.minutes === "number") dados.add(g.minutes);
+      for (const n of numerosDeMas(entrega.changed, dados)) rojo("changed", `dice ${n}, que no sale de tus días`);
+    }
+  }
   return { verde: rojos.length === 0, rojos };
 }
 

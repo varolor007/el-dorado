@@ -13,3 +13,6 @@ These rules win over the guide.
   number in a `why` is a number of the `name` or the `about` of that same sight, or its `minutes`: no other.
 - **DI8. A `why` is a short text.** One or two sentences, in one line and at most 500 characters. No links, no web
   or e-mail addresses and no phone numbers, even if the `about` of the sight carries one.
+- **DI9. With a message, every place in `removed` is in `skip`.** What the traveller took out does not come back on
+  its own. And `changed` says what changed and why, as a short text like a `why`: no number but a day of their
+  trip or the minutes of a visit. Without a message there is no `changed`.

@@ -73,6 +73,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}/alojamiento$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/alojamiento/impacto$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/alojamiento/pregunta$`), ["GET", "POST"]],
+  [new RegExp(`^viajes/${ID}/dia$`), ["GET", "POST"]],
 ];
 
 /** Si la web le pasa esa petición a la casa: "ok", o por qué no. */

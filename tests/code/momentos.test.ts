@@ -244,12 +244,13 @@ test("otro alojamiento: se busca, se mira y se cruza otra vez; la ruta, los siti
   }
 });
 
-test("un día con un mensaje tuyo: el del día a día y el cruce otra vez; no se busca ni se mira", async () => {
+test("un día con un mensaje tuyo: el del día a día otra vez; no se busca ni se mira", async () => {
   const { mesa, v } = await viajeEnElMapa();
   try {
     const uno = join(v.carpeta, "runs", "1");
     const r = await rehacerYLlevar(mesa, v.ficha.id, ["day"]);
-    assert.deepEqual(r.asientos, ["sights-picker", "trip-crosser", "trip-explainer"]);
+    // Con lo que eligió, la tabla decide lo mismo: el que cruza y el que explica se quedan con lo suyo (8.6).
+    assert.deepEqual(r.asientos, ["sights-picker"]);
     for (const nombre of ["busqueda.json", "mirar.json", "como_es.json", "ruta.json"])
       assert.equal(readFileSync(join(r.run, nombre), "utf8"), readFileSync(join(uno, nombre), "utf8"), nombre);
     // Los que miraron cada alojamiento siguen ahí, con lo que entregaron: no se les vuelve a lanzar.

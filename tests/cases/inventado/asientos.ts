@@ -219,7 +219,7 @@ export function entregaCon(asiento: string, dado: (nombre: string) => any): Obje
   if (asiento === "route-planner") return entregaDeRuta();
   if (asiento === "lodging-viewer")
     return dado("question.json") == null ? miradoPara(dado("sheet.json")) : respuestaPara(dado("sheet.json"));
-  if (asiento === "sights-picker") return entregaDeSitios();
+  if (asiento === "sights-picker") return entregaDeSitios(dado("message.json"));
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
   if (asiento === "conductor") return entregaDelConductor(dado("stop.json"));
   const fechas = dado("dates.json");

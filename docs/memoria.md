@@ -3,9 +3,9 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), hecho y junto, y sus cuatro
-momentos (8.2, 8.3, 8.6 y 8.5), en marcha con una sesión cada uno; las tandas 4 y 5, con el visto bueno del PM** (el
-estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), el alojamiento (8.2) y el día
+a día (8.6), hechos y juntos; el transporte (8.3) y los cambios (8.5), en marcha con una sesión cada uno; las tandas
+4 y 5, con el visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
 **El alojamiento, a ratos (8.2), junto** (25-nov). Desde la ficha (`web/src/piezas/Alojamiento.tsx`). Elegir otro
 de los que ya hay es una elección (`lodging`), y el total lo rehace el código (`conTuAlojamiento`, en
@@ -20,6 +20,21 @@ La pregunta por un alojamiento ya mirado (`GET` y `POST /viajes/<id>/alojamiento
 modo más de su contrato (MI7 y MI8), con el material de su puesto, en `viajes/<id>/preguntas/<n>/`; su respuesta
 pasa `agent/gates/puerta_respuesta.ts` antes de llegar a la pantalla. Los números de partida, del PM, en
 `agent/data/alojamiento.ts`. Sin ver con IA ni con fuentes de verdad.
+
+**El día a día, a ratos (8.6), junto** (25-nov). `POST` y `GET /viajes/<id>/dia` (`agent/launcher/dia_a_dia.ts`; las
+cuentas sin Node, en `agent/scripts/dia_a_dia.ts`; los números, en `agent/data/dia_a_dia.ts`). Sin `go`, el impacto
+(`impactoDeUnDia`) y lo que se buscaría (`look_for`), sin cambiar nada; con `go: true`, `rehacer` con la clase `day`.
+Lo que pides va en `pedido` (`kind: day_message`: tus palabras, el día abierto, tus días como estaban, lo quitado,
+tus elecciones y lo que no estaba). `sitios.json` lleva lo que se buscó (`buscados`, `buscadosEn`, `anadidos`), con
+`Fuentes.sitiosDeClases`, y `sitiosQueSeDan` lo da a elegir detrás del corte. El del día a día tiene un modo con
+mensaje (`in/message.json`, `changed`, DI9), y la puerta 9 mira `changed` y que lo quitado no vuelva.
+`conservarElCruce` y `conservarLaExplicacion`: en un run que sale solo de un día, si la tabla decide lo mismo y la
+entrega de antes pasa su puerta con lo de ahora, se copian sus puestos y no se lanzan. `leerElecciones` hereda
+`pedido.choices` en una versión nueva sin elecciones (vale para cualquier momento que las pase). En la web,
+`web/src/piezas/DiaADia.tsx`, al pie de tus días. Vuelve a los datos abiertos solo por palabras de una lista, en
+inglés y en español. Sin hacer: el del calendario con un mensaje (el de antes se conserva). Sin ver con IA ni con
+fuentes de verdad. Al juntarlo con el 8.2, la puerta de la web y la hoja de estilos chocaban en trozos que
+compartían líneas: se rehicieron a mano, función a función.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
