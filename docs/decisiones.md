@@ -580,7 +580,32 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   copia de la parada real de Lisboa, pidió la vuelta de más y la investigación acabó. Unos 1,8 dólares de
   equivalente entre el conductor, esa vuelta y lo que quedaba del viaje.
 
+## 25-nov-2026
+
+- **La tanda 5 empieza mientras el PM mira la 4** (el PM: «Seguimos? Luego entro a la página a revisar»; la
+  sesión lo lee como el sí para empezar, y se lo dice así, por si no lo era). Dos sesiones de obra a la vez:
+  cerrar el viaje con sus enlaces (8.4 y 3.13) y la guía (12.1 y 12.2). El visto bueno de la tanda 4 sigue
+  pendiente, con sus dos decisiones: el arranque y la frase del conductor.
+- **Lo que la tanda 5 construye sin esperar al PM, con lo más prudente** (la sesión): los enlaces, sin marca de
+  afiliado; la guía, sin dibujos, con las fotos que ya lleva el viaje, y guardada sin ninguna dependencia nueva;
+  y los números (la edad máxima de un precio), de partida y a su firma.
+- **La página de la revisión de la tanda 4** (la sesión): https://claude.ai/artifact/XhWTz37RrGYU4gYHejZ77H. Con el
+  ensayo pantalla a pantalla, y la parada enseñada de las dos maneras, con la frase del conductor y sin ella, para
+  que el PM elija viéndolas. Sus capturas, sin gastar: la mesa guardada del ensayo, abierta con una casa sin
+  modelo ni cuenta.
+- **El reloj de la investigación en vivo** (la sesión, al mirar las capturas): cada suceso dice «38 s» hasta el
+  minuto y «4:03» desde ahí. En segundos con un decimal no cabía en su columna en una investigación de verdad,
+  que dura un cuarto de hora.
+
 ## Pendientes
+
+Lo que deja el 25-nov, a decisión del PM:
+
+- **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
+  las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
+  O esperar al ensayo de la tanda 7.
+- **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
+  (12.3), y la edad máxima de un precio al cerrar.
 
 Lo que deja la obra del 24-nov, a decisión del PM:
 

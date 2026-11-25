@@ -1,10 +1,29 @@
 # Memoria de El Dorado
 
-Al día el 24-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
+Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 4, empezada por sus cimientos (24-nov); las fuentes de rutas, a decisión del PM** (el
-estado, punto a punto, en [plan.md](plan.md)). El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él
+**Estamos aquí: la tanda 5, cerrar el viaje y la guía, en obra desde el 25-nov; la tanda 4, hecha, ensayada y
+revisada, a falta del visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**La tanda 5** (25-nov). El PM dijo «Seguimos? Luego entro a la página a revisar», y la sesión lo leyó como el sí
+para empezarla mientras él mira la 4, y se lo dijo así. Van dos sesiones de obra a la vez, cada una en su rama:
+cerrar el viaje con sus enlaces (8.4 y 3.13, `claude/eldorado-8-4-cerrar-el-viaje`) y la guía (12.1 y 12.2,
+`claude/eldorado-12-la-guia`), que parte de un viaje cerrado. Sus encargos dejan fuera lo que es del PM: la marca
+de afiliado (3.9), la edad máxima de un precio, los dibujos de la guía (12.3) y cualquier dependencia nueva. Al
+juntarlas: los tipos, la batería, las biblias, las capturas y los tres adversarios.
+
+**Para cerrar la tanda 4 faltan tres cosas del PM**: el arranque (un botón o dos), si la frase del conductor se
+enseña al viajero, y su visto bueno. La página de su revisión, con el ensayo pantalla a pantalla y esas dos
+decisiones a la vista: https://claude.ai/artifact/XhWTz37RrGYU4gYHejZ77H. Sus capturas se sacaron sin gastar,
+abriendo la mesa guardada del ensayo con una casa sin modelo ni cuenta, en ancho y en móvil, en claro y en oscuro.
+Al mirarlas salieron dos fallos pequeños, arreglados (10.5 y 11.1): el reloj de cada suceso de la investigación, que en
+segundos sueltos se partía en dos líneas (ahora «38 s» y, desde el minuto, «4:03»; `reloj` en
+`web/src/lib/formato.ts`), y un correo largo, que se salía de su tarjeta en el móvil. Lo construido después del
+ensayo («Volver a intentarlo», las fechas contadas, los papeles mientras se busca y los frenos) está probado con
+asientos de mentira y no con IA de verdad: otro ensayo entero lo comprobaría, y espera el sí del PM.
+
+Lo de antes, por orden: El 23-nov el PM dio el visto bueno a la tanda 2 («okay») y con él
 empezó la 3, **el agente hace el viaje**. A media tanda dejó dicho lo que manda sobre todo lo demás: «esto se hace de forma generalista; no adaptes
 absolutamente nada para el caso concreto; tiene que servir para cualquier tipo de viaje».
 

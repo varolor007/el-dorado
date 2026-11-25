@@ -65,7 +65,7 @@ root y de solo lectura; y Claude Code recibe un entorno por lista, y su token se
 | M1 | Los contratos decían doscientas letras y las puertas dejaban trescientas | Coinciden (5.2) |
 | M2, M3 | Una frase vieja en el plan, y un pendiente sobre el techo de gasto que ya no era ese | Corregidos (0.4) |
 | M4 | Dos commits de la tanda sin número de punto | Queda dicho; los de estado llevan su número |
-| M5 | El ensayo se miró en dos de las cuatro combinaciones de ancho y de tema | Se completa en la página de la revisión |
+| M5 | El ensayo se miró en dos de las cuatro combinaciones de ancho y de tema | Mirado en las cuatro el 25-nov, sin gastar, con la mesa guardada del ensayo: 64 capturas, sin desbordes ni errores. Salieron dos fallos pequeños, arreglados (10.5 y 11.1). La página: https://claude.ai/artifact/XhWTz37RrGYU4gYHejZ77H |
 | M6 | Se supone una habitación para cualquier grupo, y los topes de grupo y de noches | Del PM |
 
 ## Lo que toca a la hoja: decide el PM
