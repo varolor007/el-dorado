@@ -10,9 +10,22 @@
 
 import { rotulosDe } from "../data/guia.ts";
 import { avisosDe } from "../data/palabras.ts";
-import type { CasillaDePapel, FilaDePapeles, Foto, Precio, Punto, Transporte, Viaje } from "../output/viaje.ts";
+import type {
+  Alojamiento,
+  CasillaDePapel,
+  ClaseDePieza,
+  EnlaceDeReserva,
+  FilaDePapeles,
+  Foto,
+  Precio,
+  PrecioDeHoy,
+  Punto,
+  Transporte,
+  Viaje,
+} from "../output/viaje.ts";
 import type { EntregaDeLaGuia } from "../gates/puerta_guia.ts";
 import { enlaceSinClaves } from "../tools/enlaces.ts";
+import { autorDe } from "../tools/sitios.ts";
 import { SIN_SABER } from "./formas.ts";
 import { deLaManera, paradasDelDia, type ParaLaGuia } from "./guia.ts";
 import { diasDe } from "./ruta.ts";
@@ -58,8 +71,36 @@ export type DiaDelCuaderno = {
 /** De qué va una cosa que hay que llevar hecha, por sus datos: una parada que se reserva, un papel o un aviso. */
 export type DeQueVa =
   | { clase: "book_ahead"; nombre: string }
-  | { clase: "paper"; pregunta: string; pais: string }
+  | { clase: "paper"; pregunta: string; pais: string; estado: string }
   | { clase: "dates"; nombre: string };
+
+/**
+ * De dónde sale un precio del cuaderno: del cierre, el que dio la fuente ese día (`closing`); el que se vio, porque al
+ * cerrar ya no estaba (`gone`) o no se pudo preguntar (`unknown`); o el de la investigación, en un viaje cerrado sin
+ * su cierre (`seen`).
+ */
+export type SegunDelPrecio = "closing" | "gone" | "unknown" | "seen";
+
+/** Un precio del cuaderno: su importe, cuándo se vio y de dónde sale. Sin enlace: los enlaces van en `reservas`. */
+export type PrecioDelCuaderno = {
+  total: number;
+  moneda: string;
+  visto: string;
+  segun: SegunDelPrecio;
+  /** Si el precio del cierre es de otra habitación que la que se miró. */
+  otraHabitacion: boolean;
+};
+
+/** Un enlace de reserva del cuaderno: los del cierre, con su clase, menos los que no respondieron al cerrar. */
+export type EnlaceDelCuaderno = {
+  clase: EnlaceDeReserva["clase"];
+  url: string;
+  vendedor: string | null;
+  /** El precio de otro vendedor, con el día en que se buscó: no es el del cierre, y se dice así. */
+  precio: { total: number; moneda: string; visto: string } | null;
+  /** Lo que se supo al cerrar: respondió, o no se pudo comprobar. Null en un viaje cerrado sin su cierre. */
+  comprobado: "ok" | "unchecked" | null;
+};
 
 export type Cuaderno = {
   formato: "guia/1";
@@ -82,7 +123,7 @@ export type Cuaderno = {
     punto: Punto;
     habitacion: string | null;
     estrellas: number | null;
-    precio: Precio;
+    precio: PrecioDelCuaderno;
   } | null;
   llegas: {
     clase: Transporte["clase"];
@@ -91,25 +132,79 @@ export type Cuaderno = {
     sale: string;
     vuelve: string | null;
     escalas: number | null;
-    precio: Precio;
+    precio: PrecioDelCuaderno;
     guardado: boolean;
   } | null;
   papeles: { viajeros: FilaDePapeles[]; casillas: CasillaDePapel[] } | null;
   /** Lo que hay que llevar hecho: de qué va cada cosa lo dicen los datos del viaje, y la frase, el que escribe. */
   antes: { item: number; de: DeQueVa | null; dice: string; plazo: string | null; tarde: boolean }[];
-  /** Dónde se reserva: solo lo que trae su enlace, de quien lo vende. */
-  reservas: { que: "stay" | "transport"; nombre: string; precio: Precio }[];
+  /**
+   * Dónde se reserva: cada pieza que trae algún enlace, con los suyos. `caidos` cuenta los que no respondieron al
+   * cerrar, que no se ponen.
+   */
+  reservas: {
+    que: "stay" | "transport";
+    nombre: string;
+    precio: PrecioDelCuaderno;
+    enlaces: EnlaceDelCuaderno[];
+    caidos: number;
+  }[];
+  /** El total del cierre, el de ese día; null en un viaje cerrado sin su cierre. */
+  total: { total: number; moneda: string; segun: "closing" | "unknown" } | null;
   noSeSabe: string[];
   avisos: { ia: string; precios: string };
   /** El día en que se vio el precio más antiguo del cuaderno: la fecha de los precios. Null si no lleva ninguno. */
   preciosDel: string | null;
 };
 
-/** Una foto solo entra con su autor y su licencia: sin ellos, no se enseña. */
+/**
+ * Una foto solo entra con su autor y su licencia: sin ellos, no se enseña. El autor, limpio como al leer la fuente: en
+ * un viaje guardado antes, puede ser la frase de Commons de que no hay un autor legible, con el supuesto dentro.
+ */
 function fotoQueVale(f: Foto | null): FotoDelCuaderno | null {
-  if (f === null || f.autor === null || f.licencia === null) return null;
-  if (f.autor.trim() === "" || f.licencia.trim() === "") return null;
-  return { url: f.url, autor: f.autor, licencia: f.licencia, pagina: f.pagina };
+  if (f === null || f.licencia === null || f.licencia.trim() === "") return null;
+  const autor = autorDe(f.autor);
+  if (autor === null || autor.trim() === "") return null;
+  return { url: f.url, autor, licencia: f.licencia, pagina: f.pagina };
+}
+
+/** El cierre de un viaje, si se cerró con su flujo: con sus precios y sus enlaces. */
+export const cierreDe = (v: Viaje): NonNullable<Viaje["cierre"]> | null =>
+  Array.isArray(v.cierre?.precios) && Array.isArray(v.cierre?.enlaces) ? v.cierre : null;
+
+/** El precio de una pieza en el cuaderno, por el cierre: el de ese día si lo dio la fuente, o el que se vio. */
+export function precioDelCierre(x: PrecioDeHoy): PrecioDelCuaderno {
+  if (x.hoy !== null) {
+    const { total, moneda, visto } = x.hoy;
+    return { total, moneda, visto, segun: "closing", otraHabitacion: x.habitacion === "other" };
+  }
+  const { total, moneda, visto } = x.antes;
+  return { total, moneda, visto, segun: x.cambio === "gone" ? "gone" : "unknown", otraHabitacion: false };
+}
+
+/** El precio que se vio en la investigación: el de un viaje cerrado sin su cierre. */
+const precioVisto = (p: Precio): PrecioDelCuaderno => ({
+  total: p.total,
+  moneda: p.moneda,
+  visto: p.visto,
+  segun: "seen",
+  otraHabitacion: false,
+});
+
+/** El día en que se buscó el precio de otro vendedor: el de su oferta, o el del precio que se vio. */
+export function vistoDeOtro(a: Alojamiento | undefined, url: string, antes: string): string {
+  return a?.otrasOfertas.find((o) => o.enlace === url)?.visto ?? antes;
+}
+
+/** Un enlace del cierre en el cuaderno, con su clase y, si es de otro vendedor, su precio con el día que se buscó. */
+function enlaceDelCierre(e: EnlaceDeReserva, a: Alojamiento | undefined, antes: string): EnlaceDelCuaderno {
+  return {
+    clase: e.clase,
+    url: e.url,
+    vendedor: e.vendedor,
+    precio: e.precio === null ? null : { ...e.precio, visto: vistoDeOtro(a, e.url, antes) },
+    comprobado: e.comprobado === "ok" ? "ok" : "unchecked",
+  };
 }
 
 /** El cuaderno de un viaje cerrado, con lo que escribió el asiento y pasó la puerta 10. */
@@ -161,23 +256,53 @@ export function montarCuaderno(
     });
     return { n: i + 1, fecha: d.fecha, titulo: suyo.title, entrada: suyo.intro, paradas, tramos };
   });
-  const precios: Precio[] = [];
+  // Los precios y los enlaces, del viaje cerrado: los de ese día. Un viaje cerrado sin su cierre lleva los de la
+  // investigación, con su enlace.
+  const cierre = cierreDe(v);
+  const vistos: string[] = [];
   const reservas: Cuaderno["reservas"] = [];
-  if (duerme !== null) {
-    precios.push(duerme.precio);
-    if (duerme.precio.enlace !== null) reservas.push({ que: "stay", nombre: duerme.nombre, precio: duerme.precio });
-  }
-  if (llega !== null) {
-    precios.push(llega.precio);
-    if (llega.precio.enlace !== null)
-      reservas.push({ que: "transport", nombre: `${llega.de} ${llega.a}`, precio: llega.precio });
-  }
+  const dePieza = (pieza: ClaseDePieza, x: Alojamiento | Transporte): PrecioDelCuaderno => {
+    const delCierre = cierre?.precios.find((p) => p.pieza === pieza && p.ref === x.id);
+    const precio = delCierre === undefined ? precioVisto(x.precio) : precioDelCierre(delCierre);
+    vistos.push(precio.visto);
+    let enlaces: EnlaceDelCuaderno[] = [];
+    let caidos = 0;
+    if (cierre === null) {
+      if (x.precio.enlace !== null)
+        enlaces = [
+          {
+            clase: pieza === "transport" ? "search" : "where_priced",
+            url: x.precio.enlace,
+            vendedor: x.precio.vendedor,
+            precio: null,
+            comprobado: null,
+          },
+        ];
+    } else {
+      const suyos = cierre.enlaces.filter((e) => e.pieza === pieza && e.ref === x.id);
+      caidos = suyos.filter((e) => e.comprobado === "down").length;
+      const a = pieza === "lodging" ? (x as Alojamiento) : undefined;
+      enlaces = suyos.filter((e) => e.comprobado !== "down").map((e) => enlaceDelCierre(e, a, x.precio.visto));
+      for (const e of enlaces) if (e.precio !== null) vistos.push(e.precio.visto);
+    }
+    if (enlaces.length > 0 || caidos > 0) {
+      const que = pieza === "lodging" ? "stay" : "transport";
+      const nombre = pieza === "lodging" ? (x as Alojamiento).nombre : `${(x as Transporte).de} ${(x as Transporte).a}`;
+      reservas.push({ que, nombre, precio, enlaces, caidos });
+    }
+    return precio;
+  };
+  const precioDuerme = duerme === null ? null : dePieza("lodging", duerme);
+  const precioLlega = llega === null ? null : dePieza("transport", llega);
+  const deLlegada = llega === null ? undefined : cierre?.precios.find((p) => p.pieza === "transport");
+  const guardado = deLlegada?.hoy != null ? deLlegada.edad !== "now" : (llega?.guardado ?? false);
   const plazos = new Map<number, { plazo: string | null; tarde: boolean }>();
   const deQue = new Map<number, DeQueVa>();
   const casillas = (v.papeles?.casillas ?? []).filter((c) => c.estado !== "in_order");
   for (const cosa of dado.todo) {
     // Un aviso de las fechas sin nombre propio no lleva rótulo: lo cuenta la frase del que escribe.
-    if (cosa.kind === "paper") deQue.set(cosa.item, { clase: "paper", pregunta: cosa.question, pais: cosa.country });
+    if (cosa.kind === "paper")
+      deQue.set(cosa.item, { clase: "paper", pregunta: cosa.question, pais: cosa.country, estado: cosa.state });
     else if (cosa.name !== SIN_SABER) deQue.set(cosa.item, { clase: cosa.kind, nombre: cosa.name });
     if (cosa.kind === "paper") {
       const c = casillas.find(
@@ -187,7 +312,7 @@ export function montarCuaderno(
     } else if (cosa.kind === "book_ahead") plazos.set(cosa.item, { plazo: null, tarde: false });
     else plazos.set(cosa.item, { plazo: cosa.trip_days[0] ?? null, tarde: false });
   }
-  const vistos = precios.map((p) => p.visto.slice(0, 10)).sort();
+  const dias10 = vistos.map((x) => x.slice(0, 10)).sort();
   const portada =
     dias.flatMap((d) => d.paradas).find((p) => p.imprescindible && p.foto !== null)?.foto ??
     dias.flatMap((d) => d.paradas).find((p) => p.foto !== null)?.foto ??
@@ -217,7 +342,7 @@ export function montarCuaderno(
             punto: duerme.punto,
             habitacion: duerme.habitacion,
             estrellas: duerme.estrellas,
-            precio: duerme.precio,
+            precio: precioDuerme as PrecioDelCuaderno,
           },
     llegas:
       llega === null
@@ -229,8 +354,8 @@ export function montarCuaderno(
             sale: llega.sale,
             vuelve: llega.vuelve,
             escalas: llega.escalas,
-            precio: llega.precio,
-            guardado: llega.guardado,
+            precio: precioLlega as PrecioDelCuaderno,
+            guardado,
           },
     papeles:
       v.papeles === undefined || v.papeles.casillas.length === 0 ? null : { viajeros: v.papeles.viajeros, casillas },
@@ -241,9 +366,17 @@ export function montarCuaderno(
       ...(plazos.get(t.item) ?? { plazo: null, tarde: false }),
     })),
     reservas,
+    total:
+      cierre === null
+        ? null
+        : {
+            total: cierre.total.hoy ?? cierre.total.antes,
+            moneda: cierre.moneda,
+            segun: cierre.total.hoy === null ? "unknown" : "closing",
+          },
     noSeSabe: escrita.unknowns,
     avisos: avisosDe(v.idioma),
-    preciosDel: vistos[0] ?? null,
+    preciosDel: dias10[0] ?? null,
   };
 }
 
@@ -308,7 +441,12 @@ export function proyectar(
   margen: number,
 ): { donde: (p: Punto) => EnElCroquis; metrosPorPunto: number } {
   const lats = puntos.map((p) => p.lat);
-  const lons = puntos.map((p) => p.lon);
+  // Si los puntos están a los dos lados del meridiano 180, las longitudes del oeste se cuentan pasado el 180: así
+  // quedan juntos, y no en los dos extremos de la caja.
+  const crudas = puntos.map((p) => p.lon);
+  const cruza = Math.max(...crudas) - Math.min(...crudas) > 180;
+  const lonDe = (l: number): number => (cruza && l < 0 ? l + 360 : l);
+  const lons = crudas.map(lonDe);
   const medio = (Math.min(...lats) + Math.max(...lats)) / 2;
   const encoge = Math.cos((medio * Math.PI) / 180);
   const xs = lons.map((l) => l * encoge);
@@ -324,7 +462,7 @@ export function proyectar(
   const sobraY = (alto - 2 * margen - altoY * escala) / 2 + ((altoY - (maxY - Math.min(...lats))) / 2) * escala;
   return {
     donde: (p) => ({
-      x: margen + sobraX + (p.lon * encoge - minX) * escala,
+      x: margen + sobraX + (lonDe(p.lon) * encoge - minX) * escala,
       y: margen + sobraY + (maxY - p.lat) * escala,
     }),
     metrosPorPunto: 111_320 / escala,
@@ -478,8 +616,8 @@ const ESTILO = [
   ".tabla td{text-align:left;padding:8px 10px 8px 0;border-top:1px solid var(--raya);vertical-align:top}",
   ".avisos{font-size:12.5px;color:var(--tinta-tenue);display:flex;flex-direction:column;gap:4px}",
   ".mota{width:8px;height:8px;border-radius:50%;background:var(--oro);margin:7px 0 0 9px}",
-  ".reserva{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;" +
-    "border-top:1px solid var(--raya)}",
+  ".reserva{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--raya)}",
+  ".enlaces{display:flex;flex-direction:column;gap:6px;padding-left:12px;border-left:2px solid var(--oro-tinte)}",
   "@media (max-width:820px){.doble{grid-template-columns:1fr}" +
     ".doble>.pagina+.pagina{border-left:0;border-top:1px solid var(--raya)}" +
     ".pagina{padding:28px 20px}h1{font-size:34px}h2{font-size:26px}.portada,.foto-portada{min-height:300px}}",
@@ -527,8 +665,25 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   const r = rotulosDe(c.idioma);
   const fotos = o.incrustadas ?? new Map<string, string>();
   const largo = (f: string): string => fechaLarga(c.idioma, f);
+  /** Un país por su nombre en el idioma del cuaderno; si no se sabe, por sus dos letras. */
+  const pais = (codigo: string): string => {
+    try {
+      return new Intl.DisplayNames([c.idioma], { type: "region" }).of(codigo) ?? codigo;
+    } catch {
+      return codigo;
+    }
+  };
   const corta = (f: string): string => fechaCorta(c.idioma, f);
-  const precio = (p: Precio): string => t("p", "num", r.precio(dinero(c.idioma, p), largo(p.visto)));
+  const precio = (p: PrecioDelCuaderno): string => {
+    const cuanto = dinero(c.idioma, p);
+    const dice =
+      p.segun === "closing"
+        ? r.precioAlCerrar(cuanto, largo(p.visto))
+        : p.segun === "seen"
+          ? r.precio(cuanto, largo(p.visto))
+          : r.precioSinConfirmar(cuanto, largo(p.visto), p.segun === "gone");
+    return t("p", "num", dice) + si(p.otraHabitacion, () => t("p", "nota", r.otraHabitacion));
+  };
   const pie = (f: FotoDelCuaderno): string => t("figcaption", null, r.foto(f.autor, f.licencia));
   const doble = (...paginas: string[]): string => h("section", "doble", ...paginas.map((x) => h("div", "pagina", x)));
   const hojas: string[] = [];
@@ -687,6 +842,18 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
       ),
     );
   }
+  if (c.total !== null) {
+    const x = c.total;
+    delViaje.push(
+      h(
+        "div",
+        null,
+        t("p", "lomo", r.total),
+        t("p", "num", dinero(c.idioma, x)),
+        si(x.segun === "unknown", () => t("p", "nota", r.totalSinConfirmar)),
+      ),
+    );
+  }
   const reservas = si(c.reservas.length > 0, () =>
     h(
       "div",
@@ -694,19 +861,45 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
       t("p", "lomo", r.reservas),
       ...c.reservas.map((x) => {
         const que = x.que === "stay" ? x.nombre : `${r.transporte[c.llegas?.clase ?? "flight"] ?? ""} ${x.nombre}`;
-        return h("div", "reserva", h("span", null, enlace(x.precio.enlace, que)), precio(x.precio));
+        const enlaces = x.enlaces.map((e) => {
+          const rotulo =
+            e.clase === "other_seller" && e.vendedor !== null
+              ? `${r.enlaceDe[e.clase]}: ${e.vendedor}`
+              : r.enlaceDe[e.clase];
+          return h(
+            "li",
+            null,
+            h("p", null, enlace(e.url, rotulo)),
+            e.precio === null ? "" : t("p", "num", r.otroPrecio(dinero(c.idioma, e.precio), largo(e.precio.visto))),
+            si(e.comprobado === "unchecked", () => t("p", "nota", r.sinComprobar)),
+          );
+        });
+        return h(
+          "div",
+          "reserva",
+          h("div", null, t("h3", null, que), precio(x.precio)),
+          h(
+            "ul",
+            "enlaces",
+            ...enlaces,
+            si(x.enlaces.length === 0, () => h("li", null, t("p", "nota", r.sinEnlace))),
+            si(x.caidos > 0, () => h("li", null, t("p", "nota", r.caidos(x.caidos)))),
+          ),
+        );
       }),
       t("p", "nota", r.reservaEn),
     ),
   );
 
   // Lo que hay que llevar hecho, con su plazo; y los papeles, con los suyos. De qué va cada cosa lo dicen los datos.
-  const deQueVa = (d: DeQueVa): string =>
-    d.clase === "paper"
-      ? `${(r.pregunta as Record<string, string>)[d.pregunta] ?? d.pregunta}, ${d.pais}`
-      : d.clase === "book_ahead"
-        ? `${d.nombre}. ${r.reservar}`
-        : d.nombre;
+  // Un papel se dice con su país por su nombre y con cómo está: «no está claro» no es lo mismo que «hay que hacerlo».
+  const deQueVa = (d: DeQueVa): string => {
+    if (d.clase === "book_ahead") return `${d.nombre}. ${r.reservar}`;
+    if (d.clase === "dates") return d.nombre;
+    const pregunta = (r.pregunta as Record<string, string>)[d.pregunta] ?? d.pregunta;
+    const estado = (r.estado as Record<string, string>)[d.estado];
+    return `${pregunta}, ${pais(d.pais)}${estado === undefined ? "" : `. ${estado}`}`;
+  };
   const antes = si(c.antes.length > 0, () =>
     h(
       "div",
@@ -744,7 +937,9 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
         .filter((s) => s !== "")
         .join(". ");
       const deQuien =
-        quien === undefined ? x.pais : `${r.viajero(quien.pasaporte, quien.edad, quien.cuantos)}, ${x.pais}`;
+        quien === undefined
+          ? r.paraEntrar(pais(x.pais))
+          : `${r.viajero(pais(quien.pasaporte), quien.edad, quien.cuantos)}. ${r.paraEntrar(pais(x.pais))}`;
       return h(
         "tr",
         null,

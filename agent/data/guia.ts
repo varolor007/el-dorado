@@ -1,7 +1,8 @@
 // Lo nuestro de la guía, en datos: lo que mide cada texto del que la escribe, las palabras que delatan un precio o una
 // hora, y los rótulos del cuaderno en cada idioma en que se escribe hoy. Los textos los escribe el asiento; los rótulos
-// (los títulos de cada página, lo que dice cada casilla) los pone el código. Al añadir un idioma, se añaden los suyos;
-// mientras no estén, el cuaderno sale con los rótulos en inglés y los textos en el idioma del viajero.
+// (los títulos de cada página, lo que dice cada casilla) los pone el código. La guía solo sale en los idiomas que
+// tienen sus rótulos, sus avisos y sus palabras prohibidas: en otro, no se pide. Al añadir un idioma, se añaden los
+// suyos y se pone en `IDIOMAS_DE_LA_GUIA`.
 
 import type { PREGUNTAS } from "./papeles.ts";
 
@@ -32,6 +33,15 @@ export const HORAS = [
   /(?<![\p{N}])(1[0-2]|0?[1-9])\s?(?:a\.?\s?m\.?|p\.?\s?m\.?)(?![\p{L}])/giu,
   /(?<![\p{L}])(?:a las|a la|at|hacia las|sobre las|desde las|hasta las)\s+([01]?\d|2[0-3])(?![\p{N}:.,])/giu,
 ];
+
+/**
+ * Los idiomas en que sale la guía: los que tienen sus rótulos aquí, sus avisos y sus palabras prohibidas en
+ * `palabras.ts`, y sus meses y sus días para la puerta 10. En otro, la guía no se pide: no hay rótulos por defecto.
+ */
+export const IDIOMAS_DE_LA_GUIA = ["en", "es"] as const;
+
+/** Las clases de un enlace de reserva, como las guarda el cierre. */
+type ClaseDeEnlace = "where_priced" | "other_seller" | "search" | "own_site";
 
 type Rotulos = {
   guia: string;
@@ -65,6 +75,18 @@ type Rotulos = {
   habitacion: string;
   estrellas: (n: number) => string;
   precio: (dinero: string, visto: string) => string;
+  /** El precio que dio la fuente al cerrar el viaje, con el día en que se vio. */
+  precioAlCerrar: (dinero: string, visto: string) => string;
+  /** El precio que se vio, cuando al cerrar ya no estaba o no se pudo preguntar. */
+  precioSinConfirmar: (dinero: string, visto: string, yaNoEsta: boolean) => string;
+  otraHabitacion: string;
+  total: string;
+  totalSinConfirmar: string;
+  enlaceDe: Record<ClaseDeEnlace, string>;
+  otroPrecio: (dinero: string, visto: string) => string;
+  sinComprobar: string;
+  caidos: (n: number) => string;
+  sinEnlace: string;
   vendedor: string;
   transporte: Record<string, string>;
   ida: string;
@@ -76,6 +98,7 @@ type Rotulos = {
   hasta: (fecha: string) => string;
   antesDe: (fecha: string, tarde: boolean) => string;
   viajero: (pasaporte: string, edad: number | null, cuantos: number) => string;
+  paraEntrar: (pais: string) => string;
   deLasFechas: string;
   hecha: (fecha: string, version: number) => string;
   atras: string;
@@ -123,6 +146,26 @@ export const ROTULOS: Record<string, Rotulos> = {
     habitacion: "Room",
     estrellas: (n) => cuenta(n, "star", "stars"),
     precio: (dinero, visto) => `${dinero}, seen on ${visto}`,
+    precioAlCerrar: (dinero, visto) => `${dinero}, the price when you closed the trip, seen on ${visto}`,
+    precioSinConfirmar: (dinero, visto, yaNoEsta) =>
+      `${dinero}, seen on ${visto}. ` +
+      (yaNoEsta
+        ? "When you closed the trip, the seller no longer had it"
+        : "When you closed the trip, it could not be checked"),
+    otraHabitacion: "This price is for another room than the one first seen",
+    total: "In total",
+    totalSinConfirmar: "With the prices seen: one of them could not be confirmed when you closed the trip",
+    enlaceDe: {
+      where_priced: "Where this price was seen",
+      search: "The search with your dates",
+      other_seller: "Another seller",
+      own_site: "The lodging's own website, not where the price was seen",
+    },
+    otroPrecio: (dinero, visto) => `${dinero}, seen on ${visto}, the day of the search`,
+    sinComprobar: "This link could not be checked when you closed the trip",
+    caidos: (n) =>
+      `${cuenta(n, "link", "links")} did not answer when you closed the trip, and ${n === 1 ? "is" : "are"} left out`,
+    sinEnlace: "No link to book it answered when you closed the trip",
     vendedor: "Sold by",
     transporte: { flight: "Flight", train: "Train", bus: "Coach", car: "Car" },
     ida: "Out",
@@ -152,8 +195,9 @@ export const ROTULOS: Record<string, Rotulos> = {
     hasta: (fecha) => `The passport has to be valid until at least ${fecha}`,
     antesDe: (fecha, tarde) => (tarde ? `It had to be done by ${fecha}` : `Do it before ${fecha}`),
     viajero: (pasaporte, edad, cuantos) =>
-      `${cuenta(cuantos, "traveller", "travellers")} with a ${pasaporte} passport` +
+      `${cuenta(cuantos, "traveller", "travellers")} with a passport from ${pasaporte}` +
       (edad === null ? "" : `, aged ${edad}`),
+    paraEntrar: (pais) => `To enter ${pais}`,
     deLasFechas: "In your dates",
     hecha: (fecha, version) => `Made on ${fecha}, from version ${version} of your trip.`,
     atras: "Your trip has changed since this guide was made: ask for it again to have it up to date.",
@@ -197,6 +241,26 @@ export const ROTULOS: Record<string, Rotulos> = {
     habitacion: "Habitación",
     estrellas: (n) => cuenta(n, "estrella", "estrellas"),
     precio: (dinero, visto) => `${dinero}, visto el ${visto}`,
+    precioAlCerrar: (dinero, visto) => `${dinero}, el precio al cerrar el viaje, visto el ${visto}`,
+    precioSinConfirmar: (dinero, visto, yaNoEsta) =>
+      `${dinero}, visto el ${visto}. ` +
+      (yaNoEsta ? "Al cerrar el viaje, quien lo vende ya no lo tenía" : "Al cerrar el viaje, no se pudo comprobar"),
+    otraHabitacion: "Este precio es de otra habitación que la que se vio primero",
+    total: "En total",
+    totalSinConfirmar: "Con los precios vistos: uno no se pudo confirmar al cerrar el viaje",
+    enlaceDe: {
+      where_priced: "Donde se vio este precio",
+      search: "La búsqueda con tus fechas",
+      other_seller: "Otro vendedor",
+      own_site: "La web del propio alojamiento, que no es donde se vio el precio",
+    },
+    otroPrecio: (dinero, visto) => `${dinero}, visto el ${visto}, el día de la búsqueda`,
+    sinComprobar: "Este enlace no se pudo comprobar al cerrar el viaje",
+    caidos: (n) =>
+      n === 1
+        ? "Un enlace no respondió al cerrar el viaje, y no se pone"
+        : `${n} enlaces no respondieron al cerrar el viaje, y no se ponen`,
+    sinEnlace: "Al cerrar el viaje, no respondió ningún enlace para reservarlo",
     vendedor: "Lo vende",
     transporte: { flight: "Vuelo", train: "Tren", bus: "Autobús", car: "Coche" },
     ida: "Ida",
@@ -226,7 +290,9 @@ export const ROTULOS: Record<string, Rotulos> = {
     hasta: (fecha) => `El pasaporte tiene que valer al menos hasta el ${fecha}`,
     antesDe: (fecha, tarde) => (tarde ? `Había que hacerlo antes del ${fecha}` : `Hazlo antes del ${fecha}`),
     viajero: (pasaporte, edad, cuantos) =>
-      `${cuenta(cuantos, "viajero", "viajeros")} con pasaporte ${pasaporte}${edad === null ? "" : `, de ${edad} años`}`,
+      `${cuenta(cuantos, "viajero", "viajeros")} con pasaporte de ${pasaporte}` +
+      (edad === null ? "" : `, de ${edad} años`),
+    paraEntrar: (pais) => `Para entrar en ${pais}`,
     deLasFechas: "En tus fechas",
     hecha: (fecha, version) => `Hecha el ${fecha}, con la versión ${version} de tu viaje.`,
     atras: "Tu viaje ha cambiado desde que se hizo esta guía: pídela otra vez para tenerla al día.",
@@ -236,7 +302,11 @@ export const ROTULOS: Record<string, Rotulos> = {
   },
 };
 
-/** Los rótulos en el idioma del viajero; si en el suyo no están escritos, en inglés. */
+/** Si la guía sale en un idioma: si tiene sus rótulos, sus avisos y sus palabras prohibidas. */
+export const hayGuiaEn = (idioma: string): boolean => (IDIOMAS_DE_LA_GUIA as readonly string[]).includes(idioma);
+
+/** Los rótulos en el idioma del viajero. En uno en que la guía no sale no hay rótulos: no se pone otro callando. */
 export function rotulosDe(idioma: string): Rotulos {
-  return Object.hasOwn(ROTULOS, idioma) ? ROTULOS[idioma] : ROTULOS.en;
+  if (!hayGuiaEn(idioma) || !Object.hasOwn(ROTULOS, idioma)) throw new Error(`la guía no sale en ${idioma}`);
+  return ROTULOS[idioma];
 }

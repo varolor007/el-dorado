@@ -92,10 +92,10 @@ const palabrasDe = (texto: string): string[] => texto.match(/\p{L}[\p{L}\p{M}'�
 /** Las palabras con mayúscula que no abren una frase: lo que tiene pinta de nombre propio. */
 function nombresEn(texto: string): string[] {
   const nombres: string[] = [];
-  for (const frase of texto.split(/(?<=[.!?:;¡¿«"“(])\s*/)) {
+  for (const frase of texto.split(/(?<=[.!?:;¡¿«"“(\n])\s*|\s+[-\u2013]\s+/)) {
     const palabras = palabrasDe(frase);
     palabras.forEach((p, i) => {
-      if (i > 0 && p.length > 1 && /^\p{Lu}/u.test(p)) nombres.push(p);
+      if (i > 0 && p.length > 1 && /^\p{Lu}/u.test(p) && !/^I['’]/u.test(p)) nombres.push(p);
     });
   }
   return nombres;
@@ -167,10 +167,19 @@ export function hayAlgoSinSaberEnLaGuia(dado: ParaLaGuia): boolean {
   );
 }
 
-export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): Veredicto {
+/**
+ * El veredicto de la puerta 10 sobre lo escrito: los rojos, que vuelven al asiento, y los avisos, que no paran nada y
+ * se guardan con el veredicto para quien lo revise.
+ */
+export type VeredictoDeLaGuia = Veredicto & { avisos: Rojo[] };
+
+export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLaGuia {
   const rojos: Rojo[] = [];
+  const avisos: Rojo[] = [];
   const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
-  if (!esObjeto(entrega)) return { verde: false, rojos: [{ donde: "delivery", que: "la entrega no es un objeto" }] };
+  const aviso = (donde: string, que: string): void => void avisos.push({ donde, que });
+  if (!esObjeto(entrega))
+    return { verde: false, rojos: [{ donde: "delivery", que: "la entrega no es un objeto" }], avisos };
   const { dado } = m;
 
   for (const campo of LO_QUE_LLEVA) if (!(campo in entrega)) rojo(campo, "falta en la entrega");
@@ -213,9 +222,11 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): Veredicto {
         rojo(donde, `dice la hora ${h}, que no está en el viaje`);
     for (const n of numerosDeMas(v, numeros)) rojo(donde, `dice ${n}, que no está en el viaje`);
     for (const otro of prohibidos) if (nombra(v, otro)) rojo(donde, `nombra «${otro}», que no es una parada del viaje`);
+    // Una palabra con mayúscula que no está en el material no es un rojo: el código no distingue un sitio inventado
+    // de «Gótico» o de «Christmas». Se avisa, para quien revise; un sitio conocido que no es del viaje, sí es rojo.
     if (conNombres)
       for (const nombre of new Set(nombresEn(v)))
-        if (!delMaterial.has(nombre.toLowerCase())) rojo(donde, `nombra «${nombre}», que no está en el viaje`);
+        if (!delMaterial.has(nombre.toLowerCase())) aviso(donde, `nombra «${nombre}», que no está en el viaje`);
   };
 
   // La portada.
@@ -305,7 +316,7 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): Veredicto {
   noSe.forEach((v, i) => texto(`unknowns[${i}]`, v));
   if (hayAlgoSinSaberEnLaGuia(dado) && noSe.length === 0)
     rojo("unknowns", "hay cosas que no se saben y no se le dicen al viajero");
-  return { verde: rojos.length === 0, rojos };
+  return { verde: rojos.length === 0, rojos, avisos };
 }
 
 /** Una dirección que se puede abrir: https, sin usuario ni clave dentro, tampoco en su consulta. */
@@ -344,22 +355,110 @@ export function puertaCuaderno(c: Cuaderno, v: Viaje, version: number = v.versio
     if (!direccionQueVale(f.url)) rojo(donde, "la foto no es una dirección https sin claves");
     if (f.pagina !== null && !direccionQueVale(f.pagina)) rojo(donde, "la página de la foto no es una dirección https");
   }
-  // Cada precio, del viaje y con su fecha.
-  const deLaCasa = [...v.alojamientos.map((a) => a.precio), ...v.transportes.map((t) => t.precio)];
+  // Cada precio y cada enlace, del viaje cerrado: los de ese día, si se cerró con su flujo; si no, los del viaje.
   const precios = [
-    ...(c.duermes === null ? [] : [{ donde: "duermes.precio", p: c.duermes.precio }]),
-    ...(c.llegas === null ? [] : [{ donde: "llegas.precio", p: c.llegas.precio }]),
-    ...c.reservas.map((r, i) => ({ donde: `reservas[${i}].precio`, p: r.precio })),
+    ...(c.duermes === null ? [] : [{ donde: "duermes.precio", p: c.duermes.precio, pieza: "lodging" as const }]),
+    ...(c.llegas === null ? [] : [{ donde: "llegas.precio", p: c.llegas.precio, pieza: "transport" as const }]),
+    ...c.reservas.map((r, i) => ({
+      donde: `reservas[${i}].precio`,
+      p: r.precio,
+      pieza: r.que === "stay" ? ("lodging" as const) : ("transport" as const),
+    })),
   ];
-  for (const { donde, p } of precios) {
+  for (const { donde, p } of precios)
     if (Number.isNaN(Date.parse(p.visto))) rojo(donde, "el precio no dice cuándo se vio");
-    if (
-      !deLaCasa.some(
-        (x) => x.total === p.total && x.moneda === p.moneda && x.visto === p.visto && x.enlace === p.enlace,
+  for (const [i, r] of c.reservas.entries())
+    r.enlaces.forEach((e, j) => {
+      if (!direccionQueVale(e.url))
+        rojo(`reservas[${i}].enlaces[${j}]`, "el enlace no es una dirección https sin claves");
+      if (e.precio !== null && Number.isNaN(Date.parse(e.precio.visto)))
+        rojo(`reservas[${i}].enlaces[${j}]`, "el precio de otro vendedor no dice cuándo se vio");
+    });
+  const cierre = Array.isArray(v.cierre?.precios) && Array.isArray(v.cierre?.enlaces) ? v.cierre : null;
+  if (cierre === null) {
+    const deLaCasa = [...v.alojamientos.map((a) => a.precio), ...v.transportes.map((t) => t.precio)];
+    for (const { donde, p } of precios)
+      if (
+        p.segun !== "seen" ||
+        p.otraHabitacion ||
+        !deLaCasa.some((x) => x.total === p.total && x.moneda === p.moneda && x.visto === p.visto)
       )
-    )
-      rojo(donde, "ese precio no es uno del viaje");
-    if (p.enlace !== null && !direccionQueVale(p.enlace)) rojo(donde, "el enlace no es una dirección https sin claves");
+        rojo(donde, "ese precio no es uno del viaje");
+    for (const [i, r] of c.reservas.entries())
+      r.enlaces.forEach((e, j) => {
+        if (!deLaCasa.some((x) => x.enlace === e.url) || e.comprobado !== null || e.precio !== null)
+          rojo(`reservas[${i}].enlaces[${j}]`, "ese enlace no es uno del viaje");
+      });
+    if (c.total !== null) rojo("total", "lleva un total, y el viaje no se cerró con sus precios de ese día");
+  } else {
+    for (const { donde, p, pieza } of precios) {
+      const suyo = cierre.precios.find((x) => x.pieza === pieza);
+      if (suyo === undefined) {
+        rojo(donde, "esa pieza no tiene precio en el viaje cerrado");
+        continue;
+      }
+      // Lo que tiene que decir, contado aquí y no con las cuentas del cuaderno: el de ese día si lo hay, y si no, el
+      // que se vio, dicho como tal.
+      const de = suyo.hoy ?? suyo.antes;
+      const debe = {
+        total: de.total,
+        moneda: de.moneda,
+        visto: de.visto,
+        segun: suyo.hoy !== null ? "closing" : suyo.cambio === "gone" ? "gone" : "unknown",
+        otraHabitacion: suyo.hoy !== null && suyo.habitacion === "other",
+      };
+      if (
+        p.total !== debe.total ||
+        p.moneda !== debe.moneda ||
+        p.visto !== debe.visto ||
+        p.segun !== debe.segun ||
+        p.otraHabitacion !== debe.otraHabitacion
+      )
+        rojo(donde, "ese precio no es el del viaje cerrado: el de ese día, o el que se vio dicho como tal");
+    }
+    const queDuerme = v.alojamientos.find((a) => a.id === cierre.alojamiento)?.nombre;
+    if (c.duermes !== null && c.duermes.nombre !== queDuerme)
+      rojo("duermes", "no es donde se duerme en el viaje cerrado");
+    const total = cierre.total.hoy ?? cierre.total.antes;
+    const segun = cierre.total.hoy === null ? "unknown" : "closing";
+    if (c.total === null || c.total.total !== total || c.total.moneda !== cierre.moneda || c.total.segun !== segun)
+      rojo("total", "no lleva el total del viaje cerrado");
+    for (const pieza of ["lodging", "transport"] as const) {
+      const suyos = cierre.enlaces.filter((e) => e.pieza === pieza);
+      const que = pieza === "lodging" ? "stay" : "transport";
+      const i = c.reservas.findIndex((r) => r.que === que);
+      const r = c.reservas[i];
+      if (r === undefined) {
+        if (suyos.length > 0) rojo("reservas", "falta dónde se reserva una pieza que tiene sus enlaces");
+        continue;
+      }
+      // El precio de otro vendedor, con el día en que se buscó: el de su oferta, o el del precio que se vio.
+      const diaDeOtro = (x: { ref: string; url: string }): string =>
+        v.alojamientos.find((a) => a.id === x.ref)?.otrasOfertas.find((o) => o.enlace === x.url)?.visto ?? antes;
+      const antes = cierre.precios.find((x) => x.pieza === pieza)?.antes.visto ?? "";
+      r.enlaces.forEach((e, j) => {
+        const aqui = `reservas[${i}].enlaces[${j}]`;
+        const x = suyos.find((y) => y.url === e.url);
+        if (x === undefined) return rojo(aqui, "ese enlace no es uno del viaje cerrado");
+        if (x.comprobado === "down") return rojo(aqui, "ese enlace no respondió al cerrar el viaje");
+        const precio = x.precio === null ? null : { ...x.precio, visto: diaDeOtro(x) };
+        if (
+          e.clase !== x.clase ||
+          e.vendedor !== x.vendedor ||
+          e.comprobado !== x.comprobado ||
+          JSON.stringify(e.precio) !== JSON.stringify(precio)
+        )
+          rojo(
+            aqui,
+            "ese enlace no dice lo que dice el viaje cerrado: su clase, su vendedor, su precio o si respondió",
+          );
+      });
+      for (const x of suyos)
+        if (x.comprobado !== "down" && !r.enlaces.some((e) => e.url === x.url))
+          rojo(`reservas[${i}]`, "falta un enlace del viaje cerrado");
+      if (r.caidos !== suyos.filter((x) => x.comprobado === "down").length)
+        rojo(`reservas[${i}]`, "no dice cuántos enlaces no respondieron al cerrar");
+    }
   }
   if (precios.length > 0 && (c.preciosDel === null || Number.isNaN(Date.parse(c.preciosDel))))
     rojo("preciosDel", "lleva precios y no dice de cuándo son");

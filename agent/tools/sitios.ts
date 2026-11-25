@@ -236,7 +236,7 @@ const sinMarcas = (html: unknown): string | null => {
  */
 const AUTOR_SUPUESTO = /^No machine-readable author provided\.?\s*(?:(.+?)\s+assumed(?:\s*\(.*\))?\.?)?$/i;
 
-const autorDe = (artista: unknown): string | null => {
+export const autorDe = (artista: unknown): string | null => {
   const limpio = sinMarcas(artista);
   if (limpio === null) return null;
   const supuesto = AUTOR_SUPUESTO.exec(limpio);

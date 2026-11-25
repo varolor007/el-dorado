@@ -5,10 +5,20 @@ import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Lanzador } from "../../../agent/launcher/asiento.ts";
-import { abrirViaje, guardarVersion, nuevoRun, pasar, type ViajeEnLaMesa } from "../../../agent/launcher/mesa.ts";
+import { elegir, llevarElCierre, seguir, type FuentesDelCierre } from "../../../agent/launcher/cerrar.ts";
+import {
+  abrirViaje,
+  guardarVersion,
+  leerViaje,
+  nuevoCierre,
+  nuevoRun,
+  pasar,
+  type ViajeEnLaMesa,
+} from "../../../agent/launcher/mesa.ts";
 import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
 import type { Viaje } from "../../../agent/output/viaje.ts";
 import type { ParaLaGuia } from "../../../agent/scripts/guia.ts";
+import type { FuenteAlojamiento, FuenteTransporte } from "../../../agent/tools/fuentes/tipos.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
 import { leerJson, seisPasos, type Objeto } from "./asientos.ts";
 import { ENTENDIDO } from "./investigacion.ts";
@@ -127,6 +137,129 @@ export function viajeCerradoEnLaMesa(o: { dueno?: string; mesa?: string; viaje?:
   guardarVersion(v, 1, "first", HOY);
   pasar(v, "closed", HOY);
   return { mesa, v };
+}
+
+/** Cuándo se cierra el viaje inventado por su flujo: la víspera del día en que se pide la guía. */
+export const AL_CERRAR = new Date("2027-01-09T10:00:00Z");
+/** Los enlaces del viaje inventado cerrado por su flujo, y lo que responde cada uno al cerrar. */
+export const ENLACES_DEL_CIERRE = {
+  hotel: "https://reservas.inventado.example/hotel",
+  otro: "https://otra.inventada.example/hotel?in=2027-02-12",
+  web: "https://hotel.inventado.example/",
+  vuelo: "https://www.aviasales.com/search/AAA1202ZZZ14021",
+};
+
+/** Una fuente de alojamiento de mentira: da hoy el total que se le diga, para las noches que se le piden. */
+function alojamientoDeHoy(total: number | null): FuenteAlojamiento {
+  return {
+    nombre: "inventada",
+    lista: async () => [],
+    detalle: async () => {
+      throw new Error("no hace falta");
+    },
+    opiniones: async () => [],
+    precios: async (ids, e) =>
+      total === null
+        ? []
+        : [
+            {
+              fuente: "inventada",
+              visto: AL_CERRAR.toISOString(),
+              id: ids[0],
+              total,
+              tasasAparte: 0,
+              moneda: "EUR",
+              habitacion: "Doble",
+              idHabitacion: null,
+              regimen: null,
+              cancelable: true,
+              entrada: e.entrada,
+              salida: e.salida,
+              adultos: e.adultos,
+              habitaciones: e.habitaciones,
+              vendedor: "inventada",
+              enlace: null,
+            },
+          ],
+  };
+}
+
+/** Una fuente de vuelos de mentira: el mismo vuelo, al precio por billete que se le diga. */
+function vueloDeHoy(porBillete: number): FuenteTransporte {
+  return {
+    nombre: "inventada",
+    lugares: async () => ({ aeropuertos: [], ciudades: [] }),
+    fechas: async (t) => [
+      {
+        fuente: "inventada",
+        visto: AL_CERRAR.toISOString(),
+        origen: t.origen,
+        destino: t.destino,
+        sale: "2027-02-12T08:00:00+01:00",
+        vuelve: "2027-02-14T18:00:00+01:00",
+        aerolinea: "ZZ",
+        numero: "1",
+        precio: porBillete,
+        pasajeros: 1,
+        moneda: "EUR",
+        escalasIda: 0,
+        escalasVuelta: 0,
+        minutos: 360,
+        minutosIda: 180,
+        guardado: false,
+        enlace: ENLACES_DEL_CIERRE.vuelo,
+      },
+    ],
+  };
+}
+
+/**
+ * El viaje inventado, cerrado de verdad por su flujo (8.4) con fuentes de mentira y sin IA, con la mejor manera: el
+ * hotel, al cerrar, cuesta lo que se diga (por defecto, un 30 % más), el viajero sigue igual, y su enlace de donde se
+ * vio el precio no responde. La web del hotel responde; la del otro vendedor y el vuelo, no se pueden comprobar.
+ */
+export async function viajeCerradoPorSuFlujo(o: { hotelHoy?: number | null } = {}): Promise<{
+  mesa: string;
+  v: ViajeEnLaMesa;
+}> {
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-guia-"));
+  const viaje = viajeParaLaGuia();
+  viaje.alojamientos[0].precio.enlace = ENLACES_DEL_CIERRE.hotel;
+  viaje.alojamientos[0].otrasOfertas[0] = {
+    ...viaje.alojamientos[0].otrasOfertas[0],
+    vendedor: "Otra Inventada",
+    enlace: ENLACES_DEL_CIERRE.otro,
+  };
+  viaje.transportes[0].sale = "2027-02-12T08:00:00+01:00";
+  viaje.transportes[0].vuelve = "2027-02-14T18:00:00+01:00";
+  viaje.transportes[0].precio.enlace = ENLACES_DEL_CIERRE.vuelo;
+  viaje.transportes[0].precio.vendedor = "ZZ";
+  const entendido = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: viaje.entrada, check_out: viaje.salida } };
+  const v = abrirViaje({ dueno: "ana", entendido, mesa, cuando: AL_CERRAR, id: "viaje-inventado" });
+  pasar(v, "confirmed", AL_CERRAR);
+  const run = nuevoRun(v, AL_CERRAR);
+  writeFileSync(join(run, "viaje.json"), JSON.stringify(viaje));
+  writeFileSync(join(run, "sucesos.json"), JSON.stringify(SUCESOS_INVENTADOS));
+  writeFileSync(join(run, "sitios.json"), JSON.stringify(sitiosInventados()));
+  const finalista = { alojamiento: { id: "a1" }, detalle: { web: ENLACES_DEL_CIERRE.web, entradaDesde: "14:00" } };
+  writeFileSync(join(run, "busqueda.json"), JSON.stringify({ busqueda: { finalistas: [finalista] } }));
+  guardarVersion(v, 1, "first", AL_CERRAR);
+  const fuentes: FuentesDelCierre = {
+    alojamiento: alojamientoDeHoy(o.hotelHoy === undefined ? 312 : o.hotelHoy),
+    transporte: vueloDeHoy(60),
+    comprobar: async (url) =>
+      url === ENLACES_DEL_CIERRE.hotel ? "down" : url === ENLACES_DEL_CIERRE.web ? "ok" : "unchecked",
+  };
+  const c = nuevoCierre(v, AL_CERRAR);
+  elegir(v, c.carpeta, "best_value", AL_CERRAR);
+  const al = { fuentes, lanzador: null, ahora: () => AL_CERRAR };
+  let r = await llevarElCierre(v, c, al);
+  if (r.etapa === "yours") {
+    seguir(c.carpeta, AL_CERRAR);
+    r = await llevarElCierre(v, c, al);
+  }
+  if (r.etapa !== "done") throw new Error(`el viaje inventado no se cerró: ${r.etapa}`);
+  return { mesa, v: leerViaje(v.ficha.id, "ana", mesa) };
 }
 
 /** Lo que escribiría un que escribe la guía aplicado: solo con los nombres y los números de su material. */
