@@ -957,6 +957,20 @@ const en = {
       calendar: "the date warnings",
       trip: "your trip on the map",
     } as Record<string, string>,
+    // Un cambio que se paró sin dar su versión: tu viaje sigue como estaba.
+    parado: {
+      titulo: "Your last change stopped",
+      texto: (cambios: string) =>
+        cambios === ""
+          ? "We could not finish it. Nothing has changed: this is still the trip you had."
+          : `We could not finish redoing it with ${cambios}. Nothing has changed: this is still the trip you had.`,
+      otraVez: "Try again",
+      gasta: "It repeats only the step that stopped. It uses AI, so it may cost a little.",
+      otraVezNo: "It cannot be tried again as it is. You can change it again, or leave it.",
+      dejar: "Leave it",
+      mandando: "Trying again",
+      fallo: "We could not try again now. Try again in a moment.",
+    },
   },
   // El alojamiento, a ratos (8.2): desde la ficha de un alojamiento tuyo, tus gustos, dormir aquí, buscar otra vez y
   // preguntar por él.
@@ -2100,6 +2114,20 @@ const es: Textos = {
       explain: "lo que gana y pierde cada manera",
       calendar: "los avisos de las fechas",
       trip: "tu viaje en el mapa",
+    },
+    parado: {
+      titulo: "Tu último cambio se paró",
+      texto: (cambios) =>
+        cambios === ""
+          ? "No hemos podido acabarlo. No ha cambiado nada: este sigue siendo el viaje que tenías."
+          : `No hemos podido acabar de rehacerlo con ${cambios}. ` +
+            "No ha cambiado nada: este sigue siendo el viaje que tenías.",
+      otraVez: "Volver a intentarlo",
+      gasta: "Repite solo el paso que se paró. Usa IA, así que puede costar un poco.",
+      otraVezNo: "Así no se puede volver a intentar. Puedes cambiarlo otra vez, o dejarlo.",
+      dejar: "Dejarlo",
+      mandando: "Volviendo a intentarlo",
+      fallo: "Ahora no hemos podido volver a intentarlo. Prueba otra vez en un momento.",
     },
   },
   // El alojamiento, a ratos (8.2).

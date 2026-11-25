@@ -478,7 +478,7 @@ test("un cambio que se para: el viaje sigue como su versión, se ve, se elige, s
     assert.equal(parado.trip.state, "on_map");
     assert.equal(parado.trip.version, 1);
     assert.equal(parado.understood.budget, antes.budget);
-    assert.deepEqual(parado.research.change, { from: 1, run: 2 });
+    assert.deepEqual(parado.research.change, { from: 1, run: 2, changes: ["budget"] });
     // Nada ha cambiado: sus piezas no están por rehacer.
     const piezas = (await pide("GET", `/viajes/${id}/piezas`)).cuerpo.pieces;
     assert.ok(!JSON.stringify(piezas).includes('"redo"'));
@@ -542,7 +542,7 @@ test("un cambio a medias que nadie lleva tras un corte: se para, y el viaje qued
     const r = await pide("GET", `/viajes/${id}`);
     assert.equal(r.cuerpo.trip.state, "on_map");
     assert.ok(r.cuerpo.research.stopped);
-    assert.deepEqual(r.cuerpo.research.change, { from: 1, run: 2 });
+    assert.deepEqual(r.cuerpo.research.change, { from: 1, run: 2, changes: ["budget"] });
     assert.equal((await pide("POST", `/viajes/${id}/reintentar`)).estado, 202);
     await esperarA(pide, id, 2);
   });

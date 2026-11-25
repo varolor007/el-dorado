@@ -19,7 +19,7 @@ import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
-import { ElImpacto, TusVersiones } from "../../../piezas/Momentos.tsx";
+import { ElImpacto, TuCambioParado, TusVersiones } from "../../../piezas/Momentos.tsx";
 import { TuAlojamiento } from "../../../piezas/Alojamiento.tsx";
 import type { GustoMarcado } from "../../../../../agent/scripts/alojamiento.ts";
 import { ElTransporte } from "../../../piezas/ElTransporte.tsx";
@@ -113,6 +113,9 @@ export default function Planear() {
   const versiones = useVersiones(pedido != null && enElMapa ? pedido : null, version);
   // Cambiar lo que pediste (8.5): con el viaje en el mapa, cerrado o con su investigación parada. ?at=change lo abre.
   const parado = vivo.estado?.research?.stopped != null && vivo.estado?.research?.running !== true;
+  // Tu último cambio se paró sin dar su versión: el viaje sigue como esa versión, y se dice encima.
+  const cambio = vivo.estado?.research?.change ?? null;
+  const cambioParado = enElMapa && parado && cambio != null && cambio.from === version ? cambio : null;
   const para = useParaCambiar(pedido != null && (enElMapa || parado) ? pedido : null, `${comoEsta}|${version}`);
   const [cambiando, setCambiando] = useState(false);
   useEffect(() => setCambiando(new URLSearchParams(window.location.search).get("at") === "change"), []);
@@ -612,6 +615,14 @@ export default function Planear() {
         !enElTransporte &&
         !conCambios && (
           <Hoja etiqueta={t.viaje.rotulo}>
+            {cambioParado !== null && pedido != null && (
+              <TuCambioParado
+                {...comun}
+                id={pedido}
+                cambio={cambioParado}
+                sePuede={vivo.estado?.research?.stopped?.options?.includes("retry") ?? false}
+              />
+            )}
             <TuViaje
               {...comun}
               viaje={viaje}

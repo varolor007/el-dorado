@@ -310,9 +310,9 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
 }
 
 /** De qué versión parte el último run si rehace una por un cambio, y su número; null si no la rehace. */
-function cambioDeCara(v: ViajeEnLaMesa, run: string): { from: number; run: number } | null {
+function cambioDeCara(v: ViajeEnLaMesa, run: string): { from: number; run: number; changes: string[] } | null {
   const r = rehechoDe(run);
-  return r === null ? null : { from: r.version, run: v.ficha.runs.length };
+  return r === null ? null : { from: r.version, run: v.ficha.runs.length, changes: [...r.cambio] };
 }
 
 /** Lo que ha gastado una cuenta, dicho para la web: números y fechas, y de cada viaje, a dónde va. */
