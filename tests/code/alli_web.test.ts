@@ -31,6 +31,7 @@ import {
   billeteSuelto,
   comidasQueSeEnsenan,
   grupoDelViaje,
+  conTransporte,
   loQueTeConviene,
   paraLlegar,
   paraTuGrupo,
@@ -276,8 +277,7 @@ test("una sola cuenta de los tramos: los que la web dice que no se andan son los
       if (d.paradas.length === 0) return 0;
       const puntos = [cama, ...d.paradas.map((id) => punto.get(id)!), cama];
       let n = 0;
-      for (let i = 0; i + 1 < puntos.length; i++)
-        if (irEntre(puntos[i], puntos[i + 1], c, "en").cogiendo.length > 0) n++;
+      for (let i = 0; i + 1 < puntos.length; i++) if (conTransporte(irEntre(puntos[i], puntos[i + 1], c, "en"))) n++;
       return n;
     });
     assert.deepEqual(
@@ -409,4 +409,38 @@ test("los textos de la web: un día al cerrar, como las demás fechas; y el coch
     const dos = t.viaje.enCoche("2 km", 7, [t.viaje.maneraDeIr.transit, coche]);
     assert.ok(dos.includes(t.viaje.maneraDeIr.transit) && dos.split(coche).length - 1 === 1, dos);
   }
+});
+
+test("un tramo que solo se hace en coche no lleva billete: ni en el tramo, ni en «Allí», ni en las cuentas", () => {
+  const v = viajeConCapas();
+  const dia = v.dias.find((d) => d.paradas.length >= 2)!;
+  const [a, b] = dia.paradas.map((id) => v.paradas.find((p) => p.id === id)!.punto);
+  // La trampa: uno de los tramos solo se hace en coche (un rodeo a pie y más lejos de lo que llega el transporte).
+  const w: Viaje = {
+    ...v,
+    caminos: {
+      fuente: "inventada",
+      visto: "2031-02-20",
+      caminos: [{ de: a, a: b, aPie: { metros: 90_000, minutos: 1200 }, enCoche: { metros: 80_000, minutos: 60 } }],
+    },
+  };
+  const ir = irEntre(a, b, caminosDe(w.caminos), "es");
+  assert.deepEqual([ir.cogiendo, conTransporte(ir)], [["car"], false]);
+  // Uno que se hace en transporte sí lleva su billete.
+  assert.equal(conTransporte({ cogiendo: ["transit", "car"] }), true);
+  for (const manera of w.maneras) {
+    const p = presupuestoDe(w, { moverse: w.moverse, entradas: w.entradas }, { zonas: w.zonasDeLaRuta });
+    const g = parteDe(p, manera.id, "getting_around")!;
+    const alli = loQueTeConviene(w, manera, w.dias);
+    // «Allí» y las cuentas dicen lo mismo: los billetes, solo de los tramos de transporte; el del coche, falta.
+    assert.ok(alli.soloEnCoche >= 1);
+    assert.equal(alli.grupo.total, g.total === null ? null : g.total);
+    assert.ok(g.faltan >= alli.soloEnCoche);
+    assert.equal(
+      alli.viajes,
+      trayectosQueNoSeAndan(w, manera).reduce((s, d) => s + d.trayectos, 0),
+    );
+  }
+  for (const idioma of IDIOMAS)
+    assert.match(TEXTOS[idioma].alli.soloEnCoche(1, true), idioma === "es" ? /coche/ : /car/);
 });

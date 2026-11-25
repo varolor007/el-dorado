@@ -498,6 +498,8 @@ const en = {
     // Lo que te conviene para moverte con tus días: la cuenta del código, la misma de «moverte allí» en las cuentas.
     teConviene: "What suits you best for your days",
     convieneNada: "On your days every leg is walked: you need no tickets.",
+    soloEnCoche: (n: number, ademas: boolean) =>
+      `${ademas ? "Besides, " : ""}${EN.cuenta(n, "leg is", "legs are")} only done by car: ${EN.plural(n, "it takes", "they take")} no ticket, and what the car costs is not known, so it is missing from getting around.`,
     tusTrayectos: (viajes: number, dias: number) =>
       `${EN.cuenta(viajes, "leg is", "legs are")} not walked on ${EN.cuenta(dias, "day", "days")}, counting from and back to where you sleep.`,
     cadaAdulto: (n: number): string => (n === 1 ? "Adult" : "Each adult"),
@@ -1921,6 +1923,8 @@ const es: Textos = {
     suelto: (dinero) => `En transporte, un billete suelto: ${dinero}`,
     teConviene: "Lo que te conviene para tus días",
     convieneNada: "En tus días todo se anda: no te hace falta ningún billete.",
+    soloEnCoche: (n, ademas) =>
+      `${ademas ? "Además, " : ""}${ES.cuenta(n, "trayecto solo se hace", "trayectos solo se hacen")} en coche: no ${ES.plural(n, "lleva", "llevan")} billete, y lo que cuesta el coche no se sabe, así que falta en moverte allí.`,
     tusTrayectos: (viajes, dias) =>
       `${ES.cuenta(viajes, "trayecto no se anda", "trayectos no se andan")} en ${ES.cuenta(dias, "día", "días")}, contando la ida y la vuelta a donde duermes.`,
     cadaAdulto: (n) => (n === 1 ? "Adulto" : "Cada adulto"),

@@ -18,7 +18,7 @@ import { carpetaDeLaGuia, llevarLaGuia, materialDeLaGuia, pedirGuia } from "../.
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
 import { montarCuaderno, pintarCuaderno, type Cuaderno } from "../../agent/scripts/cuaderno.ts";
-import { presupuestoDe } from "../../agent/scripts/presupuesto.ts";
+import { cuentaDeMoverseDelViaje, presupuestoDe } from "../../agent/scripts/presupuesto.ts";
 import {
   entregaDeLaGuia,
   HOY,
@@ -267,6 +267,35 @@ test("lo que te conviene para moverte, en «Cómo moverte»: la cuenta del presu
   });
   // Sin la capa de moverse, no hay cuenta que enseñar.
   conMaterial(viajeParaLaGuia(), (m) => assert.equal(cuadernoDe(m).conviene ?? null, null));
+});
+
+test("en «Cómo moverte», un tramo que solo se hace en coche no suma un billete: se dice, como en las cuentas", () => {
+  const v = viajeParaLaGuia({ capas: true });
+  const dia = v.dias.find((d) => d.paradas.length >= 2)!;
+  const [a, b] = dia.paradas.map((id) => v.paradas.find((p) => p.id === id)!.punto);
+  // La trampa: uno de los tramos solo se hace en coche.
+  v.caminos = {
+    fuente: "inventada",
+    visto: "2026-11-20",
+    caminos: [{ de: a, a: b, aPie: { metros: 90_000, minutos: 1200 }, enCoche: { metros: 80_000, minutos: 60 } }],
+  };
+  conMaterial(v, (m) => {
+    const c = cuadernoDe(m);
+    const cv = c.conviene!;
+    const manera = m.viaje.maneras.find((x) => x.id === "best_value")!;
+    const hecha = cuentaDeMoverseDelViaje(m.viaje, manera);
+    assert.ok(cv.soloEnCoche >= 1);
+    assert.deepEqual([cv.viajes, cv.soloEnCoche, cv.total], [hecha.viajes, hecha.soloEnCoche, hecha.grupo.total]);
+    const p = presupuestoDe(m.viaje, { moverse: m.viaje.moverse, entradas: m.viaje.entradas });
+    const alli = p.maneras.find((x) => x.manera === manera.id)!.partes.find((x) => x.parte === "getting_around")!;
+    assert.ok(alli.faltan >= cv.soloEnCoche);
+    assert.deepEqual(puertaCuaderno(c, m.viaje).rojos, []);
+    for (const idioma of ["es", "en"] as const) {
+      const html = pintarCuaderno({ ...c, idioma });
+      assert.ok(html.includes(ROTULOS[idioma].soloEnCoche(cv.soloEnCoche, cv.viajes > 0).slice(0, 30)), idioma);
+      assert.doesNotMatch(html, PROHIBIDOS);
+    }
+  });
 });
 
 test("el cuaderno se pinta con «Cómo moverte», «Antes de ir» y dónde comer, en los dos idiomas", () => {

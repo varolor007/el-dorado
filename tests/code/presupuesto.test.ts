@@ -23,6 +23,7 @@ import { paraElOrden } from "../../agent/scripts/cierre.ts";
 import { paraExplicar } from "../../agent/scripts/explica.ts";
 import {
   conOtrosDias,
+  cuentaDeMoverseDelViaje,
   delGrupo,
   elDeUnAdulto,
   presupuestoDe,
@@ -394,6 +395,50 @@ test("una sola regla para el precio de un niño, en las entradas, en llegar y en
   assert.deepEqual(SI_VALEN_VARIOS, { entradas: "cheapest", llegar: "cheapest", billetes: "dearest" });
   assert.equal(precioPara([eur(2), eur(1.5)], null, "EUR"), 2);
   assert.deepEqual(delGrupo([eur(2), eur(1.5)], { adultos: 1, ninos: [] }, "EUR")?.importes[0].importe, 1.5);
+});
+
+/**
+ * El viaje con trayectos que no se andan, y uno de ellos (de p2 a p4) solo en coche: la fuente de rutas da un rodeo a
+ * pie y un coche de más de lo que llega el transporte. Se cuenta por los caminos, como en la web y en la guía.
+ */
+function conUnoSoloEnCoche(v: Viaje = conTrayectos()): Viaje {
+  const punto = (id: string) => v.paradas.find((p) => p.id === id)!.punto;
+  const es = (x: { lat: number; lon: number }, y: { lat: number; lon: number }) => x.lat === y.lat && x.lon === y.lon;
+  const [p2, p4] = [punto("p2"), punto("p4")];
+  return {
+    ...v,
+    caminos: {
+      ...v.caminos!,
+      caminos: v.caminos!.caminos.map((c) =>
+        (es(c.de, p2) && es(c.a, p4)) || (es(c.de, p4) && es(c.a, p2))
+          ? { ...c, aPie: { metros: 90_000, minutos: 1200 }, enCoche: { metros: 80_000, minutos: 60 } }
+          : c,
+      ),
+    },
+  };
+}
+
+test("un tramo que solo se hace en coche no suma un billete: en moverte allí, es lo que falta", () => {
+  // La trampa: dos tramos que no se andan el primer día, uno de transporte y otro solo de coche.
+  const v = conUnoSoloEnCoche();
+  assert.deepEqual(
+    trayectosQueNoSeAndan(v).map((d) => [d.trayectos, d.soloEnCoche]),
+    [
+      [1, 1],
+      [0, 0],
+    ],
+  );
+  // Moverte allí: el billete del de transporte, para dos; el del coche no se inventa, y falta.
+  const g = parte(presupuestoDe(v, todoSabido(), { moverse: sueltosOAbono }), "cheapest", "getting_around");
+  assert.deepEqual([g.origen, g.total, g.faltan], ["computed", 2 * 2, 1]);
+  // Con la cuenta del de moverse, igual: lo que dice «Allí» y la guía (`cuentaDeMoverseDelViaje`).
+  const c = cuentaDeMoverseDelViaje(v, undefined, moverse());
+  assert.deepEqual([c.viajes, c.soloEnCoche, c.grupo.total], [1, 1, 2 * 2]);
+  assert.deepEqual(parte(presupuestoDe(v, todoSabido()), "cheapest", "getting_around").faltan, 1);
+  // Un día que solo se mueve en coche: moverte allí no se sabe, y falta ese tramo.
+  const soloCoche: Viaje = { ...v, dias: [{ ...v.dias[0], paradas: ["p2", "p4"], metros: [90_000] }] };
+  const s = parte(presupuestoDe(soloCoche, todoSabido()), "cheapest", "getting_around");
+  assert.deepEqual([s.origen, s.total, s.faltan], ["unknown", null, 1]);
 });
 
 test("llegar a donde se duerme: si el alojamiento dice su zona y ninguna manera va a ella, no se sabe", () => {

@@ -523,10 +523,14 @@ test("los trayectos que no se andan de cada día, con la cuenta de caminos de la
     ],
   };
   // Entre paradas: el primer día se anda entero; el segundo, uno no.
-  assert.deepEqual(viajesDeLosDias(v), [{ fecha: "2031-03-11", viajes: 1 }]);
+  assert.deepEqual(viajesDeLosDias(v), [{ fecha: "2031-03-11", viajes: 1, soloEnCoche: 0 }]);
   // Durmiendo lejos de todo: ir y volver tampoco se andan.
   assert.deepEqual(viajesDeLosDias(v, punto(10.2, 20.05)), [
-    { fecha: "2031-03-10", viajes: 2 },
-    { fecha: "2031-03-11", viajes: 3 },
+    { fecha: "2031-03-10", viajes: 2, soloEnCoche: 0 },
+    { fecha: "2031-03-11", viajes: 3, soloEnCoche: 0 },
   ]);
+  // Un trayecto que solo se hace en coche (más lejos de lo que llega el transporte) no es un billete: va aparte.
+  const lejos = { ...v, paradas: [...v.paradas, parada("e", punto(11, 20.1))] };
+  lejos.dias = [{ fecha: "2031-03-12", titulo: "", paradas: ["a", "c", "e"], metros: [] }];
+  assert.deepEqual(viajesDeLosDias(lejos), [{ fecha: "2031-03-12", viajes: 1, soloEnCoche: 1 }]);
 });
