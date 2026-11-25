@@ -93,7 +93,8 @@ test("la investigación inventada, entera, con las tres capas de mentira: cada u
     const material = leerJson(join(run, "puestos", "entradas-v1", "in", "trip.json"));
     assert.deepEqual(Object.keys(material.travellers).sort(), ["adults", "children"]);
     assert.equal(leerJson(join(run, "puestos", "entradas-v1", "in", "open_data.json")).length, v.paradas.length);
-    // El presupuesto, por manera: dormir y llegar, con su precio; lo demás, sin saber y contado.
+    // El presupuesto, por manera: dormir y llegar, con su precio; llegar a donde se duerme y las entradas, la cuenta
+    // del código con las páginas de mentira. Las cifras de la cuenta, en presupuesto.test.ts.
     assert.deepEqual(
       v.presupuesto?.maneras.map((m) => m.manera),
       v.maneras.map((m) => m.id),
@@ -106,7 +107,11 @@ test("la investigación inventada, entera, con las tres capas de mentira: cada u
       );
       assert.equal(m.partes[0].origen, "priced");
       assert.equal(m.moneda, manera.moneda);
-      assert.ok(m.faltan > 0);
+      const parte = (x: string) => m.partes.find((p) => p.parte === x)!;
+      for (const x of ["arrival", "tickets"]) {
+        assert.equal(parte(x).origen, "computed");
+        assert.ok(parte(x).fuentes.length > 0);
+      }
     }
     // Las tres maneras se siguen comparando por dormir y llegar: sus totales no cambian.
     const tabla = leerJson(join(run, "tabla-1.json"));
