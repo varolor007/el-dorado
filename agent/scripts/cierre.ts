@@ -11,6 +11,8 @@ import {
   SUBIDA_QUE_SE_PREGUNTA,
 } from "../data/cierre.ts";
 import { cuentasDeUnDia } from "../gates/puerta_dias.ts";
+import { cierraEnElViaje } from "./capa_entradas.ts";
+import { cierranTusDias } from "./dia_a_dia.ts";
 import type {
   CambioDePrecio,
   ClaseDePieza,
@@ -359,6 +361,8 @@ export function sinConfirmarDe(
   const porId = new Map(v.paradas.map((p) => [p.id, p]));
   const c = caminosDe(v.caminos);
   for (const d of v.dias) if (cuentasDeUnDia(d, porId, c).noCabe.length > 0) pon("day_does_not_fit", d.fecha);
+  // Una parada que pusiste un día que se sabe que cierra (14.7): se queda donde la pusiste, sin confirmar.
+  for (const fecha of Object.keys(cierranTusDias(cierraEnElViaje(v), v.dias))) pon("stop_closed", fecha);
   return s;
 }
 

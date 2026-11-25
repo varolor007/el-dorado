@@ -10,13 +10,20 @@
 
 import { cpSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { MENSAJES_DE_UN_VIAJE, SITIOS_DE_UNA_CLASE } from "../data/dia_a_dia.ts";
+import { MENSAJES_DE_UN_VIAJE, MIRAR_ENTRADAS, SITIOS_DE_UNA_CLASE } from "../data/dia_a_dia.ts";
 import { RONDAS } from "../data/palancas.ts";
 import { PARADO } from "../data/pasos.ts";
 import { puertaCruce } from "../gates/puerta_cruce.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
 import { pegasDelTexto } from "../gates/textos.ts";
-import { comprobarMensaje, esUnMensaje, pedidoDeUnDia, type PedidoDeUnDia } from "../scripts/dia_a_dia.ts";
+import {
+  comprobarMensaje,
+  esUnMensaje,
+  pedidoDeUnDia,
+  sitiosSinMirar,
+  type PedidoDeEntradas,
+  type PedidoDeUnDia,
+} from "../scripts/dia_a_dia.ts";
 import { sitiosParaElegir } from "../scripts/dias.ts";
 import { diasElegidos } from "../scripts/elecciones.ts";
 import type { ParaExplicar } from "../scripts/explica.ts";
@@ -112,6 +119,49 @@ export function pedirUnDia(v: ViajeEnLaMesa, o: AlPedirUnDia): { run: string; n:
   const cuando = o.cuando ?? new Date();
   const pedido = prepararUnDia(v, { ...o, cuando });
   const { run, n } = rehacer(v, { clases: ["day"], pedido, cuando });
+  return { run, n, pedido };
+}
+
+/** Cuántas veces se pulsó el botón de mirar las entradas de un viaje en la ventana de horas de su tope. */
+function entradasDesde(v: ViajeEnLaMesa, cuando: Date): number {
+  const desde = cuando.getTime() - MENSAJES_DE_UN_VIAJE.horas * 3_600_000;
+  return leerDiario(v).filter((a) => a.que === MIRAR_ENTRADAS && Date.parse(a.cuando) >= desde).length;
+}
+
+/**
+ * Lo que pediría tu botón de mirar las entradas (14.7), sobre la versión que ves, sin abrir nada: los sitios de tus
+ * paradas que no se miraron (todos, o los que pides de entre ellos, hasta los de una llamada). Lanza `FalloDeUnDia`
+ * si no es el momento, si no hay ninguno que mirar (`nothing_to_look`) o si pasa del tope, que es el de los mensajes.
+ */
+export function prepararLasEntradas(v: ViajeEnLaMesa, o: { sights?: unknown; cuando?: Date }): PedidoDeEntradas {
+  const cuando = o.cuando ?? new Date();
+  if (v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") throw new FalloDeUnDia("not_now");
+  const viaje = viajeDeLaVersion(v);
+  if (viaje === null) throw new FalloDeUnDia("not_now");
+  const pedidos =
+    o.sights === undefined || o.sights === null
+      ? undefined
+      : Array.isArray(o.sights) && o.sights.every((x) => typeof x === "string")
+        ? (o.sights as string[])
+        : null;
+  if (pedidos === null) throw new FalloDeUnDia("bad_sights");
+  const sights = sitiosSinMirar(viaje, pedidos);
+  if (sights.length === 0) throw new FalloDeUnDia("nothing_to_look");
+  if (entradasDesde(v, cuando) >= MENSAJES_DE_UN_VIAJE.deUnViaje) throw new FalloDeUnDia("too_many_messages");
+  return { kind: MIRAR_ENTRADAS, sights, choices: leerElecciones(v) };
+}
+
+/**
+ * Tu botón de mirar las entradas, pulsado: abre la investigación que las mira, con la clase «tickets» (el de las
+ * entradas, solo para esos sitios; los días y la cuenta, otra vez), sin lanzar nada: la lleva quien lo pida.
+ */
+export function pedirLasEntradas(
+  v: ViajeEnLaMesa,
+  o: { sights?: unknown; cuando?: Date },
+): { run: string; n: number; pedido: PedidoDeEntradas } {
+  const cuando = o.cuando ?? new Date();
+  const pedido = prepararLasEntradas(v, { ...o, cuando });
+  const { run, n } = rehacer(v, { clases: ["tickets"], pedido, cuando });
   return { run, n, pedido };
 }
 

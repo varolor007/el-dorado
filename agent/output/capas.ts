@@ -14,9 +14,11 @@ import {
   LETRAS_DE_UN_NOMBRE,
   LO_MAS_DE_UNA_LISTA,
   PARA_QUIEN,
+  SIN_MIRAR,
   type DiaDeLaSemana,
   type FaltaDeUnaCapa,
   type ParaQuien,
+  type SinMirar,
 } from "../data/capas.ts";
 import { CLASES_DEL_DESTINO, LETRAS_DE_UNA_COSA, TOPE_POR_CLASE, type ClaseDelDestino } from "../data/capa_destino.ts";
 import {
@@ -151,8 +153,8 @@ export type DelDestino = { cosas: CosaDelDestino[]; falta: FaltaDeUnaCapa | null
 
 /**
  * La entrada de un sitio elegido, por el id de su parada: lo que cuesta (null, no se sabe), sus horarios (null, no se
- * sabe), si hay que reservar y dónde, y su web oficial. `mirado` es falso si pasó del tope de sitios y solo se sabe lo
- * que dicen los datos abiertos.
+ * sabe), si hay que reservar y dónde, y su web oficial. `mirado` es falso si solo se sabe lo que dicen los datos
+ * abiertos, y `sinMirar` dice por qué (14.7); un viaje de antes no lo lleva.
  */
 export type EntradaDeUnSitio = {
   parada: string;
@@ -161,6 +163,7 @@ export type EntradaDeUnSitio = {
   reservar: { haceFalta: boolean; donde: string | null; fuente: FuenteDeUnDato } | null;
   web: string | null;
   mirado: boolean;
+  sinMirar?: SinMirar | null;
 };
 
 export type DeLasEntradas = { sitios: EntradaDeUnSitio[]; falta: FaltaDeUnaCapa | null };
@@ -415,6 +418,8 @@ export function pegasDeLasEntradas(e: DeLasEntradas, paradas: readonly string[])
     }
     if (x.web !== null && !enlaceDeCapa(x.web)) pegas.push({ donde, que: "su web no es una dirección https" });
     if (typeof x.mirado !== "boolean") pegas.push({ donde, que: "no dice si se miró" });
+    if (x.sinMirar != null && (x.mirado || !SIN_MIRAR.includes(x.sinMirar)))
+      pegas.push({ donde, que: "su porqué de no mirarse no es de la lista, o sí se miró" });
   });
   pegasDeLaFalta(e.falta, e.sitios.length, "entradas", pegas);
   return pegas;

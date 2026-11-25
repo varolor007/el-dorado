@@ -2,6 +2,7 @@
 // lo que entrega su asiento (`tickets`), cómo se pasa a la del viaje y los días del viaje que cierra cada parada, que
 // usan el ritmo y la puerta 9 en la casa y en la web.
 
+import type { SinMirar } from "../data/capas.ts";
 import type { DeLasEntradas, EntradaDeUnSitio, FuenteDeUnDato, Horario, PrecioDeCapa } from "../output/capas.ts";
 import { leerHorarioDeOsm } from "../tools/horarios.ts";
 import { diasQueCierra, fuenteDe, horarioDe, preciosDe, type HorarioEntregado, type PrecioEntregado } from "./capas.ts";
@@ -66,8 +67,15 @@ export function preciosAbiertos(a: DatosAbiertos | undefined): PrecioDeCapa[] | 
   return [{ para: "any", edades: null, cuanto: "free", fuente }];
 }
 
-/** Un sitio que su asiento no miró (pasó del tope, o su tanda falló): lo que dicen de él los datos abiertos. */
-export function entradaAbierta(id: string, a: DatosAbiertos | undefined): EntradaDeUnSitio {
+/**
+ * Un sitio que su asiento no miró: lo que dicen de él los datos abiertos, y por qué no se miró (pasó del tope, su
+ * tanda falló, o lo añadiste después).
+ */
+export function entradaAbierta(
+  id: string,
+  a: DatosAbiertos | undefined,
+  porQue: SinMirar = "over_limit",
+): EntradaDeUnSitio {
   return {
     parada: id,
     precios: preciosAbiertos(a),
@@ -75,6 +83,7 @@ export function entradaAbierta(id: string, a: DatosAbiertos | undefined): Entrad
     reservar: null,
     web: a?.web ?? null,
     mirado: false,
+    sinMirar: porQue,
   };
 }
 
@@ -108,13 +117,15 @@ export function paraEnsenarEntradas(
   entregas: (EntregaDeLasEntradas | null)[],
   sinMirar: string[],
   abiertos: DatosAbiertos[],
+  porQue: Readonly<Record<string, SinMirar>> = {},
 ): DeLasEntradas {
   const deUno = (id: string): DatosAbiertos | undefined => abiertos.find((x) => x.sitio === id);
   const sitios: EntradaDeUnSitio[] = [];
   for (const e of entregas)
     for (const s of e?.sights ?? [])
       if (!sitios.some((x) => x.parada === s.id)) sitios.push(entradaMirada(s, deUno(s.id)));
-  for (const id of sinMirar) if (!sitios.some((s) => s.parada === id)) sitios.push(entradaAbierta(id, deUno(id)));
+  for (const id of sinMirar)
+    if (!sitios.some((s) => s.parada === id)) sitios.push(entradaAbierta(id, deUno(id), porQue[id]));
   return { sitios, falta: null };
 }
 

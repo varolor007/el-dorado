@@ -40,6 +40,8 @@
 //                                       cambiar nada; con { "go": true, "ceiling" }, tu botón, y el del día a día
 //                                       se pone a ello
 //   GET    /viajes/<id>/dia            cómo va tu último mensaje: lo que dijiste, por dónde va y lo que cambió
+//   POST   /viajes/<id>/entradas       mirar las entradas de los sitios que no se miraron ({ "sights" }): lo que
+//                                       costaría; con { "go": true, "ceiling" }, tu botón (14.7)
 //   GET    /viajes/<id>/cambiar        para cambiar lo que pediste (8.5): lo entendido del que partes, cómo se
 //                                       rehace y lo que se ha quedado atrás (un cierre o una guía)
 //   POST   /viajes/<id>/cambiar        cambia lo que pediste ({ "understood", "go_ahead", "ceiling" }): rehace solo
@@ -145,7 +147,14 @@ import { comprobarVistazo } from "../output/viaje.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from "../scripts/vistazo.ts";
 import { porDondeVa } from "./pasos.ts";
-import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
+import {
+  FalloDeUnDia,
+  mensajeDeCara,
+  pedirLasEntradas,
+  pedirUnDia,
+  prepararLasEntradas,
+  prepararUnDia,
+} from "./dia_a_dia.ts";
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
 import { TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import { cambioQueNoVale, queTrae } from "../scripts/cambios.ts";
@@ -1238,12 +1247,63 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 202, cuerpo: { run: hecho.n, look_for: hecho.pedido.look_for } };
   }
 
+  /**
+   * Mirar las entradas de los sitios de tus paradas que no se miraron (14.7), solo su dueño, como un mensaje para un
+   * día: sin `go`, lo que costaría (el de las entradas, solo para ellos; los días y la cuenta, que son código); con
+   * `go: true`, tu botón, con tu adelante. Lo demás de las entradas se queda como estaba.
+   */
+  function mirarLasEntradas(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id)) throw new Fallo(409, "already_running");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    const al = { sights: pedido.sights, cuando: hoy() };
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    const conQue = conQuePiensa(p.cuenta);
+    if (pedido.go !== true) {
+      try {
+        const previsto = prepararLasEntradas(v, al);
+        return {
+          estado: 200,
+          cuerpo: { impact: impactoDe(["tickets"], gastoPorAsiento(p.dueno, o.mesa)), sights: previsto.sights },
+        };
+      } catch (error) {
+        throw falloDeUnDia(error);
+      }
+    }
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: ReturnType<typeof pedirLasEntradas>;
+    try {
+      hecho = pedirLasEntradas(v, al);
+    } catch (error) {
+      throw falloDeUnDia(error);
+    }
+    abandonarElCierre(v);
+    darElAdelante(hecho.run, techo, hoy());
+    apuntar(v, "tickets_look", { run: hecho.n, sights: hecho.pedido.sights }, hoy());
+    apuntar(v, "button", { boton: "tickets", run: hecho.n, techo }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, hecho.run, lanzador);
+    return { estado: 202, cuerpo: { run: hecho.n, sights: hecho.pedido.sights } };
+  }
+
   /** Por qué no se manda un mensaje, con su estado: tus palabras, el momento, el tope o que no se puede rehacer. */
   function falloDeUnDia(error: unknown): unknown {
     if (error instanceof MensajeQueNoVale) return new Fallo(400, error.message);
     if (error instanceof FalloDeUnDia)
       return new Fallo(
-        error.message === "too_many_messages" ? 429 : error.message === "bad_day" ? 400 : 409,
+        error.message === "too_many_messages"
+          ? 429
+          : error.message === "bad_day" || error.message === "bad_sights"
+            ? 400
+            : 409,
         error.message,
       );
     if (error instanceof FalloAlRehacer) return new Fallo(409, error.message);
@@ -1483,6 +1543,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
       const v = suViaje(p);
       return { estado: 200, cuerpo: { guide: guiaDeCara(v, guias.has(v.ficha.id)) } };
+    }
+    if (que === "entradas" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return mirarLasEntradas(p);
     }
     if (que === "dia" && cual === undefined) {
       if (p.metodo === "POST") return unMensajeParaElDia(p);

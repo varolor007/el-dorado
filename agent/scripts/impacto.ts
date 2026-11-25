@@ -7,6 +7,7 @@ import {
   CAMBIOS,
   CLASES_DE_CAMBIO,
   LEE,
+  MIRAN_TODAS_LAS_ENTRADAS,
   PIEZAS_DE_UN_PASO,
   PIEZAS_DE_UNA_CLASE,
   PIEZAS_DEL_VIAJE,
@@ -170,6 +171,13 @@ export function costesDe(
   };
 }
 
+/**
+ * Si con estas clases el de las entradas vuelve a mirar (y gasta): con otro destino, otras fechas o lo que no se sabe
+ * leer, todas; con tu botón (`tickets`), las que pides. Con las demás se quedan las de antes.
+ */
+export const entradasQueSeMiran = (clases: readonly ClaseDeCambio[]): boolean =>
+  clases.some((c) => c === "tickets" || MIRAN_TODAS_LAS_ENTRADAS.includes(c));
+
 const quienDa = (id: IdDePaso): string => PASOS.find((p) => p.id === id)?.quien ?? CODIGO;
 
 /**
@@ -178,7 +186,11 @@ const quienDa = (id: IdDePaso): string => PASOS.find((p) => p.id === id)?.quien 
  */
 export function impactoDe(clases: readonly ClaseDeCambio[], estimado: EstimadoPorAsiento = {}): Impacto {
   const rehacen = pasosQueSeRehacen(clases);
-  const redo = rehacen.map((step) => ({ step, who: quienDa(step) }));
+  // Las entradas que se rehacen porque cambian los sitios elegidos se quedan con las de antes: es código (14.7).
+  const redo = rehacen.map((step) => ({
+    step,
+    who: step === "tickets" && !entradasQueSeMiran(clases) ? CODIGO : quienDa(step),
+  }));
   const keep = ORDEN.filter((id) => !rehacen.includes(id));
   const posibles = new Set(clases.flatMap((c) => CAMBIOS[c].quizas).filter((id) => !rehacen.includes(id)));
   const maybe = enOrden(posibles).map((step) => ({ step, who: quienDa(step) }));

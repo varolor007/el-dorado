@@ -113,6 +113,8 @@ import {
 } from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { loPedidoDe, rehechoDe } from "./rehacer.ts";
+import { entradasQueSeMiran } from "../scripts/impacto.ts";
+import { esUnPedidoDeEntradas } from "../scripts/dia_a_dia.ts";
 import { acaboSinEntregar, trabajosDe } from "./trabajos.ts";
 import type { FaltaDeUnaCapa } from "../data/capas.ts";
 import { capaDelRun, CONTRATOS, guardada, hayContrato, type CapaDeIA, type Material } from "./capas.ts";
@@ -120,6 +122,9 @@ import { capaDelDestino } from "./capa_destino.ts";
 import {
   capaDeLasEntradasDe,
   cierraEnElRun,
+  conLasDeAntes,
+  entradasDeAntes,
+  repartirLasEntradas,
   ENTRADAS,
   losDiasSinEntradas,
   traerLosAbiertos,
@@ -922,7 +927,19 @@ async function lasEntradas(run: string, viaje: Entendido, elegida: EntregaDeSiti
   );
   // Si pasan del tope, se miran primero los imprescindibles y los que tienen puerta (14.4).
   const elegidos = ordenParaMirar(elegida.go, sitios, abiertos);
-  return deUnaCapa(run, capaDeLasEntradasDe(run), materialDeLasCapas(run, viaje, elegidos, abiertos), f);
+  // En un run que rehace otro con los mismos sitios por mirar (ni otras fechas ni otro destino), las de antes siguen
+  // valiendo: solo se miran los que pides con tu botón, y lo nuevo va con los datos abiertos (14.7).
+  const r = rehechoDe(run);
+  const deAntes =
+    r === null || (entradasQueSeMiran(r.cambio) && !r.cambio.includes("tickets"))
+      ? null
+      : entradasDeAntes(join(run, "..", String(r.de)), viaje);
+  if (deAntes === null)
+    return deUnaCapa(run, capaDeLasEntradasDe(run), materialDeLasCapas(run, viaje, elegidos, abiertos), f);
+  const pedidos = esUnPedidoDeEntradas(r?.pedido) ? r.pedido.sights : [];
+  const { aMirar, fijas } = repartirLasEntradas(elegidos, deAntes, pedidos, abiertos);
+  const capa = conLasDeAntes(capaDeLasEntradasDe(run), fijas);
+  return deUnaCapa(run, capa, materialDeLasCapas(run, viaje, aMirar, abiertos), f);
 }
 
 /** Los avisos de las fechas del run, como los enseña la web: sin lo que entregó el asiento. */

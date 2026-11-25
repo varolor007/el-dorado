@@ -365,7 +365,15 @@ test("al viaje: manda lo que leyó el asiento; lo que no sabe, lo que dicen los 
     },
   ]);
   // El que no se miró, solo con lo que dicen los datos abiertos: sin ellos, nada.
-  assert.deepEqual(q3, { parada: "Q3", precios: null, horarios: null, reservar: null, web: null, mirado: false });
+  assert.deepEqual(q3, {
+    parada: "Q3",
+    precios: null,
+    horarios: null,
+    reservar: null,
+    web: null,
+    mirado: false,
+    sinMirar: "over_limit",
+  });
   const q1Abierto = entradaAbierta("Q1", ABIERTOS[0]);
   assert.equal(q1Abierto.mirado, false);
   assert.equal(abreElDia(q1Abierto.horarios, "2031-03-09"), false);

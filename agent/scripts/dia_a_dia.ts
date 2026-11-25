@@ -2,7 +2,14 @@
 // alojamiento del viaje te deja más cerca de cada día, lo que se le cuenta al del día a día de cómo están tus días, y
 // el impacto de un mensaje antes de mandarlo. Sin nada de Node: la web lo usa igual.
 
-import { CLASES_DE_UN_MENSAJE, LARGO_DE_UN_MENSAJE, PALABRAS_DE_UNA_CLASE, UN_MENSAJE } from "../data/dia_a_dia.ts";
+import { SITIOS_POR_LLAMADA } from "../data/capa_entradas.ts";
+import {
+  CLASES_DE_UN_MENSAJE,
+  LARGO_DE_UN_MENSAJE,
+  MIRAR_ENTRADAS,
+  PALABRAS_DE_UNA_CLASE,
+  UN_MENSAJE,
+} from "../data/dia_a_dia.ts";
 import { CODIGO } from "../data/pasos.ts";
 import { RAICES } from "../data/sitios.ts";
 import { cuentasDeUnDia, type NoCabe } from "../gates/puerta_dias.ts";
@@ -28,6 +35,55 @@ export type PedidoDeUnDia = {
   /** Las clases de sitio que pides y no estaban: el código vuelve a los datos abiertos por ellas. */
   look_for: string[];
 };
+
+/**
+ * Lo que pide tu botón de mirar las entradas (14.7): los sitios de tu viaje cuyas entradas no se miraron, como mucho
+ * los de una llamada, y tus elecciones, que pasan a la versión nueva.
+ */
+export type PedidoDeEntradas = { kind: typeof MIRAR_ENTRADAS; sights: string[]; choices: Elecciones };
+
+export function esUnPedidoDeEntradas(pedido: unknown): pedido is PedidoDeEntradas {
+  const p = pedido as Partial<PedidoDeEntradas> | null;
+  return (
+    p !== null &&
+    typeof p === "object" &&
+    p.kind === MIRAR_ENTRADAS &&
+    Array.isArray(p.sights) &&
+    p.sights.every((x) => typeof x === "string")
+  );
+}
+
+/**
+ * Los sitios de tu viaje cuyas entradas se pueden mirar con tu botón: los de tus paradas que no se miraron (pasaron
+ * del tope, su tanda falló o los añadiste después), en el orden del viaje. Si pides unos, solo esos de entre ellos;
+ * como mucho, los de una llamada.
+ */
+export function sitiosSinMirar(v: Pick<Viaje, "paradas" | "entradas">, pedidos?: readonly string[]): string[] {
+  if (v.entradas === undefined || v.entradas.falta !== null) return [];
+  const sinMirar = new Set(v.entradas.sitios.filter((e) => !e.mirado).map((e) => e.parada));
+  const deMas = v.paradas.filter((p) => !v.entradas!.sitios.some((e) => e.parada === p.id)).map((p) => p.id);
+  for (const id of deMas) sinMirar.add(id);
+  return v.paradas
+    .map((p) => p.id)
+    .filter((id) => sinMirar.has(id) && (pedidos === undefined || pedidos.includes(id)))
+    .slice(0, SITIOS_POR_LLAMADA);
+}
+
+/**
+ * Las paradas de tus días que caen un día que se sabe que cierran, por fecha (14.7): lo que el código pone no cae
+ * nunca así; lo que mueves tú, sí puede, y se queda donde lo pusiste, pero se te avisa, en la web y al cerrar.
+ */
+export function cierranTusDias(
+  cierra: Readonly<Record<string, readonly string[]>>,
+  dias: readonly Pick<Dia, "fecha" | "paradas">[],
+): Record<string, string[]> {
+  const salida: Record<string, string[]> = {};
+  for (const d of dias) {
+    const cierran = d.paradas.filter((id) => (cierra[id] ?? []).includes(d.fecha));
+    if (cierran.length > 0) salida[d.fecha] = cierran;
+  }
+  return salida;
+}
 
 /** Un mensaje que no vale, por su clave. */
 export class MensajeQueNoVale extends Error {}

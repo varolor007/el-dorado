@@ -31,3 +31,10 @@ export const LETRAS_DE_UN_NOMBRE = 80;
 
 /** Lo más que una capa puede decir de días en un horario o de cosas en una lista: más no es un dato, es un error. */
 export const LO_MAS_DE_UNA_LISTA = 60;
+
+/**
+ * Por qué no se miró la entrada de un sitio, si solo se sabe lo que dicen los datos abiertos (14.7): pasó del tope de
+ * sitios, su tanda falló (o tardó, o no pasó su puerta), o lo añadiste tú después y todavía no se ha mirado.
+ */
+export const SIN_MIRAR = ["over_limit", "failed", "added"] as const;
+export type SinMirar = (typeof SIN_MIRAR)[number];

@@ -408,7 +408,8 @@ test("si la tabla decide otra cosa, el que cruza vuelve; el que explica, si aque
     const otra = { ...tabla, rows: tabla.rows.map((x) => ({ ...x, score: "unknown" })) };
     writeFileSync(join(base, "tabla-1.json"), JSON.stringify(otra));
     const r = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo");
-    assert.deepEqual(r.asientos, ["sights-picker", "tickets", "trip-crosser"]);
+    // Las entradas de antes siguen valiendo con los mismos días: el de las entradas no vuelve (14.7).
+    assert.deepEqual(r.asientos, ["sights-picker", "trip-crosser"]);
     assert.equal(r.v.ficha.version, 2);
     // Si además lo que cruzó entonces no es lo que cruza ahora, el que explica también vuelve.
     const dos = join(v.carpeta, "runs", "2");
@@ -416,7 +417,7 @@ test("si la tabla decide otra cosa, el que cruza vuelve; el que explica, si aque
     const cruce = leerJson(join(dos, "cruce-1.json"));
     writeFileSync(join(dos, "cruce-1.json"), JSON.stringify({ ...cruce, entrega: { ...cruce.entrega, tell: [] } }));
     const s = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo todavía");
-    assert.deepEqual(s.asientos, ["sights-picker", "tickets", "trip-crosser", "trip-explainer"]);
+    assert.deepEqual(s.asientos, ["sights-picker", "trip-crosser", "trip-explainer"]);
     assert.equal(s.v.ficha.version, 3);
   } finally {
     rmSync(mesa, { recursive: true, force: true });
