@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (986 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (989 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -235,8 +235,14 @@ Claude Code solo da dólares si llega su resultado, que cortado no llega (`parci
 cota, null: no se sigue a ciegas), y `gastoDe` lleva `deCortados` y deja `sabido` en falso. El acta lleva `cortado` y
 `total.de_cortados`; `/cuenta/gasto`, `cut_usd`, que la web aún no enseña. Sin comprobar, para el ensayo: que el
 flujo de verdad diga lo que la documentación dice, que cortar deje de cobrar donde se deja de recibir, y si Claude
-Code da un resultado al cortarlo con cuidado. Sabido, de la revisión: `cerrarLosCortados` no aplica la cota, una capa
-que entrega sin decir su gasto bloquea el techo, y lo que trabaja a la vez cuenta cero hasta que acaba.
+Code da un resultado al cortarlo con cuidado. De la revisión, arreglado: `cerrarLosCortados` y la capa que entrega
+sin decir su gasto llevan la misma regla (`cotaDelTrabajo`); y lo que trabaja cuenta según lo va diciendo: el
+lanzador tiene un cuarto argumento, `alContar(gasto, cota)`, `lanzarAsiento` acepta `{ corte, alContar }` (con
+`cortadoDeFuera`), la casa lleva en memoria lo que trabaja (`vivos`) y `gastoParaElTecho(run, enMarcha)` lo suma; si
+se llega al techo, las capas en marcha se cortan y no se lanza más (lo que no es capa acaba, y después se para).
+Sabido: con Claude Code no se dice nada por el camino, y ahí el techo se puede pasar con lo que corre a la vez, como
+antes; con la llamada directa queda un rato sin contar, entre que se manda una vuelta y dice lo que leyó; y
+`lanzarPorDetras` sigue sin el tope de asientos a la vez.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

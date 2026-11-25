@@ -95,9 +95,9 @@ export function gastoDe(run: string): Gasto & { sabido: boolean; deCortados: num
  * (una capa del destino cortada), lo más que pudo gastar. De una capa cortada que dijo lo gastado hasta el corte, eso
  * más lo que pudo quedar fuera. Así el techo nunca se pasa por contar de menos. Null si de algún trabajo acabado no se
  * sabe lo que gastó ni se puede acotar, o si de uno cortado no se puede acotar lo que quedó fuera: entonces no se
- * sigue a ciegas.
+ * sigue a ciegas. De lo que aún trabaja, lo que su lanzador dice que lleva (`enMarcha`, por puesto), si lo dice.
  */
-export function gastoParaElTecho(run: string): number | null {
+export function gastoParaElTecho(run: string, enMarcha?: ReadonlyMap<string, EnMarcha>): number | null {
   let usd = 0;
   for (const t of trabajosDe(run)) {
     if (t.gasto !== null) {
@@ -105,9 +105,16 @@ export function gastoParaElTecho(run: string): number | null {
       if (t.gasto.cortado !== true) continue;
       if (typeof t.cota !== "number") return null;
       usd += t.cota;
-    } else if (t.estado === "queued" || t.estado === "working") continue;
-    else if (typeof t.cota === "number") usd += t.cota;
+    } else if (t.estado === "queued" || t.estado === "working") {
+      // Lo que trabaja aún: lo que su lanzador ha dicho que lleva, y lo más que puede estar gastando su vuelta en
+      // marcha. Si no ha dicho nada, o lo de su vuelta no se acota, cuenta lo que se sabe (14.7).
+      const va = enMarcha?.get(t.puesto);
+      if (va !== undefined) usd += va.usd + (va.cota ?? 0);
+    } else if (typeof t.cota === "number") usd += t.cota;
     else return null;
   }
   return usd;
 }
+
+/** Lo que dice que lleva gastado un asiento que aún trabaja, y lo más que puede estar gastando su vuelta en marcha. */
+export type EnMarcha = { usd: number; cota: number | null };

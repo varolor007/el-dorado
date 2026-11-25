@@ -18,11 +18,22 @@ const ORDEN = resolve(import.meta.dirname, "..", "contracts", "common", "LAUNCH.
 export type Gasto = { turnos: number; entrada: number; salida: number; usd: number; cortado?: true };
 
 /**
+ * Lo que dice un lanzador mientras trabaja (14.7): lo gastado hasta ahora y lo más que puede estar gastando aún sin
+ * que se haya contado (la vuelta en marcha), en dólares; `cota` es null si eso no se puede acotar.
+ */
+export type AlContar = (gasto: Gasto, cota: number | null) => void;
+
+/**
  * Lo que hace trabajar al asiento: recibe la orden y vuelve cuando el asiento ha acabado, con lo que gastó si lo
  * sabe. Si falla, lanza un error, que puede llevar en `gasto` lo que gastó hasta entonces. Si se le acaba el tope,
- * la casa se lo avisa por la señal, para que corte y no siga gastando.
+ * la casa se lo avisa por la señal, para que corte y no siga gastando. Si sabe, va diciendo lo gastado por `alContar`.
  */
-export type Lanzador = (orden: string, puesto: Puesto, corte?: AbortSignal) => Promise<Gasto | void>;
+export type Lanzador = (
+  orden: string,
+  puesto: Puesto,
+  corte?: AbortSignal,
+  alContar?: AlContar,
+) => Promise<Gasto | void>;
 
 /**
  * El tope de un asiento, y lo que se le deja, después de cortarlo, para acabar de cerrar y decir lo que gastó: unos
@@ -53,6 +64,8 @@ export type Resultado = {
   gasto: Gasto | null;
   /** De un asiento cortado: lo más que pudo quedar sin contar, en dólares, si el lanzador lo dijo; si no, null. */
   cota: number | null;
+  /** Se le cortó desde fuera, por la señal que se le pasó (la casa, al llegar al techo): no por su tope. */
+  cortadoDeFuera: boolean;
   metodo: VeredictoDelMetodo;
 };
 
@@ -102,7 +115,13 @@ function deSuError(e: unknown): { gasto: Gasto | null; cota: number | null } {
   return { gasto, cota: vale ? cota : null };
 }
 
-export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): Promise<Resultado> {
+/**
+ * Lo que se le puede pasar al lanzar: una señal para cortarlo desde fuera, que se trata como su tope (se le avisa y
+ * se le deja la gracia para decir lo gastado), y quién escucha lo que va gastando.
+ */
+export type AlLanzar = { corte?: AbortSignal; alContar?: AlContar };
+
+export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope, o: AlLanzar = {}): Promise<Resultado> {
   const salida = join(p.carpeta, "out");
   if (!existsSync(salida) || readdirSync(salida).length > 0)
     throw new Error(`el puesto ${p.id} ya se usó: cada puesto se lanza una sola vez`);
@@ -114,6 +133,8 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
   let cota: number | null = null;
   let reloj: NodeJS.Timeout | undefined;
   const corte = new AbortController();
+  let deFuera = false;
+  let alCortarDeFuera: (() => void) | undefined;
   const limite = new Promise<"tope">((resuelve) => {
     reloj = setTimeout(() => {
       fueraDeTope = true;
@@ -121,10 +142,31 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
       corte.abort();
       resuelve("tope");
     }, tope.segundos * 1000);
+    alCortarDeFuera = () => {
+      if (fueraDeTope) return;
+      deFuera = true;
+      corte.abort();
+      resuelve("tope");
+    };
+    if (o.corte?.aborted) alCortarDeFuera();
+    else o.corte?.addEventListener("abort", alCortarDeFuera, { once: true });
   });
+  // Lo que diga mientras trabaja vale hasta que acaba o se le corta: lo de después ya no lo escucha nadie.
+  let escucha = true;
+  const alContar: AlContar | undefined =
+    o.alContar === undefined
+      ? undefined
+      : (g, c) => {
+          if (!escucha || corte.signal.aborted || !gastoQueVale(g)) return;
+          try {
+            o.alContar?.(g, typeof c === "number" && Number.isFinite(c) && c >= 0 ? c : null);
+          } catch {
+            // Quien escucha no rompe al asiento.
+          }
+        };
   // Lo que hace el lanzador, dicho siempre como un valor: así se le puede seguir esperando después del corte.
   type Acabado = { bien: true; dicho: Gasto | void } | { bien: false; e: unknown };
-  const marcha: Promise<Acabado> = (async () => lanzador(ordenDeApertura(), p, corte.signal))().then(
+  const marcha: Promise<Acabado> = (async () => lanzador(ordenDeApertura(), p, corte.signal, alContar))().then(
     (dicho) => ({ bien: true, dicho }),
     (e: unknown) => ({ bien: false, e }),
   );
@@ -139,7 +181,7 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
       acabo = await Promise.race([marcha, gracia]);
       clearTimeout(espera);
     }
-    if (acabo !== "tope" && !fueraDeTope) {
+    if (acabo !== "tope" && !fueraDeTope && !deFuera) {
       if (acabo.bien) gasto = gastoDicho(acabo.dicho);
       else {
         const e = acabo.e;
@@ -154,8 +196,20 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
       if (dicho.gasto?.cortado === true) ({ gasto, cota } = dicho);
     }
   } finally {
+    escucha = false;
     clearTimeout(reloj);
+    if (alCortarDeFuera !== undefined) o.corte?.removeEventListener("abort", alCortarDeFuera);
   }
   if (fueraDeTope) error = `no acabó en su tope de ${tope.segundos} segundos`;
-  return { puesto: p, tardoMs: Date.now() - empieza, fueraDeTope, error, gasto, cota, metodo: recogerAsiento(p) };
+  if (deFuera) error = "se le cortó: lo gastado llegó al techo del viajero";
+  return {
+    puesto: p,
+    tardoMs: Date.now() - empieza,
+    fueraDeTope,
+    error,
+    gasto,
+    cota,
+    cortadoDeFuera: deFuera,
+    metodo: recogerAsiento(p),
+  };
 }
