@@ -17,6 +17,7 @@ import {
   buscarOtraVez,
   comprobarPedido,
   conLasFechasDelVuelo,
+  paisDe,
   type AntesYAhora,
   type Comparado,
   type OtraBusqueda,
@@ -190,6 +191,39 @@ const deCara = (x: Vuelo) => ({
 });
 
 /**
+ * Los países de los aeropuertos del transporte que tienes que no están en la tabla de los papeles (ni son el del
+ * destino ni el de donde sales), y si de alguno no se sabe el país. Se buscan en los sitios con vuelos que se
+ * miraron: los de la búsqueda del run y los de cada búsqueda otra vez del viaje. No cambia nada: solo lo dice.
+ */
+function paisesSinMirar(v: ViajeEnLaMesa, run: string, t: Transporte): { nuevos: string[]; sinSaber: boolean } {
+  const c = comparadoDe(v);
+  const parrilla = leer<DeLaBusqueda>(join(run, "busqueda.json"))?.transporte;
+  const lugares = [
+    ...(parrilla?.salida ?? []),
+    ...(parrilla?.llegada ?? []),
+    ...numeros(v).flatMap((n) => {
+      const b = busquedaDe(v, n);
+      return b === null ? [] : [...b.buscado.salida, ...b.buscado.llegada];
+    }),
+  ];
+  const ya = new Set(
+    [...c.mirados, c.entendido.destination.country, c.entendido.origin?.country ?? ""].map((x) => x.toUpperCase()),
+  );
+  // El aeropuerto que dijo el viajero es del país de donde sale, o del de su destino.
+  const dicho = (codigo: string): string | null =>
+    codigo === c.entendido.origin?.airport
+      ? (c.entendido.origin?.country ?? null)
+      : codigo === c.entendido.destination.airport
+        ? c.entendido.destination.country
+        : null;
+  const paises = [t.de, t.a].map((x) => paisDe(x, lugares, null) ?? dicho(x)?.toUpperCase() ?? null);
+  return {
+    nuevos: [...new Set(paises.filter((x): x is string => x !== null && !ya.has(x)))].sort(),
+    sinSaber: paises.some((x) => x === null),
+  };
+}
+
+/**
  * Lo que la web ve del transporte de tu viaje: el que tienes, con lo que dijo la fuente; por qué no lo hay, si no;
  * la última búsqueda, si es de esta versión; y, si esta versión salió de cambiar el transporte, lo que cambió el
  * total de cada manera frente a la de antes.
@@ -204,10 +238,14 @@ export function transporteDeCara(v: ViajeEnLaMesa): Record<string, unknown> {
   const deTransporte = (version?.cambio ?? []).some((c) => c === "flight" || c === "dates");
   const antes = deTransporte && version?.de !== undefined ? (leerVersion(v, version.de)?.viaje as Viaje) : null;
   const comparado: AntesYAhora[] | null = antes == null ? null : antesYAhora(antes, viaje);
+  const sinMirar = tienes === null ? { nuevos: [], sinSaber: false } : paisesSinMirar(v, run, tienes);
   return {
     version: n,
     transport: tienes,
     flight: vuelo === null ? null : deCara(vuelo),
+    // Los países de sus aeropuertos para los que no se han mirado tus papeles: se dice, y no se cambia nada.
+    new_countries: sinMirar.nuevos,
+    country_unknown: sinMirar.sinSaber,
     none: porQueNo,
     next_to: tienes === null ? (viaje.transporteAlLado ?? null) : null,
     origin: entendido.origin === null ? null : { name: entendido.origin.name, airport: entendido.origin.airport },

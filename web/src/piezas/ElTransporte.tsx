@@ -58,6 +58,9 @@ type DeLaCasa = {
   flight: VueloDeCara | null;
   none: string | null;
   next_to: Transporte | null;
+  /** Los países de los aeropuertos del que tienes para los que no se han mirado tus papeles. */
+  new_countries?: string[];
+  country_unknown?: boolean;
   travellers: number;
   search: Busqueda | null;
   before: {
@@ -299,6 +302,12 @@ export function ElTransporte({
             </span>
             <span className="dato">{x.visto(diaCorto(vuelo.seen.slice(0, 10), idioma))}</span>
             {vuelo.saved && <p className="aviso">{x.guardado}</p>}
+            {(casa?.new_countries ?? []).length > 0 && (
+              <p className="aviso">
+                {x.paisSinMirar((casa?.new_countries ?? []).map((c) => paisDicho(c, idioma)).join(", "))}
+              </p>
+            )}
+            {casa?.country_unknown === true && <p className="aviso">{x.paisNoSe}</p>}
             <p className="dato">{x.incluye}</p>
           </div>
         ) : (

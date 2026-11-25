@@ -4,7 +4,7 @@
 // cerrar con el transporte elegido. Nada sale a internet ni gasta.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -212,6 +212,7 @@ test("otro vuelo los mismos días, por otro país: la tabla, el que cruza y los 
     assert.equal(cara.flight.saved, true);
     assert.equal(cara.none, null);
     assert.equal(cara.search, null);
+    assert.deepEqual([cara.new_countries, cara.country_unknown], [[], false]);
     const b = await buscarElTransporte(v, transporteInventado(), { arrival: "XXX" }, ahora());
     assert.equal(b.version, 1);
     assert.deepEqual(readdirSync(join(v.carpeta, "transporte")), ["1.json"]);
@@ -240,6 +241,15 @@ test("otro vuelo los mismos días, por otro país: la tabla, el que cruza y los 
     assert.deepEqual(despues.before.ways, antesYAhora(antes, nueva));
     assert.equal(despues.before.version, 1);
     assert.throws(() => loQuePideLaOpcion(r.v, b.n, opcion.id), /old_search/);
+    // Con sus papeles mirados, el tuyo no avisa de nada.
+    assert.deepEqual(despues.new_countries, []);
+    // La trampa de la revisión: el que tienes llega por un país que la tabla de los papeles no tiene, y nadie lo
+    // decía. Ahora lo dice, sin cambiar nada.
+    const enDisco = join(r.v.carpeta, "versiones", "2", "viaje.json");
+    const sinWW = JSON.parse(readFileSync(enDisco, "utf8")) as Viaje;
+    sinWW.papeles!.casillas = sinWW.papeles!.casillas.filter((c) => c.pais !== "WW");
+    writeFileSync(enDisco, JSON.stringify(sinWW));
+    assert.deepEqual((transporteDeCara(r.v) as Record<string, any>).new_countries, ["WW"]);
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
