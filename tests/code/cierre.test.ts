@@ -41,6 +41,7 @@ import {
   llegadaDe,
   mapasDe,
   paraElOrden,
+  enlaceDeLaEntrada,
   piezasDe,
   pideSeguir,
   precioDeHoy,
@@ -1311,4 +1312,72 @@ test("juntos (8.2 y 8.3): cerrar con otro alojamiento y otro transporte a la vez
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
+});
+
+// ---------- los enlaces a las entradas en el orden (14.7)
+
+/** El viaje para cerrar, con la entrada de su primera parada: hay que reservarla, y el de las entradas dice dónde. */
+function conEntradaQueSeReserva(): { viaje: Viaje; parada: string } {
+  const viaje = viajeParaCerrar();
+  const parada = viaje.dias.find((d) => d.paradas.length > 0)!.paradas[0];
+  const fuente = { url: "https://entradas.inventada.example/", visto: "2027-01-10" };
+  viaje.entradas = {
+    falta: null,
+    sitios: [
+      {
+        parada,
+        precios: null,
+        horarios: null,
+        reservar: { haceFalta: true, donde: "https://pension.inventada.example/entradas", fuente },
+        web: "https://sitio.inventado.example/",
+        mirado: true,
+        sinMirar: null,
+      },
+    ],
+  };
+  return { viaje, parada };
+}
+
+test("al cerrar, la parada que hay que reservar lleva su enlace a las entradas en su sitio del orden", async () => {
+  const { viaje, parada } = conEntradaQueSeReserva();
+  const { mesa, v } = enElMapa(viaje);
+  const { c, r } = await cerrarCon(v, fuentes(alojamientoHoy(186)), explicaDeMentira());
+  assert.equal(r.etapa, "done", JSON.stringify(JSON.parse(readFileSync(join(c.carpeta, "puerta8.json"), "utf8"))));
+  const cerrado = leerVersion(leerViaje(v.ficha.id, "u-1", mesa))!.viaje as Viaje;
+  const suya = cerrado.cierre!.reservas.find((x) => x.que === "sight" && x.ref === parada)!;
+  assert.deepEqual(suya.enlace, {
+    url: "https://pension.inventada.example/entradas",
+    clase: "booking",
+    comprobado: "ok",
+  });
+  // Va después de dormir y llegar, por su día.
+  assert.ok(suya.n > cerrado.cierre!.reservas.filter((x) => x.que !== "sight").length);
+  // Su puerta lo mira: un enlace que se da por vivo sin haber respondido, en rojo.
+  const material = {
+    piezas: piezasDe(
+      cerrado,
+      cerrado.maneras.find((x) => x.id === cerrado.cierre!.manera)!,
+    ),
+    dados: JSON.parse(readFileSync(join(c.carpeta, "precios.json"), "utf8")).dados,
+    comprobados: JSON.parse(readFileSync(join(c.carpeta, "enlaces.json"), "utf8")),
+    llegada: JSON.parse(readFileSync(join(c.carpeta, "precios.json"), "utf8")).llegada,
+    cuando: JSON.parse(readFileSync(join(c.carpeta, "elegido.json"), "utf8")).cuando,
+  };
+  assert.deepEqual(puertaCierre(cerrado, material).rojos, []);
+  material.comprobados["https://pension.inventada.example/entradas"] = "down";
+  assert.match(JSON.stringify(puertaCierre(cerrado, material).rojos), /su enlace dice ok, y lo que se vio es down/);
+});
+
+test("el enlace a las entradas: donde se reserva, o si no su web oficial; nunca una dirección con claves", () => {
+  const { viaje, parada } = conEntradaQueSeReserva();
+  assert.equal(enlaceDeLaEntrada(viaje, parada)?.clase, "booking");
+  viaje.entradas!.sitios[0].reservar!.donde = null;
+  assert.deepEqual(enlaceDeLaEntrada(viaje, parada), {
+    url: "https://sitio.inventado.example/",
+    clase: "official_site",
+  });
+  viaje.entradas!.sitios[0].web = "https://sitio.inventado.example/?token=secreto";
+  assert.equal(enlaceDeLaEntrada(viaje, parada), null);
+  // Sin enlace, la parada va igual en el orden: hay que reservarla.
+  assert.ok(reservasDe(viaje, [], []).some((x) => x.que === "sight" && x.ref === parada && x.enlace === undefined));
 });

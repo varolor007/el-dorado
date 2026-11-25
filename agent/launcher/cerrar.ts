@@ -30,6 +30,7 @@ import { conTuTransporte } from "../scripts/otro_transporte.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import type { Cierre, ComprobacionDeEnlace, EnlaceDeReserva, MANERAS, Viaje } from "../output/viaje.ts";
 import {
+  enlacesDeLasEntradas,
   enlacesSinComprobar,
   llegadaDe,
   mapasDe,
@@ -405,7 +406,7 @@ function montar(
     subida: { pide: pideSeguir(precios, m.total), sigue },
     enlaces,
     mapas: mapasDe(viaje, m.alojamiento),
-    reservas: reservasDe(viaje, piezas, precios),
+    reservas: reservasDe(viaje, piezas, precios, comprobados),
     papeles: plazosDe(viaje),
     sinConfirmar: sinConfirmarDe(viaje, precios, enlaces, llegada),
     llegada,
@@ -608,10 +609,8 @@ export async function llevarElCierre(
     const { cierre } = montar(viaje, e, p, {}, sigue, cuando);
     guardarJson(
       join(carpeta, "enlaces.json"),
-      await comprobarLosEnlaces(
-        cierre.enlaces.map((x) => x.url),
-        o.fuentes,
-      ),
+      // Los de las piezas, y los de las entradas que hay que reservar, en su orden (14.7).
+      await comprobarLosEnlaces([...cierre.enlaces.map((x) => x.url), ...enlacesDeLasEntradas(viaje)], o.fuentes),
     );
   }
   const comprobados = leer<Record<string, ComprobacionDeEnlace>>(carpeta, "enlaces.json");

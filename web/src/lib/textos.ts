@@ -1032,6 +1032,11 @@ const en = {
       unchecked: "We could not check this link.",
       down: "This link did not answer today.",
     } as Record<string, string>,
+    // El enlace a las entradas de una parada que hay que reservar (14.7).
+    entradas: {
+      booking: "Where its tickets are booked",
+      official_site: "Its official website, for its tickets",
+    } as Record<string, string>,
     deOtroDia: "Another seller's price is from the day we searched. Today it may be different.",
     mapas: "On Google Maps",
     dondeDuermes: "Where you sleep",
@@ -2380,6 +2385,10 @@ const es: Textos = {
       ok: "",
       unchecked: "No hemos podido comprobar este enlace.",
       down: "Este enlace no ha respondido hoy.",
+    },
+    entradas: {
+      booking: "Donde se reservan sus entradas",
+      official_site: "Su web oficial, para sus entradas",
     },
     deOtroDia: "El precio de otro vendedor es el del día que buscamos. Hoy puede ser otro.",
     mapas: "En Google Maps",
