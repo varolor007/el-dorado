@@ -281,6 +281,26 @@ test("«Quiero mi guía» solo con el viaje cerrado, y con su manera si tiene m�
   }
 });
 
+test("trampa: la versión de la guía es la de la mesa, no el número que el viaje lleva dentro", async () => {
+  // Pasó con el primer viaje cerrado de verdad: cerrar deja otra versión en la mesa con el mismo número dentro del
+  // viaje, y la guía recién hecha decía que se había quedado atrás.
+  const viaje = viajeParaLaGuia();
+  viaje.version = 7;
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), { hoy: () => HOY, sinFotos: true });
+    assert.deepEqual(e, { estado: "ready" });
+    const cuaderno = JSON.parse(readFileSync(join(carpetaDeLaGuia(v, p.n), "guia.json"), "utf8"));
+    assert.equal(cuaderno.version, v.ficha.version);
+    assert.equal(guiaDeCara(v, false)?.behind, false);
+    const documento = documentoDeLaGuia(v) ?? "";
+    assert.ok(!documento.includes('class="atras"'), "la guía recién hecha dice que se ha quedado atrás");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
 test("la guía se hace con la manera con que se cerró el viaje, se pida la que se pida", () => {
   const viaje = viajeParaLaGuia();
   viaje.cierre = { manera: "cheapest" } as never;

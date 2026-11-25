@@ -247,8 +247,12 @@ export async function montarLaGuia(
   const pedida = leer<Pedida>(carpeta, "pedida.json");
   const m = materialDeLaGuia(v, pedida);
   const escrita = leer<EntregaDeLaGuia>(carpeta, "escrita.json");
-  const cuaderno = montarCuaderno(m.viaje, m.dado, escrita, { manera: pedida.manera, hecha: o.hoy ?? new Date() });
-  const veredicto = puertaCuaderno(cuaderno, m.viaje);
+  const cuaderno = montarCuaderno(m.viaje, m.dado, escrita, {
+    manera: pedida.manera,
+    hecha: o.hoy ?? new Date(),
+    version: pedida.version,
+  });
+  const veredicto = puertaCuaderno(cuaderno, m.viaje, pedida.version);
   if (!veredicto.verde) return parar(carpeta, veredicto.rojos);
   if (o.sinFotos !== true) {
     try {

@@ -316,10 +316,10 @@ const direccionQueVale = (texto: unknown): boolean => enlaceSinClaves(texto);
  * cada parada son del viaje, que cada foto lleva su autor y su licencia, que cada precio dice cuándo se vio y es el
  * del viaje, que cada enlace se puede abrir sin claves, y que lleva sus avisos y la fecha de los precios.
  */
-export function puertaCuaderno(c: Cuaderno, v: Viaje): Veredicto {
+export function puertaCuaderno(c: Cuaderno, v: Viaje, version: number = v.version): Veredicto {
   const rojos: Rojo[] = [];
   const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
-  if (c.viaje !== v.id || c.version !== v.version) rojo("viaje", "el cuaderno no es de este viaje ni de esta versión");
+  if (c.viaje !== v.id || c.version !== version) rojo("viaje", "el cuaderno no es de este viaje ni de esta versión");
   if (c.idioma !== v.idioma) rojo("idioma", "no está en el idioma del viajero");
   if (c.dias.length !== v.dias.length) rojo("dias", "no tiene los días del viaje");
   const paradas = new Map(v.paradas.map((p) => [p.id, p]));

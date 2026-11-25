@@ -117,7 +117,7 @@ export function montarCuaderno(
   v: Viaje,
   dado: ParaLaGuia,
   escrita: EntregaDeLaGuia,
-  o: { manera: string | null; hecha: Date },
+  o: { manera: string | null; hecha: Date; version?: number },
 ): Cuaderno {
   const manera = o.manera === null ? null : (v.maneras.find((m) => m.id === o.manera) ?? null);
   const { duerme, llega } = deLaManera(v, manera);
@@ -195,7 +195,9 @@ export function montarCuaderno(
   return {
     formato: "guia/1",
     viaje: v.id,
-    version: v.version,
+    // La versión es la de la mesa, que es la que cuenta para saber si la guía se ha quedado atrás: el número que el
+    // viaje lleva dentro es el de su investigación, y un viaje cerrado es otra versión con ese mismo número dentro.
+    version: o.version ?? v.version,
     idioma: v.idioma,
     hecha: o.hecha.toISOString(),
     portada: { titulo: escrita.cover.title, entrada: escrita.cover.intro, foto: portada },
