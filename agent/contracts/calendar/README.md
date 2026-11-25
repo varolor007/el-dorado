@@ -13,7 +13,8 @@ moves.
 - `trip.json`: today's date (`today`); the destination (its name, its country in two letters and whether it is a
   city, a region or a country); the country the traveller leaves from (`home_country`, two letters, or `unknown`);
   the dates (`check_in`, `check_out`, how many `nights`, and `flexible`: whether the traveller can move them); what
-  they are looking for (`looking_for`, in their words or from their taps); and their language.
+  they are looking for (`looking_for`: only what is on the fixed list of what can be looked for, in English, such as
+  `Eat well` or `Nature`; never their own words); and their language.
 - `limits.json`: how many findings you may hand in (`findings_allowed`), how many other windows you may propose
   (`windows_allowed`, zero when the dates cannot move) and how many days a window may move at most
   (`max_shift_days`), before or after the trip.
