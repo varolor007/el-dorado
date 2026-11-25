@@ -3,9 +3,25 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 6, por momentos, construida y junta el 25-nov: su cimiento (8.1), el alojamiento (8.2), el
-transporte (8.3), los cambios (8.5) y el día a día (8.6); falta su revisión por los tres adversarios y su punto de
-situación al PM; las tandas 4 y 5, con su visto bueno** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, construida, revisada por los tres adversarios y arreglada el 25-nov,
+espera el visto bueno del PM: su cimiento (8.1), el alojamiento (8.2), el transporte (8.3), los cambios (8.5) y el
+día a día (8.6). La tanda 7 no empieza sin él, y gasta. Las tandas 4 y 5, con su visto bueno** (el estado, punto a
+punto, en [plan.md](plan.md)).
+
+**La revisión de la tanda 6** (25-nov). Tres adversarios, cada uno en su copia; su informe, hallazgo a hallazgo y
+con lo que se hizo, en [revisiones/tanda-6.md](revisiones/tanda-6.md), y sus pantallas en la página de la revisión
+(https://claude.ai/artifact/KMBqFEhTmYD1HNH787LHqb). Un bloqueante, de la mecánica, arreglado: un cambio que se paraba dejaba el
+viaje atascado y escondido. Los arreglos los hicieron tres sesiones de obra (el cimiento y los cambios; el
+alojamiento y el transporte; el día a día), cada uno con su prueba: la batería pasó de 839 a 860. **Cómo se miró en
+la web sin gastar**: con el viaje del ensayo, hasta cada «Adelante» y sin pulsarlo (ese viaje no lleva vuelo, y la
+fuente no dio ninguno: las opciones de vuelo solo se han visto con datos inventados); y con una casa de mentira,
+para ver lo de después: la puerta de verdad (`puertaALaWeb`) con `fuentesInventadas` y `lanzadorDeMentira` del caso
+inventado, como hacen las pruebas, escuchando donde la web espera a la casa. Con ella se vieron el vuelo elegido con
+su antes y ahora, la respuesta a una pregunta, el mensaje para un día, las cuatro versiones y el cambio parado. No
+está en el repositorio: cada sesión se hizo la suya en su borrador, y valdría la pena dejar una. Con los asientos de
+mentira, un cambio de fechas no pasa la puerta del que cruza (el caso inventado no lo cubre): sirve para ver un
+cambio parado. **Sin arreglar, y sabido**: lo que se lista al final del informe. **Nada de la tanda se ha visto con
+IA de verdad.**
 
 **El alojamiento, a ratos (8.2), junto** (25-nov). Desde la ficha (`web/src/piezas/Alojamiento.tsx`). Elegir otro
 de los que ya hay es una elección (`lodging`), y el total lo rehace el código (`conTuAlojamiento`, en

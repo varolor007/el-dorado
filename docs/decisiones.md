@@ -670,6 +670,14 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **Al juntar los cuatro momentos, cerrar lleva a la vez el alojamiento y el transporte elegidos** (la sesión, al
   juntar): cada uno cambia su parte del total de la manera, con su prueba. Las dos ramas lo habían hecho cada una
   por su lado.
+- **La revisión de la tanda 6** (la sesión, por la regla de la obra): tres adversarios en su copia. Un bloqueante,
+  arreglado: un cambio que se paraba dejaba el viaje atascado y escondido. Lo que decidieron la sesión y las
+  sesiones de obra al arreglar sus hallazgos queda en `revisiones/tanda-6.md`. Cinco cosas, con su porqué: lo que
+  pides en un momento dura por la cadena de versiones mientras sigue valiendo, porque perderlo sin decirlo es lo que
+  más sorprende; otra búsqueda de alojamiento pisa entera a la de antes, y no campo a campo; el que cruza y el que
+  explica se conservan solo si lo que leerían es lo mismo, aunque se ahorre menos, para que no quede una frase
+  vieja; un día que no cabe se dice y no se impide, porque es elección del viajero; y los cuatro momentos pasan a
+  «en parte» en el plan, como el cierre, mientras no se vean con IA de verdad.
 
 ## Pendientes
 
@@ -690,7 +698,9 @@ Lo que deja el 25-nov, a decisión del PM:
   puede mirar, porque la fuente de vuelos no dice dónde se hace: hoy solo se avisa. Si un día que no cabe, porque
   moviste o añadiste una parada, debe impedir guardar o cerrar: hoy se dice y no se impide. Si se ofrecen
   aeropuertos de otro país que el del destino cuando están cerca: hoy sí, y se avisa. Y el tope de elegir otro
-  transporte, seis por viaje al día, de partida.
+  transporte, seis por viaje al día, de partida. Si otra búsqueda de alojamiento pisa entera a lo pedido antes o
+  solo lo que cambia. Y si se prefiere ahorrar turnos de IA con un mensaje para un día, aunque una frase del que
+  explica pueda quedarse vieja: hoy no se ahorra.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
 - **Del viaje a ratos (8.1)**: cuántas versiones e investigaciones caben en un viaje (veinte y treinta), y cuánto

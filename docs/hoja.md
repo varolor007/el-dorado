@@ -688,6 +688,7 @@ Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de u
 | 8. ¿Todo cuadra? | Cerrar el viaje | Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado | hecho |
 | 9. ¿Cada día cabe? | La investigación y El día a día | Cada parada existe en los datos, con su sitio y su fuente; ninguna repetida; las horas caben en el día; ningún salto pasa del tope. Hecha, menos lo que cierra cada día, que espera a tener de dónde saberlo | en parte |
 | 10. ¿La guía dice lo que dice el viaje? | La guía | Cada sitio, cada hora y cada precio, en el viaje cerrado; cada foto, con su autor y su licencia; ninguna palabra prohibida; su aviso | hecho |
+| La de la respuesta | El alojamiento | Lo que contesta el que mira a tu pregunta por un alojamiento: su prueba, de lo que se le dio; sus números, en la ficha o en las opiniones; nada de dinero ni de promesas; y una foto que no es de la habitación no prueba una respuesta sobre ella | hecho |
 | La de todos | Cada asiento, al entregar | Cada paso dejó su archivo y en su orden; cada dato, con su fuente, su fecha y su etiqueta; cada página citada se consultó de verdad: está en la memoria de lo consultado de ese asiento, que guarda la casa | hecho |
 
 Una puerta mide las cuentas, la forma, de dónde sale cada cosa y que las piezas casen. No mide si un juicio es acertado: eso lo cubren el banco, las dos fuentes, otra pasada a ciegas y tu confirmación. Un rojo vuelve a su dueño, dos veces como mucho; después lo coge el conductor.
