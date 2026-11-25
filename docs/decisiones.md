@@ -622,6 +622,15 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **De qué va cada cosa que hay que llevar hecha lo dicen los datos** (la sesión, al mirar la guía): el nombre de la
   parada o del papel lo pone el código, y la frase, el asiento. Y lo impreso corre seguido: ocho hojas donde había
   once.
+- **El visto bueno a las tandas 4 y 5, y el sí a la 6** (el PM, a su punto de situación: «por lo demás, nada, yo
+  creo que ok, seguimos para lo siguiente»; la sesión lo lee así y se lo dice, por si no lo era). De lo que quedaba
+  a su decisión no contestó nada en concreto: se queda como está construido, y sigue en «Pendientes». No es un sí a
+  gastar.
+- **Donde la guía no sale en un idioma, se dice que todavía no está disponible** (el PM: «no es que se niegue,
+  simplemente di que todavía no están soportados»). Hecho en la web.
+- **La tanda 6 va en dos pasos** (la sesión): primero su cimiento (8.1), con una sola sesión de obra, y después el
+  alojamiento, el transporte, el día a día y los cambios, a la vez, sobre él. Si se hicieran todos a la vez, cada
+  uno inventaría su manera de guardar una elección, de decir un impacto y de rehacer.
 - **La revisión de la tanda 5** (la sesión, por la regla de la obra): tres adversarios en su copia. Dos
   bloqueantes, arreglados: seguir un cierre podía cerrar una versión vieja encima de otra nueva, y la guía enseñaba
   los precios de la investigación y no los del cierre. Lo que la sesión decidió al comprobar sus hallazgos queda en

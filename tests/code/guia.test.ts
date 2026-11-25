@@ -469,15 +469,16 @@ test("los avisos de la puerta 10 se guardan con su veredicto, y la guía sale ig
   }
 });
 
-test("la guía solo se pide en los idiomas que tienen sus rótulos y sus palabras: en otro, se niega sin lanzar", () => {
-  // Cada idioma de la guía tiene sus rótulos y sus avisos; y la web dice la negativa en inglés y en español.
+test("la guía solo sale en los idiomas que tienen sus rótulos y sus palabras: en otro, todavía no está", () => {
+  // Cada idioma de la guía tiene sus rótulos y sus avisos; y la web dice, en inglés y en español, que en ese idioma
+  // todavía no está disponible (el PM, 25-nov: no es que se niegue).
   for (const idioma of IDIOMAS_DE_LA_GUIA) {
     assert.ok(Object.hasOwn(ROTULOS, idioma), idioma);
     assert.ok(Object.hasOwn(AVISOS, idioma), idioma);
   }
   const textos = readFileSync(resolve(import.meta.dirname, "..", "..", "web", "src", "lib", "textos.ts"), "utf8");
-  assert.match(textos, /language: "Your guide can be made in English or Spanish/);
-  assert.match(textos, /language: "Tu guía se puede hacer en inglés o en español/);
+  assert.match(textos, /language: "Your guide is not available in your language yet/);
+  assert.match(textos, /language: "Tu guía todavía no está disponible en tu idioma/);
   const viaje = viajeParaLaGuia();
   viaje.idioma = "fi";
   const { mesa, v } = viajeCerradoEnLaMesa({ viaje });

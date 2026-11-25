@@ -3,8 +3,22 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 5, cerrar el viaje y la guía, construida, junta y revisada (25-nov), a falta del visto
-bueno del PM; la tanda 4, también a falta de su visto bueno** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov, por su cimiento (8.1); las tandas 4 y 5, con el
+visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
+que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
+lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee
+el resto como su visto bueno a las dos tandas y como el sí para empezar la 6, y se lo dice así. De lo que quedaba a
+su decisión no contestó nada en concreto: se queda como está construido y sigue en «Pendientes». Y no es un sí a
+gastar: ni otro ensayo, ni el cierre o la guía con IA de verdad.
+
+**La tanda 6, por momentos** (25-nov). El resto del bloque 8: usar el viaje a ratos. En dos pasos, porque todo lo
+demás se apoya en el primero. Primero, una sesión de obra con su cimiento (8.1, `claude/eldorado-8-1-por-momentos`):
+lo que el viajero elige, guardado en la casa; el estado de cada pieza, sacado del disco; el impacto de un cambio,
+por claves y sin IA; rehacer solo lo que dejó de valer, en una investigación que parte de la anterior; y las
+versiones, con volver a la de antes. Después, sobre él y a la vez: el alojamiento (8.2), el transporte (8.3), el día
+a día (8.6) y los cambios (8.5). Vigilar el precio (8.7) es del PM.
 
 **La revisión de la tanda 5** (25-nov): tres adversarios en su copia; su informe, hallazgo a hallazgo, en
 [revisiones/tanda-5.md](revisiones/tanda-5.md), y sus pantallas, con el viaje del ensayo cerrado de verdad, en
@@ -28,7 +42,7 @@ batería pasó de 706 pruebas a 779. Lo que hay que saber de cómo quedó:
 - **Una palabra con mayúscula que no está en el viaje ya no es un rojo de la puerta 10**: queda como aviso en el
   `.puertas.json` del puesto. El código no distingue un sitio inventado de «Gótico»: eso es del revisor, por decidir.
 - **La guía solo sale en inglés y en español** (`IDIOMAS_DE_LA_GUIA`), que son los idiomas con rótulos y palabras
-  prohibidas; en otro, se niega y lo dice.
+  prohibidas; en otro, dice que todavía no está disponible en ese idioma, sin lanzar a nadie.
 - **Lo que queda del PM**, entero, al final de ese informe: la puerta 8 frente a su fila de la hoja, qué precio
   manda, la marca de afiliado, los idiomas, lo de la guía y los números.
 

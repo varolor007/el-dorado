@@ -908,7 +908,7 @@ const en = {
       ({
         not_closed: "Your guide opens once your trip is closed.",
         which_way: "Choose which way you are doing it.",
-        language: "Your guide can be made in English or Spanish, and your trip is in another language.",
+        language: "Your guide is not available in your language yet. For now it comes in English and Spanish.",
         already_running: "Your guide is already being written.",
         too_many_guides: "You have asked for this trip's guide several times today. Try again tomorrow.",
         no_key: "Put your AI key first.",
@@ -1731,7 +1731,7 @@ const es: Textos = {
       ({
         not_closed: "Tu guía se abre cuando tu viaje está cerrado.",
         which_way: "Elige de qué manera lo haces.",
-        language: "Tu guía se puede hacer en inglés o en español, y tu viaje está en otro idioma.",
+        language: "Tu guía todavía no está disponible en tu idioma. De momento sale en inglés y en español.",
         already_running: "Tu guía ya se está escribiendo.",
         too_many_guides: "Hoy ya has pedido varias veces la guía de este viaje. Prueba mañana.",
         no_key: "Pon antes tu clave de IA.",
