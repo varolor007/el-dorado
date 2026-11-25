@@ -877,6 +877,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   /**
    * Tus elecciones sobre la versión que se enseña: leerlas y guardarlas, solo su dueño y solo con el viaje en el mapa.
    * Se guardan encima, sin versión nueva, y no gastan. Lo que no es del viaje se dice por su campo, y no se guarda.
+   * Al guardar se dice de qué versión son (`version`): si no es la que se enseña, 409 y no se guarda.
    */
   function tusElecciones(p: Peticion): Respuesta {
     const v = suViaje(p);
@@ -885,6 +886,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (p.metodo !== "PUT") throw new Fallo(405, "method");
     if (marchas.has(v.ficha.id)) throw new Fallo(409, "already_running");
     if (!objeto(p.cuerpo) || !objeto(p.cuerpo.choices)) throw new Fallo(400, "bad_request");
+    // Lo que se guarda dice de qué versión es: si mientras tanto se enseña otra, no se guarda encima de ella.
+    const de = p.cuerpo.version;
+    if (de !== undefined && (typeof de !== "number" || !Number.isInteger(de))) throw new Fallo(400, "bad_request");
+    if (de !== undefined && de !== v.ficha.version) throw new Fallo(409, "not_shown");
     try {
       const choices = guardarElecciones(v, p.cuerpo.choices, hoy());
       return { estado: 200, cuerpo: { version: v.ficha.version, choices } };

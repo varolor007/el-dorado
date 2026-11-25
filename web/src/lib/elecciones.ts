@@ -33,14 +33,19 @@ export function useTusElecciones(
     });
     return () => {
       vivo = false;
+      // Lo que esperaba a guardarse era de esta versión: al cambiar de versión no se manda.
+      if (reloj.current !== null) clearTimeout(reloj.current);
+      reloj.current = null;
     };
   }, [id, version]);
   const guardar = (e: Elecciones): void => {
     if (id === null || version === null) return;
     if (reloj.current !== null) clearTimeout(reloj.current);
     reloj.current = setTimeout(() => {
+      reloj.current = null;
       setGuardado("guardando");
-      void pideALaCasa("PUT", `viajes/${id}/elecciones`, { choices: e }).then((r) =>
+      // Con la versión que se ve: si la casa ya enseña otra, no lo guarda encima de ella.
+      void pideALaCasa("PUT", `viajes/${id}/elecciones`, { version, choices: e }).then((r) =>
         setGuardado(r.estado === 200 ? "guardado" : "fallo"),
       );
     }, ESPERA_AL_GUARDAR_MS);

@@ -512,7 +512,13 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     assert.deepEqual([malo.estado, malo.cuerpo.error, malo.cuerpo.field], [400, "bad_choice", "way"]);
     assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, otro, { choices: {} })).estado, 404);
     const tuyas = { way: "cheapest", pace: "full", removed: [p1], moved: { [p2]: 0 } };
-    assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { choices: tuyas })).estado, 200);
+    // Lo que se guarda dice de qué versión es: si no es la que se enseña, no se guarda encima de otra.
+    const deOtra = await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: 2, choices: tuyas });
+    assert.deepEqual([deOtra.estado, deOtra.cuerpo.error], [409, "not_shown"]);
+    const sinNumero = await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: "1", choices: tuyas });
+    assert.deepEqual([sinNumero.estado, sinNumero.cuerpo.error], [400, "bad_request"]);
+    assert.deepEqual((await pide("GET", `/viajes/${id}/elecciones`, ana)).cuerpo.choices, SIN_ELEGIR);
+    assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: 1, choices: tuyas })).estado, 200);
     // Al volver, siguen ahí.
     const leidas = (await pide("GET", `/viajes/${id}/elecciones`, ana)).cuerpo;
     assert.equal(leidas.choices.way, "cheapest");
