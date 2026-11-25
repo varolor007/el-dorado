@@ -731,6 +731,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   cosas se quitan: se lee por Overpass, con una consulta por tanda y solo etiquetas. Qué instancia se usa va por el
   entorno y es del PM. Sin Overpass el viaje sale igual: el horario de los datos abiertos no se sabe, se dice, y el
   asiento lo lee de la web del sitio, que Wikidata sí da.
+- **Una sola cuenta en todas partes** (la sesión de obra que unió las capas, con lo más prudente y a firma del PM):
+  la regla del precio de cada uno es la del presupuesto, también en la tarjeta y en la ficha de una parada. Moverte
+  allí cuenta los trayectos de los caminos de la casa, que son los que enseña la web, con la ida y la vuelta a
+  donde duermes, para no quedarse corto: por eso puede cambiar de una manera a otra. Las cuentas se rehacen siempre
+  con lo que el viajero tiene delante. Siete cifras que antes podían salir distintas en dos sitios salen ya
+  iguales, con su prueba.
 
 ## Pendientes
 
@@ -747,7 +753,9 @@ Lo que deja el 25-nov, a decisión del PM:
   cuenta de ida y vuelta (hoy, sí, si el transporte vuelve). Qué instancias de Overpass se usan para leer
   OpenStreetMap: la principal pide que lo comercial vaya a una propia o de pago, y desde esta nube no contesta; hay
   otras dos públicas de alcance mundial (la de VK Maps, rusa, y la de Private.coffee) y varias con clave o de pago
-  (`condiciones.md`). Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
+  (`condiciones.md`). Si moverte allí cuenta la ida y la vuelta a donde duermes (hoy, sí). Las reglas del precio de
+  un niño: fuera de las edades del precio de niño paga el de adulto, y con un precio de niño sin edades no se sabe.
+  Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
   veía precios. Lo que te pierdes en autobús, que la hoja nombra y sigue sin hacer. Si en «Allí» se puede escribir
   un mensaje: hoy solo se lee. Y verlo con IA de verdad, que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,

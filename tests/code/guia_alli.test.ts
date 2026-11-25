@@ -18,6 +18,7 @@ import { carpetaDeLaGuia, llevarLaGuia, materialDeLaGuia, pedirGuia } from "../.
 import { puestosDe } from "../../agent/launcher/puesto.ts";
 import { comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
 import { montarCuaderno, pintarCuaderno, type Cuaderno } from "../../agent/scripts/cuaderno.ts";
+import { presupuestoDe } from "../../agent/scripts/presupuesto.ts";
 import {
   entregaDeLaGuia,
   HOY,
@@ -232,6 +233,40 @@ test("el cuaderno pone lo de allí de los datos del viaje, cada dato con su día
     }, /un dato de allí no dice de qué página sale/);
     trampa((x) => (x.dias[1].comerDice = "Come aquí." as string) && (x.dias[1].comer = []), /dice dónde comer/);
   });
+});
+
+test("lo que te conviene para moverte, en «Cómo moverte»: la cuenta del presupuesto, y la puerta 10 la mira", () => {
+  conMaterial(viajeParaLaGuia({ capas: true }), (m) => {
+    const c = cuadernoDe(m);
+    const cv = c.conviene!;
+    assert.ok(cv !== null && cv.viajes > 0, "el viaje inventado tiene trayectos que no se andan");
+    // La misma cifra que «moverte allí» en el presupuesto de su manera, rehecho con los mismos días y capas.
+    const manera = m.viaje.maneras.find((x) => x.id === "best_value")!;
+    const p = presupuestoDe(m.viaje, { moverse: m.viaje.moverse, entradas: m.viaje.entradas });
+    const alli = p.maneras.find((x) => x.manera === manera.id)!.partes.find((x) => x.parte === "getting_around")!;
+    assert.equal(cv.total, alli.total);
+    assert.equal(cv.manera, "best_value");
+    assert.deepEqual(puertaCuaderno(c, m.viaje).rojos, []);
+    // Las trampas: otro total, otra manera y una cuenta sin el viaje sabiendo moverse.
+    const rojos = (cambia: (x: Cuaderno) => void): string[] => {
+      const roto = structuredClone(c);
+      cambia(roto);
+      return puertaCuaderno(roto, m.viaje).rojos.map((r) => `${r.donde}: ${r.que}`);
+    };
+    assert.ok(rojos((x) => (x.conviene!.total = (x.conviene!.total ?? 0) + 1)).some((r) => r.startsWith("conviene")));
+    assert.ok(rojos((x) => (x.conviene!.manera = "cheapest")).some((r) => r.startsWith("conviene")));
+    assert.ok(rojos((x) => (x.conviene!.manera = "otra")).some((r) => r.startsWith("conviene")));
+    // Se pinta, en los dos idiomas, con lo que sale y lo que cuesta.
+    for (const idioma of ["es", "en"] as const) {
+      const html = pintarCuaderno({ ...c, idioma });
+      const r = ROTULOS[idioma];
+      assert.ok(html.includes(r.teConviene), idioma);
+      assert.ok(html.includes(r.tusTrayectos(cv.viajes, cv.dias)), idioma);
+      assert.doesNotMatch(html, PROHIBIDOS);
+    }
+  });
+  // Sin la capa de moverse, no hay cuenta que enseñar.
+  conMaterial(viajeParaLaGuia(), (m) => assert.equal(cuadernoDe(m).conviene ?? null, null));
 });
 
 test("el cuaderno se pinta con «Cómo moverte», «Antes de ir» y dónde comer, en los dos idiomas", () => {

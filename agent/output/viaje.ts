@@ -66,6 +66,9 @@ export type CaminoGuardado = { de: Punto; a: Punto; aPie?: Tramo; enCoche?: Tram
  */
 export type TablaDeCaminos = { fuente: string; visto: string; caminos: CaminoGuardado[] };
 
+/** Una zona de la ruta: su id, el que dicen las capas, y su nombre, el que dice el alojamiento y ve el viajero. */
+export type ZonaDeLaRuta = { id: string; nombre: string };
+
 /** Un día: sus paradas, en orden, y lo que se anda de cada una a la siguiente. */
 export type Dia = { fecha: string; titulo: string; paradas: string[]; metros: number[] };
 
@@ -506,6 +509,12 @@ export type Viaje = {
    * mismos números que la casa. Un viaje de antes, o sin la fuente, no la trae.
    */
   caminos?: TablaDeCaminos;
+  /**
+   * Las zonas de la ruta, por su id y por su nombre (el de sus anclas, que sale de los datos): con ellas la web nombra
+   * la zona a la que llega cada manera de llegar y rehace lo que cuesta llegar a donde duermes (14.6). Un viaje de
+   * antes no las trae.
+   */
+  zonasDeLaRuta?: ZonaDeLaRuta[];
   /** Los avisos de las fechas, del del calendario, o por qué faltan. Un viaje de antes no los trae. */
   calendario?: DelCalendario;
   /** La tabla de los papeles, con sus fuentes y sus plazos, o por qué falta. Un viaje de antes no la trae. */
@@ -615,6 +624,21 @@ function pegasDeLosCaminos(t: TablaDeCaminos): Pega[] {
     vistos.add(par);
     if (c.aPie === undefined && c.enCoche === undefined) pega(donde, "no dice ni a pie ni en coche");
     if (!tramo(c.aPie) || !tramo(c.enCoche)) pega(donde, "unos metros o unos minutos no son un número");
+  });
+  return pegas;
+}
+
+/** Lo que se comprueba de las zonas de la ruta: una lista, cada una con su id y su nombre, sin repetir ninguna. */
+function pegasDeLasZonas(zonas: ZonaDeLaRuta[]): Pega[] {
+  if (!Array.isArray(zonas)) return [{ donde: "zonasDeLaRuta", que: "no es una lista" }];
+  const pegas: Pega[] = [];
+  const vistas = new Set<string>();
+  zonas.forEach((z, i) => {
+    const donde = `zonasDeLaRuta[${i}]`;
+    const texto = (x: unknown): boolean => typeof x === "string" && x.trim() !== "" && x.length <= 120;
+    if (!texto(z?.id) || !texto(z?.nombre)) return void pegas.push({ donde, que: "no dice su id y su nombre" });
+    if (vistas.has(z.id)) pegas.push({ donde, que: "la zona sale dos veces" });
+    vistas.add(z.id);
   });
   return pegas;
 }
@@ -876,6 +900,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
       pega("transporteAlLado", "no es de un día de al lado");
   }
   if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
+  if (v.zonasDeLaRuta !== undefined) pegas.push(...pegasDeLasZonas(v.zonasDeLaRuta));
   if (v.calendario !== undefined) pegas.push(...pegasDelCalendario(v.calendario, v.entrada, v.salida));
   if (v.papeles !== undefined) pegas.push(...pegasDeLosPapeles(v.papeles));
   pegas.push(...pegasDeLasCapas(v, v));

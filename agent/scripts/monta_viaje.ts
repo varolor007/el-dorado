@@ -26,7 +26,7 @@ import { elegirFotos } from "../tools/fotos.ts";
 import { paraElGrupo, type Vuelo } from "../tools/fuentes/tipos.ts";
 import type { Busqueda, Ficha } from "./busqueda_alojamiento.ts";
 import type { TablaDeCaminos } from "../tools/caminos.ts";
-import type { DeLosPapeles, DelCalendario } from "../output/viaje.ts";
+import type { DeLosPapeles, DelCalendario, ZonaDeLaRuta } from "../output/viaje.ts";
 import { cribar } from "./cribas.ts";
 import type { Entendido, EntregaDeCruce, EntregaDeExplicar, EntregaDeMirar, Tabla, ZonaResuelta } from "./formas.ts";
 import { fechasDe, repartir } from "./ritmo.ts";
@@ -197,6 +197,8 @@ export type Decidido = {
   caminos?: TablaDeCaminos | null;
   /** Los días que se sabe que cierra cada parada, de sus entradas (14.4): el ritmo no la pone esos días. */
   cierra?: Record<string, string[]>;
+  /** Las zonas de la ruta, por su id y su nombre, para que la web las nombre (14.6). */
+  zonasDeLaRuta?: ZonaDeLaRuta[];
   /** Los avisos de las fechas, o por qué faltan: viajan tal cual, ya con las cuentas del código. */
   calendario?: DelCalendario | null;
   /** La tabla de los papeles, con lo que decidió el viajero: viaja tal cual. */
@@ -250,6 +252,7 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     vistazo: vistazoDe(b),
     // Un viaje sin tabla de caminos no la lleva: se mide con la cuenta de la casa, como siempre.
     ...(caminos === null ? {} : { caminos }),
+    ...(d.zonasDeLaRuta === undefined || d.zonasDeLaRuta.length === 0 ? {} : { zonasDeLaRuta: d.zonasDeLaRuta }),
     ...(d.calendario == null ? {} : { calendario: d.calendario }),
     ...(d.papeles == null ? {} : { papeles: d.papeles }),
   };
@@ -461,6 +464,7 @@ export function montarViajeHecho(h: Hecho): Viaje {
     mirados: h.mirados,
     caminos: h.caminos,
     cierra: h.cierra,
+    zonasDeLaRuta: h.zonas.map((z) => ({ id: z.id, nombre: z.label })),
     calendario: conSusFrases(h.calendario ?? null, h.explica.dates),
     papeles: h.papeles,
   });

@@ -7,7 +7,6 @@
 // precios con fuente (las entradas, moverse allí y llegar a donde se duerme) o «no se sabe». La usa la casa al montar
 // el viaje y la puede usar la web cuando el viajero cambia el ritmo o quita una parada (`conOtrosDias`).
 
-import { SALTO_MAXIMO } from "../data/dias.ts";
 import {
   COMIDAS_AL_DIA,
   PLAZAS_DE_UN_COCHE,
@@ -28,8 +27,8 @@ import type {
   Presupuesto,
   PresupuestoDeUnaManera,
 } from "../output/capas.ts";
-import type { Viaje } from "../output/viaje.ts";
-import { cuentaDelGrupo } from "./capa_moverse.ts";
+import type { Punto, Viaje, ZonaDeLaRuta } from "../output/viaje.ts";
+import { cuentaDelGrupo, viajesDeLosDias } from "./capa_moverse.ts";
 import { entradaDe } from "./capas.ts";
 
 type ClaseDeParte = (typeof PARTES_DEL_PRESUPUESTO)[number];
@@ -76,7 +75,7 @@ export const LA_CUENTA_DE_MOVERSE: CuentaDeMoverse = (m, dias, grupo, moneda) =>
 };
 
 /** Una zona de la ruta, por su id y por su nombre: el alojamiento dice su zona por el nombre, y llegar, por el id. */
-export type ZonaParaLaCuenta = { id: string; nombre: string };
+export type ZonaParaLaCuenta = ZonaDeLaRuta;
 
 /** Lo que la cuenta puede recibir además del viaje: las zonas de la ruta y la cuenta de moverse. */
 export type OpcionesDeLaCuenta = { zonas?: ZonaParaLaCuenta[]; moverse?: CuentaDeMoverse };
@@ -147,20 +146,41 @@ function juntar(cuantos: { cuanto: Importe | "free"; veces: number; fuente: Fuen
 }
 
 /**
+ * Lo que cuesta algo que se paga por persona para cada uno del grupo, con lo que se sabe: lo sumado de los que tienen
+ * su precio, a cuántos no se les sabe, cuántos sois y si es gratis para todos. Es la única cuenta del precio de un
+ * grupo: la usan el presupuesto y la web, en la tarjeta y en la ficha de cada parada (14.6). Null sin precios.
+ */
+export type CadaUnoDelGrupo = DelGrupo & { faltan: number; cuantos: number; gratis: boolean };
+
+export function cadaUnoDelGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): CadaUnoDelGrupo | null {
+  if (precios === null || precios.length === 0) return null;
+  const personas: (number | null)[] = [
+    ...Array.from({ length: Math.max(0, grupo.adultos) }, () => null),
+    ...grupo.ninos,
+  ];
+  const cuantos = [];
+  let faltan = 0;
+  for (const edad of personas) {
+    const p = elQueConviene(preciosParaUno(precios, edad), moneda);
+    if (p === null) faltan++;
+    else cuantos.push({ cuanto: p.cuanto, veces: 1, fuente: p.fuente });
+  }
+  const gratis = faltan === 0 && cuantos.every((c) => c.cuanto === "free");
+  return { ...juntar(cuantos), faltan, cuantos: personas.length, gratis };
+}
+
+/**
  * Lo que cuesta algo que se paga por persona, para el grupo: cada uno con el precio que le vale. Null si a alguno no
  * se le sabe: entonces no se sabe la cosa entera, y no se suma a medias.
  */
 export function delGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): DelGrupo | null {
-  if (precios === null || precios.length === 0) return null;
-  const personas: (number | null)[] = [...Array.from({ length: grupo.adultos }, () => null), ...grupo.ninos];
-  const cuantos = [];
-  for (const edad of personas) {
-    const p = elQueConviene(preciosParaUno(precios, edad), moneda);
-    if (p === null) return null;
-    cuantos.push({ cuanto: p.cuanto, veces: 1, fuente: p.fuente });
-  }
-  return juntar(cuantos);
+  const c = cadaUnoDelGrupo(precios, grupo, moneda);
+  return c === null || c.faltan > 0 ? null : { importes: c.importes, fuentes: c.fuentes };
 }
+
+/** Lo que paga un adulto, el precio que le toca: para decirlo al lado de lo del grupo. Null si no se sabe. */
+export const elDeUnAdulto = (precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null =>
+  precios === null ? null : elQueConviene(preciosParaUno(precios, null), moneda);
 
 /** Lo que cuesta algo que se paga por coche (un taxi), para el grupo: tantos coches como hagan falta. */
 export function porCoche(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): DelGrupo | null {
@@ -238,9 +258,41 @@ export function lasEntradas(v: Viaje, moneda: string, capas: CapasParaLaCuenta):
   return c.parteHecha();
 }
 
-/** Los trayectos que no se andan en cada día: los que pasan de lo que se manda andar de una parada a la siguiente. */
-export const trayectosQueNoSeAndan = (v: Pick<Viaje, "dias">): TrayectosDeUnDia[] =>
-  v.dias.map((d) => ({ fecha: d.fecha, trayectos: d.metros.filter((m) => m > SALTO_MAXIMO).length }));
+/** Dónde se duerme en una manera, para contar los trayectos de allí a la primera parada y de la última a allí. */
+export const dondeDuerme = (v: Pick<Viaje, "alojamientos">, m: Viaje["maneras"][number] | undefined): Punto | null =>
+  m === undefined ? null : (v.alojamientos.find((a) => a.id === m.alojamiento)?.punto ?? null);
+
+/**
+ * Los trayectos que no se andan en cada día, con la cuenta de caminos del de moverse (`viajesDeLosDias`), la misma
+ * con que la web y la guía dicen cada tramo: de una parada a la siguiente y, con la manera, de donde se duerme a la
+ * primera y de la última a donde se duerme. Una sola cuenta (14.6): lo que se paga es lo que se enseña.
+ */
+export function trayectosQueNoSeAndan(
+  v: Pick<Viaje, "dias" | "paradas" | "caminos" | "alojamientos">,
+  manera?: Viaje["maneras"][number],
+): TrayectosDeUnDia[] {
+  const deCadaDia = new Map(viajesDeLosDias(v, dondeDuerme(v, manera)).map((d) => [d.fecha, d.viajes]));
+  return v.dias.map((d) => ({ fecha: d.fecha, trayectos: deCadaDia.get(d.fecha) ?? 0 }));
+}
+
+/**
+ * La cuenta de lo que te conviene para moverte, entera, como la hace el presupuesto: con tus días, tu grupo y donde
+ * duermes en la manera. Su total es el de «moverte allí» en las cuentas; la web y la guía la enseñan tal cual.
+ */
+export function cuentaDeMoverseDelViaje(
+  v: Viaje,
+  manera: Viaje["maneras"][number] | undefined,
+  moverse: DeMoverse | undefined = v.moverse,
+): { dias: TrayectosDeUnDia[]; viajes: number; grupo: ReturnType<typeof cuentaDelGrupo> } {
+  const dias = trayectosQueNoSeAndan(v, manera);
+  const viajes = dias.map((d) => ({ fecha: d.fecha, viajes: d.trayectos }));
+  const moneda = manera?.moneda ?? v.maneras[0]?.moneda ?? null;
+  return {
+    dias,
+    viajes: dias.reduce((s, d) => s + d.trayectos, 0),
+    grupo: cuentaDelGrupo(viajes, moverse, v.adultos, v.ninos, moneda),
+  };
+}
 
 /**
  * Moverse allí: lo que da la cuenta de sueltos o abono (de 14.2) con los trayectos que no se andan. Sin ninguno, es
@@ -251,8 +303,9 @@ export function moverseAlli(
   moneda: string,
   capas: CapasParaLaCuenta,
   cuenta: CuentaDeMoverse = LA_CUENTA_DE_MOVERSE,
+  manera?: Viaje["maneras"][number],
 ): ParteDelPresupuesto {
-  const dias = trayectosQueNoSeAndan(v);
+  const dias = trayectosQueNoSeAndan(v, manera);
   const n = dias.reduce((s, d) => s + d.trayectos, 0);
   const c = new Cuenta("getting_around", moneda);
   if (n === 0) return c.parteHecha();
@@ -349,7 +402,7 @@ export function partesDeLasCapas(
     manera === undefined
       ? sinSaber("arrival", moneda, 1)
       : llegarADormir(v, { ...manera, moneda }, capas, opciones.zonas);
-  return [llegar, moverseAlli(v, moneda, capas, opciones.moverse), lasEntradas(v, moneda, capas)];
+  return [llegar, moverseAlli(v, moneda, capas, opciones.moverse, manera), lasEntradas(v, moneda, capas)];
 }
 
 // 3. Las comidas, aparte.
@@ -426,7 +479,8 @@ export function sumarPartes(manera: string, moneda: string, partes: ParteDelPres
 
 /**
  * El presupuesto entero de un viaje ya montado, por manera, con las capas que haya: cada manera con su dormir, su
- * llegar y su llegar a donde duerme; moverse allí y las entradas, iguales en las tres.
+ * llegar, su llegar a donde duerme y su moverse allí, que cuenta los trayectos desde donde duerme; las entradas,
+ * iguales en las tres.
  */
 export function presupuestoDe(v: Viaje, capas: CapasParaLaCuenta, opciones: OpcionesDeLaCuenta = {}): Presupuesto {
   const maneras = v.maneras.map((m) =>

@@ -169,12 +169,10 @@ instancias de Overpass se usan es del PM. Sin pantalla nueva ni capturas, y sin 
 
 **La web de las capas (14.6), junta** (25-nov). `web/src/piezas/Alli.tsx` (`Alli`, `EntradaDeLaParada`,
 `FichaDeLaEntrada`, `CosteDelTrayecto`, `ElPresupuesto`) y sus cuentas en `web/src/lib/alli.ts` (`paraTuGrupo`,
-`abreTusDias`, `billeteSuelto`, `presupuestoQueSeEnsena`: hoy enseña el presupuesto del viaje y dice «de antes» si
-cambiaste ritmo, paradas, dormir o llegar). Lo vivo: `ways_around`, `good_to_know` y `tickets_known`
-(`sucesosDeLasCapas`, en `monta_viaje.ts`, la misma cuenta en vivo y grabada). Sabido: el viaje no trae el nombre de
-las zonas, y se numeran; `noSeAnda` sigue diciendo que no se sabe el transporte; la web cuenta el precio del grupo por
-su lado (`paraTuGrupo`) y el presupuesto por el suyo (`delGrupo`); el coste de un trayecto no se ha visto en pantalla
-(el caso inventado se anda entero).
+`abreTusDias`, `billeteSuelto`, `presupuestoQueSeEnsena`). Lo vivo: `ways_around`, `good_to_know` y `tickets_known`
+(`sucesosDeLasCapas`, en `monta_viaje.ts`, la misma cuenta en vivo y grabada). Lo que quedó suelto (el nombre de las
+zonas, las dos cuentas del grupo, el aviso viejo del transporte y el coste de un trayecto sin ver) se cerró al
+unirlas: ver «Las capas, unidas».
 
 **La guía con las capas (14.6), junta** (25-nov). Material: `ticket`, `eat`, `around` y `know` en
 `agent/scripts/guia.ts`, solo si la capa vale (`capaQueVale`); dónde comer por cercanía a las paradas
@@ -185,6 +183,20 @@ un precio o una hora de allí, solo de su material; antes no veía precios) y GW
 `tests/code/guia_alli.test.ts`; el viaje con capas, `viajeParaLaGuia({ capas: true })`. Sabido: la guía enseña los
 billetes, no cuál conviene; «metro» en español es también la unidad y puede dar un rojo falso; lo que te pierdes en
 autobús sigue sin hacer. Sin ver con IA.
+
+**Las capas, unidas en la web y en la guía (14.6)** (25-nov, una tercera sesión de obra, tras juntar las otras). Una
+sola cuenta: la web no tiene reglas suyas (`web/src/lib/alli.ts` llama a `cadaUnoDelGrupo`, `trayectosQueNoSeAndan`,
+`cuentaDeMoverseDelViaje` y `presupuestoDe`, de `agent/scripts/presupuesto.ts`, y a `sueltoDelGrupo`, de
+`capa_moverse.ts`). Los trayectos que no se andan son los de los caminos (`viajesDeLosDias`), con la ida y la vuelta
+a donde duerme cada manera: moverte allí puede cambiar de una manera a otra. El viaje trae `zonasDeLaRuta`
+(`montarViajeHecho` y `conLasCapas`); con ellas la web nombra las zonas y rehace también llegar a donde duermes; sin
+ellas (un viaje de antes) esa parte queda la de antes y se dice. Las cuentas enseñan el presupuesto de lo que tienes
+delante (`presupuestoQueSeEnsena(viaje, dias, cambios)`). «Allí» dice lo que te conviene para moverte
+(`loQueTeConviene`), y la guía lo pone en «Cómo moverte» (`convieneDelCuaderno`), con la puerta 10 rehaciendo la
+cuenta. `noSeAnda` dice ya los transportes que hay. Mirado con una casa de mentira y una fuente de rutas con rodeo,
+para que haya tramos que no se andan. Sabido: el que escribe la guía no recibe lo que conviene, y sus tramos no
+tienen la vuelta a donde duermes; un viaje cerrado enseña en las cuentas el presupuesto con los precios de la
+investigación, no los del cierre; sin niños en pantalla; sin IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

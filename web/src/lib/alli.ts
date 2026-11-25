@@ -1,71 +1,58 @@
 // Las cuentas de la pestaña «Allí» y de las capas del destino en la web (14.6), sin pantalla: lo que cuesta un precio
-// para tu grupo, cuándo abre un sitio en tus días, el billete suelto de un trayecto que no se anda y si el presupuesto
-// que trae el viaje sigue siendo el de lo que ves. Solo leen lo que trae el viaje, ya pasada su puerta: no calculan
-// el presupuesto (eso es de la casa, `agent/scripts/presupuesto.ts`) ni deciden nada.
+// para tu grupo, cuándo abre un sitio en tus días, el billete suelto de un trayecto que no se anda, lo que te conviene
+// para moverte y el presupuesto de lo que tienes delante. No tienen reglas suyas: cada cuenta es la de la casa
+// (`agent/scripts/presupuesto.ts` y `agent/scripts/capa_moverse.ts`), con tus días, para que la tarjeta de una
+// parada, su ficha, cada tramo, «Allí» y las cuentas digan siempre la misma cifra.
 
 import type {
   DeMoverse,
   Franja,
   Horario,
-  Importe,
   ManeraDeLlegar,
   PrecioDeCapa,
   Presupuesto,
 } from "../../../agent/output/capas.ts";
+import type { Dia, Manera, Viaje } from "../../../agent/output/viaje.ts";
+import { sueltoDelGrupo } from "../../../agent/scripts/capa_moverse.ts";
 import { abreElDia, diaDeLaSemana } from "../../../agent/scripts/capas.ts";
+import {
+  cadaUnoDelGrupo,
+  conOtrosDias,
+  cuentaDeMoverseDelViaje,
+  elDeUnAdulto,
+  presupuestoDe,
+} from "../../../agent/scripts/presupuesto.ts";
 
-/** Hasta qué edad es un bebé cuando la página no da edades: lo de menos de dos años. */
-const EDAD_DE_BEBE = 2;
+/** Quiénes viajan y en qué moneda va el viaje: con ella se elige el precio que conviene, como en el presupuesto. */
+export type GrupoDelViaje = { adultos: number; ninos: number[]; moneda: string };
+
+/** El grupo de un viaje, con la moneda de sus maneras. */
+export const grupoDelViaje = (v: Pick<Viaje, "adultos" | "ninos" | "maneras">): GrupoDelViaje => ({
+  adultos: v.adultos,
+  ninos: v.ninos,
+  moneda: v.maneras[0]?.moneda ?? "",
+});
 
 /** Lo que cuesta algo para tu grupo: lo sumado, por moneda; de cuántos de vosotros no se sabe; y si es todo gratis. */
-export type ParaTuGrupo = { importes: Importe[]; faltan: number; gratis: boolean; cuantos: number };
-
-const cubre = (p: PrecioDeCapa, edad: number): boolean =>
-  p.edades !== null &&
-  (p.edades.desde === null || p.edades.desde <= edad) &&
-  (p.edades.hasta === null || edad <= p.edades.hasta);
+export type ParaTuGrupo = {
+  importes: { importe: number; moneda: string }[];
+  faltan: number;
+  gratis: boolean;
+  cuantos: number;
+};
 
 /**
- * El precio que le toca a cada uno, por lo que dice la página: a un adulto, el de adulto o el de cualquiera; a un niño,
- * el que cubre su edad, o, si la página no da edades, el de bebé o el de niño, y si no, el de cualquiera. Lo que no se
- * puede saber (un niño en una página que solo da el de adulto) no se supone: cuenta como que falta. Los de familia y
- * de grupo no se suman: dependen de condiciones que la web no sabe.
+ * Lo que cuesta para el grupo: la cuenta del presupuesto (`cadaUnoDelGrupo`), que da a cada uno el precio que le toca
+ * y, si valen varios, el que más conviene. Sin precios, null: no se sabe.
  */
-export function precioDeCadaUno(precios: PrecioDeCapa[], edad: number | null): PrecioDeCapa | null {
-  const sueltos = precios.filter((p) => p.para !== "family" && p.para !== "group");
-  const de = (para: PrecioDeCapa["para"]) => sueltos.find((p) => p.para === para && p.edades === null) ?? null;
-  if (edad === null) return de("adult") ?? sueltos.find((p) => p.para === "adult") ?? de("any");
-  const porEdad = sueltos.filter((p) => p.para !== "adult" && cubre(p, edad));
-  if (porEdad.length > 0) return porEdad[0];
-  return (edad < EDAD_DE_BEBE ? de("infant") : null) ?? de("child") ?? de("any");
+export function paraTuGrupo(precios: PrecioDeCapa[] | null, grupo: GrupoDelViaje): ParaTuGrupo | null {
+  const c = cadaUnoDelGrupo(precios, { adultos: grupo.adultos, ninos: grupo.ninos }, grupo.moneda);
+  return c === null ? null : { importes: c.importes, faltan: c.faltan, gratis: c.gratis, cuantos: c.cuantos };
 }
 
-/** Lo que cuesta para el grupo, sumando el precio de cada uno. Sin precios, null: no se sabe. */
-export function paraTuGrupo(precios: PrecioDeCapa[] | null, adultos: number, ninos: number[]): ParaTuGrupo | null {
-  if (precios === null || precios.length === 0) return null;
-  const edades: (number | null)[] = [...Array.from({ length: Math.max(0, adultos) }, () => null), ...ninos];
-  const importes: Importe[] = [];
-  let faltan = 0;
-  let pagados = 0;
-  for (const edad of edades) {
-    const p = precioDeCadaUno(precios, edad);
-    if (p === null) {
-      faltan++;
-      continue;
-    }
-    const cuanto = p.cuanto;
-    if (cuanto === "free") continue;
-    pagados++;
-    const ya = importes.find((x) => x.moneda === cuanto.moneda);
-    if (ya === undefined) importes.push({ ...cuanto });
-    else ya.importe = Math.round((ya.importe + cuanto.importe) * 100) / 100;
-  }
-  return { importes, faltan, gratis: pagados === 0 && faltan === 0, cuantos: edades.length };
-}
-
-/** Lo que cuesta para una persona adulta, si la página lo dice: para decirlo al lado de lo del grupo. */
-export function porPersona(precios: PrecioDeCapa[] | null): PrecioDeCapa | null {
-  return precios === null ? null : precioDeCadaUno(precios, null);
+/** Lo que cuesta para una persona adulta, si la página lo dice: el mismo precio que le pone el presupuesto. */
+export function porPersona(precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null {
+  return elDeUnAdulto(precios, moneda);
 }
 
 /** Un día del viaje y lo que se sabe de si abre: sí, con sus horas; no; o no se sabe. */
@@ -89,31 +76,30 @@ export function abreTusDias(horarios: Horario[] | null, fechas: readonly string[
   });
 }
 
-/** Las maneras que no se andan, como las cuenta la web (`ManeraDeIr`): la de transporte se paga con un billete. */
-const PUBLICOS = ["metro", "tram", "bus", "train", "ferry", "cable"] as const;
-
 /**
- * Lo que cuesta un trayecto en transporte, si se sabe: el billete suelto de allí, para tu grupo. Si hay varios, el
- * del transporte que sirve más zonas; si no hay ninguno con precio, null.
+ * Lo que cuesta un trayecto que no se anda, para tu grupo: el billete suelto con que la cuenta de moverse paga cada
+ * trayecto (`sueltoDelGrupo`), el mismo que entra en «moverte allí». Null si no se sabe.
  */
-export function billeteSuelto(m: DeMoverse | undefined): DeMoverse["billetes"][number] | null {
-  if (m === undefined || m.falta !== null) return null;
-  const sueltos = m.billetes.filter(
-    (b) =>
-      b.clase === "single" && b.precios !== null && b.modos.some((x) => (PUBLICOS as readonly string[]).includes(x)),
-  );
-  const alcance = (b: DeMoverse["billetes"][number]): number =>
-    m.transportes.filter((x) => b.modos.includes(x.modo)).reduce((n, x) => n + x.zonas.length, 0);
-  return [...sueltos].sort((a, b) => alcance(b) - alcance(a))[0] ?? null;
+export function billeteSuelto(m: DeMoverse | undefined, grupo: GrupoDelViaje): ReturnType<typeof sueltoDelGrupo> {
+  return sueltoDelGrupo(m, grupo.adultos, grupo.ninos, grupo.moneda || null);
 }
 
 /**
- * Cómo se nombra la zona a la que llega cada manera de llegar. El viaje no trae el nombre de las zonas de la ruta:
- * si todas van a la misma, no hace falta nombrarla; si van a varias, se cuentan por orden de aparición.
+ * Cómo se nombra la zona a la que llega cada manera de llegar: por su nombre, si el viaje trae las zonas de su ruta y
+ * la ruta tiene más de una; si no las trae (un viaje de antes) y van a varias, por su número en el orden en que salen.
+ * Si no hace falta nombrarla (una ruta de una zona, o todas van a la misma sin nombres), null.
  */
-export function zonasDeLlegar(llegar: ManeraDeLlegar[]): Map<string, number> | null {
-  const zonas = [...new Set(llegar.map((x) => x.aZona))];
-  return zonas.length <= 1 ? null : new Map(zonas.map((z, i) => [z, i + 1]));
+export function zonasDeLlegar(
+  llegar: ManeraDeLlegar[],
+  zonas: Viaje["zonasDeLaRuta"] = undefined,
+): Map<string, string | number> | null {
+  const ids = [...new Set(llegar.map((x) => x.aZona))];
+  if (zonas !== undefined && zonas.length > 1) {
+    const conNombre = ids.flatMap((z) => zonas.filter((x) => x.id === z).map((x) => [z, x.nombre] as const));
+    if (conNombre.length === ids.length) return new Map(conNombre);
+  }
+  if (ids.length <= 1) return null;
+  return new Map(ids.map((z, i) => [z, zonas?.find((x) => x.id === z)?.nombre ?? i + 1]));
 }
 
 /** El nombre de la web de una fuente, para decir de dónde sale un dato sin enseñar la dirección entera. */
@@ -127,7 +113,7 @@ export function sitioDe(url: string): string {
 
 /**
  * Lo que has cambiado en tu viaje desde que se hizo su presupuesto: el ritmo, las paradas que quitas, añades o mueves,
- * y dónde duermes o cómo llegas. Con algo cambiado, el presupuesto que trae el viaje es el de antes.
+ * y dónde duermes o cómo llegas.
  */
 export type TusCambios = {
   ritmo: boolean;
@@ -136,14 +122,45 @@ export type TusCambios = {
   transporte: boolean;
 };
 
+/** Lo que no se puede rehacer en la web: llegar de donde aterrizas a donde duermes, sin las zonas de la ruta. */
+export type DeAntes = "arrival" | null;
+
+/** Las capas del viaje, como las quiere la cuenta. */
+const capasDe = (v: Viaje) => ({
+  ...(v.moverse === undefined ? {} : { moverse: v.moverse }),
+  ...(v.saber === undefined ? {} : { saber: v.saber }),
+  ...(v.entradas === undefined ? {} : { entradas: v.entradas }),
+});
+
 /**
- * El presupuesto que se enseña y si es el de antes de tus cambios. Hoy, el que trae el viaje; cuando la casa dé la
- * cuenta con tus días (14.5), se llama aquí y deja de ser «de antes».
+ * El presupuesto de lo que tienes delante: la cuenta de la casa (`presupuestoDe`), rehecha con tus días (tu ritmo,
+ * tus paradas) y con donde duermes y cómo llegas en tu viaje (`viaje` ya con lo tuyo). Lo único que la web no puede
+ * rehacer es llegar a donde duermes en un viaje de antes, que no trae las zonas de su ruta: entonces esa parte se
+ * queda la de antes y, si cambiaste donde duermes o cómo llegas, se dice («arrival»).
  */
 export function presupuestoQueSeEnsena(
-  presupuesto: Presupuesto | undefined,
+  viaje: Viaje,
+  dias: Dia[],
   cambios: TusCambios,
-): { presupuesto: Presupuesto | undefined; deAntes: boolean } {
-  const deAntes = cambios.ritmo || cambios.paradas || cambios.alojamiento || cambios.transporte;
-  return { presupuesto, deAntes: presupuesto !== undefined && presupuesto.falta === null && deAntes };
+): { presupuesto: Presupuesto | undefined; deAntes: DeAntes } {
+  const antes = viaje.presupuesto;
+  if (antes === undefined || antes.falta !== null) return { presupuesto: antes, deAntes: null };
+  const tuyo: Viaje = { ...viaje, dias };
+  try {
+    if (viaje.zonasDeLaRuta !== undefined)
+      return { presupuesto: presupuestoDe(tuyo, capasDe(viaje), { zonas: viaje.zonasDeLaRuta }), deAntes: null };
+    const rehecho = conOtrosDias(tuyo, capasDe(viaje), antes);
+    return { presupuesto: rehecho, deAntes: cambios.alojamiento || cambios.transporte ? "arrival" : null };
+  } catch {
+    // Si algo del viaje no deja hacer la cuenta, se enseña la que trae, y se dice que es la de antes.
+    return { presupuesto: antes, deAntes: "arrival" };
+  }
+}
+
+/**
+ * Lo que te conviene para moverte, con tus días, tu grupo y donde duermes: la cuenta del presupuesto, entera. Su total
+ * es el de «moverte allí» en las cuentas.
+ */
+export function loQueTeConviene(viaje: Viaje, manera: Manera | undefined, dias: Dia[]) {
+  return cuentaDeMoverseDelViaje({ ...viaje, dias }, manera);
 }

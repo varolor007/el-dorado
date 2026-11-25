@@ -172,6 +172,16 @@ type Rotulos = {
   webDelSitio: string;
   cerca: (metros: string, parada: string) => string;
   cuesta: (desde: string, hasta: string) => string;
+  /** Lo que te conviene para moverte (14.6): la cuenta del código, la misma de «moverte allí» en las cuentas. */
+  teConviene: string;
+  tusTrayectos: (viajes: number, dias: number) => string;
+  cadaAdulto: (adultos: number) => string;
+  unNino: (edad: number) => string;
+  conviene: Record<"nothing" | "singles" | "pass" | "rides" | "mix" | "unknown", string>;
+  paraElGrupo: (dinero: string, cuantos: number) => string;
+  frenteASueltos: (sueltos: string, ahorra: string) => string;
+  convieneNada: string;
+  convieneNoSe: string;
 };
 
 /** Las clases de lo que conviene saber, como se agrupan en «Antes de ir»: lo de comer, junto. */
@@ -351,6 +361,24 @@ export const ROTULOS: Record<string, Rotulos> = {
     },
     desde: (lugar) => `From ${lugar}`,
     hastaLas: (hora) => `until ${hora}`,
+    teConviene: "What suits you best",
+    tusTrayectos: (viajes, dias) =>
+      `${cuenta(viajes, "leg", "legs")} not walked, on ${cuenta(dias, "day", "days")}, ` +
+      "from and back to where you sleep",
+    cadaAdulto: (adultos) => (adultos === 1 ? "Adult" : "Each adult"),
+    unNino: (edad) => `Child, ${edad}`,
+    conviene: {
+      nothing: "Nothing to buy",
+      singles: "Single tickets",
+      pass: "A pass",
+      rides: "A pack of rides",
+      mix: "A mix",
+      unknown: "Not known",
+    },
+    paraElGrupo: (dinero, cuantos) => (cuantos === 1 ? `In all: ${dinero}` : `For the ${cuantos} of you: ${dinero}`),
+    frenteASueltos: (sueltos, ahorra) => `With single tickets only, ${sueltos}: you save ${ahorra}`,
+    convieneNada: "Every leg of your days is walked: you need no tickets.",
+    convieneNoSe: "What suits you best is not known: a ticket price is missing.",
     deTantos: (dias, viajes) =>
       [dias === null ? "" : cuenta(dias, "day", "days"), viajes === null ? "" : cuenta(viajes, "ride", "rides")]
         .filter((x) => x !== "")
@@ -536,6 +564,24 @@ export const ROTULOS: Record<string, Rotulos> = {
     },
     desde: (lugar) => `Desde ${lugar}`,
     hastaLas: (hora) => `hasta las ${hora}`,
+    teConviene: "Lo que te conviene",
+    tusTrayectos: (viajes, dias) =>
+      `${cuenta(viajes, "trayecto", "trayectos")} que no se andan, en ${cuenta(dias, "día", "días")}, ` +
+      "con la ida y la vuelta a donde duermes",
+    cadaAdulto: (adultos) => (adultos === 1 ? "Adulto" : "Cada adulto"),
+    unNino: (edad) => `Niño, ${edad} años`,
+    conviene: {
+      nothing: "Nada que comprar",
+      singles: "Billetes sueltos",
+      pass: "Un abono",
+      rides: "Un bono de viajes",
+      mix: "Una mezcla",
+      unknown: "Sin saber",
+    },
+    paraElGrupo: (dinero, cuantos) => (cuantos === 1 ? `En total: ${dinero}` : `Para los ${cuantos}: ${dinero}`),
+    frenteASueltos: (sueltos, ahorra) => `Solo con billetes sueltos, ${sueltos}: ahorras ${ahorra}`,
+    convieneNada: "En tus días todo se anda: no te hace falta ningún billete.",
+    convieneNoSe: "Lo que te conviene no se sabe: falta el precio de algún billete.",
     deTantos: (dias, viajes) =>
       [dias === null ? "" : cuenta(dias, "día", "días"), viajes === null ? "" : cuenta(viajes, "viaje", "viajes")]
         .filter((x) => x !== "")

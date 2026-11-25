@@ -14,28 +14,35 @@ import type {
   DeLasEntradas,
   DeMoverse,
   DelDestino,
+  Dia,
   FuenteDeUnDato,
   Importe,
+  Manera,
   PrecioDeCapa,
   Presupuesto,
   Viaje,
 } from "../../../agent/output/viaje.ts";
+import type { ReactNode } from "react";
 import { abreElDia, entradaDe } from "../../../agent/scripts/capas.ts";
 import {
   abreTusDias,
   billeteSuelto,
+  grupoDelViaje,
+  loQueTeConviene,
   paraTuGrupo,
   porPersona,
   sitioDe,
   zonasDeLlegar,
+  type DeAntes,
+  type GrupoDelViaje,
   type ParaTuGrupo,
 } from "../lib/alli.ts";
 import { diaCorto, diaDeLaSemana, enGoogleMaps } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 
 type Comun = { t: Textos; idioma: string };
-/** Quiénes viajan, para lo que cuesta para el grupo: cuántos adultos y la edad de cada niño. */
-type Grupo = { adultos: number; ninos: number[] };
+/** Quiénes viajan, para lo que cuesta para el grupo: cuántos adultos, la edad de cada niño y la moneda del viaje. */
+type Grupo = GrupoDelViaje;
 
 // ---------- Lo que comparten
 
@@ -88,8 +95,8 @@ export function dichoDelGrupo(t: Textos, idioma: string, g: ParaTuGrupo | null):
 
 /** Lo que cuesta, para el grupo y, si sois más de uno, por adulto. */
 function dichoDelPrecio(t: Textos, idioma: string, precios: PrecioDeCapa[] | null, grupo: Grupo): string {
-  const g = paraTuGrupo(precios, grupo.adultos, grupo.ninos);
-  const uno = porPersona(precios);
+  const g = paraTuGrupo(precios, grupo);
+  const uno = porPersona(precios, grupo.moneda);
   const dicho = dichoDelGrupo(t, idioma, g);
   if (g === null || g.cuantos === 1 || uno === null || uno.cuanto === "free" || uno.para !== "adult") return dicho;
   return `${dicho} (${t.alli.porAdulto(importe(uno.cuanto, idioma))})`;
@@ -111,24 +118,34 @@ function sinLaCapa(t: Textos, capa: { falta: string | null } | undefined): strin
 
 // ---------- La pestaña «Allí»
 
-/** La pestaña «Allí»: cómo llegar y moverte, lo que conviene saber y dónde se come, y las entradas en resumen. */
-export function Alli({
-  t,
-  idioma,
-  viaje,
-  dias,
-}: Comun & { viaje: Viaje; dias?: { fecha: string; paradas: string[] }[] }) {
-  const grupo = { adultos: viaje.adultos, ninos: viaje.ninos };
+/**
+ * La pestaña «Allí»: cómo llegar y moverte, con lo que te conviene para tus días, lo que conviene saber y dónde se
+ * come, y las entradas en resumen. `viaje` va ya con lo tuyo (donde duermes y cómo llegas), y `dias`, con tu ritmo y
+ * tus paradas: lo que te conviene cambia con ellos.
+ */
+export function Alli({ t, idioma, viaje, dias, manera }: Comun & { viaje: Viaje; dias?: Dia[]; manera?: Manera }) {
+  const grupo = grupoDelViaje(viaje);
+  const tusDias = dias ?? viaje.dias;
+  const marcada = manera ?? viaje.maneras[0];
   return (
     <>
-      <Moverse t={t} idioma={idioma} m={viaje.moverse} grupo={grupo} />
+      <Moverse t={t} idioma={idioma} m={viaje.moverse} grupo={grupo} zonas={viaje.zonasDeLaRuta}>
+        <LoQueTeConviene t={t} idioma={idioma} viaje={viaje} dias={tusDias} manera={marcada} />
+      </Moverse>
       <Saber t={t} idioma={idioma} s={viaje.saber} />
-      <ResumenDeLasEntradas t={t} viaje={viaje} dias={dias ?? viaje.dias} />
+      <ResumenDeLasEntradas t={t} viaje={viaje} dias={tusDias} />
     </>
   );
 }
 
-function Moverse({ t, idioma, m, grupo }: Comun & { m: DeMoverse | undefined; grupo: Grupo }) {
+function Moverse({
+  t,
+  idioma,
+  m,
+  grupo,
+  zonas: deLaRuta,
+  children,
+}: Comun & { m: DeMoverse | undefined; grupo: Grupo; zonas?: Viaje["zonasDeLaRuta"]; children?: ReactNode }) {
   const falta = sinLaCapa(t, m);
   if (falta !== null || m === undefined)
     return (
@@ -137,7 +154,8 @@ function Moverse({ t, idioma, m, grupo }: Comun & { m: DeMoverse | undefined; gr
         <p className="suave">{falta}</p>
       </div>
     );
-  const zonas = zonasDeLlegar(m.llegar);
+  const zonas = zonasDeLlegar(m.llegar, deLaRuta);
+  const numeradas = zonas !== null && [...zonas.values()].some((z) => typeof z === "number");
   const modo = (x: string): string => t.alli.modo[x] ?? x;
   const nada = m.llegar.length + m.transportes.length + m.billetes.length + m.pagos.length === 0 && m.coche === null;
   return (
@@ -160,7 +178,9 @@ function Moverse({ t, idioma, m, grupo }: Comun & { m: DeMoverse | undefined; gr
                     ? t.alli.deNombre(x.desde.nombre)
                     : (t.alli.desde[x.desde.clase] ?? x.desde.clase)}
                   {x.desde.nombre === null && x.desde.codigo !== null ? ` (${x.desde.codigo})` : ""}
-                  {zona === undefined ? "" : `, ${t.alli.aZona(zona)}`}
+                  {zona === undefined
+                    ? ""
+                    : `, ${typeof zona === "number" ? t.alli.aZona(zona) : t.alli.aZonaNombre(zona)}`}
                 </span>
                 <b>{modo(x.modo)}</b>
                 {datos.length > 0 && <span className="dato">{datos.join(", ")}</span>}
@@ -171,7 +191,9 @@ function Moverse({ t, idioma, m, grupo }: Comun & { m: DeMoverse | undefined; gr
           })}
         </ul>
       )}
-      {zonas !== null && <p className="credito">{t.alli.zonasSinNombre}</p>}
+      {numeradas && <p className="credito">{t.alli.zonasSinNombre}</p>}
+
+      {children}
 
       {m.transportes.length > 0 && (
         <>
@@ -348,7 +370,7 @@ export function EntradaDeLaParada({
 }: Comun & { entradas?: DeLasEntradas; parada: string; fecha: string | null; grupo: Grupo }) {
   const e = entradaDe(entradas, parada);
   if (e === null) return null;
-  const g = paraTuGrupo(e.precios, grupo.adultos, grupo.ninos);
+  const g = paraTuGrupo(e.precios, grupo);
   const cierra = fecha !== null && abreElDia(e.horarios, fecha) === false;
   return (
     <>
@@ -456,17 +478,111 @@ export function FichaDeLaEntrada({
 
 // ---------- En cada trayecto que no se anda
 
-/** Lo que cuesta un trayecto en transporte, si se sabe: el billete suelto de allí, para tu grupo. Si no, nada. */
+/**
+ * Lo que cuesta un trayecto en transporte, si se sabe: el billete suelto con que la cuenta de moverse paga cada
+ * trayecto, para tu grupo, el mismo que entra en «moverte allí». Si no se sabe, nada.
+ */
 export function CosteDelTrayecto({ t, idioma, moverse, grupo }: Comun & { moverse?: DeMoverse; grupo: Grupo }) {
-  const b = billeteSuelto(moverse);
+  const b = billeteSuelto(moverse, grupo);
   if (b === null) return null;
-  const g = paraTuGrupo(b.precios, grupo.adultos, grupo.ninos);
-  if (g === null || (g.importes.length === 0 && !g.gratis)) return null;
+  const cifra = b.importe === 0 ? t.alli.gratis : importe({ importe: b.importe, moneda: b.moneda }, idioma);
+  const dicho = b.cuantos === 1 ? cifra : t.alli.paraElGrupo(cifra, b.cuantos - b.faltan);
   return (
     <span className="tramo__coste">
-      <span className="dato">{t.alli.suelto(dichoDelPrecio(t, idioma, b.precios, grupo))}</span>
-      <Fuente t={t} idioma={idioma} f={b.fuente} />
+      <span className="dato">
+        {t.alli.suelto(b.faltan > 0 ? `${dicho}, ${t.alli.faltanDeVosotros(b.faltan, b.cuantos)}` : dicho)}
+      </span>
+      <Fuentes t={t} idioma={idioma} fuentes={b.fuentes} />
     </span>
+  );
+}
+
+// ---------- Lo que te conviene para moverte
+
+/**
+ * Lo que te sale mejor para moverte con tus días y tu grupo: billetes sueltos, un abono, un bono o una mezcla, lo que
+ * cuesta y lo que ahorras frente a los sueltos, con sus páginas. Es la cuenta del presupuesto: su total es el de
+ * «moverte allí» en las cuentas.
+ */
+function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Viaje; dias: Dia[]; manera?: Manera }) {
+  const m = viaje.moverse;
+  if (m === undefined || m.falta !== null) return null;
+  const { viajes, dias: conDias, grupo } = loQueTeConviene(viaje, manera, dias);
+  const enDias = conDias.filter((d) => d.trayectos > 0).length;
+  const dinero = (n: number, moneda: string | null): string =>
+    moneda === null ? String(n) : importe({ importe: n, moneda }, idioma);
+  const cabecera = <h3 className="fechas__sub">{t.alli.teConviene}</h3>;
+  if (viajes === 0)
+    return (
+      <div className="alli__conviene">
+        {cabecera}
+        <p className="suave">{t.alli.convieneNada}</p>
+      </div>
+    );
+  // Cada uno con su cuenta; los adultos tienen la misma, y se dicen una vez.
+  const personas = grupo.porPersona.filter(
+    (c, i) => c.edad !== null || grupo.porPersona.findIndex((x) => x.edad === null) === i,
+  );
+  const adultos = viaje.adultos;
+  const quien = (edad: number | null): string => (edad === null ? t.alli.cadaAdulto(adultos) : t.alli.unNino(edad));
+  const compras = (c: (typeof grupo.porPersona)[number]): string =>
+    c.compras
+      .map((x) =>
+        t.alli.compra(
+          x.cuantos,
+          t.alli.billete(x.clase, m.billetes[x.billete]?.dias ?? null, m.billetes[x.billete]?.viajes ?? null),
+        ),
+      )
+      .join(" + ");
+  const sueltos = grupo.porPersona.every((c) => c.sueltos !== null)
+    ? Math.round(grupo.porPersona.reduce((s, c) => s + (c.sueltos ?? 0), 0) * 100) / 100
+    : null;
+  const ahorra = sueltos !== null && grupo.total !== null ? Math.round((sueltos - grupo.total) * 100) / 100 : null;
+  const fuentes = grupo.porPersona.flatMap((c) => c.fuentes);
+  const cuantos = grupo.porPersona.length;
+  return (
+    <div className="alli__conviene">
+      {cabecera}
+      <p className="dato">{t.alli.tusTrayectos(viajes, enDias)}</p>
+      <ul className="fechas__lista">
+        {personas.map((c, i) => (
+          <li key={i} className="fecha alli__cosa">
+            <span className="fecha__clase">{quien(c.edad)}</span>
+            {c.total === null ? (
+              <span className="dato">{t.alli.convieneNoSe[c.porQue ?? "no_price"] ?? t.alli.sinPrecio}</span>
+            ) : (
+              <>
+                <b>{t.alli.conviene[c.conviene] ?? c.conviene}</b>
+                {c.compras.length > 0 && c.conviene !== "singles" && <span className="dato">{compras(c)}</span>}
+                <span className="alli__precio">{dinero(c.total, c.moneda)}</span>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      {grupo.total !== null && (
+        <p className="alli__linea">
+          <b>{t.alli.convieneGrupo(dinero(grupo.total, grupo.moneda), cuantos)}</b>
+          {sueltos !== null && ahorra !== null && ahorra > 0 && (
+            <span className="dato">
+              {t.alli.frenteASueltos(dinero(sueltos, grupo.moneda), dinero(ahorra, grupo.moneda))}
+            </span>
+          )}
+          {sueltos !== null && ahorra === 0 && personas.some((c) => c.conviene !== "singles") && (
+            <span className="dato">{t.alli.igualQueSueltos}</span>
+          )}
+        </p>
+      )}
+      {grupo.total === null && grupo.faltan > 0 && (
+        <p className="suave">{t.alli.faltanDeVosotros(grupo.faltan, cuantos)}</p>
+      )}
+      {fuentes.length > 0 && (
+        <span className="alli__enlaces">
+          <Fuentes t={t} idioma={idioma} fuentes={fuentes} />
+        </span>
+      )}
+      <p className="credito">{t.alli.convieneNota}</p>
+    </div>
   );
 }
 
@@ -474,16 +590,16 @@ export function CosteDelTrayecto({ t, idioma, moverse, grupo }: Comun & { movers
 
 /**
  * El presupuesto entero de la manera marcada, parte a parte, con de dónde sale cada una y lo que falta; las comidas
- * aparte, como una horquilla. Si cambiaste algo desde que se hizo, se dice que es el de antes.
+ * aparte, como una horquilla. Es el de lo que tienes delante; lo que la web no puede rehacer, se dice qué es.
  */
 export function ElPresupuesto({
   t,
   idioma,
   presupuesto,
   manera,
-  deAntes = false,
+  deAntes = null,
   dias,
-}: Comun & { presupuesto?: Presupuesto; manera: string; deAntes?: boolean; dias: number }) {
+}: Comun & { presupuesto?: Presupuesto; manera: string; deAntes?: DeAntes; dias: number }) {
   const falta = sinLaCapa(t, presupuesto);
   const suyo = presupuesto?.maneras.find((x) => x.manera === manera);
   if (falta !== null || presupuesto === undefined || suyo === undefined)
@@ -505,9 +621,9 @@ export function ElPresupuesto({
           <span className="dato">{t.alli.aparte(suyo.aparte.map((a) => importe(a, idioma)).join(" + "))}</span>
         )}
       </p>
-      {deAntes && (
+      {deAntes !== null && (
         <p className="aviso" role="note">
-          {t.alli.deAntes}
+          {t.alli.deAntes[deAntes]}
         </p>
       )}
       <ul className="presupuesto__partes">

@@ -20,11 +20,15 @@ import type {
   FilaDePapeles,
   Foto,
   Precio,
+  Manera,
   PrecioDeHoy,
   Punto,
   Transporte,
   Viaje,
 } from "../output/viaje.ts";
+import type { ClaseDeBillete } from "../data/capa_moverse.ts";
+import type { LoQueConviene } from "./capa_moverse.ts";
+import { cuentaDeMoverseDelViaje } from "./presupuesto.ts";
 import type {
   CosaDelDestino,
   DeMoverse,
@@ -88,6 +92,67 @@ export type EntradaDelCuaderno = {
 
 /** Un sitio donde comer un día: la cosa del destino, tal cual, la parada que le queda más cerca y lo que se anda. */
 export type ComerDelCuaderno = { cosa: CosaDelDestino; cerca: string; metros: number };
+
+/**
+ * Lo que te conviene para moverte (14.6), de la cuenta del presupuesto (`cuentaDeMoverseDelViaje`) con los días del
+ * viaje cerrado, su grupo y donde duerme su manera: su total es el de «moverte allí». La puerta 10 la vuelve a hacer.
+ */
+export type ConvieneDelCuaderno = {
+  manera: string | null;
+  viajes: number;
+  dias: number;
+  total: number | null;
+  moneda: string | null;
+  sueltos: number | null;
+  ahorra: number | null;
+  faltan: number;
+  personas: {
+    edad: number | null;
+    conviene: LoQueConviene;
+    total: number | null;
+    moneda: string | null;
+    compras: { clase: ClaseDeBillete; dias: number | null; viajes: number | null; cuantos: number; total: number }[];
+  }[];
+  fuentes: FuenteDeUnDato[];
+};
+
+/** Lo que te conviene para moverte, con la manera del cuaderno. Null si el viaje no sabe cómo moverse allí. */
+export function convieneDelCuaderno(v: Viaje, manera: Manera | null): ConvieneDelCuaderno | null {
+  const m = capaQueVale(v.moverse);
+  if (!moverseConAlgo(m)) return null;
+  const { dias, viajes, grupo } = cuentaDeMoverseDelViaje(v, manera ?? undefined, m);
+  const redondo = (n: number): number => Math.round(n * 100) / 100;
+  const sueltos = grupo.porPersona.every((c) => c.sueltos !== null)
+    ? redondo(grupo.porPersona.reduce((s, c) => s + (c.sueltos ?? 0), 0))
+    : null;
+  const fuentes: FuenteDeUnDato[] = [];
+  for (const f of grupo.porPersona.flatMap((c) => c.fuentes))
+    if (!fuentes.some((x) => x.url === f.url && x.visto === f.visto)) fuentes.push({ ...f });
+  return {
+    manera: manera?.id ?? null,
+    viajes,
+    dias: dias.filter((d) => d.trayectos > 0).length,
+    total: grupo.total,
+    moneda: grupo.moneda,
+    sueltos,
+    ahorra: sueltos === null || grupo.total === null ? null : redondo(sueltos - grupo.total),
+    faltan: grupo.faltan,
+    personas: grupo.porPersona.map((c) => ({
+      edad: c.edad,
+      conviene: c.conviene,
+      total: c.total,
+      moneda: c.moneda,
+      compras: c.compras.map((x) => ({
+        clase: x.clase,
+        dias: m.billetes[x.billete]?.dias ?? null,
+        viajes: m.billetes[x.billete]?.viajes ?? null,
+        cuantos: x.cuantos,
+        total: x.total,
+      })),
+    })),
+    fuentes,
+  };
+}
 
 /** Cómo moverte, copiado del viaje: lo que hay que contar, sin su porqué de faltar. */
 export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche">;
@@ -200,6 +265,8 @@ export type Cuaderno = {
   noSeSabe: string[];
   /** Cómo moverte, si el viaje lo sabe (14.6); un cuaderno de antes no lo trae. */
   moverse?: MoverseDelCuaderno | null;
+  /** Lo que te conviene para moverte con los días del viaje, si el viaje sabe cómo moverse (14.6). */
+  conviene?: ConvieneDelCuaderno | null;
   /** Lo que conviene saber que no es de un día, si el viaje lo sabe (14.6). */
   saber?: CosaDelDestino[];
   avisos: { ia: string; precios: string };
@@ -449,6 +516,7 @@ export function montarCuaderno(
           },
     noSeSabe: escrita.unknowns,
     moverse,
+    conviene: moverse === null ? null : convieneDelCuaderno(v, manera),
     saber: comer.sinDia,
     avisos: avisosDe(v.idioma),
     preciosDel: dias10[0] ?? null,
@@ -1038,6 +1106,75 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
       );
     if (mv.coche !== null)
       moverte.push(h("p", null, t("b", null, r.coche(mv.coche.haceFalta)), " ", nota(`(${visto(mv.coche.fuente)})`)));
+  }
+  // Lo que te conviene para moverte: la cuenta del código, la misma de «moverte allí» (14.6).
+  const cv = mv === null ? null : (c.conviene ?? null);
+  if (cv !== null) {
+    const enDinero = (n: number, moneda: string | null): string =>
+      moneda === null ? String(n) : dinero(c.idioma, { total: n, moneda });
+    const filas: string[] = [];
+    if (cv.viajes === 0) filas.push(t("p", null, r.convieneNada));
+    else {
+      filas.push(t("p", "nota", r.tusTrayectos(cv.viajes, cv.dias)));
+      const adultos = cv.personas.filter((x) => x.edad === null).length;
+      const personas = cv.personas.filter(
+        (x, i) => x.edad !== null || cv.personas.findIndex((y) => y.edad === null) === i,
+      );
+      filas.push(
+        h(
+          "ul",
+          "lista datos",
+          ...personas.map((x) => {
+            const quien = x.edad === null ? r.cadaAdulto(adultos) : r.unNino(x.edad);
+            // Con billetes sueltos, basta con decirlo; con un abono o una mezcla, lo que se compra.
+            const compras =
+              x.conviene === "singles"
+                ? ""
+                : x.compras
+                    .map((y) => {
+                      const cuanto = r.deTantos(y.dias, y.viajes);
+                      const billete = `${r.billete[y.clase] ?? y.clase}${cuanto === "" ? "" : ` (${cuanto})`}`;
+                      return y.cuantos === 1 ? billete : `${y.cuantos} × ${billete}`;
+                    })
+                    .join(" + ");
+            return h(
+              "li",
+              null,
+              h("span", "mota"),
+              h(
+                "p",
+                null,
+                t("b", null, quien),
+                esc(
+                  x.total === null
+                    ? `: ${r.convieneNoSe}`
+                    : [`: ${r.conviene[x.conviene]}`, compras, enDinero(x.total, x.moneda)]
+                        .filter((y) => y !== "")
+                        .join(", "),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+      if (cv.total !== null) {
+        const cuantos = cv.personas.length;
+        const ahorro =
+          cv.sueltos !== null && cv.ahorra !== null && cv.ahorra > 0
+            ? `. ${r.frenteASueltos(enDinero(cv.sueltos, cv.moneda), enDinero(cv.ahorra, cv.moneda))}`
+            : "";
+        filas.push(
+          h(
+            "p",
+            null,
+            t("b", null, r.paraElGrupo(enDinero(cv.total, cv.moneda), cuantos)),
+            esc(ahorro),
+            cv.fuentes.length > 0 ? ` ${nota(`(${[...new Set(cv.fuentes.map((f) => visto(f)))].join(", ")})`)}` : "",
+          ),
+        );
+      } else filas.push(t("p", null, r.convieneNoSe));
+    }
+    moverte.push(t("h3", null, r.teConviene), ...filas);
   }
   const saber = c.saber ?? [];
   const gruposDeSaber: string[] = [];
