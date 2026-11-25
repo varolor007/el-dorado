@@ -24,9 +24,12 @@
 //   POST   /viajes/<id>/reintentar     volver a intentarlo en un run parado: solo el paso que lo paró, y sigue
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
+//   POST   /viajes/<id>/cerrar         «me quedo con este», con su manera ({ "way": ... }); o que sigues aunque un
+//                                       precio haya subido mucho ({ "prices": "go_on" })
+//   GET    /viajes/<id>/cierre         por dónde va el último cierre y, si espera tu sí, lo que ha cambiado
 
 import { timingSafeEqual } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { join } from "node:path";
 import { FRENOS_DE_LA_PUERTA, type FrenosDeLaPuerta } from "../data/frenos.ts";
@@ -59,18 +62,31 @@ import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import { FalloAlReintentar, reintentar } from "./reintentar.ts";
 import {
+  cierreDeCara,
+  comprobarEnlace,
+  elegir,
+  etapaDe,
+  FalloAlCerrar,
+  llevarElCierre,
+  seguir,
+  type FuentesDelCierre,
+} from "./cerrar.ts";
+import {
   abrirViaje,
   apuntar,
   cambiarLoEntendido,
   cuantosViajes,
   leerVersion,
   leerViaje,
+  nuevoCierre,
   nuevoRun,
   pasar,
+  ultimoCierre,
   ultimoRun,
   viajesDe,
   type ViajeEnLaMesa,
 } from "./mesa.ts";
+import type { Viaje } from "../output/viaje.ts";
 import { comprobarVistazo } from "../output/viaje.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from "../scripts/vistazo.ts";
@@ -127,6 +143,11 @@ export type OpcionesDeLaPuerta = {
       : FrenosDeLaPuerta[K];
   };
   esperasDelVistazo?: Esperas;
+  /**
+   * Lo que responde un enlace al cerrar un viaje. Sin ello, se pregunta a cada web con una sola petición de su
+   * cabecera (`comprobarEnlace`).
+   */
+  comprobarEnlace?: FuentesDelCierre["comprobar"];
 };
 
 export type Puerta = {
@@ -581,6 +602,68 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 202, cuerpo: { retry: hecho.n } };
   }
 
+  /**
+   * «Me quedo con este»: cierra el viaje que se enseña con la manera que se diga, solo su dueño y solo si está en el
+   * mapa; o, si el cierre espera su sí porque un precio subió mucho, sigue con él. Corre de fondo: la web pregunta
+   * por dónde va en `/cierre`. Sin IA, el viaje se cierra igual, con el orden del código y sin las frases.
+   */
+  function cerrarElViaje(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id)) throw new Fallo(409, "already_running");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    let cierre: { carpeta: string; n: number };
+    if (pedido.prices !== undefined) {
+      const ultimo = ultimoCierre(v);
+      if (pedido.prices !== "go_on") throw new Fallo(400, "bad_request");
+      if (ultimo === null || v.ficha.estado !== "on_map" || etapaDe(ultimo.carpeta) !== "yours")
+        throw new Fallo(409, "not_now");
+      seguir(ultimo.carpeta, hoy());
+      cierre = ultimo;
+      apuntar(v, "button", { boton: "close_go_on", cierre: ultimo.n }, hoy());
+    } else {
+      if (v.ficha.estado !== "on_map") throw new Fallo(409, "not_now");
+      const viaje = leerVersion(v)?.viaje as Viaje | undefined;
+      if (typeof pedido.way !== "string" || !viaje?.maneras.some((m) => m.id === pedido.way))
+        throw new Fallo(400, "bad_way");
+      cierre = nuevoCierre(v, hoy());
+      try {
+        elegir(v, cierre.carpeta, pedido.way, hoy());
+      } catch (error) {
+        if (error instanceof FalloAlCerrar) throw new Fallo(409, error.message);
+        throw error;
+      }
+      apuntar(v, "button", { boton: "close", cierre: cierre.n, manera: pedido.way }, hoy());
+    }
+    const conQue = conQuePiensa(p.cuenta);
+    const clave = conQue === "key" ? claveDe(p.dueno, o.secreto, o.mesa) : null;
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : conQue === "key" && clave !== null
+          ? (o.lanzador as (clave: string) => Lanzador)(clave)
+          : null;
+    const todas = o.fuentes();
+    const fuentes: FuentesDelCierre = {
+      alojamiento: todas.alojamiento,
+      transporte: todas.transporte,
+      comprobar: o.comprobarEnlace ?? ((url) => comprobarEnlace(url)),
+    };
+    const marcha = llevarElCierre(v, cierre, { fuentes, lanzador, ahora: hoy })
+      .then(() => undefined)
+      .catch(() => {
+        // Si la casa se rompe a medias, el cierre no se queda colgado: queda parado, y el viaje sigue en el mapa.
+        if (!existsSync(join(cierre.carpeta, "parado.json")))
+          writeFileSync(
+            join(cierre.carpeta, "parado.json"),
+            JSON.stringify({ paso: "la casa", rojos: [{ donde: "house", que: "la casa se rompió mientras cerraba" }] }),
+          );
+      })
+      .finally(() => marchas.delete(id));
+    marchas.set(id, marcha);
+    return { estado: 202, cuerpo: { closing: cierre.n } };
+  }
+
   /** La casa lleva la investigación de un run, de fondo: si se rompe a medias, queda parada, y se cuenta. */
   function marchar(id: string, run: string, lanzador: Lanzador): void {
     const marcha = llevar(run, o.fuentes(), lanzador, o.alLlevar)
@@ -642,6 +725,17 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       const run = ultimoRun(suViaje(p));
       if (run === null) throw NO_HAY();
       return { estado: 200, cuerpo: { record: actaDeCara(actaDe(run)) } };
+    }
+    if (que === "cerrar" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return cerrarElViaje(p);
+    }
+    if (que === "cierre" && cual === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      const c = ultimoCierre(v);
+      if (c === null) throw NO_HAY();
+      return { estado: 200, cuerpo: { closing: { ...cierreDeCara(v, c), running: marchas.has(v.ficha.id) } } };
     }
     if (que === "version") {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

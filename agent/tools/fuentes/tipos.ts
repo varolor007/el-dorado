@@ -135,6 +135,8 @@ export type Vuelo = Origen & {
   escalasIda: number | null;
   escalasVuelta: number | null;
   minutos: number | null;
+  /** Lo que dura la ida, en minutos, si la fuente lo dice: con ello se sabe a qué hora se llega. */
+  minutosIda?: number | null;
   /** Verdadero si el precio es de una búsqueda anterior de otra persona, y no de ahora. */
   guardado: boolean;
   enlace: string | null;

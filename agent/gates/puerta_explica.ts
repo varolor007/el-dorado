@@ -9,6 +9,7 @@
 import { avisosDe, DE_ABARATAR } from "../data/palabras.ts";
 import type { FechasParaExplicar, HallazgoParaExplicar, ParaExplicar } from "../scripts/explica.ts";
 import type { Entendido } from "../scripts/formas.ts";
+import type { ParaElOrden } from "../scripts/cierre.ts";
 import { numerosEn } from "./puerta_cruce.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
@@ -284,4 +285,84 @@ function pegasDeLasFechas(crudo: unknown, m: MaterialDeExplicar): [string, strin
   for (const w of dadas.windows)
     if (!contadas.has(w.window)) pega(`${DE_LAS_FECHAS}.windows`, `falta la frase de la ventana ${w.window}`);
   return pegas;
+}
+
+// Al cerrar el viaje, el que explica deja el orden (su modo de cerrar, `in/closing.json`): una frase por reserva y una
+// por plazo de papel, ni más ni menos, y lo que no se sabe. Lo que pasa la puerta 7 es lo mismo que siempre: un texto
+// para el viajero, sin promesas, sin enlaces y con los números de lo que se le dio.
+
+/** Lo que tuvo delante el que explica al cerrar: lo que montó el código, en inglés y con sus números. */
+export type MaterialDelOrden = { dado: ParaElOrden };
+
+const DEL_ORDEN = ["seat", "language", "closing"];
+const DEL_CIERRE = ["steps", "papers", "unknowns"];
+
+/** Los números del material del orden: los que son números, los de las fechas y los de los nombres de cada pieza. */
+function numerosDelOrden(d: ParaElOrden): Set<number> {
+  const dados = new Set<number>();
+  const recorre = (algo: unknown, campo: string): void => {
+    if (typeof algo === "number" && Number.isFinite(algo)) {
+      dados.add(algo);
+      dados.add(Math.abs(algo));
+    } else if (typeof algo === "string") {
+      if (campo === "label" || campo === "destination" || ES_FECHA.test(algo) || /^\d{2}:\d{2}$/.test(algo))
+        for (const n of numerosDe(algo)) dados.add(n);
+    } else if (Array.isArray(algo)) for (const x of algo) recorre(x, campo);
+    else if (esObjeto(algo)) for (const [k, x] of Object.entries(algo)) recorre(x, k);
+  };
+  recorre(d, "");
+  dados.add(d.trip.adults + d.trip.children);
+  return dados;
+}
+
+export function puertaDelOrden(entrega: unknown, m: MaterialDelOrden): Veredicto {
+  const rojos: Rojo[] = [];
+  const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
+  if (!esObjeto(entrega)) return { verde: false, rojos: [{ donde: "delivery", que: "la entrega no es un objeto" }] };
+  for (const campo of DEL_ORDEN) if (!(campo in entrega)) rojo(campo, "falta en la entrega");
+  for (const campo of Object.keys(entrega))
+    if (!DEL_ORDEN.includes(campo)) rojo(campo, "no es de la entrega al cerrar");
+  if (entrega.seat !== "trip-explainer") rojo("seat", "la entrega no es del asiento que explica");
+  if (entrega.language !== m.dado.trip.language)
+    rojo("language", `no escribe en el idioma del viajero: ${m.dado.trip.language}`);
+  const c = entrega.closing;
+  if (!esObjeto(c)) return { verde: false, rojos: [...rojos, { donde: "closing", que: "no es un objeto" }] };
+  for (const campo of DEL_CIERRE) if (!Array.isArray(c[campo])) rojo(`closing.${campo}`, "falta, o no es una lista");
+  for (const campo of Object.keys(c)) if (!DEL_CIERRE.includes(campo)) rojo(`closing.${campo}`, "no es de la entrega");
+
+  const numeros = numerosDelOrden(m.dado);
+  const texto = (donde: string, v: unknown): void => {
+    if (!esTexto(v)) return rojo(donde, "está en blanco");
+    for (const pega of pegasDelTexto(v, { sinNumerosLargos: true })) rojo(donde, pega);
+    for (const n of numerosDeMas(v, numeros)) rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+  };
+  /** Una entrada por cada una de las dadas, ni más ni menos, cada una con su frase. */
+  const unaPorCada = (campo: "steps" | "papers", clave: "step" | "paper", dadas: number[]): void => {
+    const escritas = new Set<number>();
+    lista(c[campo]).forEach((cruda, i) => {
+      const donde = `closing.${campo}[${i}]`;
+      if (!esObjeto(cruda) || !Number.isInteger(cruda[clave])) return rojo(donde, `no dice de qué ${clave} habla`);
+      const n = cruda[clave] as number;
+      if (!dadas.includes(n)) return rojo(donde, `${clave} ${n} no es de los que se le dieron`);
+      if (escritas.has(n)) return rojo(donde, `${clave} ${n} sale dos veces`);
+      escritas.add(n);
+      for (const k of Object.keys(cruda)) if (k !== clave && k !== "says") rojo(`${donde}.${k}`, "no es de la entrega");
+      texto(`${donde}.says`, cruda.says);
+    });
+    for (const n of dadas) if (!escritas.has(n)) rojo(`closing.${campo}`, `falta la frase de ${clave} ${n}`);
+  };
+  unaPorCada(
+    "steps",
+    "step",
+    m.dado.steps.map((s) => s.step),
+  );
+  unaPorCada(
+    "papers",
+    "paper",
+    m.dado.papers.map((p) => p.paper),
+  );
+  lista(c.unknowns).forEach((v, i) => texto(`closing.unknowns[${i}]`, v));
+  if (m.dado.unconfirmed.length > 0 && lista(c.unknowns).length === 0)
+    rojo("closing.unknowns", "hay cosas sin confirmar y no se le dicen al viajero");
+  return { verde: rojos.length === 0, rojos };
 }

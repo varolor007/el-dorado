@@ -6,7 +6,7 @@
 // cuenta. Entera es la que acabó en el mapa (dejó su versión) y de la que se sabe todo lo que gastó. Si la cuenta no
 // tiene ninguna, no se dice una cifra.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { viajesDe, type ViajeEnLaMesa } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
@@ -68,6 +68,26 @@ function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
   };
 }
 
+/** Lo que gastaron los cierres de un viaje: el que explica, una vez por cierre. */
+function deLosCierres(v: ViajeEnLaMesa): Omit<DeUnRun, "entera"> {
+  const raiz = join(v.carpeta, "cierres");
+  const suma = { usd: 0, llamadas: 0, sabido: true, ultima: null as string | null };
+  if (!existsSync(raiz)) return suma;
+  for (const n of readdirSync(raiz).filter((x) => /^[1-9]\d*$/.test(x))) {
+    const carpeta = join(raiz, n);
+    const lanzados = trabajosDe(carpeta).filter((t) => t.estado !== "queued");
+    const gasto = gastoDe(carpeta);
+    suma.usd += gasto.usd;
+    suma.llamadas += lanzados.length;
+    suma.sabido &&= gasto.sabido;
+    for (const t of lanzados) {
+      const h = t.hasta ?? t.desde;
+      if (h !== null && (suma.ultima === null || h > suma.ultima)) suma.ultima = h;
+    }
+  }
+  return suma;
+}
+
 /** Lo que ha gastado cada viaje de un dueño, el total y lo que costaría la siguiente investigación. */
 export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
   const viajes: GastoDeUnViaje[] = [];
@@ -78,13 +98,15 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
     const v: ViajeEnLaMesa = { carpeta: join(resolve(mesa), "viajes", ficha.id), ficha };
     const runs = v.ficha.runs.map((r) => deUnRun(v, r.n));
     for (const r of runs) if (r.entera) enteras.push(r.usd);
-    const ultimas = runs.flatMap((r) => r.ultima ?? []).sort();
+    // Lo que gastó el que explica al cerrar el viaje cuenta en el viaje, no en la media de una investigación.
+    const cierres = deLosCierres(v);
+    const ultimas = [...runs.flatMap((r) => r.ultima ?? []), ...(cierres.ultima ?? [])].sort();
     viajes.push({
       id: v.ficha.id,
       ...aDonde(v),
-      usd: runs.reduce((s, r) => s + r.usd, 0),
-      llamadas: runs.reduce((s, r) => s + r.llamadas, 0),
-      sabido: runs.every((r) => r.sabido),
+      usd: runs.reduce((s, r) => s + r.usd, 0) + cierres.usd,
+      llamadas: runs.reduce((s, r) => s + r.llamadas, 0) + cierres.llamadas,
+      sabido: runs.every((r) => r.sabido) && cierres.sabido,
       ultima: ultimas.at(-1) ?? null,
       investigaciones: runs.length,
     });

@@ -60,3 +60,21 @@ what they gain and what they lose with these other dates>" }] }`
 - `finding` and `window`: the position, as in `in/dates.json`.
 - `says`: for the traveller, in one line and at most 500 characters. None is empty. Its numbers are those of its
   finding or its window and of the dates of the trip (EX8).
+
+## The closing delivery
+
+Only when there is `in/closing.json`. Then `delivery.json` has exactly these fields, and no others:
+
+| Field | What it is |
+|---|---|
+| `seat` | Always `"trip-explainer"` |
+| `language` | The `language` of `in/trip.json`, copied |
+| `closing` | `steps`, one entry per step of `in/closing.json`; `papers`, one entry per paper; and `unknowns` |
+
+`{ "steps": [{ "step": 1, "says": "<one sentence in the traveller's language>" }], "papers": [{ "paper": 0,
+"says": "<one sentence>" }], "unknowns": ["<one sentence>"] }`
+
+- `step` and `paper`: as in `in/closing.json`. Every one, once.
+- `says`, and each of `unknowns`: for the traveller, in one line and at most 500 characters. None is empty. Its
+  numbers are numbers of `in/closing.json`: a price, a difference, a day, a count. `papers` or `unknowns` is an
+  empty list if there is nothing to tell, but `unknowns` is never empty when `unconfirmed` is not.

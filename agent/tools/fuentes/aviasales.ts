@@ -65,6 +65,7 @@ export function leerVuelos(json: unknown, t: Trayecto, pedido: string): Vuelo[] 
       escalasIda: numero(v.transfers),
       escalasVuelta: t.vuelta === null ? null : numero(v.return_transfers),
       minutos: numero(v.duration),
+      minutosIda: numero(v.duration_to),
       guardado: true,
       enlace: enlaceDeVuelo(enlace),
     });
