@@ -210,14 +210,20 @@ const en = {
     enCoche: (lejos: string, min: number, maneras: string[]) =>
       `${lejos}: ${maneras.join(" or ")}; by car, ${min} min without traffic`,
     maneraDeIr: { walk: "on foot", transit: "by public transport", car: "by car" } as Record<string, string>,
-    noSeAnda:
-      "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet.",
-    noSeAndaSinTrafico:
-      "Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates: what transport there is and what it costs is not known yet.",
+    // Parte del viaje no se anda: lo que se sabe del transporte de allí (14.6), o que todavía no se sabe.
+    noSeAnda: (modos: string[] | null) =>
+      modos === null
+        ? "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet."
+        : `Part of this trip is not walked. Times by car or public transport are approximate.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in the There tab.`,
+    noSeAndaSinTrafico: (modos: string[] | null) =>
+      modos === null
+        ? "Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates: what transport there is and what it costs is not known yet."
+        : `Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in the There tab.`,
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
     comoIr: "See how to get there, in Google Maps",
     desdeLaCama: (tramo: string) => `From where you sleep: ${tramo}`,
+    aLaCama: (tramo: string) => `Back to where you sleep: ${tramo}`,
     imprescindible: "Not to miss",
     // En inglés se dice igual de una parada que de varias; en español, no.
     fuera: (_n: number) => "Left out at this pace",
@@ -369,6 +375,7 @@ const en = {
     >,
     deNombre: (nombre: string) => `From ${nombre}`,
     aZona: (n: number) => `to area ${EN.cifra(n)} of your route`,
+    aZonaNombre: (nombre: string) => `to ${nombre}`,
     zonasSinNombre: "Your route has more than one area: they are numbered in the order they appear here.",
     sinLlegar: {
       not_found: "No way to get from where you land to where you sleep was found.",
@@ -478,6 +485,33 @@ const en = {
       `${EN.cuenta(n, "stop is", "stops are")} closed on the day ${EN.plural(n, "it is", "they are")} planned.`,
     // Un trayecto que no se anda: lo que cuesta, si se sabe.
     suelto: (dinero: string) => `By public transport, a single ticket: ${dinero}`,
+    // Lo que te conviene para moverte con tus días: la cuenta del código, la misma de «moverte allí» en las cuentas.
+    teConviene: "What suits you best for your days",
+    convieneNada: "On your days every leg is walked: you need no tickets.",
+    tusTrayectos: (viajes: number, dias: number) =>
+      `${EN.cuenta(viajes, "leg is", "legs are")} not walked on ${EN.cuenta(dias, "day", "days")}, counting from and back to where you sleep.`,
+    cadaAdulto: (n: number): string => (n === 1 ? "Adult" : "Each adult"),
+    unNino: (edad: number) => `Child, ${EN.cifra(edad)}`,
+    compra: (cuantos: number, billete: string) => (cuantos === 1 ? billete : `${EN.cifra(cuantos)} × ${billete}`),
+    conviene: {
+      nothing: "Nothing to buy",
+      singles: "Single tickets",
+      pass: "A pass",
+      rides: "A pack of rides",
+      mix: "A mix",
+      unknown: "Not known",
+    } as Record<string, string>,
+    convieneNoSe: {
+      no_layer: "Not known: there is nothing on getting around.",
+      no_tickets: "Not known: no public transport ticket was found.",
+      no_price: "Not known: a ticket price is missing for this person.",
+    } as Record<string, string>,
+    convieneGrupo: (dinero: string, cuantos: number) =>
+      cuantos === 1 ? `In all: ${dinero}` : `For the ${EN.cifra(cuantos)} of you: ${dinero}`,
+    frenteASueltos: (sueltos: string, ahorra: string) => `With single tickets only, ${sueltos}: you save ${ahorra}.`,
+    igualQueSueltos: "The same as with single tickets.",
+    convieneNota:
+      "Worked out by the code from the prices of each ticket, for your days and your group. It is the same figure as getting around in Money.",
     // El presupuesto entero, parte a parte.
     parte: {
       lodging: "Sleeping",
@@ -499,8 +533,11 @@ const en = {
     comidasNota: "They depend on you, so they are not in the total.",
     comidasNo: "What meals cost there is not known yet.",
     comparan: "The ways are still compared by sleeping and getting there, which is what changes between them.",
-    deAntes:
-      "This budget is from before your changes: it does not count what you changed in your days, where you sleep or how you get there.",
+    // Lo que no se puede rehacer en la web, dicho por lo que es.
+    deAntes: {
+      arrival:
+        "From where you land to where you sleep is still the figure from before you changed where you sleep or how you get there: this trip does not say which area of the route each place is in.",
+    } as Record<string, string>,
   },
   cifras: {
     // Lo que cubre el total de la manera elegida: las noches o, si lleva transporte, también cómo se llega.
@@ -1605,14 +1642,19 @@ const es: Textos = {
     cogiendo: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}, unos ${min} min (cálculo aproximado)`,
     enCoche: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}; en coche, ${min} min sin tráfico`,
     maneraDeIr: { walk: "a pie", transit: "en transporte", car: "en coche" },
-    noSeAnda:
-      "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
-    noSeAndaSinTrafico:
-      "Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados: todavía no se sabe qué transporte hay ni lo que cuesta.",
+    noSeAnda: (modos) =>
+      modos === null
+        ? "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta."
+        : `Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en la pestaña Allí.`,
+    noSeAndaSinTrafico: (modos) =>
+      modos === null
+        ? "Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados: todavía no se sabe qué transporte hay ni lo que cuesta."
+        : `Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en la pestaña Allí.`,
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
     comoIr: "Ver cómo ir, en Google Maps",
     desdeLaCama: (tramo) => `Desde donde duermes: ${tramo}`,
+    aLaCama: (tramo) => `De vuelta a donde duermes: ${tramo}`,
     imprescindible: "Imprescindible",
     fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
     fueraLejos: (n) => ES.plural(n, "Queda demasiado lejos para tus días", "Quedan demasiado lejos para tus días"),
@@ -1751,6 +1793,7 @@ const es: Textos = {
     desde: { airport: "Desde el aeropuerto", station: "Desde la estación", port: "Desde el puerto" },
     deNombre: (nombre) => `Desde ${nombre}`,
     aZona: (n) => `a la zona ${ES.cifra(n)} de tu ruta`,
+    aZonaNombre: (nombre) => `a ${nombre}`,
     zonasSinNombre: "Tu ruta tiene más de una zona: van numeradas en el orden en que salen aquí.",
     sinLlegar: {
       not_found: "No se encontró cómo ir de donde llegas a donde duermes.",
@@ -1852,6 +1895,32 @@ const es: Textos = {
     cierranResumen: (n) =>
       `${ES.cuenta(n, "parada cierra", "paradas cierran")} el día en que ${ES.plural(n, "está puesta", "están puestas")}.`,
     suelto: (dinero) => `En transporte, un billete suelto: ${dinero}`,
+    teConviene: "Lo que te conviene para tus días",
+    convieneNada: "En tus días todo se anda: no te hace falta ningún billete.",
+    tusTrayectos: (viajes, dias) =>
+      `${ES.cuenta(viajes, "trayecto no se anda", "trayectos no se andan")} en ${ES.cuenta(dias, "día", "días")}, contando la ida y la vuelta a donde duermes.`,
+    cadaAdulto: (n) => (n === 1 ? "Adulto" : "Cada adulto"),
+    unNino: (edad) => `Niño, ${ES.cifra(edad)} años`,
+    compra: (cuantos, billete) => (cuantos === 1 ? billete : `${ES.cifra(cuantos)} × ${billete}`),
+    conviene: {
+      nothing: "Nada que comprar",
+      singles: "Billetes sueltos",
+      pass: "Un abono",
+      rides: "Un bono de viajes",
+      mix: "Una mezcla",
+      unknown: "Sin saber",
+    },
+    convieneNoSe: {
+      no_layer: "Sin saber: no hay nada de cómo moverse.",
+      no_tickets: "Sin saber: no se encontró ningún billete de transporte.",
+      no_price: "Sin saber: falta el precio de un billete para esta persona.",
+    },
+    convieneGrupo: (dinero, cuantos) =>
+      cuantos === 1 ? `En total: ${dinero}` : `Para los ${ES.cifra(cuantos)}: ${dinero}`,
+    frenteASueltos: (sueltos, ahorra) => `Solo con billetes sueltos, ${sueltos}: ahorras ${ahorra}.`,
+    igualQueSueltos: "Lo mismo que con billetes sueltos.",
+    convieneNota:
+      "Lo cuenta el código con el precio de cada billete, para tus días y tu grupo. Es la misma cifra que moverte allí en las cuentas.",
     parte: {
       lodging: "Dormir",
       transport: "Llegar",
@@ -1871,8 +1940,10 @@ const es: Textos = {
     comidasNota: "Dependen de ti, así que no van en el total.",
     comidasNo: "Lo que cuesta comer allí todavía no se sabe.",
     comparan: "Las maneras se siguen comparando por dormir y llegar, que es lo que cambia de una a otra.",
-    deAntes:
-      "Este presupuesto es el de antes de tus cambios: no cuenta lo que cambiaste en tus días, en dónde duermes ni en cómo llegas.",
+    deAntes: {
+      arrival:
+        "De donde llegas a donde duermes sigue siendo la cifra de antes de cambiar dónde duermes o cómo llegas: este viaje no dice en qué zona de la ruta está cada sitio.",
+    },
   },
   cifras: {
     total: (noches, transporte) =>

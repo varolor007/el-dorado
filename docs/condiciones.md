@@ -12,6 +12,7 @@ salir, se vuelven a leer.
 | LiteAPI | Enseñar precios, fotos y opiniones al viajero y mandarlo a reservar a su página, que cobra ella | Que la IA valore sus fotos y sus opiniones, y cruzar sus datos con los de otras fuentes: sus condiciones lo ponen en duda |
 | Parallel | Enseñar los resultados al viajero en un producto que se vende y pasarlos por una IA | No dice de dónde saca los precios de Booking.com y de Airbnb, y todo el riesgo frente a terceros es del cliente. No deja guardar resultados |
 | Travelpayouts | Usar los precios guardados en una web propia, con consultas hechas por código | Que el proyecto declarado encaje con lo que es de verdad, y enseñar cada precio como aproximado y con su fecha |
+| OpenStreetMap y Wikidata | Usar sus datos, gratis, citando de dónde salen | Leer OpenStreetMap por su servicio de lectura y no por su API de editar ni por su buscador (se cambia en esta tanda), elegir qué instancia se usa, y el texto exacto de la atribución |
 
 ## LiteAPI (hoy, «Nuitee Connect»; Nuitée Travel Limited, Irlanda)
 
@@ -119,6 +120,42 @@ una búsqueda y comprobado aparte por la sesión. Todavía no se ha llamado con 
 - **Su clave** va en la dirección de cada pedido. Se puede atar en su panel a unas direcciones de red o a unos
   orígenes.
 
+## Los datos abiertos: OpenStreetMap y Wikidata (las entradas; desde el 25-nov-2026)
+
+Leído el 25-nov-2026 en sus cuatro páginas (la política del buscador, la de la API, la licencia de OpenStreetMap y el
+acceso a los datos de Wikidata), por una búsqueda que citó cada frase. De ellos salen, sin IA, el horario y si se
+paga de cada sitio (OpenStreetMap) y su web oficial (Wikidata). No llevan clave ni se pagan.
+
+- **Wikidata deja casi todo**: sus datos son de dominio público («licensed CC0»), «with no requirement for
+  attribution», aunque agradece que se nombre de dónde salen. Pide un buen `User-Agent`, no hacer muchas consultas a
+  la vez y parar si contesta que se espere. Ya se hace así, y cada dato cita su página.
+- **Los datos de OpenStreetMap piden citarlo**: su licencia es la ODbL. Hay que enseñar su aviso de atribución y
+  dejar claro que los datos están bajo esa licencia, con un enlace a `https://www.openstreetmap.org/copyright`; en
+  papel, la dirección entera. Hoy cada horario cita la página de su objeto en OpenStreetMap y el mapa lleva su
+  atribución. **Antes de vender** hay que comprobar el texto exacto que piden sus guías de atribución, en la web y
+  en la guía impresa.
+- **La API de OpenStreetMap no es para leer**: su política dice que «is provided in order to edit the map data, not
+  for read-only purposes or projects», y que puede bloquear sin avisar. La sesión que hizo las entradas la usó para
+  traer el objeto de cada sitio. **No vale, y se cambia en esta tanda**: se lee por Overpass, que la misma política
+  nombra como «an API provided for read only purposes».
+- **Su buscador tampoco es para esto**: pide «an absolute maximum of 1 request per second», guardar los resultados
+  («Results must be cached on your side») y prohíbe las consultas sistemáticas. Se usaba, a una por segundo, para
+  los sitios de los que Wikidata no sabe el objeto. **Se quita con el mismo cambio**: Overpass los encuentra por su
+  identificador.
+- **Overpass tiene varias instancias públicas**, de dueños distintos, y no todas contestan desde todas partes.
+  **Cuáles se usan es una decisión del PM** (van en `ELDORADO_OVERPASS`), y antes de vender hay que leer lo que pide
+  la que se elija, o montar una propia. A Overpass solo van identificadores de sitios y puntos del mapa: nada del
+  viajero. Lo que dice la wiki de OpenStreetMap de las tres de alcance mundial, según la sesión de obra que hizo
+  el cambio (sin comprobar aparte todavía):
+  - La principal (`overpass-api.de`, de FOSSGIS): no más de 10.000 consultas ni 1 GB al día, y mucho menos si el uso
+    se repite; identificarse; nada en paralelo; guardar lo que contesta; y **lo comercial, a una instancia propia o
+    de pago**. Desde la nube donde se trabaja no contesta (corta la conexión o dice 503).
+  - La de VK Maps (`maps.mail.ru`, rusa): dice que vale para cualquier proyecto y que hoy no tiene límites. Desde
+    esta nube contestó bien una vez y después 504.
+  - La de Private.coffee (`overpass.private.coffee`): cualquier proyecto, avisando antes si es a gran escala. Desde
+    esta nube no contestó.
+  Hay además instancias con clave o de pago (Geofabrik y otras), que hoy no caben: la dirección no lleva claves.
+
 ## Lo que sale de aquí
 
 1. **Para probar y montar las bases, vale ya**: las tres responden, y sus claves de prueba están para eso.
@@ -147,3 +184,7 @@ una búsqueda y comprobado aparte por la sesión. Todavía no se ha llamado con 
 - https://www.geoapify.com/pricing/
 - https://www.geoapify.com/routing-api/
 - https://www.geoapify.com/terms-and-conditions/
+- https://operations.osmfoundation.org/policies/nominatim/
+- https://operations.osmfoundation.org/policies/api/
+- https://www.openstreetmap.org/copyright
+- https://www.wikidata.org/wiki/Wikidata:Data_access

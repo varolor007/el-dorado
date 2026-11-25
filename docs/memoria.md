@@ -149,27 +149,30 @@ frases del presupuesto entero con `agent/gates/cifras_del_presupuesto.ts`, y sus
 hoy nadie les pasa: sin él, una cifra en una frase del presupuesto entero sale roja. Al viaje le falta el id de la
 zona de cada alojamiento. Sin ver con IA ni con fuentes de verdad.
 
-**El de las entradas (14.4), junto** (25-nov). Datos abiertos en `agent/tools/abiertos.ts` (Wikidata para la web y
-el objeto de OpenStreetMap; la API de OpenStreetMap; el buscador de OpenStreetMap, una consulta por segundo, solo si
-el resultado lleva el identificador del sitio) y el horario en `agent/tools/horarios.ts`. Contrato en
+**El de las entradas (14.4), junto** (25-nov). Datos abiertos en `agent/tools/abiertos.ts`: Wikidata para la web y
+el objeto de OpenStreetMap, y Overpass, el servicio de lectura de OpenStreetMap, para sus etiquetas (una consulta
+por tanda de hasta 30 sitios: por el número que dice Wikidata y por el identificador del sitio a 500 metros de su
+punto; solo etiquetas). Sus instancias, en `ELDORADO_OVERPASS` (https, separadas por comas, cuatro como mucho; sin
+ella, la principal), en orden, con 40 segundos por instancia y 90 en total; si ninguna contesta, se avisa y el
+horario no se sabe. Antes se leía por la API de editar y por el buscador, que sus condiciones no dejan
+(`condiciones.md`). Desde esta nube ninguna instancia pública contestó bien (la principal, 503; la de VK Maps, 504
+casi siempre; la de Private.coffee, nada): el camino bueno solo se ha visto con una consulta suelta. El horario se
+lee en `agent/tools/horarios.ts`. Contrato en
 `agent/contracts/tickets/` (TK1 a TK8); puerta 13 en `agent/gates/puerta_entradas.ts`, con las páginas abiertas del
 puesto (`capaDeLasEntradasDe(run)`). Al viaje, manda el asiento; su «unknown» y lo no mirado, con los datos abiertos.
 Lo que cierra cada día: `cierraEnElRun` y `cierraEnElViaje`; el ritmo lo recibe como séptimo parámetro, con el motivo
 «closed», y la puerta 9 lo mira con `cierra`. Lo usan la casa, el montaje del viaje, `diasElegidos` y la web. Si pasan
 del tope, `ordenParaMirar`: primero los imprescindibles y los que tienen puerta; el aviso, con los del run. Sabido: el
 viaje no distingue un sitio sin mirar por el tope de uno cuya tanda falló; «closed» sale en la web con lo que no cabe
-a ese ritmo; el buscador de OpenStreetMap es una salida nueva del código, y sus condiciones (citar a OpenStreetMap,
-una consulta por segundo) van a `docs/condiciones.md` antes de vender. Sin pantalla nueva ni capturas, y sin ver con
-IA.
+a ese ritmo; el aviso de que Overpass no contesta sale por la consola y aún no llega a los avisos del run; y qué
+instancias de Overpass se usan es del PM. Sin pantalla nueva ni capturas, y sin ver con IA.
 
 **La web de las capas (14.6), junta** (25-nov). `web/src/piezas/Alli.tsx` (`Alli`, `EntradaDeLaParada`,
 `FichaDeLaEntrada`, `CosteDelTrayecto`, `ElPresupuesto`) y sus cuentas en `web/src/lib/alli.ts` (`paraTuGrupo`,
-`abreTusDias`, `billeteSuelto`, `presupuestoQueSeEnsena`: hoy enseña el presupuesto del viaje y dice «de antes» si
-cambiaste ritmo, paradas, dormir o llegar). Lo vivo: `ways_around`, `good_to_know` y `tickets_known`
-(`sucesosDeLasCapas`, en `monta_viaje.ts`, la misma cuenta en vivo y grabada). Sabido: el viaje no trae el nombre de
-las zonas, y se numeran; `noSeAnda` sigue diciendo que no se sabe el transporte; la web cuenta el precio del grupo por
-su lado (`paraTuGrupo`) y el presupuesto por el suyo (`delGrupo`); el coste de un trayecto no se ha visto en pantalla
-(el caso inventado se anda entero).
+`abreTusDias`, `billeteSuelto`, `presupuestoQueSeEnsena`). Lo vivo: `ways_around`, `good_to_know` y `tickets_known`
+(`sucesosDeLasCapas`, en `monta_viaje.ts`, la misma cuenta en vivo y grabada). Lo que quedó suelto (el nombre de las
+zonas, las dos cuentas del grupo, el aviso viejo del transporte y el coste de un trayecto sin ver) se cerró al
+unirlas: ver «Las capas, unidas».
 
 **La guía con las capas (14.6), junta** (25-nov). Material: `ticket`, `eat`, `around` y `know` en
 `agent/scripts/guia.ts`, solo si la capa vale (`capaQueVale`); dónde comer por cercanía a las paradas
@@ -180,6 +183,20 @@ un precio o una hora de allí, solo de su material; antes no veía precios) y GW
 `tests/code/guia_alli.test.ts`; el viaje con capas, `viajeParaLaGuia({ capas: true })`. Sabido: la guía enseña los
 billetes, no cuál conviene; «metro» en español es también la unidad y puede dar un rojo falso; lo que te pierdes en
 autobús sigue sin hacer. Sin ver con IA.
+
+**Las capas, unidas en la web y en la guía (14.6)** (25-nov, una tercera sesión de obra, tras juntar las otras). Una
+sola cuenta: la web no tiene reglas suyas (`web/src/lib/alli.ts` llama a `cadaUnoDelGrupo`, `trayectosQueNoSeAndan`,
+`cuentaDeMoverseDelViaje` y `presupuestoDe`, de `agent/scripts/presupuesto.ts`, y a `sueltoDelGrupo`, de
+`capa_moverse.ts`). Los trayectos que no se andan son los de los caminos (`viajesDeLosDias`), con la ida y la vuelta
+a donde duerme cada manera: moverte allí puede cambiar de una manera a otra. El viaje trae `zonasDeLaRuta`
+(`montarViajeHecho` y `conLasCapas`); con ellas la web nombra las zonas y rehace también llegar a donde duermes; sin
+ellas (un viaje de antes) esa parte queda la de antes y se dice. Las cuentas enseñan el presupuesto de lo que tienes
+delante (`presupuestoQueSeEnsena(viaje, dias, cambios)`). «Allí» dice lo que te conviene para moverte
+(`loQueTeConviene`), y la guía lo pone en «Cómo moverte» (`convieneDelCuaderno`), con la puerta 10 rehaciendo la
+cuenta. `noSeAnda` dice ya los transportes que hay. Mirado con una casa de mentira y una fuente de rutas con rodeo,
+para que haya tramos que no se andan. Sabido: el que escribe la guía no recibe lo que conviene, y sus tramos no
+tienen la vuelta a donde duermes; un viaje cerrado enseña en las cuentas el presupuesto con los precios de la
+investigación, no los del cierre; sin niños en pantalla; sin IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

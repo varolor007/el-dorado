@@ -39,7 +39,7 @@ export const ABIERTOS = "abiertos.json";
 const ASIENTO = "tickets";
 
 /** Lo que trae los datos abiertos de unos sitios: es una fuente, y se le pasa a la investigación con las demás. */
-export type TraerAbiertos = (sitios: Sitio[]) => Promise<DatosAbiertos[]>;
+export type TraerAbiertos = (sitios: Sitio[], avisar?: (texto: string) => void) => Promise<DatosAbiertos[]>;
 
 /** Los sitios que se miran: los elegidos, por orden de importancia, hasta el tope; en tandas de los de cada llamada. */
 export function tandasDeSitios(elegidos: Sitio[]): Sitio[][] {
@@ -66,7 +66,10 @@ export async function traerLosAbiertos(
   else
     try {
       const ids = new Set(elegidos.map((s) => s.id));
-      abiertos = (await traer(elegidos)).filter((a) => ids.has(a.sitio));
+      // Lo que avise la fuente (una parte que no contestó) queda en los avisos del run, no en la consola.
+      abiertos = (await traer(elegidos, (texto) => avisos.push(`datos abiertos: ${texto}`))).filter((a) =>
+        ids.has(a.sitio),
+      );
     } catch (error) {
       avisos.push(`sin datos abiertos de los sitios: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -261,4 +264,16 @@ export function losDiasSinEntradas(e: DeLasEntradas | undefined): string[] {
   return porElTope > 0
     ? [`${porElTope} sitios se quedan sin mirar sus entradas: pasan del tope de ${SITIOS_EN_TOTAL} por viaje`]
     : [];
+}
+
+/** Lo que avisaron los datos abiertos de las entradas en un run, para los avisos de la investigación. */
+export function avisosDeLosAbiertos(run: string): string[] {
+  const ruta = join(run, ABIERTOS);
+  if (!existsSync(ruta)) return [];
+  try {
+    const { avisos } = JSON.parse(readFileSync(ruta, "utf8")) as { avisos?: unknown };
+    return Array.isArray(avisos) ? avisos.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
 }

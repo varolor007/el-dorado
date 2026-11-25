@@ -9,7 +9,13 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { SITIOS_EN_TOTAL, SITIOS_POR_LLAMADA } from "../../agent/data/capa_entradas.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
-import { porQueSinMirar, repartirLasEntradas, tandasDeSitios } from "../../agent/launcher/capa_entradas.ts";
+import {
+  avisosDeLosAbiertos,
+  porQueSinMirar,
+  repartirLasEntradas,
+  tandasDeSitios,
+  traerLosAbiertos,
+} from "../../agent/launcher/capa_entradas.ts";
 import { FalloDeUnDia, pedirLasEntradas, prepararLasEntradas } from "../../agent/launcher/dia_a_dia.ts";
 import { abrirViaje, leerVersion, leerViaje, nuevoRun, pasar, type ViajeEnLaMesa } from "../../agent/launcher/mesa.ts";
 import { pegasDeLasEntradas, type DeLasEntradas } from "../../agent/output/capas.ts";
@@ -196,5 +202,19 @@ test("al cerrar: una parada que pusiste un día que cierra queda sin confirmar, 
     assert.ok(!sinConfirmarDe(viaje, [], [], "ok").some((x) => x.que === "stop_closed"));
   } finally {
     rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo que avisan los datos abiertos de las entradas queda en los avisos del run, no en la consola", async () => {
+  const run = mkdtempSync(join(tmpdir(), "el-dorado-run-"));
+  try {
+    const traer = async (sitios: Sitio[], avisar?: (texto: string) => void) => {
+      avisar?.("sin el horario ni si se paga de OpenStreetMap: 1");
+      return sitios.map((s) => ({ sitio: s.id, web: null, horario: null, dePago: null, fuentes: [] }));
+    };
+    await traerLosAbiertos(run, [SITIOS[0]], traer as never);
+    assert.deepEqual(avisosDeLosAbiertos(run), ["datos abiertos: sin el horario ni si se paga de OpenStreetMap: 1"]);
+  } finally {
+    rmSync(run, { recursive: true, force: true });
   }
 });

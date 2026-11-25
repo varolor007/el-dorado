@@ -111,6 +111,10 @@ Para probar la fuente de rutas con sitios de verdad, de dos en dos puntos:
 GEOAPIFY_KEY=<la clave> node agent/launcher/rutas.ts <lat,lon> <lat,lon>   # cada manera de ir, lo que tarda y lo que hay
 ```
 
+El horario y si se paga de cada sitio elegido se leen de OpenStreetMap por Overpass, sin clave. Sus instancias, en
+orden, en `ELDORADO_OVERPASS` (direcciones https separadas por comas); sin ella, la principal. Si ninguna contesta,
+no se saben, se dice, y la web de cada sitio llega igual de Wikidata.
+
 La búsqueda necesita las claves de las fuentes en el entorno (`LITEAPI_KEY`, `TRAVELPAYOUTS_TOKEN` y
 `PARALLEL_API_KEY`); en las sesiones de la nube las pone su proxy, y entonces se lanza con `NODE_USE_ENV_PROXY=1`
 delante. Lo que saca queda en la mesa, fuera del repositorio (`ELDORADO_MESA`). Una fuente se apaga con

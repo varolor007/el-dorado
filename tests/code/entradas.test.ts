@@ -23,7 +23,15 @@ import {
 } from "../../agent/scripts/capa_entradas.ts";
 import { diasElegidos, SIN_ELEGIR } from "../../agent/scripts/elecciones.ts";
 import { fechasDe, repartir } from "../../agent/scripts/ritmo.ts";
-import { abiertosDe, busquedaDe, dePagoDe, leerWikidata } from "../../agent/tools/abiertos.ts";
+import {
+  abiertosDe,
+  consultaDeOverpass,
+  dePagoDe,
+  instanciasDeOverpass,
+  leerOverpass,
+  leerWikidata,
+  OVERPASS_POR_DEFECTO,
+} from "../../agent/tools/abiertos.ts";
 import { leerHorarioDeOsm } from "../../agent/tools/horarios.ts";
 import type { Respuesta, Sitio } from "../../agent/tools/sitios.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson, runNuevo, trabaja } from "../cases/inventado/asientos.ts";
@@ -99,9 +107,52 @@ const fila = (id: string, extra: Record<string, string> = {}) => ({
   ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, { value: v }])),
 });
 
-/** Unas fuentes abiertas inventadas: Wikidata, la API y el buscador de OpenStreetMap, con lo que se les pidió. */
-function fuentesAbiertas(o: { wikidataFalla?: boolean; buscadorFalla?: boolean } = {}) {
+const PRIMERA = "https://overpass.uno.example/api/interpreter";
+const SEGUNDA = "https://overpass.dos.example/api/interpreter";
+
+type ComoContesta = "bien" | "caida" | "espera" | "rota" | "a_medias" | "no_contesta";
+
+/**
+ * Unas fuentes abiertas inventadas: Wikidata y dos instancias de Overpass, con lo que se les pidió. Overpass contesta
+ * como lo haría la de verdad a la consulta que se le manda: los objetos por su número y, cerca de cada punto, el que
+ * lleva el identificador del sitio.
+ */
+function fuentesAbiertas(o: { wikidataFalla?: boolean; uno?: ComoContesta; dos?: ComoContesta } = {}) {
   const pedidos: string[] = [];
+  const consultas: string[] = [];
+  // Lo que hay en el mapa inventado; cada objeto lleva más cosas (quién lo editó, sus nodos), y de ahí solo valen sus
+  // etiquetas.
+  const mapa = [
+    {
+      type: "way",
+      id: 11,
+      user: "alguien",
+      uid: 7,
+      nodes: [1, 2],
+      tags: { opening_hours: "Tu-Su 10:00-18:00", fee: "yes", website: "https://osm.inventado.example/" },
+    },
+    { type: "node", id: 22, user: "alguien", tags: { opening_hours: "24/7", fee: "no" } },
+    // Wikidata dice este objeto del parque, pero el objeto dice que es de otro sitio: no vale.
+    { type: "relation", id: 44, tags: { wikidata: "Q999", opening_hours: "Mo 10:00-11:00" } },
+    // Cerca de la iglesia: uno de otro sitio, y el suyo.
+    { type: "node", id: 30, tags: { wikidata: "Q30", opening_hours: "Mo 09:00-10:00" } },
+    { type: "way", id: 33, tags: { wikidata: "Q3", opening_hours: "Mo-Fr 09:00-17:00", fee: "15€" } },
+  ];
+  const overpass = (consulta: string): unknown[] =>
+    mapa.filter((e) => {
+      const porNumero = new RegExp(`${e.type}\\(id:[\\d,]*\\b${e.id}\\b`).test(consulta);
+      const q = (e.tags as Record<string, string | undefined>).wikidata;
+      return porNumero || (q !== undefined && consulta.includes(`["wikidata"="${q}"](around:`));
+    });
+  const como = (c: ComoContesta, consulta: string): Respuesta => {
+    if (c === "no_contesta") throw new Error("no contesta a tiempo");
+    if (c === "caida") return { estado: 504, cuerpo: "<html>Gateway Timeout</html>", esperar: null };
+    if (c === "espera") return { estado: 429, cuerpo: "", esperar: 5 };
+    if (c === "rota") return { estado: 200, cuerpo: "<html>no es JSON", esperar: null };
+    const elements = overpass(consulta);
+    if (c === "a_medias") return ok({ elements: elements.slice(0, 1), remark: "runtime error: Query timed out" });
+    return ok({ version: 0.6, generator: "Overpass API inventada", osm3s: { copyright: "ODbL" }, elements });
+  };
   const traer = async (url: string): Promise<Respuesta> => {
     pedidos.push(url);
     if (url.startsWith("https://query.wikidata.org/")) {
@@ -118,36 +169,36 @@ function fuentesAbiertas(o: { wikidataFalla?: boolean; buscadorFalla?: boolean }
         },
       });
     }
-    if (url.includes("/api/0.6/ways.json")) {
-      // Cada objeto lleva más cosas (quién lo editó, sus nodos): de ahí solo se guardan sus etiquetas.
-      const tags = { opening_hours: "Tu-Su 10:00-18:00", fee: "yes", website: "https://osm.inventado.example/" };
-      return ok({ elements: [{ type: "way", id: 11, user: "alguien", nodes: [1, 2], tags }] });
-    }
-    if (url.includes("/api/0.6/nodes.json")) return { estado: 404, cuerpo: "", esperar: null };
-    if (url.includes("/api/0.6/node/22.json"))
-      return ok({ elements: [{ type: "node", id: 22, tags: { opening_hours: "24/7", fee: "no" } }] });
-    if (url.includes("/api/0.6/relations.json"))
-      // Wikidata dice este objeto, pero el objeto dice que es de otro sitio: no vale.
-      return ok({
-        elements: [{ type: "relation", id: 44, tags: { wikidata: "Q999", opening_hours: "Mo 10:00-11:00" } }],
-      });
-    if (url.startsWith("https://nominatim.openstreetmap.org/")) {
-      if (o.buscadorFalla) return { estado: 503, cuerpo: "", esperar: null };
-      return ok([
-        { osm_type: "node", osm_id: 30, extratags: { wikidata: "Q30", opening_hours: "Mo 09:00-10:00" } },
-        { osm_type: "way", osm_id: 33, extratags: { wikidata: "Q3", opening_hours: "Mo-Fr 09:00-17:00", fee: "15€" } },
-      ]);
-    }
+    for (const [base, c] of [
+      [PRIMERA, o.uno ?? "bien"],
+      [SEGUNDA, o.dos ?? "bien"],
+    ] as const)
+      if (url.startsWith(`${base}?data=`)) {
+        const consulta = new URL(url).searchParams.get("data") ?? "";
+        consultas.push(consulta);
+        return como(c, consulta);
+      }
     return { estado: 404, cuerpo: "", esperar: null };
   };
   const esperas: number[] = [];
-  return { traer, pedidos, esperas, dormir: async (ms: number) => void esperas.push(ms) };
+  const avisos: string[] = [];
+  return {
+    traer,
+    pedidos,
+    consultas,
+    esperas,
+    avisos,
+    overpass: [PRIMERA, SEGUNDA],
+    dormir: async (ms: number) => void esperas.push(ms),
+    avisar: (t: string) => void avisos.push(t),
+  };
 }
 
-test("los datos abiertos: el horario y si se paga, de OpenStreetMap; la web, de Wikidata; con su página", async () => {
+const CUATRO = [sitio("Q1", "Museo"), sitio("Q2", "Mirador"), sitio("Q3", "Iglesia"), sitio("Q4", "Parque")];
+
+test("los datos abiertos: el horario y si se paga, de OpenStreetMap por Overpass; la web, de Wikidata", async () => {
   const f = fuentesAbiertas();
-  const sitios = [sitio("Q1", "Museo"), sitio("Q2", "Mirador"), sitio("Q3", "Iglesia"), sitio("Q4", "Parque")];
-  const abiertos = await abiertosDe(sitios, f, new Date("2026-11-25T10:00:00Z"));
+  const abiertos = await abiertosDe(CUATRO, f, new Date("2026-11-25T10:00:00Z"));
   const de = (id: string) => abiertos.find((a) => a.sitio === id)!;
   // El museo: su objeto, por Wikidata; su web, la más corta de las de Wikidata, y no la de OpenStreetMap.
   assert.deepEqual(de("Q1"), {
@@ -165,41 +216,63 @@ test("los datos abiertos: el horario y si se paga, de OpenStreetMap; la web, de 
       web: { url: "https://www.wikidata.org/wiki/Q1", visto: "2026-11-25" },
     },
   });
-  // El mirador: pedidos de una vez fallan, y se pide de uno en uno; gratis y abierto siempre.
+  // El mirador: su nodo, por su número; gratis y abierto siempre.
   assert.equal(de("Q2").horario, "24/7");
   assert.equal(de("Q2").dePago, false);
   assert.equal(de("Q2").web, null);
-  // La iglesia: Wikidata no sabe su objeto; el buscador da dos, y vale solo el que lleva su identificador. Su web de
-  // Wikidata no es https: no vale. «15€» no dice sí ni no: no se sabe si se paga.
+  // La iglesia: Wikidata no sabe su objeto; cerca de su punto hay dos, y vale solo el que lleva su identificador. Su
+  // web de Wikidata no es https: no vale. «15€» no dice sí ni no: no se sabe si se paga.
   assert.equal(de("Q3").horario, "Mo-Fr 09:00-17:00");
   assert.equal(de("Q3").dePago, null);
   assert.equal(de("Q3").web, null);
   assert.equal(de("Q3").de?.horario?.url, "https://www.openstreetmap.org/way/33");
-  // El parque: el objeto que dice Wikidata es de otro sitio, y el buscador tampoco da el suyo. No se sabe nada de él.
+  // El parque: el objeto que dice Wikidata es de otro sitio, y cerca no hay ninguno con el suyo. No se sabe nada.
   assert.equal(de("Q4").horario, null);
   assert.ok(!de("Q4").fuentes.some((x) => x.url.includes("openstreetmap")));
-  // Al buscador, de una en una, con su espera; y a nadie se le da quién edita en OpenStreetMap.
-  const alBuscador = f.pedidos.filter((u) => u.startsWith("https://nominatim"));
-  assert.equal(alBuscador.length, 2);
-  assert.equal(f.esperas.length, 1);
-  assert.ok(!JSON.stringify(abiertos).includes("alguien"));
+  // Una sola consulta para los cuatro, a la primera instancia; ni a la API de editar ni al buscador; sin esperas.
+  assert.equal(f.consultas.length, 1);
+  assert.ok(f.pedidos.every((u) => u.startsWith("https://query.wikidata.org/") || u.startsWith(PRIMERA)));
+  assert.ok(!f.pedidos.some((u) => /api\.openstreetmap|nominatim/.test(u)));
+  assert.deepEqual(f.esperas, []);
+  assert.deepEqual(f.avisos, []);
+  // Y de lo que se guarda, solo etiquetas: ni quién edita, ni sus nodos, ni lo que dice Overpass de sí.
+  const guardado = JSON.stringify(abiertos);
+  for (const nada of ["alguien", "uid", "nodes", "Overpass API inventada", "ODbL"]) assert.ok(!guardado.includes(nada));
 });
 
-test("los datos abiertos: si una fuente falla, se sigue con las otras; si fallan todas, se dice", async () => {
-  const sinWikidata = fuentesAbiertas({ wikidataFalla: true });
-  const con = await abiertosDe([sitio("Q3", "Iglesia")], sinWikidata);
-  assert.equal(con[0].horario, "Mo-Fr 09:00-17:00");
-  const nada = fuentesAbiertas({ wikidataFalla: true, buscadorFalla: true });
-  await assert.rejects(abiertosDe([sitio("Q3", "Iglesia")], { ...nada, intentos: 1 }), /contestan/);
-  // Un sitio sin identificador de Wikidata no se pide.
-  assert.deepEqual(await abiertosDe([sitio("x1", "Inventado")], fuentesAbiertas()), []);
-});
-
-test("los datos abiertos: la búsqueda va con el nombre y cerca de su punto; y lo que se lee de cada respuesta", () => {
-  const u = new URL(busquedaDe(sitio("Q1", "Museo de la Sal")));
-  assert.equal(u.searchParams.get("q"), "Museo de la Sal");
-  assert.equal(u.searchParams.get("bounded"), "1");
-  assert.equal(u.searchParams.get("viewbox"), "19.99500,10.00500,20.00500,9.99500");
+test("los datos abiertos: la consulta a Overpass, por número y cerca del punto, solo etiquetas, validada", () => {
+  const q = consultaDeOverpass({
+    objetos: [
+      { tipo: "way", id: 11 },
+      { tipo: "way", id: 11 },
+      { tipo: "node", id: 22 },
+    ],
+    cerca: [{ id: "Q3", punto: { lat: 10, lon: 20 } }],
+  })!;
+  assert.match(q, /^\[out:json\]\[timeout:\d+\];/);
+  assert.match(q, /^node\(id:22\);$/m);
+  assert.match(q, /^way\(id:11\);$/m);
+  assert.match(q, /^nwr\["wikidata"="Q3"\]\(around:500,10\.000000,20\.000000\);$/m);
+  assert.match(q, /out tags;$/);
+  assert.doesNotMatch(q, /out (meta|body|geom)/);
+  // Lo que no es un número, un identificador o un punto en su rango no entra en la consulta.
+  const malos = consultaDeOverpass({
+    objetos: [
+      { tipo: "node", id: -1 },
+      { tipo: "way", id: 1.5 },
+      { tipo: "relation", id: Number.NaN },
+      { tipo: "node; out meta; node" as "node", id: 5 },
+    ],
+    cerca: [
+      { id: 'Q1"];out meta;nwr["x', punto: { lat: 10, lon: 20 } },
+      { id: "Q2", punto: { lat: 91, lon: 20 } },
+      { id: "Q2", punto: { lat: 10, lon: -181 } },
+      { id: "Q2", punto: { lat: Number.NaN, lon: 0 } },
+      { id: "q2", punto: { lat: 10, lon: 20 } },
+    ],
+  });
+  assert.equal(malos, null);
+  // Y lo que se lee de cada respuesta.
   assert.equal(dePagoDe("yes"), true);
   assert.equal(dePagoDe(" No "), false);
   assert.equal(dePagoDe("donation"), null);
@@ -208,6 +281,90 @@ test("los datos abiertos: la búsqueda va con el nombre y cerca de su punto; y l
     0,
   );
   assert.equal(leerWikidata(null).size, 0);
+  assert.throws(() => leerOverpass("<html>"), /no contesta con datos/);
+  assert.throws(() => leerOverpass('{"elements": "x"}'), /no contesta con datos/);
+  assert.throws(() => leerOverpass('{"elements": [], "remark": "runtime error: out of memory"}'), /a medias/);
+  assert.deepEqual(leerOverpass('{"elements": [{"type": "node", "id": 1, "user": "x", "lat": 1}]}'), [
+    { tipo: "node", id: 1, etiquetas: {} },
+  ]);
+});
+
+test("los datos abiertos: las instancias de Overpass, del entorno, validadas; sin él, la principal", () => {
+  assert.deepEqual(instanciasDeOverpass(undefined), { instancias: OVERPASS_POR_DEFECTO, malas: 0 });
+  assert.deepEqual(instanciasDeOverpass("  "), { instancias: OVERPASS_POR_DEFECTO, malas: 0 });
+  assert.deepEqual(instanciasDeOverpass(`${PRIMERA}, ${SEGUNDA},${PRIMERA}`), {
+    instancias: [PRIMERA, SEGUNDA],
+    malas: 0,
+  });
+  const malas = [
+    "http://overpass.inseguro.example/api/interpreter",
+    "https://usuario:clave@overpass.example/api/interpreter",
+    "https://overpass.example/api/interpreter?key=1",
+    "https://overpass.example/api/interpreter#x",
+    "ftp://overpass.example/",
+    "no es una direccion",
+  ];
+  assert.deepEqual(instanciasDeOverpass([...malas, SEGUNDA].join(",")), { instancias: [SEGUNDA], malas: malas.length });
+  assert.deepEqual(instanciasDeOverpass(malas.join(",")), { instancias: [], malas: malas.length });
+  const muchas = Array.from({ length: 9 }, (_, i) => `https://o${i}.example/api/interpreter`).join(",");
+  assert.equal(instanciasDeOverpass(muchas).instancias.length, 4);
+});
+
+test("los datos abiertos: si la primera instancia cae, contesta la segunda", async () => {
+  for (const uno of ["caida", "rota", "a_medias", "no_contesta"] as const) {
+    const f = fuentesAbiertas({ uno });
+    const abiertos = await abiertosDe(CUATRO, f);
+    assert.equal(abiertos.find((a) => a.sitio === "Q1")?.horario, "Tu-Su 10:00-18:00", uno);
+    assert.equal(abiertos.find((a) => a.sitio === "Q3")?.horario, "Mo-Fr 09:00-17:00", uno);
+    assert.equal(f.consultas.length, 2, uno);
+    assert.ok(f.pedidos.at(-1)!.startsWith(SEGUNDA), uno);
+    assert.deepEqual(f.avisos, [], uno);
+  }
+  // La que no contesta se corta con su tope, aunque quien la pide no sepa cortarla.
+  const colgada = fuentesAbiertas();
+  const traer = (url: string) => (url.startsWith(PRIMERA) ? new Promise<Respuesta>(() => {}) : colgada.traer(url));
+  const r = await abiertosDe(CUATRO, { ...colgada, traer, tope: 1500 });
+  assert.equal(r.find((a) => a.sitio === "Q1")?.web, "https://museo.inventado.example/");
+  assert.match(colgada.avisos.join(" "), /sin el horario/);
+});
+
+test("los datos abiertos: si ninguna instancia contesta, se dice, y la web de Wikidata llega", async () => {
+  const f = fuentesAbiertas({ uno: "caida", dos: "rota" });
+  const abiertos = await abiertosDe(CUATRO, f);
+  assert.equal(abiertos.length, 4);
+  assert.ok(abiertos.every((a) => a.horario === null && a.dePago === null));
+  assert.ok(abiertos.every((a) => !a.fuentes.some((x) => x.url.includes("openstreetmap"))));
+  assert.equal(abiertos.find((a) => a.sitio === "Q1")?.web, "https://museo.inventado.example/");
+  assert.equal(f.avisos.length, 1);
+  assert.match(f.avisos[0], /sin el horario ni si se paga de OpenStreetMap: Overpass no contesta/);
+  assert.match(f.avisos[0], /overpass\.uno\.example contesta 504/);
+  // Una vez cada una, sin martillear.
+  assert.equal(f.consultas.length, 2);
+  // Si dicen que se espere, se espera lo que dicen y se vuelve una sola vez, a la que menos pidió.
+  const esperan = fuentesAbiertas({ uno: "espera", dos: "caida" });
+  await abiertosDe(CUATRO, esperan);
+  assert.deepEqual(esperan.esperas, [5000]);
+  assert.equal(esperan.consultas.length, 3);
+  // Si lo que piden esperar no cabe en el tope, no se espera.
+  const sinTiempo = fuentesAbiertas({ uno: "espera", dos: "espera" });
+  await abiertosDe(CUATRO, { ...sinTiempo, tope: 4000 });
+  assert.deepEqual(sinTiempo.esperas, []);
+  assert.equal(sinTiempo.consultas.length, 2);
+  // Sin ninguna dirección que valga, ni se intenta; y se dice.
+  const ninguna = fuentesAbiertas();
+  await abiertosDe(CUATRO, { ...ninguna, overpass: ["http://inseguro.example/api/interpreter"] });
+  assert.equal(ninguna.consultas.length, 0);
+  assert.match(ninguna.avisos.join(" "), /ninguna dirección de Overpass/);
+});
+
+test("los datos abiertos: si una fuente falla, se sigue con las otras; si fallan todas, se dice", async () => {
+  const sinWikidata = fuentesAbiertas({ wikidataFalla: true });
+  const con = await abiertosDe([sitio("Q3", "Iglesia")], sinWikidata);
+  assert.equal(con[0].horario, "Mo-Fr 09:00-17:00");
+  const nada = fuentesAbiertas({ wikidataFalla: true, uno: "caida", dos: "caida" });
+  await assert.rejects(abiertosDe([sitio("Q3", "Iglesia")], { ...nada, intentos: 1 }), /contestan/);
+  // Un sitio sin identificador de Wikidata no se pide.
+  assert.deepEqual(await abiertosDe([sitio("x1", "Inventado")], fuentesAbiertas()), []);
 });
 
 // ---------- la puerta 13

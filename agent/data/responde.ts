@@ -31,6 +31,11 @@ export const QUIEN_RESPONDE: QuienResponde[] = [
   // El ritmo y mover una parada, código; un mensaje tuyo, el del día a día.
   { sitio: "day", responde: LA_CASA, mensaje: "sights-picker" },
   { sitio: "guide", responde: "guide-writer", mensaje: "guide-writer" },
+  // Las capas del destino (bloque 14): lo que lees lo trae cada asiento y lo enseña el código por claves, con su
+  // fuente. Ahí se lee: no se escribe.
+  { sitio: "there_getting_around", responde: "getting-around", mensaje: null },
+  { sitio: "there_good_to_know", responde: "local-knowledge", mensaje: null },
+  { sitio: "stop_tickets", responde: "tickets", mensaje: null },
   { sitio: "change", responde: LA_CASA, mensaje: null, alFinal: EL_DUENO_DE_CADA_PIEZA },
 ];
 

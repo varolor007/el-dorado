@@ -697,6 +697,46 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   estén. Se construyen en una tanda propia, la 6 bis, para no mover el número de las que ya se nombran en estos
   documentos: primero su suelo (14.1), con una sola sesión de obra, y después las capas, a la vez, sobre él, como se
   hizo con la tanda 6.
+- **El techo de gasto y las capas** (el PM, al leer lo que quedaba pendiente de las capas: «hombre, entiendo que esto
+  es un problema, ¿no?»). De las tres cosas que señaló, la sesión le contestó que una lo es: con un techo de gasto
+  puesto, un asiento que se corta por su tope sin decir lo que gastó para la investigación entera, y una capa es
+  opcional. Se arregla en esta tanda (14.7): una capa cortada por su tope se da por perdida, el viaje sigue y lo
+  dice, y su gasto se cuenta por lo más alto que pudo gastar, para que el techo siga valiendo. Las otras dos (los
+  topes de las entradas, y que otro idioma u otro «qué buscas» vuelva a lanzar al que conoce el destino) son números
+  y reglas de partida, y siguen en «Pendientes».
+- **Las capas, construidas y juntas** (la sesión, con seis sesiones de obra a la vez sobre el suelo, cada una con lo
+  más prudente y a firma del PM). Del de moverse: el día en que se vio una página es hoy, con un día de holgura; si
+  valen varios precios para una persona se coge el más caro, para no quedarse corto; un abono cubre días seguidos;
+  una tarjeta recargable no entra en la cuenta, y la llegada se cuenta de ida. Del que conoce el destino: dieciséis
+  cosas como mucho, con sus cifras aparte, y lo de comer sin nombres propios: la puerta mira palabras de restaurante
+  y de opinión, y un nombre a secas queda al contrato. Del de las entradas: los datos abiertos salen de Wikidata y de
+  OpenStreetMap, también de su buscador cuando Wikidata no sabe qué objeto es, a una consulta por segundo; una
+  página de datos abiertos no vale como fuente de un precio que da el asiento; lo que el asiento no sabe se queda
+  con lo que dicen los datos abiertos; lo que el viajero movió a un día se queda ahí aunque cierre, y se avisa; y si
+  hay más sitios que el tope se miran primero los imprescindibles y los que tienen puerta. Del presupuesto: dos
+  comidas de pago al día, un taxi para cuatro, ida y vuelta al aeropuerto si el transporte vuelve, y el precio más
+  barato de los que valen. De la guía: el que la escribe ve ahora los precios y las horas de allí (no los de dormir
+  ni los de llegar) y puede decirlos, solo de su material; dónde comer cae en cada día por cercanía, a 1.200 metros
+  y tres por día. De la web: si la página no da el precio de un niño no se supone.
+- **Al juntarlas** (la sesión): la cuenta de moverse del presupuesto es la del de moverse, que cada sesión había
+  dejado por su lado, con su prueba; los contratos de prueba del suelo se quitaron; y «Quién te responde» tiene las
+  filas de «Allí» y de la entrada de una parada, donde se lee y no se escribe, como dice la fila de «Allí» en la web.
+- **Un agujero en la puerta de todos, cerrado** (lo encontraron dos sesiones de las capas; lo arregló la sesión, en
+  el 3.5): en una vuelta de más, la entrega que se le devuelve al asiento contaba como su material, y una página
+  que había escrito sin abrirla pasaba. Ya no cuenta; a cambio vale lo que abrió en sus vueltas de antes. Tocaba a
+  todo asiento con internet: el del calendario, el de los papeles y las tres capas.
+- **OpenStreetMap se lee por su servicio de lectura** (la sesión, al leer sus condiciones, y una sesión de obra):
+  el de las entradas traía el objeto de cada sitio por la API de OpenStreetMap, que es la de editar y no admite
+  proyectos de solo lectura, y buscaba por nombre en su buscador, que prohíbe las consultas sistemáticas. Las dos
+  cosas se quitan: se lee por Overpass, con una consulta por tanda y solo etiquetas. Qué instancia se usa va por el
+  entorno y es del PM. Sin Overpass el viaje sale igual: el horario de los datos abiertos no se sabe, se dice, y el
+  asiento lo lee de la web del sitio, que Wikidata sí da.
+- **Una sola cuenta en todas partes** (la sesión de obra que unió las capas, con lo más prudente y a firma del PM):
+  la regla del precio de cada uno es la del presupuesto, también en la tarjeta y en la ficha de una parada. Moverte
+  allí cuenta los trayectos de los caminos de la casa, que son los que enseña la web, con la ida y la vuelta a
+  donde duermes, para no quedarse corto: por eso puede cambiar de una manera a otra. Las cuentas se rehacen siempre
+  con lo que el viajero tiene delante. Siete cifras que antes podían salir distintas en dos sitios salen ya
+  iguales, con su prueba.
 
 ## Pendientes
 
@@ -706,9 +746,18 @@ Lo que deja el 25-nov, a decisión del PM:
   fuente de opiniones. Sus topes de partida: el de moverse y el que conoce el destino, diez búsquedas y dieciséis
   páginas; el de las entradas, doce y veinte por llamada, ocho sitios por llamada y veinticuatro en total; diez
   minutos de espera a las entradas antes de repartir los días sin ellas; y, del destino, cuántas cosas por clase y
-  160 letras por cosa. Que otro idioma, o cambiar lo que buscas, vuelve a lanzar al que conoce el destino. Y una
-  regla de antes que ahora pesa más: con un techo de gasto puesto, un asiento que se corta por su tope sin decir lo
-  que gastó para la investigación; con las entradas, eso quiere decir que no se reparten los días sin ellas.
+  160 letras por cosa. Que otro idioma, o cambiar lo que buscas, vuelve a lanzar al que conoce el destino. Los
+  números de partida que pusieron sus sesiones: dos comidas de pago al día y cuatro por taxi; 1.200 metros y tres
+  sitios por día para comer; el día de holgura de una página vista y los 31 días de un abono. Qué precio se coge si
+  valen varios: hoy, el más barato en las entradas y el más caro en los billetes. Si la llegada al aeropuerto se
+  cuenta de ida y vuelta (hoy, sí, si el transporte vuelve). Qué instancias de Overpass se usan para leer
+  OpenStreetMap: la principal pide que lo comercial vaya a una propia o de pago, y desde esta nube no contesta; hay
+  otras dos públicas de alcance mundial (la de VK Maps, rusa, y la de Private.coffee) y varias con clave o de pago
+  (`condiciones.md`). Si moverte allí cuenta la ida y la vuelta a donde duermes (hoy, sí). Las reglas del precio de
+  un niño: fuera de las edades del precio de niño paga el de adulto, y con un precio de niño sin edades no se sabe.
+  Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
+  veía precios. Lo que te pierdes en autobús, que la hoja nombra y sigue sin hacer. Si en «Allí» se puede escribir
+  un mensaje: hoy solo se lee. Y verlo con IA de verdad, que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.
