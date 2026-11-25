@@ -70,6 +70,11 @@ export type Opciones = {
    * nada. Del que la fuente no dice nada, no se sabe, y sigue.
    */
   imprescindibles?: string[];
+  /**
+   * Lo más que el viajero quiere pagar por el alojamiento entero, con lo que se cobra aparte (8.2). Lo que pasa de ahí
+   * no entra en los que tienen precio, y se dice cuántos.
+   */
+  tope?: number | null;
 };
 
 function mensaje(e: unknown): string {
@@ -160,6 +165,9 @@ export async function buscarDondeHaya(
   const cuantos = o.finalistas ?? 5;
   const imprescindibles = o.imprescindibles ?? [];
   const muchos = p.muchosSinPrecio ?? Infinity;
+  const tope = o.tope ?? null;
+  /** Los que tienen precio y pasan del tope del viajero. */
+  const caros = new Set<string>();
 
   // Cada precio se pide una vez, se pregunte las veces que se pregunte por ese alojamiento.
   const precios = new Map<string, Precio | null>();
@@ -171,7 +179,12 @@ export async function buscarDondeHaya(
     }
     return lista.flatMap((a) => {
       const precio = precios.get(a.id);
-      return precio === null || precio === undefined ? [] : [{ alojamiento: a, precio }];
+      if (precio === null || precio === undefined) return [];
+      if (tope !== null && completo(precio) > tope) {
+        caros.add(a.id);
+        return [];
+      }
+      return [{ alojamiento: a, precio }];
     });
   };
 
@@ -205,7 +218,7 @@ export async function buscarDondeHaya(
       anillo = { minimos: m, lista: nuevos, dentro, conPrecio };
       pasos.push({ veces, minimos: m, pasan: dentro.length, conPrecio: conPrecio.length });
       if (yaHay() + conPrecio.length >= p.bastan || i === p.minimos.length - 1) break;
-      if (conPrecio.length === 0 && dentro.length >= muchos) {
+      if (conPrecio.length === 0 && caros.size === 0 && dentro.length >= muchos) {
         sinDisponibilidad = true;
         avisos.push(
           `${dentro.length} pasan los mínimos y ninguno tiene precio para esas noches y ese grupo: ` +
@@ -239,7 +252,9 @@ export async function buscarDondeHaya(
   if (fuera.length - sinDeclarar > 0)
     avisos.push(`la fuente devolvió ${fuera.length - sinDeclarar} que no cumplen los mínimos; descartados`);
   if (sinDeclarar > 0) avisos.push(`${sinDeclarar} cumplen los mínimos y no declaran lo imprescindible; descartados`);
-  if (conPrecio.length < dentro.length) avisos.push(`${dentro.length - conPrecio.length} sin precio para esas noches`);
+  if (caros.size > 0) avisos.push(`${caros.size} pasan del tope de gasto del viajero; fuera`);
+  if (conPrecio.length + caros.size < dentro.length)
+    avisos.push(`${dentro.length - conPrecio.length - caros.size} sin precio para esas noches`);
 
   // A quién se mira de cerca. Primero, lo de la zona de la ruta: con varias zonas, el más barato de cada una, para
   // que cada una tenga quien la represente, y el resto por la regla de todos. Lo que solo salió al ensanchar entra

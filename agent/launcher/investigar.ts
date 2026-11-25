@@ -97,6 +97,7 @@ import {
   type Escuchado,
 } from "./escuchar.ts";
 import { prepararMirar, recogerMirar, type Recogido } from "./mirar.ts";
+import { buscarConLoPedido, conLosGustosPedidos, reutilizarMiradas } from "./alojamiento.ts";
 import {
   celdasDe,
   PAPELES,
@@ -340,10 +341,21 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
     radioMaximo: RADIO_MAXIMO,
     muchosSinPrecio: MUCHOS_SIN_PRECIO,
   };
-  const busqueda = await buscarDondeHaya(f.alojamiento, e, dondeBuscar, comoBuscar, {
-    finalistas: FINALISTAS,
-    imprescindibles,
+  // Lo que pidió el viajero desde la ficha de un alojamiento (8.2), si este run rehace por eso: otra zona, otros
+  // mínimos u otro tope de gasto, encima de lo de siempre.
+  const pedido = buscarConLoPedido(run, {
+    donde: dondeBuscar,
+    minimos: comoBuscar.minimos,
+    radios: comoBuscar.radios,
+    tope: null,
   });
+  const busqueda = await buscarDondeHaya(
+    f.alojamiento,
+    e,
+    pedido.donde,
+    { ...comoBuscar, minimos: pedido.minimos, radios: pedido.radios },
+    { finalistas: FINALISTAS, imprescindibles, tope: pedido.tope },
+  );
   const avisos: string[] = [];
   if (f.ofertas !== undefined) {
     for (const z of zonas) {
@@ -876,7 +888,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       return { ...e, avisos, porDetras: e.parado === null ? conLoDeDetras(e.esperan) : [] };
     }
   }
-  const viaje = sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido);
+  // Con los gustos que marcó el viajero en la ficha de un alojamiento, si este run rehace por ellos (8.2).
+  const viaje = conLosGustosPedidos(run, sinPalabras(leer<Escuchado>(run, ESCUCHADO).entendido));
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
@@ -943,9 +956,16 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
     const pendientes: string[] = [];
     if (!hay(run, "mirar.json")) {
-      const p = await prepararMirar(busqueda, run, { pasadas: 1, fotos: f.bajarFotos });
+      // Si este run rehace el alojamiento (8.2), a quien ya se miró no se le vuelve a mirar, y de los nuevos solo a
+      // los que caben; los demás se quedan sin mirar.
+      const reusadas = reutilizarMiradas(run, busqueda);
+      const solo = reusadas === null ? {} : { solo: [...reusadas.reusadas, ...reusadas.nuevas] };
+      const p = await prepararMirar(busqueda, run, { pasadas: 1, fotos: f.bajarFotos, ...solo });
+      if (reusadas !== null && reusadas.sinMirar.length > 0)
+        avisos.push(`${reusadas.sinMirar.length} candidatos nuevos se quedan sin mirar: no caben en este cambio`);
       avisos.push(...p.avisos);
-      pendientes.push(...p.puestos.map((x) => x.id));
+      // Lo que ya entregó (la mirada de antes, copiada) no se vuelve a lanzar.
+      pendientes.push(...p.puestos.filter((x) => !entregado(x)).map((x) => x.id));
     } else {
       const { quienes } = leer<{ quienes: { puesto: string }[] }>(run, "mirar.json");
       const deMirar = puestosDe(run).filter((p) => quienes.some((q) => q.puesto === p.id));

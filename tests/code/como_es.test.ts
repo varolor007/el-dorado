@@ -140,9 +140,9 @@ test("el contrato nombra las estaciones que pone el código, y dice que no se de
   assert.ok(!/"stay\.check_(in|out)"/.test(leer("DELIVERY.md")));
 });
 
-test("las normas del que mira son seis, de la MI1 a la MI6, y el contrato dice lo que no ve", () => {
+test("las normas del que mira son ocho, de la MI1 a la MI8, y el contrato dice lo que no ve", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(MI\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["MI1", "MI2", "MI3", "MI4", "MI5", "MI6"]);
+  assert.deepEqual(codigos, ["MI1", "MI2", "MI3", "MI4", "MI5", "MI6", "MI7", "MI8"]);
   assert.match(leer("README.md"), /You do not see the price, the review score or the stars/);
   assert.match(leer("README.md"), /You do not use the internet/);
 });

@@ -139,3 +139,26 @@ Both are invented and show the form only.
 are files of `in/photos/`, references of `in/reviews.json` or fields of `in/sheet.json`. The same goes for the `refs`
 of `conflicts`. A warning about the season cites `stay.season`, and there is none when `stay.season` is `unknown`:
 the season is never deduced from the dates.
+
+## The answer delivery
+
+When `in/question.json` is there, `delivery.json` is one object with exactly these fields, and no other.
+
+| Field | What it is |
+|---|---|
+| `seat` | Always `"lodging-viewer"` |
+| `mode` | Always `"question"` |
+| `lodging_id` | The `lodging_id` of `in/sheet.json`, copied |
+| `question_id` | The `id` of `in/question.json`, copied |
+| `answer` | One of `yes`, `no`, `partly`, `unknown` |
+| `evidence` | What shows it: entries like those of `fields`, `{ "kind", "ref", "what" }`. At least one unless `unknown` |
+| `says` | One sentence for the traveller, in their language: the answer and what shows it. No link, no promise |
+| `unknowns` | What would be needed to answer and is not in the material, in plain sentences. Empty list if nothing |
+
+`{ "seat": "lodging-viewer", "mode": "question", "lodging_id": "x7", "question_id": "q1", "answer": "partly",
+"evidence": [ { "kind": "photo", "ref": "hotel-04.jpg", "what": "two treadmills and a rack of dumbbells" } ],
+"says": "The gym photo shows a rack of dumbbells, but no bench or barbell.", "unknowns": [] }` is invented and shows
+the form only.
+
+`ref` follows the same rules as in `fields`: a photo of `in/photos/` with its extension, a reference of
+`in/reviews.json`, or a field of `in/sheet.json`. `says` is plain text in one line, of 500 characters at most.

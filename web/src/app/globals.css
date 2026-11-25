@@ -2498,3 +2498,86 @@ select.toque {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* ---------- El alojamiento, a ratos (8.2): dormir aquí, tus gustos, buscar otra vez y preguntar */
+
+.tu-alojamiento__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.gustos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gustos__una {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.gustos__pesos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gustos__aqui {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+}
+.buscar__minimos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.buscar__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.buscar__campo--ancho {
+  width: 100%;
+}
+.respuesta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+  overflow-wrap: anywhere;
+}
+.respuesta__pregunta {
+  margin: 0;
+  font-style: italic;
+}
+.respuesta__si {
+  font-size: 1.05rem;
+}
+.respuesta__pruebas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.respuesta__pruebas img {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radio-chico);
+}
+.gustos__novale {
+  color: var(--ojo);
+}
+.respuesta__pruebas a {
+  display: block;
+  width: 96px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: var(--radio-chico);
+  background: var(--velo);
+}

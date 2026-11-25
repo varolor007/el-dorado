@@ -28,13 +28,15 @@ export type Preparado = { puestos: Puesto[]; quienes: Quien[]; avisos: string[] 
 export async function prepararMirar(
   b: Busqueda,
   run: string,
-  o: { pasadas?: number; fotos?: OpcionesDeFotos } = {},
+  o: { pasadas?: number; fotos?: OpcionesDeFotos; solo?: string[] } = {},
 ): Promise<Preparado> {
   const puestos: Puesto[] = [];
   const quienes: Quien[] = [];
   const avisos: string[] = [];
   const montados = puestosDe(run);
   for (const [i, ficha] of b.finalistas.entries()) {
+    // Con `solo`, a los demás no se les monta puesto: se quedan sin mirar (8.2, los candidatos nuevos que no caben).
+    if (o.solo !== undefined && !o.solo.includes(ficha.alojamiento.id)) continue;
     const clave = `a${i + 1}`;
     const pasadas = Array.from({ length: o.pasadas ?? 1 }, (_, n) => n + 1);
     const quien = (puesto: string, pasada: number): Quien => ({
