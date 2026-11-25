@@ -82,6 +82,7 @@ import {
   apuntar,
   cambiarLoEntendido,
   cuantosViajes,
+  leerDiario,
   leerVersion,
   leerViaje,
   nuevoCierre,
@@ -633,6 +634,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       apuntar(v, "button", { boton: "close_go_on", cierre: ultimo.n }, hoy());
     } else {
       if (v.ficha.estado !== "on_map") throw new Fallo(409, "not_now");
+      if (apuntadoDesde(v, "closing", f.cierres.horas) >= f.cierres.deUnViaje)
+        throw new Fallo(429, "too_many_closings");
       const viaje = leerVersion(v)?.viaje as Viaje | undefined;
       if (typeof pedido.way !== "string" || !viaje?.maneras.some((m) => m.id === pedido.way))
         throw new Fallo(400, "bad_way");
@@ -696,6 +699,15 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   }
 
   /**
+   * Cuántas veces se apuntó algo en el diario de un viaje en las últimas horas. Con ello se frena lo que gasta
+   * después de la investigación: sale del disco, así que un corte de la casa no pone la cuenta a cero.
+   */
+  function apuntadoDesde(v: ViajeEnLaMesa, que: string, horas: number): number {
+    const desde = hoy().getTime() - horas * 3_600_000;
+    return leerDiario(v).filter((a) => a.que === que && Date.parse(a.cuando) >= desde).length;
+  }
+
+  /**
    * «Quiero mi guía»: solo su dueño, con el viaje cerrado y sin otra guía en marcha, y con la misma cuenta o clave con
    * la que piensa. Sale de la versión que se enseña, con la manera que diga si el viaje tiene más de una.
    */
@@ -704,6 +716,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const id = v.ficha.id;
     if (guias.has(id) || marchas.has(id)) throw new Fallo(409, "already_running");
     if (v.ficha.estado !== "closed") throw new Fallo(409, "not_closed");
+    if (apuntadoDesde(v, "guide", f.guias.horas) >= f.guias.deUnViaje) throw new Fallo(429, "too_many_guides");
     const conQue = conQuePiensa(p.cuenta);
     if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};

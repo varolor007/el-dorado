@@ -33,6 +33,13 @@ export const FRENOS_DE_LA_PUERTA = {
   viajes: { deUnDueno: 200, enLaCasa: 20_000 },
   /** Cuántos escuchan en vivo a la vez: a un viaje, a los viajes de una cuenta y a toda la casa. */
   oyentes: { deUnViaje: 8, deUnaCuenta: 16, enLaCasa: 300 },
+  /**
+   * Lo que gasta después de la investigación: cuántas guías se pueden pedir de un viaje, y cuántas veces se puede
+   * intentar cerrarlo, en esas horas. Cada guía lanza a un asiento, y cada cierre pregunta a las fuentes, comprueba
+   * enlaces y lanza a otro: sin tope, una cuenta podía pedirlos uno detrás de otro.
+   */
+  guias: { horas: 24, deUnViaje: 3 },
+  cierres: { horas: 24, deUnViaje: 6 },
   /** Comprobar una clave de IA contra la IA: por cuenta y por cliente. */
   claves: { minutos: 60, porCuenta: 10, porCliente: 20 },
   /** Cuántas cuentas distintas recuerda cada freno en la memoria, como mucho. */

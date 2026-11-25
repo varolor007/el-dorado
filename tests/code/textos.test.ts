@@ -61,6 +61,29 @@ test("un texto para el viajero es un texto: corto, en una línea, sin enlaces ni
   assert.deepEqual(pegasDelTexto("Abre a las 9 a.m. y cierra tarde.El resto, andando."), []);
 });
 
+test("trampa: una dirección escrita a medias tampoco pasa, y lo que solo se le parece, sí", () => {
+  const disimulada = (texto: string): boolean => pegasDelTexto(texto).some((p) => p.includes("escrita a medias"));
+  for (const mala of [
+    "Reserva en viajes-baratos . com y listo.",
+    "Mira cheap-tours dot com before you go.",
+    "Escribe a tours at gmail dot com.",
+    "Búscalo en viajes punto com.",
+    "Go to tours (dot) net.",
+    "Entra en ofertas punto online.",
+  ])
+    assert.ok(disimulada(mala), mala);
+  for (const buena of [
+    "Un punto común de encuentro para los dos.",
+    "Este punto es el más alto de la ciudad.",
+    "Llegas al final. Como siempre, con calma.",
+    "Desde ese punto, como mucho diez minutos andando.",
+    "A dot on the map, nothing more.",
+    "El punto informativo está en la plaza.",
+    "Es un sitio. Organiza bien la mañana.",
+  ])
+    assert.ok(!disimulada(buena), buena);
+});
+
 test("donde los números salen de internet, una tira larga de cifras no pasa: es un teléfono o una cuenta", () => {
   const largo = { sinNumerosLargos: true };
   assert.equal(pegasDelTexto("Llama al +351 912 345 678 para reservar.", largo).length, 1);

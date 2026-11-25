@@ -20,14 +20,24 @@ export function enlaceQueVale(texto: unknown): texto is string {
  * Lo que no puede ir en un enlace que ve el viajero: una clave, un token o una firma de quien lo pidió. Si un enlace
  * de una fuente trae algo así, no se enseña.
  */
-const CON_CLAVE = /^(?:api[_-]?key|apikey|key|token|access[_-]?token|secret|signature|sig|auth|password|pass)$/i;
+const DE_CLAVE = [
+  "api[_-]?key|apikey|key|token|secret|signature|sig|auth|password|passwd|pass",
+  "session(?:[_-]?id)?|sid|credential|jwt",
+].join("|");
+/** El nombre de una clave vale entero o como el final de uno más largo, tras un guion, un punto o una barra baja. */
+const CON_CLAVE = new RegExp(`(?:^|[_.-])(?:${DE_CLAVE})$`, "i");
 
-/** Verdadero si un enlace vale y no lleva dentro, en su consulta, nada con nombre de clave. */
+/**
+ * Verdadero si un enlace vale y no lleva dentro nada con nombre de clave: ni en su consulta ni detrás de la
+ * almohadilla, que es donde algunas webs dejan el token de quien entró. El nombre cuenta también si es el final de
+ * uno más largo («client_secret», «X-Amz-Signature»). Lo que vaya escrito en la ruta no se puede saber por su nombre.
+ */
 export function enlaceSinClaves(texto: unknown): texto is string {
   if (!enlaceQueVale(texto)) return false;
   const u = new URL(texto);
-  for (const nombre of u.searchParams.keys()) if (CON_CLAVE.test(nombre)) return false;
-  return true;
+  const nombres = [...u.searchParams.keys()];
+  if (u.hash.includes("=")) nombres.push(...new URLSearchParams(u.hash.slice(1)).keys());
+  return !nombres.some((nombre) => CON_CLAVE.test(nombre));
 }
 
 const punto = (p: Punto): string => `${p.lat},${p.lon}`;

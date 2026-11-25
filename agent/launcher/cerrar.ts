@@ -15,6 +15,7 @@
 //   viaje.json      el viaje cerrado, que pasa a ser una versión
 //   parado.json     si la puerta 8 lo paró, por qué; o si se rompió algo
 
+import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { COMPROBAR_ENLACES, ESPERA_A_LAS_FUENTES, VUELTAS_DEL_ORDEN } from "../data/cierre.ts";
@@ -49,7 +50,7 @@ import { hora24 } from "../tools/horas.ts";
 import { completo } from "../scripts/finalistas.ts";
 import { paraElGrupo, type FuenteAlojamiento, type FuenteTransporte, type Vuelo } from "../tools/fuentes/tipos.ts";
 import { lanzarAsiento, recogerAsiento, type Lanzador, type Tope } from "./asiento.ts";
-import { paginaDeFuera } from "./consultado.ts";
+import { direccionDeDentro, paginaDeFuera } from "./consultado.ts";
 import { sinPalabras } from "./escuchar.ts";
 import { estanciaDe } from "./investigar.ts";
 import { guardarCierre, guardarJson, leerVersion, type ViajeEnLaMesa } from "./mesa.ts";
@@ -494,7 +495,15 @@ export async function llevarElCierre(
  * admite, el primer byte), con su tiempo, siguiendo unas pocas redirecciones y solo por https. Responde si contesta
  * bien; no responde si no existe (404, 410) o su nombre no existe; si la web no deja mirar, no se sabe.
  */
-export async function comprobarEnlace(url: string, pedir: typeof fetch = fetch): Promise<ComprobacionDeEnlace> {
+/** A qué direcciones lleva el nombre de una máquina. */
+export type Resolver = (nombre: string) => Promise<string[]>;
+const porSuNombre: Resolver = async (nombre) => (await lookup(nombre, { all: true })).map((x) => x.address);
+
+export async function comprobarEnlace(
+  url: string,
+  pedir: typeof fetch = fetch,
+  resolver: Resolver = porSuNombre,
+): Promise<ComprobacionDeEnlace> {
   let actual = url;
   const una = (metodo: "HEAD" | "GET"): Promise<Response> =>
     pedir(actual, {
@@ -507,6 +516,17 @@ export async function comprobarEnlace(url: string, pedir: typeof fetch = fetch):
     // Solo se llama a una página de fuera: https, con nombre, sin puerto y que no sea de dentro de la red de la
     // casa. Un enlace lo trae una fuente, y una redirección, cualquiera: ni uno ni otra mandan a la casa a su red.
     if (!enlaceQueVale(actual) || !paginaDeFuera(actual)) return "unchecked";
+    // Un nombre de fuera puede llevar dentro (uno que resuelve a una dirección privada o a la de los metadatos de
+    // una nube): se mira a dónde lleva antes de llamar, en cada salto. Si no se puede saber, porque la máquina sale
+    // por un intermediario que resuelve él, se sigue: quien llama entonces no es la casa. No cierra del todo (entre
+    // mirar y llamar el nombre puede cambiar): la salida del servidor a redes privadas se cierra en el servidor.
+    let lleva: string[] = [];
+    try {
+      lleva = await resolver(new URL(actual).hostname);
+    } catch {
+      lleva = [];
+    }
+    if (lleva.some(direccionDeDentro)) return "unchecked";
     let r: Response;
     try {
       r = await una("HEAD");

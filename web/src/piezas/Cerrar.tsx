@@ -67,7 +67,7 @@ export function MeQuedo({
   ritmo: Ritmo;
 }) {
   const [cierre, setCierre] = useState<DelCierre | null>(null);
-  const [fallo, setFallo] = useState(false);
+  const [fallo, setFallo] = useState<"no" | "fallo" | "muchos">("no");
   const [mandando, setMandando] = useState(false);
   const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -91,10 +91,10 @@ export function MeQuedo({
 
   const manda = async (cuerpo: Record<string, unknown>): Promise<void> => {
     setMandando(true);
-    setFallo(false);
+    setFallo("no");
     const r = await pideALaCasa("POST", `viajes/${id}/cerrar`, cuerpo);
     setMandando(false);
-    if (r.estado !== 202) return setFallo(true);
+    if (r.estado !== 202) return setFallo(r.estado === 429 ? "muchos" : "fallo");
     setCierre({ n: 0, stage: "prices", running: true });
     void mira();
   };
@@ -149,7 +149,7 @@ export function MeQuedo({
         </div>
       )}
       {cierre?.stage === "stopped" && !cierre.running && <p className="aviso">{t.cerrar.etapa.stopped}</p>}
-      {fallo && <p className="aviso">{t.cerrar.fallo}</p>}
+      {fallo !== "no" && <p className="aviso">{fallo === "muchos" ? t.cerrar.muchos : t.cerrar.fallo}</p>}
     </div>
   );
 }

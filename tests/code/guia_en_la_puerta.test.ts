@@ -76,6 +76,18 @@ test("la guía, por la puerta: solo con el viaje cerrado, solo su dueño, y su d
     // Lo que sale no lleva ni rutas del disco ni el porqué de nada.
     assert.doesNotMatch(JSON.stringify(lista), /el-dorado-mesa|puestos|rojos/);
 
+    // Pedir guías gasta: de un viaje se piden unas pocas al día, y la que pasa del tope no lanza a nadie.
+    for (const n of [2, 3]) {
+      assert.deepEqual((await pide("POST", ruta, ana.sesion, { way: "best_value" })).cuerpo, { guide: n });
+      await puerta.esperar();
+    }
+    const lanzadas = lanzador.veces;
+    const demas = await pide("POST", ruta, ana.sesion, { way: "best_value" });
+    assert.equal(demas.estado, 429);
+    assert.equal(demas.cuerpo.error, "too_many_guides");
+    await puerta.esperar();
+    assert.equal(lanzador.veces, lanzadas);
+
     // Con el viaje abierto otra vez, no se pide guía.
     pasar(v, "researching", HOY);
     assert.equal((await pide("POST", ruta, ana.sesion, { way: "best_value" })).cuerpo.error, "not_closed");

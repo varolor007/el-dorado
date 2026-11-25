@@ -20,6 +20,19 @@ const ENLACE = new RegExp(
   "iu",
 );
 const CORREO = /[^\s@]+@[^\s@]+\.[^\s@]+/u;
+/** Las terminaciones generales: las que nadie escribe por casualidad detrás de un punto suelto o de un «dot». */
+const GENERALES = "com|net|org|info|biz|io|app|shop|online|site|travel";
+/**
+ * Una dirección escrita a medias para que no lo parezca: «viajes . com», «viajes dot com», «viajes punto com», y con
+ * ello un correo como «ana at correo dot com». Solo con las terminaciones generales: con las de país caería medio
+ * idioma («este punto es», «al final. No»). Lo que sigue a la terminación no puede ser letra: «un punto común» no
+ * lo es.
+ */
+const DISIMULADA = new RegExp(
+  `[\\p{L}\\p{N}-]{2,}\\s+\\.\\s*(?:${GENERALES})(?![\\p{L}\\p{N}])` +
+    `|[\\p{L}\\p{N}-]{2,}\\s*[\\[(]?(?<![\\p{L}\\p{N}])(?:dot|punto)[\\])]?\\s+(?:${GENERALES})(?![\\p{L}\\p{N}])`,
+  "iu",
+);
 /** Un teléfono o una cuenta: nueve cifras o más seguidas, juntas o con espacios, puntos, guiones o paréntesis. */
 const NUMERO_LARGO = /\+?\d(?:[ ().-]{0,2}\d){8,}/u;
 
@@ -36,6 +49,7 @@ export function pegasDelTexto(crudo: string, o: { sinNumerosLargos?: boolean } =
   if (DE_CONTROL.test(texto)) pegas.push("lleva saltos de línea o marcas que no son texto");
   if (ENLACE.test(texto)) pegas.push("lleva un enlace: al viajero no se le manda a ninguna dirección");
   if (CORREO.test(texto)) pegas.push("lleva una dirección de correo");
+  if (DISIMULADA.test(texto)) pegas.push("lleva una dirección escrita a medias: al viajero no se le manda a ninguna");
   if (o.sinNumerosLargos === true && NUMERO_LARGO.test(cifras(texto).texto))
     pegas.push("lleva un número largo, como un teléfono o una cuenta");
   for (const p of PROHIBIDAS) {
@@ -182,6 +196,7 @@ export function pegaDeNombreDeFuera(nombre: string): string | null {
   if (DE_CONTROL.test(nombre)) return "lleva saltos de línea o marcas que no son texto";
   if (ENLACE.test(nombre)) return "lleva una dirección de la web";
   if (CORREO.test(nombre)) return "lleva una dirección de correo";
+  if (DISIMULADA.test(nombre)) return "lleva una dirección escrita a medias";
   if (NUMERO_LARGO.test(nombre)) return "lleva un número largo, como un teléfono";
   return null;
 }

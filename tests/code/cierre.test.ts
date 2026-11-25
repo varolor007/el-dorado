@@ -181,6 +181,24 @@ test("los enlaces (3.13): solo https y sin claves; cada parada y cada día, el s
   assert.equal(enlaceSinClaves("https://yo:clave@a.example/x"), false);
   assert.equal(enlaceSinClaves("https://a.example/x?api_key=1"), false);
   assert.equal(enlaceSinClaves("javascript:alert(1)"), false);
+  // Una clave puede ir detrás de la almohadilla, o ser el final de un nombre más largo.
+  for (const mala of [
+    "https://a.example/p#access_token=abc",
+    "https://a.example/p?client_secret=abc",
+    "https://a.example/p?X-Amz-Signature=abc&X-Amz-Credential=def",
+    "https://a.example/p?sessionid=abc",
+    "https://a.example/p?session_id=abc",
+    "https://a.example/p?jwt=abc",
+  ])
+    assert.equal(enlaceSinClaves(mala), false, mala);
+  // Y lo que no es una clave no se confunde con una: unas fechas, un hotel, una sección de la página.
+  for (const buena of [
+    "https://a.example/p?checkin=2027-02-12&checkout=2027-02-15&adults=2",
+    "https://a.example/p?hotelkeyword=centro&monkey=1",
+    "https://a.example/p#habitaciones",
+    "https://a.example/p?author=ana",
+  ])
+    assert.equal(enlaceSinClaves(buena), true, buena);
   const v = viajeParaCerrar();
   const m = v.maneras[0];
   const precios = piezasDe(v, m).map((x) => precioDeHoy(x, "unknown", AHORA));
@@ -623,6 +641,9 @@ test("trampa: un enlace con una clave dentro no llega a la web", async () => {
   assert.equal(puertaCierre(viaje, material).verde, false);
 });
 
+/** En las pruebas ningún nombre se pregunta de verdad: todos llevan a una dirección de fuera. */
+const DE_FUERA = async (): Promise<string[]> => ["203.0.113.7"];
+
 test("comprobar un enlace: solo la cabecera, sin seguir de más, y lo que no deja mirar no está muerto", async () => {
   const pedidos: { url: string; metodo: string }[] = [];
   const con = (respuestas: Record<string, { status: number; location?: string }>): typeof fetch =>
@@ -631,23 +652,26 @@ test("comprobar un enlace: solo la cabecera, sin seguir de más, y lo que no dej
       const r = respuestas[String(url)] ?? { status: 200 };
       return new Response(null, { status: r.status, headers: r.location ? { location: r.location } : {} });
     }) as typeof fetch;
-  assert.equal(await comprobarEnlace("https://a.example/x", con({})), "ok");
+  assert.equal(await comprobarEnlace("https://a.example/x", con({}), DE_FUERA), "ok");
   assert.equal(pedidos[0].metodo, "HEAD");
-  assert.equal(await comprobarEnlace("https://a.example/y", con({ "https://a.example/y": { status: 404 } })), "down");
   assert.equal(
-    await comprobarEnlace("https://a.example/z", con({ "https://a.example/z": { status: 429 } })),
+    await comprobarEnlace("https://a.example/y", con({ "https://a.example/y": { status: 404 } }), DE_FUERA),
+    "down",
+  );
+  assert.equal(
+    await comprobarEnlace("https://a.example/z", con({ "https://a.example/z": { status: 429 } }), DE_FUERA),
     "unchecked",
   );
   // Una redirección a una dirección sin https no se sigue.
   const fuera = con({ "https://a.example/r": { status: 302, location: "http://b.example/" } });
-  assert.equal(await comprobarEnlace("https://a.example/r", fuera), "unchecked");
+  assert.equal(await comprobarEnlace("https://a.example/r", fuera, DE_FUERA), "unchecked");
   // Una web que no admite la cabecera se mira con el primer byte.
   pedidos.length = 0;
   const sinCabecera = (async (url: string | URL, init?: RequestInit) => {
     pedidos.push({ url: String(url), metodo: init?.method ?? "GET" });
     return new Response(null, { status: init?.method === "HEAD" ? 405 : 206 });
   }) as typeof fetch;
-  assert.equal(await comprobarEnlace("https://a.example/h", sinCabecera), "ok");
+  assert.equal(await comprobarEnlace("https://a.example/h", sinCabecera, DE_FUERA), "ok");
   assert.deepEqual(
     pedidos.map((p) => p.metodo),
     ["HEAD", "GET"],
@@ -655,7 +679,7 @@ test("comprobar un enlace: solo la cabecera, sin seguir de más, y lo que no dej
   // Un bucle de redirecciones se deja a las pocas.
   pedidos.length = 0;
   const bucle = con({ "https://a.example/b": { status: 301, location: "https://a.example/b" } });
-  assert.equal(await comprobarEnlace("https://a.example/b", bucle), "unchecked");
+  assert.equal(await comprobarEnlace("https://a.example/b", bucle, DE_FUERA), "unchecked");
   assert.ok(pedidos.length <= 5);
 });
 
@@ -678,11 +702,22 @@ test("trampa: comprobar un enlace no manda a la casa a su red, ni de entrada ni 
     "https://caja.svc/",
     "https://a.example:8443/",
   ];
-  for (const url of deDentro) assert.equal(await comprobarEnlace(url, con({})), "unchecked", url);
+  for (const url of deDentro) assert.equal(await comprobarEnlace(url, con({}), DE_FUERA), "unchecked", url);
   assert.deepEqual(pedidos, []);
+  // Un nombre de fuera que lleva dentro tampoco se pide: se mira a dónde lleva antes de llamar.
+  for (const dentro of ["169.254.169.254", "127.0.0.1", "10.1.2.3", "172.20.0.5", "192.168.1.1", "100.64.0.1", "::1"]) {
+    const lleva = async (): Promise<string[]> => ["203.0.113.7", dentro];
+    assert.equal(await comprobarEnlace("https://metadatos.example/", con({}), lleva), "unchecked", dentro);
+  }
+  assert.equal(await comprobarEnlace("https://fd12.example/", con({}), async () => ["fd12:3456::1"]), "unchecked");
+  assert.deepEqual(pedidos, []);
+  // Si no se puede saber a dónde lleva (la máquina sale por un intermediario), se pide: quien llama no es la casa.
+  const sinSaber = async (): Promise<string[]> => Promise.reject(new Error("no hay quien resuelva"));
+  assert.equal(await comprobarEnlace("https://a.example/x", con({}), sinSaber), "ok");
+  pedidos.length = 0;
   // Y una web de fuera que redirige a dentro: se pide la de fuera, y a la de dentro no se llega.
   const aDentro = con({ "https://a.example/r": { status: 302, location: "https://10.0.0.7/admin" } });
-  assert.equal(await comprobarEnlace("https://a.example/r", aDentro), "unchecked");
+  assert.equal(await comprobarEnlace("https://a.example/r", aDentro, DE_FUERA), "unchecked");
   assert.deepEqual(pedidos, ["https://a.example/r"]);
 });
 
@@ -752,6 +787,71 @@ test("la puerta de la casa: «me quedo con este» solo para su dueño, de fondo,
   } finally {
     await puerta.esperar();
     await puerta.cerrar();
+  }
+});
+
+test("trampa: intentar cerrar una y otra vez no pregunta sin fin a las fuentes: hay un tope al día", async () => {
+  const { puertaALaWeb, CABECERA_DE_LA_SESION } = await import("../../agent/launcher/puerta_a_la_web.ts");
+  const { fuentesInventadas } = await import("../cases/inventado/asientos.ts");
+  const { FRENOS_DE_LA_PUERTA } = await import("../../agent/data/frenos.ts");
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
+  const LLAVE = "una-llave-larga-e-inventada-para-la-web";
+  let preguntadas = 0;
+  // Una fuente que cada vez da un precio mucho más alto: cada cierre se para a pedir el sí, y el viaje sigue abierto.
+  const cara = alojamientoHoy(400);
+  const fuente = {
+    ...cara,
+    precios: async (...a: Parameters<typeof cara.precios>) => (preguntadas++, cara.precios(...a)),
+  };
+  const puerta = puertaALaWeb({
+    mesa,
+    llave: LLAVE,
+    secreto: Buffer.alloc(32, 7),
+    fuentes: () => ({ ...fuentesInventadas(), alojamiento: fuente, transporte: vueloHoy(60) }),
+    hoy: () => new Date(AHORA),
+    comprobarEnlace: async () => "ok",
+  });
+  await new Promise<void>((r) => puerta.servidor.listen(0, "127.0.0.1", r));
+  const url = `http://127.0.0.1:${(puerta.servidor.address() as { port: number }).port}`;
+  const pide = async (metodo: string, ruta: string, sesion: string | null, cuerpo?: unknown) => {
+    const r = await fetch(url + ruta, {
+      method: metodo,
+      headers: { authorization: `Bearer ${LLAVE}`, ...(sesion === null ? {} : { [CABECERA_DE_LA_SESION]: sesion }) },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+    return { estado: r.status, cuerpo: (await r.json().catch(() => ({}))) as Record<string, any> };
+  };
+  try {
+    const cuenta = { email: "ana@inventado.example", password: "una contraseña larga" };
+    const ana = (await pide("POST", "/cuentas", null, cuenta)).cuerpo.session as string;
+    const viaje = viajeParaCerrar();
+    const entendido = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: viaje.entrada, check_out: viaje.salida } };
+    const id = (await pide("POST", "/viajes", ana, { understood: entendido })).cuerpo.trip.id as string;
+    const dueno = JSON.parse(readFileSync(join(mesa, "viajes", id, "ficha.json"), "utf8")).dueno as string;
+    const v = leerViaje(id, dueno, mesa);
+    pasar(v, "confirmed");
+    const run = nuevoRun(v);
+    writeFileSync(join(run, "viaje.json"), JSON.stringify(viaje));
+    writeFileSync(join(run, "sucesos.json"), "[]");
+    guardarVersion(v, 1, "first");
+    const tope = FRENOS_DE_LA_PUERTA.cierres.deUnViaje;
+    for (let k = 1; k <= tope; k++) {
+      assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, { way: "cheapest" })).estado, 202, String(k));
+      await puerta.esperar();
+      assert.equal((await pide("GET", `/viajes/${id}/cierre`, ana)).cuerpo.closing.stage, "yours");
+    }
+    assert.equal(preguntadas, tope);
+    const demas = await pide("POST", `/viajes/${id}/cerrar`, ana, { way: "cheapest" });
+    assert.equal(demas.estado, 429);
+    assert.equal(demas.cuerpo.error, "too_many_closings");
+    await puerta.esperar();
+    assert.equal(preguntadas, tope);
+    // El último que esperaba su sí todavía se puede seguir: seguir no es otro intento.
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, { prices: "go_on" })).estado, 202);
+  } finally {
+    await puerta.esperar();
+    await puerta.cerrar();
+    rmSync(mesa, { recursive: true, force: true });
   }
 });
 

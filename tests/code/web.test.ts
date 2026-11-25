@@ -781,3 +781,15 @@ test("la hoja de estilos de la web cierra todo lo que abre: una regla a medias l
   }
   assert.equal(hondo, 0, "queda una regla sin cerrar al final de la hoja");
 });
+
+test("el marco de la guía no deja correr programas: con su mismo origen, tendrían la sesión de la web", () => {
+  const pagina = readFileSync(resolve(import.meta.dirname, "../../web/src/app/(panel)/guide/page.tsx"), "utf8");
+  const marcos = [...pagina.matchAll(/sandbox="([^"]*)"/g)].map((m) => m[1].split(/\s+/));
+  assert.ok(marcos.length > 0, "la guía ya no va en un marco cerrado");
+  // Un marco sin `sandbox`, o con él vacío a medias, lo deja todo: cada `<iframe` lleva el suyo.
+  assert.equal((pagina.match(/<iframe/g) ?? []).length, marcos.length);
+  for (const permisos of marcos) {
+    for (const prohibido of ["allow-scripts", "allow-forms", "allow-top-navigation", "allow-downloads"])
+      assert.ok(!permisos.includes(prohibido), prohibido);
+  }
+});

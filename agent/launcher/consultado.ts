@@ -68,6 +68,28 @@ export function paginaDeFuera(url: string): boolean {
   return maquina.includes(".") && !DE_DENTRO.test(maquina);
 }
 
+/**
+ * Si la dirección de una máquina es de dentro de una red y no de internet: la propia máquina, una red privada, la de
+ * enlace local (donde una nube guarda sus metadatos), la compartida de un operador, o una que no es de nadie. Un
+ * nombre de fuera puede llevar a una de estas: por eso, antes de llamar, se mira a dónde lleva.
+ */
+export function direccionDeDentro(ip: string): boolean {
+  const limpia = ip.trim().toLowerCase();
+  const v4 = /^(?:::ffff:)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(limpia);
+  if (v4 !== null) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    if (a === 0 || a === 10 || a === 127 || a >= 224) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && (b === 168 || b === 0)) return true;
+    return a === 198 && (b === 18 || b === 19);
+  }
+  // Las de seis: la propia máquina, la que no es ninguna, las de enlace local, las privadas y las de difusión.
+  if (limpia === "::" || limpia === "::1") return true;
+  return /^(fe[89ab]|f[cd]|ff)/.test(limpia);
+}
+
 /** Si un texto es, él entero, una dirección de la web: así se distingue una cita de una página de una de un archivo. */
 export const esDireccion = (texto: string): boolean =>
   /^(https?:\/\/|www\.)/i.test(texto.trim()) && direccionComparable(texto) !== null;

@@ -38,7 +38,9 @@ function Documento({
       title={titulo}
       srcDoc={html}
       // Sin programas: el documento no lleva ninguno, y aunque llevara, no correría. Puede abrir sus enlaces de reserva
-      // fuera e imprimirse.
+      // fuera e imprimirse (imprimir pide `allow-modals`, y medir su alto, `allow-same-origin`). Por eso mismo aquí
+      // NUNCA va `allow-scripts`: con el mismo origen, un programa del documento tendría la sesión de la web. La
+      // batería lo vigila.
       sandbox="allow-same-origin allow-modals allow-popups allow-popups-to-escape-sandbox"
       style={{ height: alto }}
       onLoad={() => {

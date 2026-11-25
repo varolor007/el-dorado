@@ -12,6 +12,7 @@ import { rotulosDe } from "../data/guia.ts";
 import { avisosDe } from "../data/palabras.ts";
 import type { CasillaDePapel, FilaDePapeles, Foto, Precio, Punto, Transporte, Viaje } from "../output/viaje.ts";
 import type { EntregaDeLaGuia } from "../gates/puerta_guia.ts";
+import { enlaceSinClaves } from "../tools/enlaces.ts";
 import { SIN_SABER } from "./formas.ts";
 import { deLaManera, paradasDelDia, type ParaLaGuia } from "./guia.ts";
 import { diasDe } from "./ruta.ts";
@@ -258,13 +259,7 @@ export function esc(texto: string): string {
 
 /** Una dirección que se puede poner en un enlace o una foto: https, sin claves; si no, ninguna. */
 function direccion(url: string | null): string | null {
-  if (url === null) return null;
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" && u.username === "" && u.password === "" ? u.toString() : null;
-  } catch {
-    return null;
-  }
+  return url !== null && enlaceSinClaves(url) ? new URL(url).toString() : null;
 }
 
 const fechaLarga = (idioma: string, fecha: string): string => {

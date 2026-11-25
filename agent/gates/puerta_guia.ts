@@ -19,6 +19,7 @@ import type { Cuaderno } from "../scripts/cuaderno.ts";
 import type { ParaLaGuia } from "../scripts/guia.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
+import { enlaceSinClaves } from "../tools/enlaces.ts";
 
 export type EntregaDeLaGuia = {
   seat: "guide-writer";
@@ -307,16 +308,8 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): Veredicto {
   return { verde: rojos.length === 0, rojos };
 }
 
-/** Una dirección que se puede abrir: https, sin usuario ni clave dentro. */
-function direccionQueVale(texto: unknown): boolean {
-  if (typeof texto !== "string") return false;
-  try {
-    const u = new URL(texto);
-    return u.protocol === "https:" && u.username === "" && u.password === "";
-  } catch {
-    return false;
-  }
-}
+/** Una dirección que se puede abrir: https, sin usuario ni clave dentro, tampoco en su consulta. */
+const direccionQueVale = (texto: unknown): boolean => enlaceSinClaves(texto);
 
 /**
  * El cuaderno ya montado, contra el viaje cerrado del que sale: que es de ese viaje y de esa versión, que cada día y
