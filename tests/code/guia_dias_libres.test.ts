@@ -18,7 +18,9 @@ import { comprobarViaje } from "../../agent/output/viaje.ts";
 import { conTusDias } from "../../agent/scripts/cierre.ts";
 import { tituloDelDia } from "../../agent/scripts/ritmo.ts";
 import { JPEG, type Objeto } from "../cases/inventado/asientos.ts";
+import type { Viaje } from "../../agent/output/viaje.ts";
 import {
+  capasParaLaGuia,
   entregaDeLaGuia,
   HOY,
   lanzadorDeLaGuia,
@@ -180,4 +182,56 @@ test("un día con paradas y sin título en el viaje lleva en el material el de s
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
+});
+
+// ---------- Cómo moverte en papel: de donde llegas a donde duermes, sin repetir
+
+/** El viaje con capas, con la misma manera de llegar a cada una de las dos zonas de su ruta. */
+function conDosZonas(o: { zonas: boolean; duermeEn: string | null }): Viaje {
+  const viaje = viajeConDiasLibres();
+  Object.assign(viaje, capasParaLaGuia());
+  const llegada = viaje.moverse!.llegar[0];
+  viaje.moverse!.llegar = [llegada, { ...llegada, aZona: "z2" }];
+  if (o.zonas)
+    viaje.zonasDeLaRuta = [
+      { id: "z1", nombre: "Casco Inventado" },
+      { id: "z2", nombre: "Puerto Inventado" },
+    ];
+  viaje.alojamientos[0].zona = o.duermeEn;
+  return viaje;
+}
+
+/** Las líneas de «De donde llegas a donde duermes» del cuaderno de un viaje así, por su texto. */
+async function lineasDeLlegar(viaje: Viaje): Promise<string[]> {
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    assert.deepEqual(e, { estado: "ready" });
+    const html = documentoDeLaGuia(v) ?? "";
+    return [...html.matchAll(/<b>(Desde [^<]*)<\/b>/g)].map((x) => x[1]);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+}
+
+test("de donde llegas: si se sabe tu zona, solo la manera que va a ella", async () => {
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: true, duermeEn: "Puerto Inventado" })), [
+    "Desde Aeropuerto Inventado",
+  ]);
+});
+
+test("de donde llegas: sin saber tu zona, cada manera dice a cuál va, por su nombre o por su número", async () => {
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: true, duermeEn: null })), [
+    "Desde Aeropuerto Inventado, a Casco Inventado",
+    "Desde Aeropuerto Inventado, a Puerto Inventado",
+  ]);
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: false, duermeEn: null })), [
+    "Desde Aeropuerto Inventado, a la zona 1 de tu ruta",
+    "Desde Aeropuerto Inventado, a la zona 2 de tu ruta",
+  ]);
 });

@@ -25,6 +25,7 @@ import type {
   Punto,
   Transporte,
   Viaje,
+  ZonaDeLaRuta,
 } from "../output/viaje.ts";
 import type { ClaseDeBillete } from "../data/capa_moverse.ts";
 import type { LoQueConviene } from "./capa_moverse.ts";
@@ -155,7 +156,13 @@ export function convieneDelCuaderno(v: Viaje, manera: Manera | null): ConvieneDe
 }
 
 /** Cómo moverte, copiado del viaje: lo que hay que contar, sin su porqué de faltar. */
-export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche">;
+export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche"> & {
+  /**
+   * A qué zona de la ruta va cada manera de llegar, por su id: su nombre o, sin él, su número. Solo cuando se enseñan
+   * maneras que van a zonas distintas (no se sabe la tuya, o ninguna va a ella); si no, no hace falta decirlo.
+   */
+  aZona?: Record<string, string | number>;
+};
 
 export type TramoDelCuaderno = {
   de: string;
@@ -326,6 +333,35 @@ function enlaceDelCierre(e: EnlaceDeReserva, a: Alojamiento | undefined, antes: 
   };
 }
 
+const otrasDeMoverse = (m: DeMoverse): Omit<MoverseDelCuaderno, "llegar" | "aZona"> => ({
+  transportes: m.transportes,
+  billetes: m.billetes,
+  pagos: m.pagos,
+  coche: m.coche,
+});
+
+/**
+ * De donde llegas a donde duermes, en papel: si se sabe la zona donde duermes y alguna manera va a ella, solo esas;
+ * si no, todas, y si van a zonas distintas, cada una con la suya (su nombre, o su número en la ruta), para que dos
+ * iguales a zonas distintas no parezcan la misma repetida.
+ */
+export function llegarDelCuaderno(
+  llegar: DeMoverse["llegar"],
+  zonas: ZonaDeLaRuta[] | undefined,
+  zonaDondeDuermes: string | null,
+): Pick<MoverseDelCuaderno, "llegar" | "aZona"> {
+  const tuya =
+    zonaDondeDuermes === null
+      ? null
+      : ((zonas ?? []).find((z) => z.nombre === zonaDondeDuermes || z.id === zonaDondeDuermes)?.id ?? zonaDondeDuermes);
+  const aLaTuya = tuya === null ? [] : llegar.filter((x) => x.aZona === tuya);
+  if (aLaTuya.length > 0) return { llegar: aLaTuya };
+  const ids = [...new Set(llegar.map((x) => x.aZona))];
+  if (ids.length <= 1) return { llegar };
+  const nombres = new Map((zonas ?? []).map((z) => [z.id, z.nombre]));
+  return { llegar, aZona: Object.fromEntries(ids.map((id, i) => [id, nombres.get(id) ?? i + 1])) };
+}
+
 /** El cuaderno de un viaje cerrado, con lo que escribió el asiento y pasó la puerta 10. */
 export function montarCuaderno(
   v: Viaje,
@@ -396,7 +432,7 @@ export function montarCuaderno(
   });
   const m = capaQueVale(v.moverse);
   const moverse: MoverseDelCuaderno | null = moverseConAlgo(m)
-    ? { llegar: m.llegar, transportes: m.transportes, billetes: m.billetes, pagos: m.pagos, coche: m.coche }
+    ? { ...llegarDelCuaderno(m.llegar, v.zonasDeLaRuta, duerme?.zona ?? null), ...otrasDeMoverse(m) }
     : null;
   // Los precios de lo de allí cuentan para la fecha de los precios, como los del viaje.
   for (const f of fuentesDeAlli({ dias, moverse, saber: comer.sinDia }, true)) vistos.push(f.visto);
@@ -1021,7 +1057,10 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
           "ul",
           "lista datos",
           ...mv.llegar.map((x) => {
-            const desde = r.desde(x.desde.nombre ?? r.deDonde[x.desde.clase]);
+            const zona = mv.aZona?.[x.aZona];
+            const desde =
+              r.desde(x.desde.nombre ?? r.deDonde[x.desde.clase]) +
+              (zona === undefined ? "" : `, ${typeof zona === "number" ? r.aZona(zona) : r.aZonaNombre(zona)}`);
             const partes = [
               r.modo[x.modo] ?? x.modo,
               x.minutos === null ? "" : r.minutos(x.minutos),

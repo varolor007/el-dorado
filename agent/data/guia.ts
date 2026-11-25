@@ -160,6 +160,9 @@ type Rotulos = {
   claseDelDestino: Record<"neighbourhood" | "hours" | "money" | "practical" | "avoid" | "food", string>;
   diaDeLaSemana: Record<DiaDeLaSemana, string>;
   desde: (lugar: string) => string;
+  /** A qué zona de la ruta va una manera de llegar: por su número, o por su nombre. */
+  aZona: (n: number) => string;
+  aZonaNombre: (nombre: string) => string;
   hastaLas: (hora: string) => string;
   deTantos: (dias: number | null, viajes: number | null) => string;
   coche: (haceFalta: boolean) => string;
@@ -363,6 +366,8 @@ export const ROTULOS: Record<string, Rotulos> = {
       sun: "Sunday",
     },
     desde: (lugar) => `From ${lugar}`,
+    aZona: (n) => `to area ${n} of your route`,
+    aZonaNombre: (nombre) => `to ${nombre}`,
     hastaLas: (hora) => `until ${hora}`,
     teConviene: "What suits you best",
     tusTrayectos: (viajes, dias) =>
@@ -567,6 +572,8 @@ export const ROTULOS: Record<string, Rotulos> = {
       sun: "domingo",
     },
     desde: (lugar) => `Desde ${lugar}`,
+    aZona: (n) => `a la zona ${n} de tu ruta`,
+    aZonaNombre: (nombre) => `a ${nombre}`,
     hastaLas: (hora) => `hasta las ${hora}`,
     teConviene: "Lo que te conviene",
     tusTrayectos: (viajes, dias) =>
