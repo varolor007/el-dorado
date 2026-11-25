@@ -11,7 +11,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { ASIENTOS_A_LA_VEZ, TOPE_DE_UN_ASIENTO, topeDe, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
+import { CAPAS_DE_IA } from "../data/capas.ts";
+import { ASIENTOS_A_LA_VEZ, PASOS, TOPE_DE_UN_ASIENTO, topeDe, VUELTAS_DE_LA_CASA } from "../data/pasos.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { escribirActa } from "./acta.ts";
 import { lanzarAsiento, type Gasto, type Lanzador, type Tope } from "./asiento.ts";
@@ -21,7 +22,7 @@ import { guardarJson } from "./mesa.ts";
 import { porDondeVa } from "./pasos.ts";
 import { puestosDe } from "./puesto.ts";
 import { aplicarReintento } from "./reintentar.ts";
-import { acaboSinEntregar, apuntarTrabajo, gastoDe, trabajosDe } from "./trabajos.ts";
+import { acaboSinEntregar, apuntarTrabajo, gastoDe, gastoParaElTecho, trabajosDe } from "./trabajos.ts";
 
 export const ADELANTE = "adelante.json";
 
@@ -88,7 +89,27 @@ export type AlLlevar = {
   ahora?: () => Date;
   /** Sin conductor (false), un run parado por un asiento se queda parado sin que nadie lo mire. */
   conductor?: boolean;
+  /**
+   * Lo más que puede gastar una llamada de una capa del destino, en dólares, por su asiento; null si no se sabe
+   * acotar (14.7). Con ella, una capa que se corta sin decir lo que gastó se da por perdida y la investigación sigue,
+   * contando para el techo esa cota. Sin ella, como cualquier asiento: con techo, no se sigue a ciegas.
+   */
+  cota?: (asiento: string) => number | null;
 };
+
+const CON_LA_COTA = " contando lo más que pudo gastar lo que se cortó";
+
+/** Los asientos de las capas del destino: son opcionales, y el viaje sale sin ellas si faltan (14.1). */
+const ASIENTOS_DE_LAS_CAPAS = new Set(
+  PASOS.filter((p) => (CAPAS_DE_IA as readonly string[]).includes(p.id)).map((p) => p.quien),
+);
+
+/** La cota de una capa que acabó sin decir lo que gastó, si vale; si no, null. */
+function cotaDe(asiento: string, cota: AlLlevar["cota"]): number | null {
+  if (!ASIENTOS_DE_LAS_CAPAS.has(asiento) || cota === undefined) return null;
+  const n = cota(asiento);
+  return typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : null;
+}
 
 /** Unos cuantos a la vez, y no más: cada uno empieza cuando queda sitio. */
 async function porTandas<T>(cosas: T[], aLaVez: number, hacer: (cosa: T) => Promise<void>): Promise<void> {
@@ -158,15 +179,24 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
     const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
     const estado = r.fueraDeTope ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
     const fallo = estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega");
-    apuntarTrabajo(run, { ...base, estado, hasta: ahora().toISOString(), gasto: r.gasto, fallo });
+    // Una capa cortada sin decir lo que gastó: cuenta para el techo lo más que pudo gastar (14.7).
+    const cota = r.gasto === null && estado !== "done" ? cotaDe(puesto.asiento, o.cota) : null;
+    apuntarTrabajo(run, {
+      ...base,
+      estado,
+      hasta: ahora().toISOString(),
+      gasto: r.gasto,
+      fallo,
+      ...(cota === null ? {} : { cota }),
+    });
   };
 
   /** Si se puede gastar: con el adelante del viajero y sin pasar de su techo, ni seguir a ciegas. */
   const sePuedeGastar = (): boolean => {
     const adelante = adelanteDe(run);
     if (adelante === null) return false;
-    const gastado = gastoDe(run);
-    return adelante.techo === null || (gastado.sabido && gastado.usd < adelante.techo);
+    const contado = gastoParaElTecho(run);
+    return adelante.techo === null || (contado !== null && contado < adelante.techo);
   };
 
   /**
@@ -242,17 +272,18 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
     const adelante = adelanteDe(run);
     if (adelante === null) return con({ sinAdelante: true });
 
-    // Ni por encima de lo que aceptó gastar. Si de algo no se sabe lo que costó, no se sigue a ciegas.
-    const gastado = gastoDe(run);
-    if (adelante.techo !== null && !gastado.sabido)
+    // Ni por encima de lo que aceptó gastar. Si de algo no se sabe lo que costó, no se sigue a ciegas; de una capa
+    // del destino cortada, se cuenta lo más que pudo gastar (14.7).
+    const contado = gastoParaElTecho(run);
+    if (adelante.techo !== null && contado === null)
       return para("el gasto", [{ donde: "spend", que: "de un asiento no se sabe lo que gastó: no se sigue a ciegas" }]);
-    if (adelante.techo !== null && gastado.usd >= adelante.techo)
+    if (adelante.techo !== null && contado !== null && contado >= adelante.techo)
       return para("el gasto", [
         {
           donde: "spend",
           que:
-            `lo gastado, ${gastado.usd.toFixed(2)} USD, llegó al techo de ${adelante.techo.toFixed(2)} USD ` +
-            "que aceptó el viajero",
+            `lo gastado, ${contado.toFixed(2)} USD${contado > gastoDe(run).usd ? CON_LA_COTA : ""}, ` +
+            `llegó al techo de ${adelante.techo.toFixed(2)} USD que aceptó el viajero`,
         },
       ]);
 
