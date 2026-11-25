@@ -25,6 +25,7 @@ import { avisosDeSiempre } from "../scripts/monta_viaje.ts";
 import { diasDe } from "../scripts/ruta.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { guardarJson, leerDiario, type ViajeEnLaMesa } from "./mesa.ts";
+import type { Pieza } from "./puesto.ts";
 import { leerElecciones, viajeDeLaVersion } from "./momentos.ts";
 import { rehacer, rehechoDe } from "./rehacer.ts";
 
@@ -227,34 +228,74 @@ function copiarPuestos(desde: string, hasta: string, base: string): number {
   return ids.length;
 }
 
+/** Los archivos de una carpeta, con su ruta dentro de ella. */
+function archivosDe(carpeta: string, dentro = ""): string[] {
+  return readdirSync(join(carpeta, dentro), { withFileTypes: true }).flatMap((x) =>
+    x.isDirectory() ? archivosDe(carpeta, join(dentro, x.name)) : [join(dentro, x.name)],
+  );
+}
+
+/**
+ * Si lo que se le daría ahora a un asiento es lo mismo que se le dio la primera vez en el run de antes: pieza a pieza,
+ * con su contenido, ni una más ni una menos. Lo que leyó entonces es de donde salen sus frases: si algo de eso cambió
+ * (lo que se tarda a tus paradas, por ejemplo), lo que escribió puede nombrar lo que ya no es, aunque pase su puerta.
+ */
+export function mismoMaterial(desde: string, base: string, piezas: readonly Pieza[]): boolean {
+  const dado = join(desde, "puestos", `${base}-v1`, "in");
+  if (!existsSync(dado)) return false;
+  const antes = archivosDe(dado).sort();
+  const ahora = piezas.map((p) => p.ruta).sort();
+  if (JSON.stringify(antes) !== JSON.stringify(ahora)) return false;
+  return piezas.every((p) => {
+    const entonces = readFileSync(join(dado, p.ruta));
+    const hoy = "copiaDe" in p ? readFileSync(p.copiaDe) : Buffer.from(p.contenido);
+    return entonces.equals(hoy);
+  });
+}
+
 const sinPuestos = (run: string, base: string): boolean =>
   !existsSync(join(run, "puestos")) ||
   !readdirSync(join(run, "puestos")).some((x) => new RegExp(`^${base}-v\\d+$`).test(x));
 
 /**
  * Antes de lanzar al que cruza en una ronda de un run que sale de un mensaje: si con la tabla nueva deciden lo mismo
- * que con la de antes (los mismos alojamientos, con sus totales, sus notas y sus marcas, y lo mismo en cada palanca)
- * y lo que entregó entonces sigue pasando su puerta con ella, se queda con ello: se copian sus puestos y no se lanza.
- * Devuelve si lo conservó.
+ * que con la de antes (los mismos alojamientos, con sus totales, sus notas y sus marcas, y lo mismo en cada palanca),
+ * lo que se le daría ahora es lo mismo que se le dio entonces (`piezas`, también lo que se tarda a tus paradas) y lo
+ * que entregó sigue pasando su puerta con ella, se queda con ello: se copian sus puestos y no se lanza. Devuelve si
+ * lo conservó.
  */
-export function conservarElCruce(run: string, ronda: number, tabla: Tabla, viaje: Entendido): boolean {
+export function conservarElCruce(
+  run: string,
+  ronda: number,
+  tabla: Tabla,
+  viaje: Entendido,
+  piezas: readonly Pieza[],
+): boolean {
   const desde = deDondeSale(run);
   const base = `cruce-${ronda}`;
   if (desde === null || !hay(desde, `${base}.json`) || !hay(desde, `tabla-${ronda}.json`) || !sinPuestos(run, base))
     return false;
   if (loQueDecide(leer<Tabla>(desde, `tabla-${ronda}.json`)) !== loQueDecide(tabla)) return false;
+  if (!mismoMaterial(desde, base, piezas)) return false;
   const entrega = leer<{ entrega: EntregaDeCruce }>(desde, `${base}.json`).entrega;
   if (!puertaCruce(entrega, { tabla, viaje }).verde) return false;
   return copiarPuestos(desde, run, base) > 0;
 }
 
 /**
- * Antes de lanzar al que explica en un run que sale de un mensaje: si cada ronda del que cruza se conservó tal cual y
- * lo que explicó entonces sigue pasando la puerta 7 con lo que se le daría ahora, se queda con ello.
+ * Antes de lanzar al que explica en un run que sale de un mensaje: si cada ronda del que cruza se conservó tal cual,
+ * lo que se le daría ahora (`piezas`) es lo mismo que se le dio entonces y lo que explicó sigue pasando la puerta 7
+ * con ello, se queda con ello. La puerta 7 no mide si una frase nombra lo que cambió: por eso, el material igual.
  */
-export function conservarLaExplicacion(run: string, dado: ParaExplicar, viaje: Entendido): boolean {
+export function conservarLaExplicacion(
+  run: string,
+  dado: ParaExplicar,
+  viaje: Entendido,
+  piezas: readonly Pieza[],
+): boolean {
   const desde = deDondeSale(run);
   if (desde === null || !hay(desde, "explica.json") || !sinPuestos(run, "explica")) return false;
+  if (!mismoMaterial(desde, "explica", piezas)) return false;
   for (let ronda = 1; ronda <= RONDAS; ronda++) {
     const antes = hay(desde, `cruce-${ronda}.json`);
     if (antes !== hay(run, `cruce-${ronda}.json`)) return false;

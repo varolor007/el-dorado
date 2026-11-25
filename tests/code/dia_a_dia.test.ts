@@ -92,6 +92,11 @@ async function mandarYLlevar(
 
 const viajeDe = (v: ViajeEnLaMesa, n: number | null = v.ficha.version): Viaje => leerVersion(v, n)?.viaje as Viaje;
 
+/** El material que se le dio a un puesto, pieza a pieza, como se le daría otra vez. */
+function materialDe(puesto: string): { ruta: string; contenido: string }[] {
+  return Object.entries(foto(join(puesto, "in"))).map(([ruta, contenido]) => ({ ruta, contenido }));
+}
+
 /** Lo que hay en una carpeta, archivo a archivo: para ver que una versión no se ha tocado. */
 function foto(carpeta: string): Record<string, string> {
   const salida: Record<string, string> = {};
@@ -345,16 +350,45 @@ test("el que cruza solo se conserva si la tabla decide lo mismo y lo que entreg�
     const base = join(v.carpeta, "runs", "1");
     const tabla = leerJson(join(base, "tabla-1.json")) as Tabla;
     // Otro total: lo que decide cambia, y se vuelve a lanzar.
+    const material = materialDe(join(base, "puestos", "cruce-1-v1"));
     const otra = { ...tabla, rows: tabla.rows.map((x, i) => (i === 0 ? { ...x, total: x.total + 1 } : x)) };
-    assert.equal(conservarElCruce(run, 1, otra, ENTENDIDO), false);
+    assert.equal(conservarElCruce(run, 1, otra, ENTENDIDO, material), false);
     assert.ok(!existsSync(join(run, "puestos", "cruce-1-v1")));
-    // La misma: se queda con lo que hizo, con sus horas.
-    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO), true);
+    // La trampa: decide lo mismo, pero lo que se le daría ahora no es lo que leyó (lo que se tarda a tus paradas,
+    // o una pieza de más): se vuelve a lanzar.
+    const lejos = { ...tabla, rows: tabla.rows.map((x) => ({ ...x, minutes_to_sights: 99 })) };
+    const conOtraTabla = material.map((x) =>
+      x.ruta === "table.json" ? { ...x, contenido: JSON.stringify(lejos) } : x,
+    );
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, conOtraTabla), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, [...material, { ruta: "x.json", contenido: "{}" }]), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material.slice(1)), false);
+    assert.ok(!existsSync(join(run, "puestos", "cruce-1-v1")));
+    // La misma, con lo mismo: se queda con lo que hizo, con sus horas.
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material), true);
     const copia = join(run, "puestos", "cruce-1-v1", "out", "delivery.json");
     const deAntes = statSync(join(base, "puestos", "cruce-1-v1", "out", "delivery.json")).mtimeMs;
     assert.ok(Math.abs(statSync(copia).mtimeMs - deAntes) < 1);
     // Y una vez que hay puestos, no se copia otra vez encima.
-    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO), false);
+    assert.equal(conservarElCruce(run, 1, tabla, ENTENDIDO, material), false);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("el que explica no se conserva si lo que leería no es lo que leyó: lo que se tarda a tus paradas", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    // Sin el museo, lo que se tarda de cada alojamiento a tus paradas cambia: el que explica lo lee en las maneras.
+    const r = await mandarYLlevar(mesa, v.ficha.id, "menos museos");
+    const antes = leerJson(join(v.carpeta, "runs", "1", "puestos", "explica-v1", "in", "ways.json"));
+    const ahora = leerJson(join(r.run, "puestos", "explica-v1", "in", "ways.json"));
+    const minutos = (w: any) => (w.ways as { minutes_to_sights: unknown }[]).map((x) => x.minutes_to_sights);
+    assert.notDeepEqual(minutos(ahora), minutos(antes));
+    assert.ok(r.asientos.includes("trip-explainer"));
+    // Lo que se le dio es lo de ahora, no lo de antes.
+    const tabla = leerJson(join(r.run, "tabla-1.json")) as Tabla;
+    assert.ok(minutos(ahora).every((m) => tabla.rows.some((x) => x.minutes_to_sights === m)));
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
