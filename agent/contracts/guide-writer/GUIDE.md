@@ -21,7 +21,9 @@ three short texts:
 - `what`: what it is, for someone who has never heard of it, from `about` and its kind.
 - `why`: why they go, for this traveller.
 - `when`: when it is best to go, from `best_time`, and what to know before going in: if it is booked ahead, say so.
-  If `best_time` is `any`, say that any time of the day suits it, or what the material says.
+  If `best_time` is `any`, say that any time of the day suits it, or what the material says. If the stop has its
+  `ticket`, you may say it is free, or that it is closed that day (`open_that_day` is `no`), or the hours it opens
+  that day: only as the material gives them.
 
 Two examples of the form of a `what`, in English and of two different kinds, so that you copy neither:
 `A covered market from the end of the nineteenth century, where the stalls of the town still sell fish and fruit.`,
@@ -35,6 +37,14 @@ estimate: say about that many minutes, never on foot. If `measured_by` is `estim
 approximate. What they see on the way is what the two points are: you do not invent streets, views or places in
 between. Two examples of the form: `From the market to the castle, <minutes> minutes uphill on foot, <metres>
 metres.`, or `About <minutes> minutes by car or public transport: the castle is out of town.`
+If `on_foot` is `false` and you have `in/around.json`, you may say which of its `transport` modes there are to go:
+only those. Without it, you name no bus, metro, tram or train.
+
+## 4b. Write where to eat
+
+For each day that has `eat`, one or two sentences (`eat`): where to stop and eat that day, by its places, near which
+stop and how many metres away, as the material gives them. The places are areas and markets, never a restaurant: if
+the material has no name for a place, say what it is without a name.
 
 ## 5. Write what to have done
 
@@ -50,5 +60,7 @@ estimates, a deadline that is `unknown`. Plainly, in their language.
 
 ## 7. Self-critique
 
-Before delivering: a place that is not a stop of the trip; a number that is not in the material; a clock time; a
-price; a promise; a word from inside; an adjective without its fact; a stop, a leg or a thing to do without its text.
+Before delivering: a place that is not a stop of the trip or of your material; a number that is not in the material;
+a clock time or a price that is not in the material; a restaurant; a transport mode that is not in `in/around.json`; a
+promise; a word from inside; an adjective without its fact; a stop, a leg, a day with `eat` or a thing to do without
+its text; an `eat` on a day without it.

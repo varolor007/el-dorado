@@ -1,7 +1,7 @@
 // La guía del viaje inventado: el viaje cerrado en una mesa de mentira, con lo que dirían sus fuentes abiertas, y lo
 // que entregaría un que escribe la guía aplicado, solo con su material. Para probar la guía sin internet y sin gastar.
 
-import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Lanzador } from "../../../agent/launcher/asiento.ts";
@@ -16,7 +16,7 @@ import {
   type ViajeEnLaMesa,
 } from "../../../agent/launcher/mesa.ts";
 import { ENTREGA, PASOS } from "../../../agent/gates/puerta_metodo.ts";
-import type { Viaje } from "../../../agent/output/viaje.ts";
+import type { DeLasEntradas, DeMoverse, DelDestino, Viaje } from "../../../agent/output/viaje.ts";
 import type { ParaLaGuia } from "../../../agent/scripts/guia.ts";
 import type { FuenteAlojamiento, FuenteTransporte } from "../../../agent/tools/fuentes/tipos.ts";
 import type { Sitio } from "../../../agent/tools/sitios.ts";
@@ -27,9 +27,179 @@ import { SUCESOS_INVENTADOS, viajeInventado } from "./viaje.ts";
 export const HOY = new Date("2027-01-10T09:00:00Z");
 const FUENTE_OFICIAL = "https://gobierno.inventado.example/entrar";
 
-/** El viaje inventado, con lo que se lleva a una guía: sus papeles con un plazo, un aviso de sus fechas y un enlace. */
-export function viajeParaLaGuia(): Viaje {
+/** Las páginas inventadas de lo de allí, con el día en que se vieron. */
+export const PAGINAS_DE_ALLI = {
+  transporte: "https://transporte.inventado.example/tarifas",
+  turismo: "https://turismo.inventado.example/guia",
+  sitios: "https://sitios.inventado.example/entradas",
+  reservar: "https://sitios.inventado.example/mercado/reservar",
+  visto: "2026-11-20",
+};
+
+/**
+ * Las capas del destino del viaje inventado, ya en la forma del viaje (14.6): cómo moverse (un autobús del aeropuerto,
+ * el autobús y el metro de allí, un billete y un abono, sin contacto), lo que conviene saber (un barrio, el dinero, el
+ * enchufe, un plato, lo que cuesta comer, una zona para comer junto a la torre, un mercado junto al mirador y una zona
+ * lejos de todo), y las entradas: la torre se paga y abre de martes a domingo; el mercado es gratis, abre por la
+ * mañana y se reserva; el mirador no dice su precio y cierra los sábados.
+ */
+export function capasParaLaGuia(): { moverse: DeMoverse; saber: DelDestino; entradas: DeLasEntradas } {
+  const { transporte, turismo, sitios, reservar, visto } = PAGINAS_DE_ALLI;
+  const de = (url: string) => ({ url, visto });
+  const euros = (importe: number) => ({ importe, moneda: "EUR" });
+  const adulto = (importe: number, url: string) => ({
+    para: "adult" as const,
+    edades: null,
+    cuanto: euros(importe),
+    fuente: de(url),
+  });
+  const cosa = (x: Partial<DelDestino["cosas"][number]> & Pick<DelDestino["cosas"][number], "clase" | "frase">) => ({
+    zona: null,
+    nombre: null,
+    punto: null,
+    cuesta: null,
+    fuente: de(turismo),
+    ...x,
+  });
+  const todos = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+  return {
+    moverse: {
+      llegar: [
+        {
+          desde: { clase: "airport", codigo: "ZZZ", nombre: "Aeropuerto Inventado" },
+          aZona: "z1",
+          modo: "bus",
+          minutos: 40,
+          precios: [adulto(3, transporte)],
+          hastaLas: "23:30",
+          fuente: de(transporte),
+        },
+      ],
+      sinLlegar: null,
+      transportes: [
+        { modo: "bus", zonas: ["z1"], hastaLas: "23:30", fuente: de(transporte) },
+        { modo: "metro", zonas: ["z1"], hastaLas: null, fuente: de(transporte) },
+      ],
+      billetes: [
+        {
+          clase: "single",
+          dias: null,
+          viajes: 1,
+          modos: ["bus", "metro"],
+          precios: [adulto(2, transporte)],
+          fuente: de(transporte),
+        },
+        {
+          clase: "day_pass",
+          dias: 1,
+          viajes: null,
+          modos: ["bus", "metro"],
+          precios: [adulto(6, transporte)],
+          fuente: de(transporte),
+        },
+      ],
+      pagos: [{ clase: "contactless", fuente: de(transporte) }],
+      coche: { haceFalta: false, fuente: de(transporte) },
+      falta: null,
+    },
+    saber: {
+      cosas: [
+        cosa({ clase: "neighbourhood", zona: "z1", frase: "Calles viejas y tranquilas por la noche." }),
+        cosa({ clase: "money", frase: "Se paga con tarjeta casi en todas partes." }),
+        cosa({ clase: "practical", frase: "El enchufe es el de dos patas redondas." }),
+        cosa({ clase: "dish", nombre: "Guiso de la costa", frase: "El guiso de pescado del sitio." }),
+        cosa({
+          clase: "meal_cost",
+          frase: "Un menú del día, entre semana.",
+          cuesta: { desde: 12, hasta: 18, moneda: "EUR" },
+        }),
+        cosa({
+          clase: "food_area",
+          nombre: "Calle de las Tascas",
+          punto: { lat: 10.021, lon: 20.021 },
+          frase: "Una calle de tascas y casas de comidas.",
+        }),
+        cosa({
+          clase: "market",
+          nombre: "Mercado de la Plaza",
+          punto: { lat: 10.061, lon: 20.062 },
+          frase: "Puestos de fruta y de comida para llevar.",
+        }),
+        cosa({
+          clase: "food_area",
+          nombre: "Puerto Viejo",
+          punto: { lat: 10.2, lon: 20.2 },
+          frase: "Pescado a la brasa junto al agua.",
+        }),
+      ],
+      falta: null,
+    },
+    entradas: {
+      sitios: [
+        {
+          parada: "p1",
+          precios: [
+            adulto(10, sitios),
+            { para: "child", edades: { desde: null, hasta: 12 }, cuanto: "free", fuente: de(sitios) },
+          ],
+          horarios: [
+            {
+              desde: null,
+              hasta: null,
+              franjas: [{ dias: todos.filter((d) => d !== "mon"), abre: "09:00", cierra: "18:00" }],
+              cierra: [],
+              fuente: de(sitios),
+            },
+          ],
+          reservar: { haceFalta: false, donde: null, fuente: de(sitios) },
+          web: "https://sitios.inventado.example/p1",
+          mirado: true,
+        },
+        {
+          parada: "p2",
+          precios: [{ para: "any", edades: null, cuanto: "free", fuente: de(sitios) }],
+          horarios: [
+            {
+              desde: null,
+              hasta: null,
+              franjas: [{ dias: [...todos], abre: "08:00", cierra: "14:00" }],
+              cierra: [],
+              fuente: de(sitios),
+            },
+          ],
+          reservar: { haceFalta: true, donde: reservar, fuente: de(sitios) },
+          web: null,
+          mirado: true,
+        },
+        {
+          parada: "p3",
+          precios: null,
+          horarios: [
+            {
+              desde: null,
+              hasta: null,
+              franjas: [{ dias: todos.filter((d) => d !== "sat"), abre: "10:00", cierra: "20:00" }],
+              cierra: [],
+              fuente: de(sitios),
+            },
+          ],
+          reservar: null,
+          web: null,
+          mirado: true,
+        },
+      ],
+      falta: null,
+    },
+  };
+}
+
+/**
+ * El viaje inventado, con lo que se lleva a una guía: sus papeles con un plazo, un aviso de sus fechas y un enlace.
+ * Con `capas`, también lo que sabe de allí (14.6).
+ */
+export function viajeParaLaGuia(o: { capas?: boolean } = {}): Viaje {
   const v = viajeInventado();
+  if (o.capas === true) Object.assign(v, capasParaLaGuia());
   v.paradas[1].reservar = true;
   v.paradas[0].mejorHora = "morning";
   v.paradas[0].foto = {
@@ -264,6 +434,8 @@ export async function viajeCerradoPorSuFlujo(o: { hotelHoy?: number | null } = {
 
 /** Lo que escribiría un que escribe la guía aplicado: solo con los nombres y los números de su material. */
 export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
+  const conAutobus = d.around?.transport.some((x) => x.mode === "bus") ?? false;
+  const nombreDe = (nombre: string): string => (nombre === "unknown" ? "hay sitio" : nombre);
   return {
     seat: "guide-writer",
     language: d.trip.language,
@@ -275,6 +447,11 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
       date: dia.date,
       title: dia.title,
       intro: `Un día con ${dia.stops.length} paradas, sin prisa.`,
+      ...(dia.eat === undefined || dia.eat.length === 0
+        ? {}
+        : {
+            eat: `Para comer, ${nombreDe(dia.eat[0].name)}, ${dia.eat[0].metres} metros.`,
+          }),
       stops: dia.stops.map((p) => ({
         id: p.id,
         what:
@@ -282,14 +459,22 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
             ? `${p.name}, una de las paradas de tu viaje.`
             : `${p.name}: lo que cuentan sus fuentes.`,
         why: `Vas a ${p.name} porque es de lo que más merece tu tiempo aquí.`,
-        when: p.best_time === "morning" ? "Mejor por la mañana, con calma." : "Cualquier hora del día le va bien.",
+        when:
+          (p.best_time === "morning" ? "Mejor por la mañana, con calma." : "Cualquier hora del día le va bien.") +
+          (p.ticket?.open_that_day === "no" ? " Ese día cierra." : "") +
+          (p.ticket?.hours_that_day[0] === undefined
+            ? ""
+            : ` Abre de ${p.ticket.hours_that_day[0].opens} a ${p.ticket.hours_that_day[0].closes}.`) +
+          (Array.isArray(p.ticket?.prices) && typeof p.ticket.prices[0]?.amount === "number"
+            ? ` La entrada cuesta ${p.ticket.prices[0].amount} €.`
+            : ""),
       })),
       legs: dia.legs.map((l) => ({
         from: l.from,
         to: l.to,
         says: l.on_foot
           ? `Son ${l.minutes} minutos andando, ${l.metres} metros.`
-          : `Unos ${l.minutes} minutos en coche o en transporte.`,
+          : `Unos ${l.minutes} minutos en coche o en transporte${conAutobus ? ", también en autobús" : ""}.`,
       })),
     })),
     todo: d.todo.map((c) => ({
@@ -316,6 +501,12 @@ export function lanzadorDeLaGuia(
       days: material(puesto.carpeta, "days.json") as unknown as ParaLaGuia["days"],
       stay: material(puesto.carpeta, "stay.json") as ParaLaGuia["stay"],
       todo: material(puesto.carpeta, "todo.json") as unknown as ParaLaGuia["todo"],
+      ...(existsSync(join(puesto.carpeta, "in", "around.json"))
+        ? { around: material(puesto.carpeta, "around.json") as ParaLaGuia["around"] }
+        : {}),
+      ...(existsSync(join(puesto.carpeta, "in", "know.json"))
+        ? { know: material(puesto.carpeta, "know.json") as ParaLaGuia["know"] }
+        : {}),
     };
     const entrega = entregaDeLaGuia(dado);
     estropea(entrega, lanzador.veces);

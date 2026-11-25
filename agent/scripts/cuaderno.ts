@@ -1,14 +1,16 @@
 // La maqueta de la guía: el cuaderno. Junta el viaje cerrado y lo que escribió el que escribe la guía, ya pasado por
-// la puerta 10, en un cuaderno: la portada, el viaje de un vistazo, una doble página por día con su croquis y sus
-// paradas, dónde se duerme, cómo se llega, lo que hay que llevar hecho, los papeles con sus plazos y dónde se
-// reserva. Y lo pinta como una página que se lee en la pantalla y se guarda como documento: la imprime el navegador
-// (o se guarda como PDF desde su diálogo de imprimir), sin ninguna pieza de fuera.
+// la puerta 10, en un cuaderno: la portada, el viaje de un vistazo, lo de allí (cómo moverte y antes de ir), una doble
+// página por día con su croquis, sus paradas con su entrada y su horario de ese día, y dónde comer; dónde se duerme,
+// cómo se llega, lo que hay que llevar hecho, los papeles con sus plazos y dónde se reserva. Lo de allí sale de las
+// capas del destino del viaje (14.6), cada dato con su día; la capa que falta no se nombra. Y lo pinta como una
+// página que se lee en la pantalla y se guarda como documento: la imprime el navegador (o se guarda como PDF desde su
+// diálogo de imprimir), sin ninguna pieza de fuera.
 //
 // Aquí no piensa nadie: el cuaderno sale siempre igual de lo mismo. Los textos son los del asiento; los números, los
 // rótulos, los precios con su fecha, las fotos con su autor y su licencia y los enlaces de reserva, del código. El
 // croquis de cada día lo dibuja el código con los puntos del viaje: sin teselas, sin servicios y sin claves.
 
-import { rotulosDe } from "../data/guia.ts";
+import { GRUPO_DEL_DESTINO, rotulosDe } from "../data/guia.ts";
 import { avisosDe } from "../data/palabras.ts";
 import type {
   Alojamiento,
@@ -23,11 +25,31 @@ import type {
   Transporte,
   Viaje,
 } from "../output/viaje.ts";
+import type {
+  CosaDelDestino,
+  DeMoverse,
+  EntradaDeUnSitio,
+  FuenteDeUnDato,
+  Franja,
+  Horario,
+  PrecioDeCapa,
+} from "../output/capas.ts";
 import type { EntregaDeLaGuia } from "../gates/puerta_guia.ts";
 import { enlaceSinClaves } from "../tools/enlaces.ts";
 import { autorDe } from "../tools/sitios.ts";
 import { SIN_SABER } from "./formas.ts";
-import { deLaManera, paradasDelDia, type ParaLaGuia } from "./guia.ts";
+import { abreElDia, entradaDe } from "./capas.ts";
+import {
+  capaQueVale,
+  comerPorDias,
+  deLaManera,
+  entradaConAlgo,
+  franjasDelDia,
+  horarioDelDia,
+  moverseConAlgo,
+  paradasDelDia,
+  type ParaLaGuia,
+} from "./guia.ts";
 import { diasDe } from "./ruta.ts";
 
 export type FotoDelCuaderno = { url: string; autor: string; licencia: string; pagina: string | null };
@@ -47,7 +69,28 @@ export type ParadaDelCuaderno = {
   porQue: string;
   cuando: string;
   fuente: { nombre: string; enlace: string | null };
+  /** Lo que cuesta y cuándo abre ese día, de las entradas del viaje (14.6); null si no se sabe nada. */
+  entrada?: EntradaDelCuaderno | null;
 };
+
+/**
+ * La entrada de una parada el día que se va, copiada del viaje: sus precios, si abre ese día, sus franjas de ese día y
+ * el horario que manda ese día (con su página y su fecha), si hay que reservar y dónde, y su web.
+ */
+export type EntradaDelCuaderno = {
+  precios: PrecioDeCapa[] | null;
+  abre: boolean | null;
+  franjas: Franja[];
+  horario: Horario | null;
+  reservar: EntradaDeUnSitio["reservar"];
+  web: string | null;
+};
+
+/** Un sitio donde comer un día: la cosa del destino, tal cual, la parada que le queda más cerca y lo que se anda. */
+export type ComerDelCuaderno = { cosa: CosaDelDestino; cerca: string; metros: number };
+
+/** Cómo moverte, copiado del viaje: lo que hay que contar, sin su porqué de faltar. */
+export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche">;
 
 export type TramoDelCuaderno = {
   de: string;
@@ -66,6 +109,9 @@ export type DiaDelCuaderno = {
   entrada: string;
   paradas: ParadaDelCuaderno[];
   tramos: TramoDelCuaderno[];
+  /** Dónde comer ese día (14.6): sus sitios, de los datos, y la frase del que escribe. Uno de antes no lo trae. */
+  comer?: ComerDelCuaderno[];
+  comerDice?: string | null;
 };
 
 /** De qué va una cosa que hay que llevar hecha, por sus datos: una parada que se reserva, un papel o un aviso. */
@@ -152,6 +198,10 @@ export type Cuaderno = {
   /** El total del cierre, el de ese día; null en un viaje cerrado sin su cierre. */
   total: { total: number; moneda: string; segun: "closing" | "unknown" } | null;
   noSeSabe: string[];
+  /** Cómo moverte, si el viaje lo sabe (14.6); un cuaderno de antes no lo trae. */
+  moverse?: MoverseDelCuaderno | null;
+  /** Lo que conviene saber que no es de un día, si el viaje lo sabe (14.6). */
+  saber?: CosaDelDestino[];
   avisos: { ia: string; precios: string };
   /** El día en que se vio el precio más antiguo del cuaderno: la fecha de los precios. Null si no lleva ninguno. */
   preciosDel: string | null;
@@ -216,6 +266,9 @@ export function montarCuaderno(
 ): Cuaderno {
   const manera = o.manera === null ? null : (v.maneras.find((m) => m.id === o.manera) ?? null);
   const { duerme, llega } = deLaManera(v, manera);
+  const comer = comerPorDias(v);
+  const entradas = capaQueVale(v.entradas) ?? undefined;
+  const vistos: string[] = [];
   let n = 0;
   const dias = v.dias.map((d, i): DiaDelCuaderno => {
     const suyo = escrita.days.find((x) => x.date === d.fecha);
@@ -239,6 +292,7 @@ export function montarCuaderno(
         porQue: t.why,
         cuando: t.when,
         fuente: { nombre: p.origen.fuente, enlace: p.origen.enlace },
+        entrada: entradaDelCuaderno(entradaDe(entradas, p.id), d.fecha),
       };
     });
     const tramos = delDado.legs.map((l): TramoDelCuaderno => {
@@ -254,12 +308,31 @@ export function montarCuaderno(
         dice: t.says,
       };
     });
-    return { n: i + 1, fecha: d.fecha, titulo: suyo.title, entrada: suyo.intro, paradas, tramos };
+    const deComer = (comer.porDia.get(d.fecha) ?? []).map((x) => ({
+      cosa: x.cosa,
+      cerca: x.parada.id,
+      metros: x.metros,
+    }));
+    return {
+      n: i + 1,
+      fecha: d.fecha,
+      titulo: suyo.title,
+      entrada: suyo.intro,
+      paradas,
+      tramos,
+      comer: deComer,
+      comerDice: deComer.length > 0 ? (suyo.eat ?? null) : null,
+    };
   });
+  const m = capaQueVale(v.moverse);
+  const moverse: MoverseDelCuaderno | null = moverseConAlgo(m)
+    ? { llegar: m.llegar, transportes: m.transportes, billetes: m.billetes, pagos: m.pagos, coche: m.coche }
+    : null;
+  // Los precios de lo de allí cuentan para la fecha de los precios, como los del viaje.
+  for (const f of fuentesDeAlli({ dias, moverse, saber: comer.sinDia }, true)) vistos.push(f.visto);
   // Los precios y los enlaces, del viaje cerrado: los de ese día. Un viaje cerrado sin su cierre lleva los de la
   // investigación, con su enlace.
   const cierre = cierreDe(v);
-  const vistos: string[] = [];
   const reservas: Cuaderno["reservas"] = [];
   const dePieza = (pieza: ClaseDePieza, x: Alojamiento | Transporte): PrecioDelCuaderno => {
     const delCierre = cierre?.precios.find((p) => p.pieza === pieza && p.ref === x.id);
@@ -375,9 +448,69 @@ export function montarCuaderno(
             segun: cierre.total.hoy === null ? "unknown" : "closing",
           },
     noSeSabe: escrita.unknowns,
+    moverse,
+    saber: comer.sinDia,
     avisos: avisosDe(v.idioma),
     preciosDel: dias10[0] ?? null,
   };
+}
+
+/** La entrada de una parada un día, copiada del viaje; null si el viaje no sabe nada de ella. */
+export function entradaDelCuaderno(e: EntradaDeUnSitio | null, fecha: string): EntradaDelCuaderno | null {
+  if (!entradaConAlgo(e)) return null;
+  return {
+    precios: e.precios,
+    abre: abreElDia(e.horarios, fecha),
+    franjas: franjasDelDia(e.horarios, fecha),
+    horario: horarioDelDia(e.horarios, fecha),
+    reservar: e.reservar,
+    web: e.web,
+  };
+}
+
+/**
+ * Las páginas de lo de allí que lleva el cuaderno, sin repetir: de cada entrada, cada sitio donde comer, cómo moverte
+ * y antes de ir. Con `soloPrecios`, solo las de los precios, que dan la fecha de los precios.
+ */
+export function fuentesDeAlli(
+  c: { dias: DiaDelCuaderno[]; moverse?: MoverseDelCuaderno | null; saber?: CosaDelDestino[] },
+  soloPrecios = false,
+): FuenteDeUnDato[] {
+  const todas: FuenteDeUnDato[] = [];
+  const precios = (ps: PrecioDeCapa[] | null): void => void todas.push(...(ps ?? []).map((p) => p.fuente));
+  for (const d of c.dias) {
+    for (const p of d.paradas) {
+      const e = p.entrada ?? null;
+      if (e === null) continue;
+      precios(e.precios);
+      if (!soloPrecios && e.horario !== null) todas.push(e.horario.fuente);
+      if (!soloPrecios && e.reservar !== null) todas.push(e.reservar.fuente);
+    }
+    for (const x of d.comer ?? []) if (!soloPrecios || x.cosa.cuesta !== null) todas.push(x.cosa.fuente);
+  }
+  const m = c.moverse ?? null;
+  if (m !== null) {
+    for (const x of m.llegar) {
+      precios(x.precios);
+      if (!soloPrecios) todas.push(x.fuente);
+    }
+    for (const x of m.billetes) {
+      precios(x.precios);
+      if (!soloPrecios) todas.push(x.fuente);
+    }
+    if (!soloPrecios) {
+      for (const x of [...m.transportes, ...m.pagos]) todas.push(x.fuente);
+      if (m.coche !== null) todas.push(m.coche.fuente);
+    }
+  }
+  for (const x of c.saber ?? []) if (!soloPrecios || x.cuesta !== null) todas.push(x.fuente);
+  const vistas = new Set<string>();
+  return todas.filter((f) => {
+    const clave = `${f.url} ${f.visto}`;
+    if (vistas.has(clave)) return false;
+    vistas.add(clave);
+    return true;
+  });
 }
 
 // Pintarlo.
@@ -618,6 +751,12 @@ const ESTILO = [
   ".mota{width:8px;height:8px;border-radius:50%;background:var(--oro);margin:7px 0 0 9px}",
   ".reserva{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--raya)}",
   ".enlaces{display:flex;flex-direction:column;gap:6px;padding-left:12px;border-left:2px solid var(--oro-tinte)}",
+  ".ficha{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;background:var(--papel-2);" +
+    "font-size:14px}",
+  ".ficha .marca{display:inline-block}",
+  ".comer{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--raya)}",
+  ".datos li{grid-template-columns:18px 1fr}",
+  ".pagina h3+.lista{margin-top:-8px}",
   "@media (max-width:820px){.doble{grid-template-columns:1fr}" +
     ".doble>.pagina+.pagina{border-left:0;border-top:1px solid var(--raya)}" +
     ".pagina{padding:28px 20px}h1{font-size:34px}h2{font-size:26px}.portada,.foto-portada{min-height:300px}}",
@@ -629,7 +768,7 @@ const ESTILO = [
     ".cuaderno>.doble:first-child{break-before:auto}.doble.cierre{break-before:auto;margin-top:9mm}" +
     ".pagina{padding:0}.doble>.pagina+.pagina{border:0;margin-top:7mm}" +
     ".foto-portada{min-height:0;height:95mm}.portada{min-height:0;padding-top:1mm}" +
-    ".parada,.camino,.reserva,tr,.lista li{break-inside:avoid}.camino{break-after:avoid}" +
+    ".parada,.camino,.reserva,tr,.lista li,.ficha{break-inside:avoid}.camino{break-after:avoid}" +
     ".camino::before{top:0;bottom:0}.parada figure img{height:44mm}" +
     "h1{font-size:26pt}h2{font-size:18pt}h3{font-size:13pt}a{color:inherit;text-decoration:none}" +
     'a[href]::after{content:" (" attr(href) ")";font-size:7pt;word-break:break-all;color:var(--tinta-tenue)}}',
@@ -687,6 +826,50 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   const pie = (f: FotoDelCuaderno): string => t("figcaption", null, r.foto(f.autor, f.licencia));
   const doble = (...paginas: string[]): string => h("section", "doble", ...paginas.map((x) => h("div", "pagina", x)));
   const hojas: string[] = [];
+  // Lo de allí: cada precio para quién es, y cada dato con el día en que se vio.
+  const visto = (f: FuenteDeUnDato): string => r.visto(largo(f.visto));
+  const unPrecio = (p: PrecioDeCapa): string => {
+    const edades = p.edades === null ? "" : r.edades(p.edades.desde, p.edades.hasta);
+    const cuanto =
+      p.cuanto === "free" ? r.gratis : dinero(c.idioma, { total: p.cuanto.importe, moneda: p.cuanto.moneda });
+    return `${r.para[p.para] ?? p.para}${edades === "" ? "" : ` (${edades})`}: ${cuanto}`;
+  };
+  const nota = (texto: string): string => t("span", "nota", texto);
+  /** Unos precios, ya en HTML, con su día: una vez al final si todos se vieron el mismo día, o cada uno el suyo. */
+  const losPrecios = (ps: PrecioDeCapa[]): string => {
+    const dias = new Set(ps.map((p) => p.fuente.visto));
+    if (dias.size <= 1)
+      return esc(ps.map(unPrecio).join("; ")) + (ps.length > 0 ? ` ${nota(`(${visto(ps[0].fuente)})`)}` : "");
+    return ps.map((p) => `${esc(unPrecio(p))} ${nota(`(${visto(p.fuente)})`)}`).join("; ");
+  };
+  /** La entrada y el horario de una parada ese día, de los datos del viaje: lo que no se sabe no sale. */
+  const laEntrada = (p: ParadaDelCuaderno): string => {
+    const e = p.entrada ?? null;
+    if (e === null) return "";
+    const filas: string[] = [];
+    if (e.precios !== null && e.precios.length > 0)
+      filas.push(h("p", null, t("b", null, `${r.entrada}. `), losPrecios(e.precios)));
+    if (e.abre === true && e.franjas.length > 0 && e.horario !== null)
+      filas.push(
+        h(
+          "p",
+          null,
+          esc(r.abre(e.franjas.map((f) => r.deA(f.abre, f.cierra)).join(", "))),
+          " ",
+          nota(`(${visto(e.horario.fuente)})`),
+        ),
+      );
+    else if (e.abre === false && e.horario !== null)
+      filas.push(h("p", null, t("span", "marca ojo", r.cierraEseDia), " ", nota(`(${visto(e.horario.fuente)})`)));
+    const enlaces = [
+      e.reservar?.haceFalta === true && e.reservar.donde !== null ? enlace(e.reservar.donde, r.reservarEn) : "",
+      e.web === null ? "" : enlace(e.web, r.webDelSitio),
+    ].filter((x) => x !== "");
+    if (e.reservar?.haceFalta === true && p.reservar !== true)
+      filas.push(h("p", null, t("span", "marca ojo", r.reservar), " ", nota(`(${visto(e.reservar.fuente)})`)));
+    if (enlaces.length > 0) filas.push(h("p", null, enlaces.join(", ")));
+    return filas.length === 0 ? "" : h("div", "ficha", ...filas);
+  };
 
   // La portada, con la foto de lo que no hay que perderse si la hay.
   const portada =
@@ -751,6 +934,159 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
     ),
   );
 
+  // Lo de allí: cómo moverte y antes de ir, si el viaje lo sabe. Lo que no sabe no se nombra.
+  const mv = c.moverse ?? null;
+  const moverte: string[] = [];
+  if (mv !== null) {
+    if (mv.llegar.length > 0)
+      moverte.push(
+        t("h3", null, r.llegar),
+        h(
+          "ul",
+          "lista datos",
+          ...mv.llegar.map((x) => {
+            const desde = r.desde(x.desde.nombre ?? r.deDonde[x.desde.clase]);
+            const partes = [
+              r.modo[x.modo] ?? x.modo,
+              x.minutos === null ? "" : r.minutos(x.minutos),
+              x.hastaLas === null ? "" : r.hastaLas(x.hastaLas),
+            ].filter((y) => y !== "");
+            return h(
+              "li",
+              null,
+              h("span", "mota"),
+              h(
+                "div",
+                null,
+                h("p", null, t("b", null, desde), esc(`. ${partes.join(", ")}`)),
+                x.precios === null || x.precios.length === 0
+                  ? h("p", null, nota(visto(x.fuente)))
+                  : h("p", null, losPrecios(x.precios)),
+              ),
+            );
+          }),
+        ),
+      );
+    if (mv.transportes.length > 0)
+      moverte.push(
+        t("h3", null, r.transportes),
+        h(
+          "ul",
+          "lista datos",
+          ...mv.transportes.map((x) =>
+            h(
+              "li",
+              null,
+              h("span", "mota"),
+              h(
+                "p",
+                null,
+                t("b", null, r.modo[x.modo] ?? x.modo),
+                x.hastaLas === null ? "" : esc(`, ${r.hastaLas(x.hastaLas)}`),
+                " ",
+                nota(`(${visto(x.fuente)})`),
+              ),
+            ),
+          ),
+        ),
+      );
+    if (mv.billetes.length > 0)
+      moverte.push(
+        t("h3", null, r.billetes),
+        h(
+          "ul",
+          "lista datos",
+          ...mv.billetes.map((x) => {
+            const cuanto = r.deTantos(x.dias, x.viajes);
+            const modos = x.modos.map((y) => r.modo[y] ?? y).join(", ");
+            return h(
+              "li",
+              null,
+              h("span", "mota"),
+              h(
+                "div",
+                null,
+                h(
+                  "p",
+                  null,
+                  t("b", null, r.billete[x.clase] ?? x.clase),
+                  esc(
+                    [cuanto, modos]
+                      .filter((y) => y !== "")
+                      .map((y) => `, ${y}`)
+                      .join(""),
+                  ),
+                ),
+                x.precios === null || x.precios.length === 0
+                  ? h("p", null, nota(visto(x.fuente)))
+                  : h("p", null, losPrecios(x.precios)),
+              ),
+            );
+          }),
+        ),
+      );
+    if (mv.pagos.length > 0)
+      moverte.push(
+        t("h3", null, r.pagos),
+        h(
+          "p",
+          null,
+          esc(mv.pagos.map((x) => r.pago[x.clase] ?? x.clase).join(", ")),
+          " ",
+          nota(`(${[...new Set(mv.pagos.map((x) => visto(x.fuente)))].join(", ")})`),
+        ),
+      );
+    if (mv.coche !== null)
+      moverte.push(h("p", null, t("b", null, r.coche(mv.coche.haceFalta)), " ", nota(`(${visto(mv.coche.fuente)})`)));
+  }
+  const saber = c.saber ?? [];
+  const gruposDeSaber: string[] = [];
+  for (const grupo of Object.keys(r.claseDelDestino) as (keyof typeof r.claseDelDestino)[]) {
+    const suyas = saber.filter((x) => GRUPO_DEL_DESTINO[x.clase] === grupo);
+    if (suyas.length === 0) continue;
+    gruposDeSaber.push(
+      t("h3", null, r.claseDelDestino[grupo]),
+      h(
+        "ul",
+        "lista datos",
+        ...suyas.map((x) =>
+          h(
+            "li",
+            null,
+            h("span", "mota"),
+            h(
+              "div",
+              null,
+              h("p", null, x.nombre === null ? "" : t("b", null, `${x.nombre}. `), esc(x.frase)),
+              h(
+                "p",
+                null,
+                x.cuesta === null
+                  ? ""
+                  : esc(
+                      `${r.cuesta(
+                        dinero(c.idioma, { total: x.cuesta.desde, moneda: x.cuesta.moneda }),
+                        dinero(c.idioma, { total: x.cuesta.hasta, moneda: x.cuesta.moneda }),
+                      )} `,
+                    ),
+                nota(`(${visto(x.fuente)})`),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  const deMoverte =
+    moverte.length === 0 ? "" : t("p", "lomo", c.destino.nombre) + t("h2", null, r.comoMoverte) + moverte.join("");
+  const deSaber =
+    gruposDeSaber.length === 0
+      ? ""
+      : t("p", "lomo", c.destino.nombre) + t("h2", null, r.antesDeIr) + gruposDeSaber.join("");
+  if (deMoverte !== "" && deSaber !== "") hojas.push(doble(deMoverte, deSaber));
+  else if (deMoverte !== "" || deSaber !== "")
+    hojas.push(h("section", "doble sola", h("div", "pagina", deMoverte + deSaber)));
+
   // Una doble página por día: a la izquierda, su croquis y sus paradas; a la derecha, lo que se cuenta.
   for (const d of c.dias) {
     const lista = d.paradas.map((p) =>
@@ -794,6 +1130,42 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
           t("p", null, p.que),
           t("p", null, p.porQue),
           t("p", null, p.cuando),
+          laEntrada(p),
+        ),
+      );
+    }
+    const comer = d.comer ?? [];
+    if (comer.length > 0) {
+      const nombres = new Map(d.paradas.map((p) => [p.id, p.nombre]));
+      piezas.push(
+        h(
+          "section",
+          "comer",
+          t("p", "lomo", r.dondeComer),
+          d.comerDice == null ? "" : t("p", null, d.comerDice),
+          h(
+            "ul",
+            "lista datos",
+            ...comer.map((x) =>
+              h(
+                "li",
+                null,
+                h("span", "mota"),
+                h(
+                  "div",
+                  null,
+                  h("p", null, x.cosa.nombre === null ? "" : t("b", null, `${x.cosa.nombre}. `), esc(x.cosa.frase)),
+                  h(
+                    "p",
+                    null,
+                    nota(
+                      `${r.cerca(metros(c.idioma, x.metros), nombres.get(x.cerca) ?? "")} (${visto(x.cosa.fuente)})`,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }
@@ -981,7 +1353,24 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
     c.preciosDel === null ? "" : t("p", null, r.preciosVistos(largo(c.preciosDel))),
     t("p", null, r.hecha(largo(c.hecha), c.version)),
   );
-  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos));
+  const deAlli = fuentesDeAlli(c);
+  const fuentesDeAlliHtml =
+    deAlli.length === 0
+      ? ""
+      : t("h3", null, r.deAlli) +
+        h(
+          "ul",
+          "lista",
+          ...deAlli.map((f) =>
+            h(
+              "li",
+              null,
+              h("span", "mota"),
+              h("p", null, enlace(f.url, new URL(f.url).host), " ", nota(`(${visto(f)})`)),
+            ),
+          ),
+        );
+  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos), fuentesDeAlliHtml);
   hojas.push(h("section", "doble cierre", h("div", "pagina", noSeSabe + fuentes), h("div", "pagina", avisos)));
 
   const aviso = o.atras === true ? `<p class="atras" role="status">${esc(r.atras)}</p>` : "";

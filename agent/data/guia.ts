@@ -4,6 +4,9 @@
 // tienen sus rótulos, sus avisos y sus palabras prohibidas: en otro, no se pide. Al añadir un idioma, se añaden los
 // suyos y se pone en `IDIOMAS_DE_LA_GUIA`.
 
+import type { ClaseDelDestino } from "./capa_destino.ts";
+import type { ClaseDeBillete, ClaseDePago, DeDondeSeLlega, ModoDeMoverse } from "./capa_moverse.ts";
+import type { DiaDeLaSemana, ParaQuien } from "./capas.ts";
 import type { PREGUNTAS } from "./papeles.ts";
 
 /** Lo que mide cada texto de la guía, en letras. Una o dos frases; la portada y la entrada de un día, algo más. */
@@ -11,6 +14,39 @@ export const LARGO_EN_LA_GUIA = { titulo: 80, texto: 500 };
 
 /** Lo más que puede llevar la guía: días, paradas por día y cosas que llevar hechas. Más es un viaje que no es. */
 export const TOPES_DE_LA_GUIA = { dias: 31, paradasPorDia: 12, antes: 60, noSeSabe: 6 };
+
+/**
+ * Dónde se come cada día (14.6): una zona o un mercado de lo que conviene saber, con su punto, va al día de la parada
+ * que le queda más cerca si se anda en estos metros o menos; si no, va a «Antes de ir», sin día. Y lo más que se le
+ * pone a un día. De partida: se ajusta con casos reales.
+ */
+export const PARA_COMER = { metros: 1200, porDia: 3 };
+
+/**
+ * Las maneras de moverse que se nombran con su palabra en un texto del que escribe la guía, por idioma: si un tramo
+ * que no se anda dice una de estas y el viaje no la trae, la ha puesto él. El coche, el taxi y «el transporte» no
+ * están: son las palabras de siempre de un tramo que no se anda, y no dicen qué hay allí.
+ */
+export const MODOS_EN_UN_TEXTO: Record<string, Partial<Record<ModoDeMoverse, RegExp>>> = {
+  en: {
+    metro: /(?<![\p{L}])(?:metro|subway|underground)(?![\p{L}])/iu,
+    tram: /(?<![\p{L}])(?:trams?|streetcars?)(?![\p{L}])/iu,
+    bus: /(?<![\p{L}])(?:bus|buses|coach)(?![\p{L}])/iu,
+    train: /(?<![\p{L}])(?:trains?|railway)(?![\p{L}])/iu,
+    ferry: /(?<![\p{L}])(?:ferry|ferries|boat)(?![\p{L}])/iu,
+    cable: /(?<![\p{L}])(?:cable car|funicular|gondola)(?![\p{L}])/iu,
+    shuttle: /(?<![\p{L}])(?:shuttle)(?![\p{L}])/iu,
+  },
+  es: {
+    metro: /(?<![\p{L}])(?:metro|suburbano)(?![\p{L}])/iu,
+    tram: /(?<![\p{L}])(?:tranv[ií]as?)(?![\p{L}])/iu,
+    bus: /(?<![\p{L}])(?:bus|autob[uú]s|autobuses)(?![\p{L}])/iu,
+    train: /(?<![\p{L}])(?:trenes|tren|cercan[ií]as)(?![\p{L}])/iu,
+    ferry: /(?<![\p{L}])(?:ferry|ferri|barco)(?![\p{L}])/iu,
+    cable: /(?<![\p{L}])(?:telef[eé]rico|funicular|telecabina)(?![\p{L}])/iu,
+    shuttle: /(?<![\p{L}])(?:lanzadera)(?![\p{L}])/iu,
+  },
+};
 
 /**
  * Un precio dicho en un texto: un signo de moneda, un código de tres letras de los más usados o el nombre de una
@@ -105,6 +141,50 @@ type Rotulos = {
   reservaEn: string;
   nada: string;
   preciosVistos: (fecha: string) => string;
+  /** Las capas del destino en el cuaderno (14.6): cómo moverte, antes de ir, dónde comer y la entrada de cada sitio. */
+  comoMoverte: string;
+  antesDeIr: string;
+  dondeComer: string;
+  deAlli: string;
+  llegar: string;
+  transportes: string;
+  billetes: string;
+  pagos: string;
+  modo: Record<ModoDeMoverse, string>;
+  billete: Record<ClaseDeBillete, string>;
+  pago: Record<ClaseDePago, string>;
+  deDonde: Record<DeDondeSeLlega, string>;
+  para: Record<ParaQuien, string>;
+  claseDelDestino: Record<"neighbourhood" | "hours" | "money" | "practical" | "avoid" | "food", string>;
+  diaDeLaSemana: Record<DiaDeLaSemana, string>;
+  desde: (lugar: string) => string;
+  hastaLas: (hora: string) => string;
+  deTantos: (dias: number | null, viajes: number | null) => string;
+  coche: (haceFalta: boolean) => string;
+  visto: (fecha: string) => string;
+  entrada: string;
+  gratis: string;
+  edades: (desde: number | null, hasta: number | null) => string;
+  abre: (franjas: string) => string;
+  cierraEseDia: string;
+  deA: (abre: string, cierra: string) => string;
+  reservarEn: string;
+  webDelSitio: string;
+  cerca: (metros: string, parada: string) => string;
+  cuesta: (desde: string, hasta: string) => string;
+};
+
+/** Las clases de lo que conviene saber, como se agrupan en «Antes de ir»: lo de comer, junto. */
+export const GRUPO_DEL_DESTINO: Record<ClaseDelDestino, keyof Rotulos["claseDelDestino"]> = {
+  neighbourhood: "neighbourhood",
+  hours: "hours",
+  money: "money",
+  practical: "practical",
+  avoid: "avoid",
+  food_area: "food",
+  market: "food",
+  dish: "food",
+  meal_cost: "food",
 };
 
 const cuenta = (n: number, uno: string, varios: string): string => `${n} ${n === 1 ? uno : varios}`;
@@ -204,6 +284,96 @@ export const ROTULOS: Record<string, Rotulos> = {
     reservaEn: "Book it at the seller's website",
     nada: "Nothing",
     preciosVistos: (fecha) => `Prices seen on ${fecha} or later`,
+    comoMoverte: "Getting around",
+    antesDeIr: "Good to know before you go",
+    dondeComer: "Where to eat",
+    deAlli: "Getting around, opening hours and good to know",
+    llegar: "From where you arrive to where you sleep",
+    transportes: "What there is to get around",
+    billetes: "Tickets and passes",
+    pagos: "How you pay",
+    modo: {
+      metro: "Metro",
+      tram: "Tram",
+      bus: "Bus",
+      train: "Train",
+      ferry: "Ferry",
+      cable: "Cable car",
+      shuttle: "Shuttle",
+      taxi: "Taxi",
+      ride_hailing: "Ride-hailing app",
+      car: "Car",
+      bike: "Bike",
+      walk: "On foot",
+    },
+    billete: {
+      single: "Single ticket",
+      day_pass: "Day pass",
+      multi_day_pass: "Pass for several days",
+      multi_ride: "Ticket for several rides",
+      travel_card: "Rechargeable card",
+    },
+    pago: {
+      contactless: "Contactless card",
+      card: "Card",
+      cash: "Cash",
+      app: "An app",
+      travel_card: "A local travel card",
+    },
+    deDonde: { airport: "the airport", station: "the station", port: "the port" },
+    para: {
+      any: "Anyone",
+      adult: "Adult",
+      child: "Child",
+      infant: "Baby",
+      youth: "Young person",
+      student: "Student",
+      senior: "Senior",
+      family: "Family",
+      group: "Group",
+    },
+    claseDelDestino: {
+      neighbourhood: "The neighbourhoods",
+      hours: "Times of day there",
+      money: "Money",
+      practical: "Practical things",
+      avoid: "Better to avoid",
+      food: "Eating",
+    },
+    diaDeLaSemana: {
+      mon: "Monday",
+      tue: "Tuesday",
+      wed: "Wednesday",
+      thu: "Thursday",
+      fri: "Friday",
+      sat: "Saturday",
+      sun: "Sunday",
+    },
+    desde: (lugar) => `From ${lugar}`,
+    hastaLas: (hora) => `until ${hora}`,
+    deTantos: (dias, viajes) =>
+      [dias === null ? "" : cuenta(dias, "day", "days"), viajes === null ? "" : cuenta(viajes, "ride", "rides")]
+        .filter((x) => x !== "")
+        .join(", "),
+    coche: (haceFalta) => (haceFalta ? "A car is needed" : "No car is needed"),
+    visto: (fecha) => `seen on ${fecha}`,
+    entrada: "Entry",
+    gratis: "free",
+    edades: (desde, hasta) =>
+      desde !== null && hasta !== null
+        ? `aged ${desde} to ${hasta}`
+        : desde !== null
+          ? `aged ${desde} or more`
+          : hasta !== null
+            ? `up to ${hasta}`
+            : "",
+    abre: (franjas) => `Open that day, ${franjas}`,
+    cierraEseDia: "Closed that day",
+    deA: (abre, cierra) => `${abre} to ${cierra}`,
+    reservarEn: "Where to book",
+    webDelSitio: "Its website",
+    cerca: (metros, parada) => `${metros} from ${parada}`,
+    cuesta: (desde, hasta) => `Usually ${desde} to ${hasta}`,
   },
   es: {
     guia: "Tu guía",
@@ -299,6 +469,96 @@ export const ROTULOS: Record<string, Rotulos> = {
     reservaEn: "Se reserva en la web de quien lo vende",
     nada: "Nada",
     preciosVistos: (fecha) => `Precios vistos desde el ${fecha}`,
+    comoMoverte: "Cómo moverte",
+    antesDeIr: "Antes de ir",
+    dondeComer: "Dónde comer",
+    deAlli: "Cómo moverte, los horarios y lo que conviene saber",
+    llegar: "De donde llegas a donde duermes",
+    transportes: "Lo que hay para moverte",
+    billetes: "Billetes y abonos",
+    pagos: "Cómo se paga",
+    modo: {
+      metro: "Metro",
+      tram: "Tranvía",
+      bus: "Autobús",
+      train: "Tren",
+      ferry: "Barco",
+      cable: "Teleférico",
+      shuttle: "Lanzadera",
+      taxi: "Taxi",
+      ride_hailing: "Coche con conductor por una aplicación",
+      car: "Coche",
+      bike: "Bicicleta",
+      walk: "Andando",
+    },
+    billete: {
+      single: "Billete sencillo",
+      day_pass: "Abono de un día",
+      multi_day_pass: "Abono de varios días",
+      multi_ride: "Bono de varios viajes",
+      travel_card: "Tarjeta recargable",
+    },
+    pago: {
+      contactless: "Tarjeta sin contacto",
+      card: "Tarjeta",
+      cash: "Efectivo",
+      app: "Una aplicación",
+      travel_card: "Una tarjeta de transporte de allí",
+    },
+    deDonde: { airport: "el aeropuerto", station: "la estación", port: "el puerto" },
+    para: {
+      any: "Cualquiera",
+      adult: "Adulto",
+      child: "Niño",
+      infant: "Bebé",
+      youth: "Joven",
+      student: "Estudiante",
+      senior: "Mayor",
+      family: "Familia",
+      group: "Grupo",
+    },
+    claseDelDestino: {
+      neighbourhood: "Los barrios",
+      hours: "Los horarios de allí",
+      money: "El dinero",
+      practical: "Lo práctico",
+      avoid: "Lo que conviene evitar",
+      food: "Comer",
+    },
+    diaDeLaSemana: {
+      mon: "lunes",
+      tue: "martes",
+      wed: "miércoles",
+      thu: "jueves",
+      fri: "viernes",
+      sat: "sábado",
+      sun: "domingo",
+    },
+    desde: (lugar) => `Desde ${lugar}`,
+    hastaLas: (hora) => `hasta las ${hora}`,
+    deTantos: (dias, viajes) =>
+      [dias === null ? "" : cuenta(dias, "día", "días"), viajes === null ? "" : cuenta(viajes, "viaje", "viajes")]
+        .filter((x) => x !== "")
+        .join(", "),
+    coche: (haceFalta) => (haceFalta ? "Hace falta coche" : "No hace falta coche"),
+    visto: (fecha) => `visto el ${fecha}`,
+    entrada: "Entrada",
+    gratis: "gratis",
+    edades: (desde, hasta) =>
+      desde !== null && hasta !== null
+        ? `de ${desde} a ${hasta} años`
+        : desde !== null
+          ? `desde ${desde} años`
+          : hasta !== null
+            ? `hasta ${hasta} años`
+            : "",
+    abre: (franjas) => `Ese día abre de ${franjas}`,
+    cierraEseDia: "Ese día cierra",
+    deA: (abre, cierra) => `${abre} a ${cierra}`,
+    reservarEn: "Dónde se reserva",
+    webDelSitio: "Su web",
+    cerca: (metros, parada) => `A ${metros} de ${parada}`,
+    cuesta: (desde, hasta) => `Suele costar de ${desde} a ${hasta}`,
   },
 };
 

@@ -18,9 +18,11 @@ because yours goes in the language of `in/trip.json`, whichever it is.
 ## An entry of `days`
 
 `{ "date": "<the date of the day, as in in/days.json>", "title": "<the day in a few words>", "intro": "<one or two
-sentences>", "stops": [...], "legs": [...] }`
+sentences>", "stops": [...], "legs": [...], "eat": "<one or two sentences>" }`
 
 - `date`: as in `in/days.json`.
+- `eat`: only on a day that has `eat` in `in/days.json`, and then always: where to stop and eat that day, by its
+  places. On a day without `eat`, the field is not there.
 - `stops`: one entry per stop of that day, all of them, once:
   `{ "id": "<the id of the stop>", "what": "<what it is>", "why": "<why they go>", "when": "<when it is best>" }`.
 - `legs`: one entry per leg of that day, all of them, once:
@@ -36,4 +38,5 @@ sentences>", "stops": [...], "legs": [...] }`
 
 Every number in every text is a number of your material: minutes, metres, a day of the month, a year, how many
 travel. Written as a number, not as a word, the way the traveller's language writes numbers: the house reads both
-`1.5` and `1,5` as the same number. No prices and no clock times (GW3).
+`1.5` and `1,5` as the same number. A price only if it is an amount of your material, with its currency; a clock
+time only if it is a time of your material (GW3).
