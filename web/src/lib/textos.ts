@@ -915,7 +915,7 @@ const en = {
       dates: "the dates",
       travellers: "who travels",
       rooms: "the rooms",
-      passports: "the passports",
+      passports: "the passports or ages for your papers",
       budget: "what you want to spend",
       currency: "the currency",
       language: "the language",
@@ -955,6 +955,44 @@ const en = {
       calendar: "the date warnings",
       trip: "your trip on the map",
     } as Record<string, string>,
+  },
+  // Cambios (8.5): cambiar lo que pediste con tus respuestas de empezar, ya contestadas, y lo que se queda atrás.
+  cambios: {
+    rotulo: "Change what you asked",
+    abrir: "Change what you asked",
+    abrirTexto: "Your dates, who is going, what you spend or what matters where you sleep",
+    sub: "These are your answers from the start. Touch only what changes: the rest stays as it is, and is not asked or paid again.",
+    fechas: "When",
+    entrada: "Check-in",
+    salida: "Check-out",
+    gustos: "Where you sleep",
+    gustosSub: "What matters to you in a place to stay.",
+    destino:
+      "To go somewhere else, search it at the top. Another destination is a new trip: this one stays as it is, with its versions.",
+    nadaCambia: "Nothing has changed yet.",
+    loQueCambia: (que: string) => `You are changing ${que}.`,
+    ver: "See what changes",
+    volver: "Back to my trip",
+    deNuevo:
+      "The research stopped before your trip was ready. Nothing of it is kept: it starts again from the beginning, with what you changed.",
+    atrasCierre: (n: number) =>
+      `You closed version ${n} of this trip. That closing and its booking links belong to that version, and stay there: what you see now is newer. You can go back to it below.`,
+    atrasGuia: (n: number) =>
+      `Your guide was made from version ${n}: it has fallen behind. Close your trip again to make it up to date.`,
+    fallo: (clave: string): string =>
+      ({
+        too_many_changes:
+          "You have changed this trip several times today. Try again tomorrow, or go back to a version.",
+        too_many_versions:
+          "This trip has as many versions as it can keep. Go back to one of them, or start a new trip.",
+        no_key: "Put your AI key first.",
+        no_ai: "There is no AI to redo it right now.",
+        already_running: "Something of this trip is already running. Wait until it finishes.",
+        not_now: "This trip cannot be changed right now.",
+        unclear: "Something of what you changed is not clear. Check your dates and who is going.",
+        new_trip: "Another destination is a new trip: search it at the top.",
+        nothing_changed: "Nothing has changed yet.",
+      })[clave] ?? "Something went wrong. Try again in a moment.",
   },
   // Tu guía (12.2): el cuaderno de un viaje cerrado, que se pide, se ve y se descarga.
   guia: {
@@ -1810,7 +1848,7 @@ const es: Textos = {
       dates: "las fechas",
       travellers: "quién viaja",
       rooms: "las habitaciones",
-      passports: "los pasaportes",
+      passports: "los pasaportes o las edades de tus papeles",
       budget: "lo que quieres gastar",
       currency: "la moneda",
       language: "el idioma",
@@ -1850,6 +1888,42 @@ const es: Textos = {
       calendar: "los avisos de las fechas",
       trip: "tu viaje en el mapa",
     },
+  },
+  cambios: {
+    rotulo: "Cambiar lo que pediste",
+    abrir: "Cambiar lo que pediste",
+    abrirTexto: "Tus fechas, quién va, lo que gastas o lo que te importa donde duermes",
+    sub: "Son tus respuestas del principio. Toca solo lo que cambia: lo demás se queda como está, sin volver a pedirlo ni a pagarlo.",
+    fechas: "Cuándo",
+    entrada: "Entrada",
+    salida: "Salida",
+    gustos: "Donde duermes",
+    gustosSub: "Lo que te importa de un sitio donde dormir.",
+    destino:
+      "Para ir a otro sitio, búscalo arriba. Otro destino es un viaje nuevo: este se queda como está, con sus versiones.",
+    nadaCambia: "Todavía no has cambiado nada.",
+    loQueCambia: (que) => `Cambias ${que}.`,
+    ver: "Ver lo que cambia",
+    volver: "Volver a mi viaje",
+    deNuevo:
+      "La investigación se paró antes de que tu viaje estuviera listo. No se queda nada de ella: empieza otra vez desde el principio, con lo que has cambiado.",
+    atrasCierre: (n) =>
+      `Cerraste la versión ${n} de este viaje. Ese cierre y sus enlaces de reserva son de esa versión, y se quedan en ella: lo que ves ahora es más nuevo. Puedes volver a ella más abajo.`,
+    atrasGuia: (n) =>
+      `Tu guía se hizo con la versión ${n}: se ha quedado atrás. Cierra otra vez tu viaje para tenerla al día.`,
+    fallo: (clave) =>
+      ({
+        too_many_changes: "Hoy ya has cambiado este viaje varias veces. Prueba mañana, o vuelve a una versión.",
+        too_many_versions:
+          "Este viaje tiene todas las versiones que puede guardar. Vuelve a una de ellas, o empieza un viaje nuevo.",
+        no_key: "Pon antes tu clave de IA.",
+        no_ai: "Ahora no hay IA que lo rehaga.",
+        already_running: "Algo de este viaje ya está en marcha. Espera a que acabe.",
+        not_now: "Este viaje no se puede cambiar ahora.",
+        unclear: "Algo de lo que has cambiado no está claro. Mira tus fechas y quién va.",
+        new_trip: "Otro destino es un viaje nuevo: búscalo arriba.",
+        nothing_changed: "Todavía no has cambiado nada.",
+      })[clave] ?? "Algo ha fallado. Prueba otra vez en un momento.",
   },
   guia: {
     titulo: "Tu guía",

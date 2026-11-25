@@ -20,6 +20,7 @@ import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
 import { ElImpacto, TusVersiones } from "../../../piezas/Momentos.tsx";
+import { Cambios, SeQuedaronAtras, useParaCambiar } from "../../../piezas/Cambios.tsx";
 import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../../../../../agent/data/momentos.ts";
 import { impactoDe } from "../../../../../agent/scripts/impacto.ts";
 import { useTusElecciones, useVersiones } from "../../../lib/elecciones.ts";
@@ -104,6 +105,12 @@ export default function Planear() {
   const version = vivo.estado?.trip.version ?? null;
   const tuyas = useTusElecciones(pedido != null && comoEsta === "on_map" ? pedido : null, version);
   const versiones = useVersiones(pedido != null && enElMapa ? pedido : null, version);
+  // Cambiar lo que pediste (8.5): con el viaje en el mapa, cerrado o con su investigación parada. ?at=change lo abre.
+  const parado = vivo.estado?.research?.stopped != null && vivo.estado?.research?.running !== true;
+  const para = useParaCambiar(pedido != null && (enElMapa || parado) ? pedido : null, `${comoEsta}|${version}`);
+  const [cambiando, setCambiando] = useState(false);
+  useEffect(() => setCambiando(new URLSearchParams(window.location.search).get("at") === "change"), []);
+  const conCambios = cambiando && para !== null && typeof pedido === "string";
   const tocado = useRef(false);
   const toca = (): void => {
     tocado.current = true;
@@ -488,7 +495,21 @@ export default function Planear() {
           }}
         />
       )}
-      {etapa === "casa" && vivo.estado && (
+      {conCambios && (
+        <Cambios
+          key={`${comoEsta}|${version}`}
+          {...comun}
+          id={pedido}
+          para={para}
+          alVolver={() => {
+            setCambiando(false);
+            const direccion = new URL(window.location.href);
+            direccion.searchParams.set("at", "trip");
+            window.history.replaceState(null, "", direccion);
+          }}
+        />
+      )}
+      {etapa === "casa" && vivo.estado && !conCambios && (
         <Hoja etiqueta={t.casa.titulo}>
           <EnCasa
             {...comun}
@@ -543,7 +564,7 @@ export default function Planear() {
           <ElImpacto {...comun} impacto={impactoDe(impactoSuelto)} alAhoraNo={() => setImpactoSuelto(null)} />
         </Hoja>
       )}
-      {etapa === "viaje" && viaje !== null && abierta === null && impactoSuelto === null && (
+      {etapa === "viaje" && viaje !== null && abierta === null && impactoSuelto === null && !conCambios && (
         <Hoja etiqueta={t.viaje.rotulo}>
           <TuViaje
             {...comun}
@@ -581,6 +602,17 @@ export default function Planear() {
             <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />
           )}
           {tuyas.guardado === "fallo" && <p className="aviso">{t.momentos.noGuardado}</p>}
+          {para !== null && pedido != null && (
+            <>
+              <SeQuedaronAtras {...comun} atras={para.behind} />
+              <div className="grupo cambiar">
+                <button type="button" className="boton boton--hueco" onClick={() => setCambiando(true)}>
+                  {t.cambios.abrir}
+                </button>
+                <span className="dato">{t.cambios.abrirTexto}</span>
+              </div>
+            </>
+          )}
           {pedido != null && versiones !== null && versiones.length > 0 && (
             <TusVersiones {...comun} id={pedido} versiones={versiones} />
           )}

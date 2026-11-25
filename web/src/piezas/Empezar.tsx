@@ -32,7 +32,7 @@ export const toquesDeBuscar = (i: number): string[] => Object.values(TEXTOS).map
 export const TODOS_LOS_TOQUES_DE_BUSCAR: string[] = Object.values(TEXTOS).flatMap((x) => x.preguntas.buscasOpciones);
 
 /** Una pregunta con sus respuestas, de las que se marca una. Sin marcar, el viajero aún no lo ha dicho. */
-function Una<T extends string | boolean>(x: {
+export function Una<T extends string | boolean>(x: {
   titulo: string;
   opciones: Opcion<T>[];
   valor: T | null;
@@ -59,7 +59,7 @@ function Una<T extends string | boolean>(x: {
 }
 
 /** De dónde sales: se escribe y se elige de lo que propone el buscador, o se deja ver dónde estás. */
-function DeDonde({
+export function DeDonde({
   t,
   idioma,
   origen,
@@ -176,7 +176,6 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
   const x = t.empezar;
   const [r, setR] = useState<Respuestas>(inicial);
   const [dentro, setDentro] = useState(viaje !== null);
-  const [distintos, setDistintos] = useState(new Set(inicial.pasaportes ?? []).size > 1);
   const [fallo, setFallo] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const id = useRef<string | null>(viaje);
@@ -192,13 +191,7 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
   // Quien piensa con la cuenta de la casa no necesita clave para empezar.
   const conClave = conSesion && (cuenta.thinks_with === "house" || cuenta.key !== null);
 
-  // Los países y las monedas, con su nombre en el idioma de quien mira.
-  const paises = useMemo(() => {
-    const nombres = new Intl.DisplayNames(idioma, { type: "region" });
-    return [...MONEDA_DE.keys()]
-      .map((codigo) => ({ codigo, nombre: nombres.of(codigo) ?? codigo }))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, idioma));
-  }, [idioma]);
+  // Las monedas, con su nombre en el idioma de quien mira.
   const monedas = useMemo(() => {
     const nombres = new Intl.DisplayNames(idioma, { type: "currency" });
     return [...new Set(MONEDA_DE.values())].sort().map((codigo) => ({ codigo, nombre: nombres.of(codigo) ?? codigo }));
@@ -248,33 +241,8 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
     if (id.current !== null) alEmpezar(id.current);
   };
 
-  const viajeros = (r.adultos ?? e.entendido?.travellers.adults ?? 2) + r.ninos.length;
   const adultos = r.adultos ?? 2;
   const habitaciones = r.habitaciones ?? 1;
-  // El pasaporte: uno para todos o, si no todos tienen el mismo, el de cada uno.
-  const delPrimero = r.pasaportes?.[0] ?? "";
-  const todos = (codigo: string): void => pon({ pasaportes: Array.from({ length: viajeros }, () => codigo) });
-  const elDe = (n: number, codigo: string): void =>
-    pon({ pasaportes: Array.from({ length: viajeros }, (_, i) => (i === n ? codigo : (r.pasaportes?.[i] ?? ""))) });
-  const cuantos = (masAdultos: number, edades: (number | null)[]): void => {
-    const total = masAdultos + edades.length;
-    // Quien se suma hereda el pasaporte del primero; quien se va, se lleva el suyo.
-    const pasaportes =
-      r.pasaportes === null ? null : Array.from({ length: total }, (_, i) => r.pasaportes?.[i] ?? delPrimero);
-    pon({ adultos: masAdultos, ninos: edades, habitaciones: Math.min(habitaciones, masAdultos), pasaportes });
-  };
-  const elPais = (valor: string, etiqueta: string, alCambiar: (codigo: string) => void) => (
-    <select className="toque" aria-label={etiqueta} value={valor} onChange={(ev) => alCambiar(ev.target.value)}>
-      <option value="" disabled>
-        {x.paisSinDecir}
-      </option>
-      {paises.map((pais) => (
-        <option key={pais.codigo} value={pais.codigo}>
-          {pais.nombre}
-        </option>
-      ))}
-    </select>
-  );
   const siONo: Opcion<boolean>[] = [
     { valor: true, texto: x.si },
     { valor: false, texto: x.no },
@@ -348,83 +316,7 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
               pon({ origen, moneda: r.moneda ?? monedaDe(origen?.pais) })
             }
           />
-          <div className="toques" role="group" aria-label={p.quienes}>
-            <span className="rotulo">{p.quienes}</span>
-            <div className="cabecera__linea">
-              <Contador
-                texto={t.vistazo.adultos(adultos)}
-                n={adultos}
-                minimo={1}
-                maximo={VIAJEROS.adultos}
-                menos={p.menos}
-                mas={p.mas}
-                alCambiar={(cuantosAdultos) => cuantos(cuantosAdultos, r.ninos)}
-              />
-              <Contador
-                texto={p.ninos(r.ninos.length)}
-                n={r.ninos.length}
-                minimo={0}
-                maximo={VIAJEROS.ninos}
-                menos={p.menos}
-                mas={p.mas}
-                alCambiar={(k) => cuantos(adultos, k < r.ninos.length ? r.ninos.slice(0, k) : [...r.ninos, null])}
-              />
-              <Contador
-                texto={t.vistazo.habitaciones(habitaciones)}
-                n={habitaciones}
-                minimo={1}
-                maximo={adultos}
-                menos={p.menos}
-                mas={p.mas}
-                alCambiar={(k) => pon({ adultos, habitaciones: k })}
-              />
-            </div>
-            {r.ninos.length > 0 && (
-              <div className="cabecera__linea">
-                {r.ninos.map((edad, i) => (
-                  <select
-                    key={i}
-                    className="toque"
-                    aria-label={p.edad(i + 1)}
-                    value={edad ?? ""}
-                    onChange={(ev) => pon({ ninos: r.ninos.map((v, j) => (j === i ? Number(ev.target.value) : v)) })}
-                  >
-                    <option value="" disabled>
-                      {p.edadSinDecir}
-                    </option>
-                    {Array.from({ length: VIAJEROS.edadDeNino + 1 }, (_, anos) => (
-                      <option key={anos} value={anos}>
-                        {p.anos(anos)}
-                      </option>
-                    ))}
-                  </select>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="toques" role="group" aria-label={x.pasaporte}>
-            <span className="rotulo">{x.pasaporte}</span>
-            <div className="cabecera__linea">
-              {distintos
-                ? Array.from({ length: viajeros }, (_, i) => (
-                    <span key={i}>{elPais(r.pasaportes?.[i] ?? "", x.pasaporteDe(i + 1), (c) => elDe(i, c))}</span>
-                  ))
-                : elPais(delPrimero, x.pasaporte, todos)}
-              {viajeros > 1 && (
-                <button
-                  type="button"
-                  className="toque"
-                  aria-pressed={distintos}
-                  onClick={() => {
-                    if (distintos && delPrimero !== "") todos(delPrimero);
-                    setDistintos(!distintos);
-                  }}
-                >
-                  {x.distintos}
-                </button>
-              )}
-            </div>
-          </div>
+          <QuienesViajan t={t} idioma={idioma} r={r} pon={pon} />
           <Una
             titulo={p.fechas}
             opciones={[
@@ -575,5 +467,135 @@ export function Empezar({ t, idioma, inicial, viaje, cuenta, alEmpezar, alVistaz
         </div>
       )}
     </Hoja>
+  );
+}
+
+/**
+ * Quién viaja: los adultos, los niños con su edad, las habitaciones y el pasaporte de cada uno. La usan empezar un
+ * viaje y cambiar lo que pediste (8.5), con las mismas respuestas.
+ */
+export function QuienesViajan({
+  t,
+  idioma,
+  r,
+  pon,
+}: Comun & { r: Respuestas; pon: (cambio: Partial<Respuestas>) => void }) {
+  const p = t.preguntas;
+  const x = t.empezar;
+  const [distintos, setDistintos] = useState(new Set(r.pasaportes ?? []).size > 1);
+  // Los países, con su nombre en el idioma de quien mira.
+  const paises = useMemo(() => {
+    const nombres = new Intl.DisplayNames(idioma, { type: "region" });
+    return [...MONEDA_DE.keys()]
+      .map((codigo) => ({ codigo, nombre: nombres.of(codigo) ?? codigo }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, idioma));
+  }, [idioma]);
+  const adultos = r.adultos ?? 2;
+  const viajeros = adultos + r.ninos.length;
+  const habitaciones = r.habitaciones ?? 1;
+  // El pasaporte: uno para todos o, si no todos tienen el mismo, el de cada uno.
+  const delPrimero = r.pasaportes?.[0] ?? "";
+  const todos = (codigo: string): void => pon({ pasaportes: Array.from({ length: viajeros }, () => codigo) });
+  const elDe = (n: number, codigo: string): void =>
+    pon({ pasaportes: Array.from({ length: viajeros }, (_, i) => (i === n ? codigo : (r.pasaportes?.[i] ?? ""))) });
+  const cuantos = (masAdultos: number, edades: (number | null)[]): void => {
+    const total = masAdultos + edades.length;
+    // Quien se suma hereda el pasaporte del primero; quien se va, se lleva el suyo.
+    const pasaportes =
+      r.pasaportes === null ? null : Array.from({ length: total }, (_, i) => r.pasaportes?.[i] ?? delPrimero);
+    pon({ adultos: masAdultos, ninos: edades, habitaciones: Math.min(habitaciones, masAdultos), pasaportes });
+  };
+  const elPais = (valor: string, etiqueta: string, alCambiar: (codigo: string) => void) => (
+    <select className="toque" aria-label={etiqueta} value={valor} onChange={(ev) => alCambiar(ev.target.value)}>
+      <option value="" disabled>
+        {x.paisSinDecir}
+      </option>
+      {paises.map((pais) => (
+        <option key={pais.codigo} value={pais.codigo}>
+          {pais.nombre}
+        </option>
+      ))}
+    </select>
+  );
+  return (
+    <>
+      <div className="toques" role="group" aria-label={p.quienes}>
+        <span className="rotulo">{p.quienes}</span>
+        <div className="cabecera__linea">
+          <Contador
+            texto={t.vistazo.adultos(adultos)}
+            n={adultos}
+            minimo={1}
+            maximo={VIAJEROS.adultos}
+            menos={p.menos}
+            mas={p.mas}
+            alCambiar={(cuantosAdultos) => cuantos(cuantosAdultos, r.ninos)}
+          />
+          <Contador
+            texto={p.ninos(r.ninos.length)}
+            n={r.ninos.length}
+            minimo={0}
+            maximo={VIAJEROS.ninos}
+            menos={p.menos}
+            mas={p.mas}
+            alCambiar={(k) => cuantos(adultos, k < r.ninos.length ? r.ninos.slice(0, k) : [...r.ninos, null])}
+          />
+          <Contador
+            texto={t.vistazo.habitaciones(habitaciones)}
+            n={habitaciones}
+            minimo={1}
+            maximo={adultos}
+            menos={p.menos}
+            mas={p.mas}
+            alCambiar={(k) => pon({ adultos, habitaciones: k })}
+          />
+        </div>
+        {r.ninos.length > 0 && (
+          <div className="cabecera__linea">
+            {r.ninos.map((edad, i) => (
+              <select
+                key={i}
+                className="toque"
+                aria-label={p.edad(i + 1)}
+                value={edad ?? ""}
+                onChange={(ev) => pon({ ninos: r.ninos.map((v, j) => (j === i ? Number(ev.target.value) : v)) })}
+              >
+                <option value="" disabled>
+                  {p.edadSinDecir}
+                </option>
+                {Array.from({ length: VIAJEROS.edadDeNino + 1 }, (_, anos) => (
+                  <option key={anos} value={anos}>
+                    {p.anos(anos)}
+                  </option>
+                ))}
+              </select>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="toques" role="group" aria-label={x.pasaporte}>
+        <span className="rotulo">{x.pasaporte}</span>
+        <div className="cabecera__linea">
+          {distintos
+            ? Array.from({ length: viajeros }, (_, i) => (
+                <span key={i}>{elPais(r.pasaportes?.[i] ?? "", x.pasaporteDe(i + 1), (c) => elDe(i, c))}</span>
+              ))
+            : elPais(delPrimero, x.pasaporte, todos)}
+          {viajeros > 1 && (
+            <button
+              type="button"
+              className="toque"
+              aria-pressed={distintos}
+              onClick={() => {
+                if (distintos && delPrimero !== "") todos(delPrimero);
+                setDistintos(!distintos);
+              }}
+            >
+              {x.distintos}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

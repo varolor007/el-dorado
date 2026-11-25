@@ -2498,3 +2498,19 @@ select.toque {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* Cambios (8.5): las dos fechas en una línea, también en el móvil; y el botón para cambiar lo que pediste. */
+.cambios__fechas {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.cambios__fechas .campo {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 10px;
+}
+.cambiar {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
