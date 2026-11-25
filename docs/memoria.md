@@ -26,7 +26,8 @@ Node: `abreElDia`, `diasQueCierra`, `entradaDe`) y `agent/launcher/capas.ts`. Ca
 elige los sitios, con los días esperándolo hasta su tope (600 segundos), y `budget`, de código, antes de montar el
 viaje. Sin contrato en `agent/contracts/<asiento>/` (`getting-around`, `local-knowledge`, `tickets`) una capa no se
 lanza; los tres contratos ya están, y los de prueba del suelo se quitaron al juntarlos (25-nov).
-**Cómo se enchufa una capa**: escribir su contrato (con `README.md`, `DELIVERY.md` e `INTERNET.md`); afinar su
+**Cómo se enchufa una capa**: escribir su contrato (`README.md`, `GUIDE.md`, `RULES.md`, `DELIVERY.md` e
+`INTERNET.md`); afinar su
 entrega y `paraEnsenar...` en `agent/scripts/capa_<x>.ts`, sin cambiar la forma del viaje; poner su puerta en
 `agent/gates/` y cambiarla en una línea de `agent/launcher/capa_<x>.ts`; afinar su asiento de mentira; y sus pruebas
 en su archivo. No se tocan los archivos comunes ni `investigar.ts`. El impacto de cada cambio, en
@@ -171,8 +172,7 @@ Lo que cierra cada día: `cierraEnElRun` y `cierraEnElViaje`; el ritmo lo recibe
 «closed», y la puerta 9 lo mira con `cierra`. Lo usan la casa, el montaje del viaje, `diasElegidos` y la web. Si pasan
 del tope, `ordenParaMirar`: primero los imprescindibles y los que tienen puerta; el aviso, con los del run. Sabido: el
 viaje no distingue un sitio sin mirar por el tope de uno cuya tanda falló; «closed» sale en la web con lo que no cabe
-a ese ritmo; el aviso de que Overpass no contesta sale por la consola y aún no llega a los avisos del run; y qué
-instancias de Overpass se usan es del PM. Sin pantalla nueva ni capturas, y sin ver con IA.
+a ese ritmo; y qué instancias de Overpass se usan es del PM. Sin pantalla nueva ni capturas, y sin ver con IA.
 
 **La web de las capas (14.6), junta** (25-nov). `web/src/piezas/Alli.tsx` (`Alli`, `EntradaDeLaParada`,
 `FichaDeLaEntrada`, `CosteDelTrayecto`, `ElPresupuesto`) y sus cuentas en `web/src/lib/alli.ts` (`paraTuGrupo`,

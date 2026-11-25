@@ -75,6 +75,12 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   cuaderno (`agent/scripts/cuaderno.ts`), sus rótulos y lo cerca que cae un sitio de comer (`agent/data/guia.ts`), la
   puerta 10 con lo de allí (`agent/gates/puerta_guia.ts`) y sus pruebas (`tests/code/guia_alli.test.ts`); de
   mentira, las capas del viaje de la guía, en `tests/cases/inventado/guia.ts`.
+- **En los demás momentos (14.7)**: el presupuesto delante del que cruza, del que explica y del cierre
+  (`agent/launcher/presupuesto_delante.ts`); lo que no se miró y tu botón para mirarlo (`agent/launcher/dia_a_dia.ts`,
+  `agent/scripts/dia_a_dia.ts` y, en la web, `web/src/piezas/LasEntradas.tsx`); el enlace a las entradas al cerrar
+  (`agent/scripts/cierre.ts` y `agent/gates/puerta_cierre.ts`); y el techo de gasto con una capa cortada
+  (`agent/launcher/trabajos.ts` y `agent/launcher/casa.ts`). Sus pruebas, en `tests/code/techo_de_las_capas.test.ts`,
+  `presupuesto_delante.test.ts`, `cambios_con_capas.test.ts` y `entradas_a_ratos.test.ts`.
 
 ## Lo que aún no existe
 
