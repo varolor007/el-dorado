@@ -26,6 +26,7 @@ import { COMPROBAR_ENLACES, ESPERA_A_LAS_FUENTES, VUELTAS_DEL_ORDEN } from "../d
 import { TOPE_DE_UN_ASIENTO } from "../data/pasos.ts";
 import { puertaCierre, type MaterialDelCierre } from "../gates/puerta_cierre.ts";
 import { puertaDelOrden } from "../gates/puerta_explica.ts";
+import { conTuTransporte } from "../scripts/otro_transporte.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import type { Cierre, ComprobacionDeEnlace, EnlaceDeReserva, MANERAS, Viaje } from "../output/viaje.ts";
 import {
@@ -97,6 +98,8 @@ type Elegido = {
   ritmo?: string;
   /** El alojamiento que eligió en lugar del de la manera (8.2), si eligió otro: se cierra con él. */
   alojamiento?: string;
+  /** El transporte que elegiste, si es otro que el de la manera (8.3): de los que trae esa versión. */
+  transporte?: string;
 };
 type DeLosPrecios = {
   dados: Record<string, DeHoy>;
@@ -124,7 +127,7 @@ export function elegir(
   carpeta: string,
   manera: unknown,
   cuando: Date,
-  tuyos: { dias?: unknown; ritmo?: unknown; alojamiento?: unknown } = {},
+  tuyos: { dias?: unknown; ritmo?: unknown; alojamiento?: unknown; transporte?: unknown } = {},
 ): Elegido {
   const version = leerVersion(v);
   const viaje = version?.viaje as Viaje | undefined;
@@ -154,6 +157,16 @@ export function elegir(
     }
     elegido.dias = con.dias.map((d) => ({ fecha: d.fecha, paradas: d.paradas }));
     elegido.ritmo = con.ritmo;
+  }
+  // El transporte que elegiste (8.3): tiene que ser de esta versión y sumarse en la moneda de la manera.
+  if (tuyos.transporte !== undefined && tuyos.transporte !== null) {
+    const m = viaje.maneras.find((x) => x.id === manera)!;
+    try {
+      conTuTransporte(viaje, m, tuyos.transporte as string);
+    } catch {
+      throw new FalloAlCerrar("bad_transport");
+    }
+    if (tuyos.transporte !== m.transporte) elegido.transporte = tuyos.transporte as string;
   }
   guardarJson(join(carpeta, "elegido.json"), elegido);
   return elegido;
@@ -217,14 +230,17 @@ function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Via
   const deLaVersion = version.viaje as Viaje;
   // Con los días que tenía delante el viajero, si los mandó: es su viaje el que se cierra.
   const conDias = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
-  // Con el alojamiento que eligió en lugar del de la manera, si eligió otro (8.2): la manera, con él y su total.
+  // Con el alojamiento que eligió en lugar del de la manera (8.2) y con el transporte que eligió en lugar del suyo
+  // (8.3), si eligió otros: la manera, con ellos y su total. Cada uno cambia su parte de la suma.
   const tuyo = e.alojamiento ?? null;
+  const conLoTuyo = (m: Viaje["maneras"][number]): Viaje["maneras"][number] =>
+    conTuTransporte(conDias, conTuAlojamiento(conDias, m, tuyo), e.transporte);
   const viaje =
-    tuyo === null
+    tuyo === null && e.transporte === undefined
       ? conDias
       : {
           ...conDias,
-          maneras: conDias.maneras.map((m) => (m.id === e.manera ? conTuAlojamiento(conDias, m, tuyo) : m)),
+          maneras: conDias.maneras.map((m) => (m.id === e.manera ? conLoTuyo(m) : m)),
         };
   return { e, viaje, entendido: version.entendido as Entendido };
 }

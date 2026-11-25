@@ -3,9 +3,9 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), el alojamiento (8.2) y el día
-a día (8.6), hechos y juntos; el transporte (8.3) y los cambios (8.5), en marcha con una sesión cada uno; las tandas
-4 y 5, con el visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), el alojamiento (8.2), el día a
+día (8.6) y el transporte (8.3), hechos y juntos; los cambios (8.5), por juntar; las tandas 4 y 5, con el visto bueno
+del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
 **El alojamiento, a ratos (8.2), junto** (25-nov). Desde la ficha (`web/src/piezas/Alojamiento.tsx`). Elegir otro
 de los que ya hay es una elección (`lodging`), y el total lo rehace el código (`conTuAlojamiento`, en
@@ -35,6 +35,25 @@ entrega de antes pasa su puerta con lo de ahora, se copian sus puestos y no se l
 inglés y en español. Sin hacer: el del calendario con un mensaje (el de antes se conserva). Sin ver con IA ni con
 fuentes de verdad. Al juntarlo con el 8.2, la puerta de la web y la hoja de estilos chocaban en trozos que
 compartían líneas: se rehicieron a mano, función a función.
+
+**El transporte, a ratos (8.3), junto** (25-nov). La búsqueda otra vez es código (`agent/scripts/otro_transporte.ts`
+y `agent/launcher/otro_transporte.ts`; los números, en `agent/data/transporte.ts`), guardada en
+`viajes/<id>/transporte/<n>.json` con su versión: `GET` y `POST /viajes/<id>/transporte` (`{move}`) y
+`POST /viajes/<id>/transporte/elegir` (`{search, option, ceiling?}`), que solo vale con la búsqueda de la versión que
+se ve (`old_search` si no). Dos clases nuevas en `agent/data/momentos.ts`: `flight` (otro vuelo los mismos días: la
+tabla, el que cruza y el que explica; la que había, `transport`, queda sin usar porque rehacía también las miradas)
+y `new_country` (los papeles, con el país de un aeropuerto nuevo); otro día va por `dates`, con lo entendido nuevo.
+El pedido del run lleva el vuelo y los países (`pedidoDelTransporte`), y lo leen `transporteDe` y los papeles en
+`investigar.ts`; los papeles y la puerta 2 aceptan países de más. Cerrar usa la elección `transport`
+(`Elegido.transporte` y `conTuTransporte`; 400 `bad_transport` si no es del viaje). En la web,
+`web/src/piezas/ElTransporte.tsx`, desde las cuentas o suelta con `?at=transport`. Sabido y sin arreglar: si otra
+investigación rehace los papeles por otro cambio, los países de más del transporte no se recuerdan (van en el pedido
+de su run); la fuente no dice dónde se hace escala; el impacto de `flight` dice que deja de valer «dónde duermes»
+(lo trae `PIEZAS_DE_UN_PASO.table`). Al juntarlo con el 8.2, cerrar lleva los dos: la manera, con el alojamiento
+y el transporte elegidos, cada uno en su parte del total (`delElegido`, con su prueba en `cierre.test.ts`); y en la
+puerta, el pedido que no vale del transporte entra con otro nombre, porque el del alojamiento se llama igual. Mirado
+en la web con el viaje del ensayo, que no lleva vuelo: dice por qué, y al buscar otra vez la fuente no dio nada para
+esas fechas, y se dice. Sus opciones no se han visto con datos de verdad, ni nada de esto con IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

@@ -1284,3 +1284,28 @@ test("la puerta: no se investiga mientras se escribe la guía del viaje", async 
     }
   });
 });
+
+test("juntos (8.2 y 8.3): cerrar con otro alojamiento y otro transporte a la vez, y su total", async () => {
+  const base = viajeParaCerrar();
+  const m = base.maneras.find((x) => x.id === "cheapest")!;
+  const suyoA = base.alojamientos.find((a) => a.id === m.alojamiento)!;
+  const otroA = base.alojamientos.find((a) => a.id !== m.alojamiento && a.descartado == null)!;
+  const suyoT = base.transportes.find((t) => t.id === m.transporte)!;
+  const otroT = { ...suyoT, id: "t2", precio: { ...suyoT.precio, total: suyoT.precio.total + 25 } };
+  const { mesa, v } = enElMapa({ ...base, transportes: [...base.transportes, otroT] });
+  try {
+    const c = nuevoCierre(v, new Date(AHORA));
+    const e = elegir(v, c.carpeta, "cheapest", new Date(AHORA), { alojamiento: otroA.id, transporte: "t2" });
+    assert.deepEqual([e.alojamiento, e.transporte], [otroA.id, "t2"]);
+    const f = fuentes(alojamientoHoy(otroA.precio.total));
+    const r = await llevarElCierre(v, c, { fuentes: f, lanzador: explicaDeMentira(), ahora: () => new Date(AHORA) });
+    assert.equal(r.etapa, "done", JSON.stringify(r));
+    const cierre = (leerVersion(leerViaje(v.ficha.id, "u-1", mesa))!.viaje as Viaje).cierre!;
+    assert.deepEqual([cierre.alojamiento, cierre.transporte], [otroA.id, "t2"]);
+    const juntos = m.total - suyoA.precio.total + otroA.precio.total - suyoT.precio.total + otroT.precio.total;
+    assert.equal(cierre.total.antes, Math.round(juntos * 100) / 100);
+    assert.deepEqual(cierre.precios.map((p) => p.ref).sort(), [otroA.id, "t2"].sort());
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});

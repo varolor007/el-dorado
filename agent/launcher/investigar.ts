@@ -62,6 +62,8 @@ import {
   vuelosMovidos,
   type Parrilla,
 } from "../scripts/transporte.ts";
+import { pedidoDelTransporte } from "../scripts/otro_transporte.ts";
+import { rehechoDe } from "./rehacer.ts";
 import type { TablaDeCaminos } from "../tools/caminos.ts";
 import type { Opciones as OpcionesDeFotos } from "../tools/fotos.ts";
 import { paraElGrupo } from "../tools/fuentes/tipos.ts";
@@ -421,6 +423,10 @@ type DeLaBusqueda = { vuelos: Vuelo[]; transporte?: Parrilla | null; busqueda: B
 function transporteDe(run: string): Vuelo | null {
   const { vuelos, busqueda } = leer<DeLaBusqueda>(run, "busqueda.json");
   const e = busqueda.estancia;
+  // Si este run lo rehace el transporte (8.3), su vuelo es el que eligió el viajero, si es de las fechas del viaje y
+  // de su moneda: un precio de otros días no se suma a estas noches.
+  const elegido = pedidoDelTransporte(rehechoDe(run)?.pedido)?.flight ?? null;
+  if (elegido !== null && elTransporte([elegido], e.moneda, e.entrada, e.salida) !== null) return elegido;
   return elTransporte(vuelos, e.moneda, e.entrada, e.salida);
 }
 
@@ -759,9 +765,11 @@ function deLosPapeles(run: string, base: Entendido): string | null {
   const viaje = sinPalabras(base);
   const hoy = hoyEnLaCasa();
   // Sin nada que preguntar (todos viajan por el país de su pasaporte), la tabla queda vacía y no se lanza a nadie.
-  if (celdasDe(viaje).length === 0) {
+  // Los países de más que trae el transporte elegido (8.3), si este run lo rehace por él.
+  const deMas = pedidoDelTransporte(rehechoDe(run)?.pedido)?.countries ?? [];
+  if (celdasDe(viaje, deMas).length === 0) {
     guardar(run, PAPELES, {
-      ...paraEnsenarPapeles({ seat: "papers", cells: [], unknowns: [] }, viaje, hoy),
+      ...paraEnsenarPapeles({ seat: "papers", cells: [], unknowns: [] }, viaje, hoy, deMas),
       entrega: null,
       cuando: new Date().toISOString(),
     } satisfies DeLosPapelesGuardado);
@@ -776,14 +784,14 @@ function deLosPapeles(run: string, base: Entendido): string | null {
     run,
     "papeles",
     "papers",
-    piezasDeLosPapeles(viaje, hoy),
-    (e) => puertaPapeles(e, { viaje }).rojos,
+    piezasDeLosPapeles(viaje, hoy, deMas),
+    (e) => puertaPapeles(e, { viaje, paises: deMas }).rojos,
   );
   if ("espera" in r) return r.espera;
   if ("parado" in r) guardar(run, PAPELES, sinPapeles(viaje, "rejected", new Date()));
   else
     guardar(run, PAPELES, {
-      ...paraEnsenarPapeles(r.entrega, viaje, hoy),
+      ...paraEnsenarPapeles(r.entrega, viaje, hoy, deMas),
       entrega: r.entrega,
       cuando: new Date().toISOString(),
     } satisfies DeLosPapelesGuardado);

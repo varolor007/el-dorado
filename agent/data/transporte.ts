@@ -29,3 +29,27 @@ export const PETICIONES_DE_TRANSPORTE = PARES * 2;
 
 /** El redondeo del punto del que sale el viajero, en decimales de grado: uno es unos once kilómetros. */
 export const DECIMALES_DEL_ORIGEN = 1;
+
+// El transporte, a ratos (8.3): buscarlo otra vez, movido a donde pide el viajero. Son de partida, como lo de arriba.
+
+/** Cuántos días se puede mover la ida o la vuelta al buscar otra vez: la parrilla mira además los suyos alrededor. */
+export const DIAS_QUE_SE_MUEVE_UN_VUELO = DIAS_ALREDEDOR;
+
+/**
+ * Los horarios que se pueden pedir, por la hora de salida en la hora del sitio de donde sale: desde y hasta (sin
+ * llegar a ella). «Sin madrugar» es salir de las nueve en adelante.
+ */
+export const HORARIOS = {
+  any: [0, 24],
+  not_early: [9, 24],
+  morning: [6, 12],
+  afternoon: [12, 18],
+  evening: [18, 24],
+} as const satisfies Record<string, readonly [number, number]>;
+export type Horario = keyof typeof HORARIOS;
+
+/** Cuántas opciones se enseñan de una búsqueda, las más baratas primero. */
+export const OPCIONES_QUE_SE_ENSENAN = 12;
+
+/** Cuántas veces se puede buscar otra vez el transporte de un viaje, en tantas horas: cada una pide a la fuente. */
+export const BUSQUEDAS_DE_TRANSPORTE = { deUnViaje: 12, horas: 24 };

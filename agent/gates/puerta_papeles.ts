@@ -41,7 +41,8 @@ const PUEDE_ENTRAR = new RegExp(
   "i",
 );
 
-export type ParaLosPapeles = { viaje: Entendido };
+/** Lo que mira la puerta: lo entendido y, si el transporte elegido pasa por otro país (8.3), esos países. */
+export type ParaLosPapeles = { viaje: Entendido; paises?: readonly string[] };
 
 export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
   const rojos: Rojo[] = [];
@@ -50,7 +51,7 @@ export function puertaPapeles(v: unknown, p: ParaLosPapeles): Veredicto {
   if (v.seat !== "papers") rojo("seat", "no es la entrega del de los papeles");
   const filas = filasDe(p.viaje);
   const destino = p.viaje.destination.country.toUpperCase();
-  const pendientes = new Map(celdasDe(p.viaje).map((c) => [`${c.traveller}|${c.country}|${c.question}`, c]));
+  const pendientes = new Map(celdasDe(p.viaje, p.paises).map((c) => [`${c.traveller}|${c.country}|${c.question}`, c]));
   const vistas = new Set<string>();
 
   const casillas = Array.isArray(v.cells) ? v.cells : null;

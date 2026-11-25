@@ -415,6 +415,8 @@ type DeViaje = Comun & {
   alReponer?: (id: string) => void;
   /** El identificador del viaje si es tuyo y se le puede mandar un mensaje para tus días (8.6). */
   paraMensajes?: string | null;
+  /** Abre el transporte de tu viaje (8.3). */
+  alTransporte?: () => void;
 };
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
@@ -779,6 +781,11 @@ function Cuentas(x: DeViaje) {
         </div>
         {marcada !== undefined && (
           <p className="dato">{t.cuentas.incluye(t.viaje.manera[marcada.id], comoSeLlega(viaje, marcada))}</p>
+        )}
+        {x.alTransporte !== undefined && (
+          <button type="button" className="enlace" onClick={x.alTransporte}>
+            {t.transporte.abrir}
+          </button>
         )}
       </div>
       {viaje.palancas.length > 0 && (

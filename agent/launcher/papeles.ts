@@ -58,8 +58,13 @@ export function filasDe(viaje: Entendido): Fila[] {
   return filas;
 }
 
-/** Los países del viaje: hoy, el del destino. Por cuáles se hace escala lo dirá el transporte. */
-export const paisesDe = (viaje: Entendido): string[] => [viaje.destination.country.toUpperCase()];
+/**
+ * Los países del viaje: el del destino y, si el transporte elegido sale o llega por otro (8.3), esos también. Por
+ * cuáles se hace escala no lo dice la fuente de vuelos: esa pregunta sigue esperando.
+ */
+export const paisesDe = (viaje: Entendido, deMas: readonly string[] = []): string[] => [
+  ...new Set([viaje.destination.country.toUpperCase(), ...deMas.map((x) => x.toUpperCase())]),
+];
 
 /** Lo que se pregunta a una fila: la lista fija, sin lo de menores a un adulto y sin lo que espera al transporte. */
 export const preguntasDe = (f: Fila): (typeof PREGUNTAS)[number][] =>
@@ -72,27 +77,27 @@ export const esSuPais = (f: Fila, pais: string): boolean => f.passport !== "" &&
  * La tabla que hay que llenar: cada fila por cada país que no sea el de su pasaporte, con sus preguntas. Puede quedar
  * vacía (todos viajan por su propio país): entonces no hay nada que mirar, y no se lanza a nadie.
  */
-export function celdasDe(viaje: Entendido): Celda[] {
+export function celdasDe(viaje: Entendido, deMas: readonly string[] = []): Celda[] {
   return filasDe(viaje).flatMap((f) =>
-    paisesDe(viaje)
+    paisesDe(viaje, deMas)
       .filter((country) => !esSuPais(f, country))
       .flatMap((country) => preguntasDe(f).map((question) => ({ traveller: f.id, country, question }))),
   );
 }
 
 /** Lo que el de los papeles puede ver: los pasaportes, las edades, el destino y los días. Nada de quién es nadie. */
-export function piezasDeLosPapeles(viaje: Entendido, hoy: string): Pieza[] {
+export function piezasDeLosPapeles(viaje: Entendido, hoy: string, deMas: readonly string[] = []): Pieza[] {
   const json = (dato: unknown): string => JSON.stringify(dato, null, 2);
   const { check_in, check_out } = viaje.dates;
   const filas = filasDe(viaje);
-  const paises = paisesDe(viaje);
+  const paises = paisesDe(viaje, deMas);
   const trip = {
     today: hoy,
     destination: { name: viaje.destination.name, country: viaje.destination.country.toUpperCase() },
     countries: paises,
     dates: { check_in, check_out, nights: diasEntre(check_in, check_out) },
   };
-  const questions = celdasDe(viaje).map((c) => ({ ...c, asks: QUE_PREGUNTA[c.question] }));
+  const questions = celdasDe(viaje, deMas).map((c) => ({ ...c, asks: QUE_PREGUNTA[c.question] }));
   const deCada = [...new Set([...paises, ...filas.map((f) => f.passport)])].map(
     (pais) => [pais, dominiosDe(pais)] as const,
   );
@@ -129,7 +134,12 @@ export function validoHasta(v: Vigencia, entrada: string, salida: string): strin
 export const bloquea = (casillas: CasillaDePapel[]): boolean => casillas.some((c) => c.estado === "blocks");
 
 /** Lo que se enseña de lo que entregó el asiento, con las cuentas de plazos del código. Ninguna frase suya. */
-export function paraEnsenarPapeles(e: EntregaDeLosPapeles, viaje: Entendido, hoy: string): DeLosPapeles {
+export function paraEnsenarPapeles(
+  e: EntregaDeLosPapeles,
+  viaje: Entendido,
+  hoy: string,
+  deMas: readonly string[] = [],
+): DeLosPapeles {
   const { check_in: entrada, check_out: salida } = viaje.dates;
   const filas = filasDe(viaje);
   const viajeros: FilaDePapeles[] = filas.map((f) => ({
@@ -159,7 +169,7 @@ export function paraEnsenarPapeles(e: EntregaDeLosPapeles, viaje: Entendido, hoy
       coste: c.cost === "unknown" ? null : { importe: c.cost.amount, moneda: c.cost.currency.toUpperCase() },
     };
   });
-  const paises = paisesDe(viaje);
+  const paises = paisesDe(viaje, deMas);
   const porQueNo = (
     fila: Fila,
     pregunta: (typeof PREGUNTAS)[number],
