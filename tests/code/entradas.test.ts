@@ -65,6 +65,20 @@ test("el horario de OpenStreetMap: lo corriente se lee, y un día que no sale es
   assert.deepEqual(leerHorarioDeOsm("Mo,We,Fr 10:00-12:00")?.[0].dias, ["mon", "wed", "fri"]);
   // Los festivos no se pueden poner en el calendario: se dejan, y lo demás se lee.
   assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-18:00; PH off")?.[0].dias, todos.slice(0, 5));
+  // Un festivo junto a unos días: se lee lo de esos días, y el festivo se deja.
+  for (const h of ["Mo-Sa 10:00-18:00; Su,PH off", "Mo-Sa 10:00-18:00; PH,Su off", "Mo-Sa 10:00-18:00; Su, PH off"])
+    assert.deepEqual(leerHorarioDeOsm(h), [{ dias: todos.slice(0, 6), abre: "10:00", cierra: "18:00" }], h);
+  assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-18:00; Sa,PH 10:00-14:00"), [
+    { dias: ["sat"], abre: "10:00", cierra: "14:00" },
+    { dias: todos.slice(0, 5), abre: "10:00", cierra: "18:00" },
+  ]);
+  // Dos tramos de horas con un espacio tras la coma, y unos días sueltos con su espacio.
+  assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-12:00, 14:00-18:00"), [
+    { dias: todos.slice(0, 5), abre: "10:00", cierra: "12:00" },
+    { dias: todos.slice(0, 5), abre: "14:00", cierra: "18:00" },
+  ]);
+  assert.deepEqual(leerHorarioDeOsm("Mo, We 10:00-12:00")?.[0].dias, ["mon", "wed"]);
+  assert.deepEqual(leerHorarioDeOsm("Mo-Su 00:00-24:00")?.[0], { dias: todos, abre: "00:00", cierra: "24:00" });
 });
 
 test("el horario de OpenStreetMap: lo que no se entiende no se adivina, y no se sabe", () => {
@@ -74,6 +88,13 @@ test("el horario de OpenStreetMap: lo que no se entiende no se adivina, y no se 
     "Mo-Fr",
     "PH off",
     "Mo 22:00-02:00",
+    // Una hora que no existe: solo «24:00» vale como las doce de la noche.
+    "Mo-Fr 10:00-24:30",
+    "Mo-Fr 10:00-24:01",
+    "Mo-Fr 10:00-24:59",
+    // Un festivo con algo que no se entiende sigue sin saberse.
+    "Su,PH 10:00-12:00 open",
+    "Su,PH,SH off",
     'Mo-Fr 10:00-18:00 "by appointment"',
     "Mo[1] 10:00-12:00",
     "Mo-Su 10:00-18:00+",

@@ -223,7 +223,7 @@ type Pega = { donde: string; que: string };
 
 const esFecha = (v: unknown): boolean =>
   typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
-const esHora = (v: unknown): boolean => typeof v === "string" && /^([01]\d|2[0-4]):[0-5]\d$/.test(v);
+const esHora = (v: unknown): boolean => typeof v === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
 const esMoneda = (v: unknown): boolean => typeof v === "string" && /^[A-Z]{3}$/.test(v);
 const esLista = (v: unknown): v is unknown[] => Array.isArray(v) && v.length <= LO_MAS_DE_UNA_LISTA;
 const esNombre = (v: unknown): boolean =>
