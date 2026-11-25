@@ -14,9 +14,20 @@ export function cuantosSitios(noches: number): number {
   return Math.min(SITIOS_PARA_ELEGIR.maximo, Math.max(SITIOS_PARA_ELEGIR.minimo, porNoches));
 }
 
-/** Los sitios que se le dan a elegir: los más conocidos, tantos como pidan las noches, con lo que dice su artículo. */
-export function sitiosParaElegir(sitios: Sitio[], noches: number, resumenes: Map<string, string> = new Map()): Lugar[] {
-  return sitios.slice(0, cuantosSitios(noches)).map((s) => lugarDe(s, resumenes.get(s.id)));
+/**
+ * Los sitios que se le dan a elegir: los más conocidos, tantos como pidan las noches, con lo que dice su artículo. Y,
+ * detrás, los de `tambien` que no estuvieran: los que pidió el viajero en un mensaje y no estaban (8.6).
+ */
+export function sitiosParaElegir(
+  sitios: Sitio[],
+  noches: number,
+  resumenes: Map<string, string> = new Map(),
+  tambien: readonly string[] = [],
+): Lugar[] {
+  const dados = sitios.slice(0, cuantosSitios(noches));
+  const ya = new Set(dados.map((s) => s.id));
+  const mas = sitios.filter((s) => tambien.includes(s.id) && !ya.has(s.id));
+  return [...dados, ...mas].map((s) => lugarDe(s, resumenes.get(s.id)));
 }
 
 /** Una foto solo se enseña con su autor y su licencia: sin ellos, la parada va sin foto. */

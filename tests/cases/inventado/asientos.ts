@@ -204,7 +204,7 @@ export function entregaCon(asiento: string, dado: (nombre: string) => any): Obje
   if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
   if (asiento === "route-planner") return entregaDeRuta();
   if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
-  if (asiento === "sights-picker") return entregaDeSitios();
+  if (asiento === "sights-picker") return entregaDeSitios(dado("message.json"));
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
   if (asiento === "conductor") return entregaDelConductor(dado("stop.json"));
   const fechas = dado("dates.json");

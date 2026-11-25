@@ -21,10 +21,57 @@ export function viajeDeLaVersion(v: ViajeEnLaMesa, n: number | null = v.ficha.ve
   return (leerVersion(v, n)?.viaje as Viaje | undefined) ?? null;
 }
 
+/**
+ * Lo que traen de la versión de la que salen las elecciones de una versión nueva, si el momento que la hizo las pasó
+ * en lo que pide (`pedido.choices`, como un mensaje para un día, 8.6): lo que quitaste no vuelve solo. Se queda solo
+ * lo que sigue siendo del viaje nuevo; si con ello los días no valen, solo lo que quitaste y el ritmo.
+ */
+function heredadas(v: ViajeEnLaMesa, n: number, viaje: Viaje): Elecciones {
+  const version = v.ficha.versiones.find((x) => x.n === n);
+  const pedido = version === undefined ? null : rehechoDe(join(v.carpeta, "runs", String(version.run)))?.pedido;
+  const crudo = (pedido as { choices?: Partial<Elecciones> } | null)?.choices;
+  if (crudo === undefined || crudo === null || typeof crudo !== "object") return SIN_ELEGIR;
+  const suyas = new Set(viaje.paradas.map((p) => p.id));
+  const dias = viaje.dias.length;
+  const de = <T>(x: T | undefined, validos: readonly T[]): T | null =>
+    x !== undefined && validos.includes(x) ? x : null;
+  const removed = (crudo.removed ?? []).filter((id) => suyas.has(id));
+  const entera = {
+    way: de(
+      crudo.way ?? undefined,
+      viaje.maneras.map((m) => m.id),
+    ),
+    lodging: de(
+      crudo.lodging ?? undefined,
+      viaje.alojamientos.filter((a) => a.descartado == null).map((a) => a.id),
+    ),
+    transport: de(
+      crudo.transport ?? undefined,
+      viaje.transportes.map((t) => t.id),
+    ),
+    pace: crudo.pace ?? null,
+    removed,
+    added: (crudo.added ?? []).filter((id) => suyas.has(id) && !removed.includes(id)),
+    moved: Object.fromEntries(
+      Object.entries(crudo.moved ?? {}).filter(([id, d]) => suyas.has(id) && !removed.includes(id) && d < dias),
+    ),
+    tastes: crudo.tastes ?? null,
+  };
+  for (const e of [entera, { ...SIN_ELEGIR, removed, pace: entera.pace }]) {
+    try {
+      return comprobarElecciones(viaje, e);
+    } catch {
+      // Si no vale entera, se prueba con menos.
+    }
+  }
+  return SIN_ELEGIR;
+}
+
 /** Lo que elegiste sobre una versión; lo propuesto si no elegiste nada, o si lo guardado ya no es de ella. */
 export function leerElecciones(v: ViajeEnLaMesa, n: number | null = v.ficha.version): Elecciones {
   const viaje = viajeDeLaVersion(v, n);
-  if (n === null || viaje === null || !existsSync(deLaVersion(v, n))) return SIN_ELEGIR;
+  if (n === null || viaje === null) return SIN_ELEGIR;
+  if (!existsSync(deLaVersion(v, n))) return heredadas(v, n, viaje);
   try {
     const guardado = JSON.parse(readFileSync(deLaVersion(v, n), "utf8")) as { elecciones?: unknown };
     return comprobarElecciones(viaje, guardado.elecciones);

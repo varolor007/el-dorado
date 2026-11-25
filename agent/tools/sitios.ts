@@ -47,7 +47,12 @@ export function claseDe(clases: string[], raicesDe: Map<string, string[]>): stri
   return clase;
 }
 
-export type Pedido = { minimoDeEnlaces?: number; cuantos?: number; idioma?: string };
+/**
+ * Lo que se pide: cuánta fama como mínimo, cuántos y en qué idioma. Con `raices`, solo lo que desciende de esas
+ * clases de la fuente (sus identificadores, `Q` y un número): así se vuelve a los datos abiertos por algo que pidió
+ * el viajero y no estaba, como una playa o un mercado.
+ */
+export type Pedido = { minimoDeEnlaces?: number; cuantos?: number; idioma?: string; raices?: string[] };
 
 /**
  * Una caja, con un margen alrededor, en grados. La caja de una ciudad es la de su término, y lo que está en su
@@ -73,6 +78,13 @@ export function consultaDeSitios(caja: Encuadre, p: Pedido = {}): string {
   const minimo = Math.max(1, Math.floor(p.minimoDeEnlaces ?? 5));
   // Se piden más filas de las que hacen falta: muchas son de cosas que no son un sitio que ver, y se caen después.
   const filas = Math.min(500, Math.max(1, Math.floor(p.cuantos ?? 120)) * 6);
+  // Solo identificadores de la fuente: nada de lo que se le pase entra en la consulta como texto.
+  const raices = (p.raices ?? []).filter((r) => /^Q\d{1,12}$/.test(r));
+  if (p.raices !== undefined && raices.length === 0) throw new Error("no hay ninguna clase que pedir");
+  const deClase =
+    raices.length === 0
+      ? ""
+      : `\n  ?item wdt:P31/wdt:P279* ?raiz . VALUES ?raiz { ${raices.map((r) => `wd:${r}`).join(" ")} }`;
   return `SELECT ?item ?lat ?lon ?enlaces
   (SAMPLE(?nombreSuyo) AS ?nombre) (SAMPLE(?nombreIngles) AS ?nombreEn) (SAMPLE(?descripcion) AS ?about)
   (SAMPLE(?articuloSuyo) AS ?articulo) (SAMPLE(?articuloIngles) AS ?articuloEn) (SAMPLE(?imagen) AS ?foto)
@@ -83,7 +95,7 @@ export function consultaDeSitios(caja: Encuadre, p: Pedido = {}): string {
     bd:serviceParam wikibase:cornerSouthWest "Point(${caja.oeste} ${caja.sur})"^^geo:wktLiteral .
     bd:serviceParam wikibase:cornerNorthEast "Point(${caja.este} ${caja.norte})"^^geo:wktLiteral .
   }
-  ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${minimo})
+  ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${minimo})${deClase}
   BIND(geof:latitude(?donde) AS ?lat) BIND(geof:longitude(?donde) AS ?lon)
   OPTIONAL { ?item wdt:P18 ?imagen . }
   OPTIONAL { ?item wdt:P31 ?clase . }

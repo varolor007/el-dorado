@@ -10,7 +10,9 @@ import { encendida } from "../tools/fuentes/enchufes.ts";
 import { CASILLAS_DE_UNA_MATRIZ, claveDeGeoapify, matrizDeCaminos } from "../tools/fuentes/geoapify.ts";
 import { liteapi } from "../tools/fuentes/liteapi.ts";
 import { ofertasDeZona } from "../tools/fuentes/parallel.ts";
-import { conMargen, fotosDe, resumenesDe, sitiosConEscalera } from "../tools/sitios.ts";
+import { SITIOS_DE_UNA_CLASE } from "../data/dia_a_dia.ts";
+import { raicesDeLasClases } from "../scripts/dia_a_dia.ts";
+import { conMargen, fotosDe, resumenesDe, sitiosConEscalera, sitiosDe } from "../tools/sitios.ts";
 import type { Fuentes } from "./investigar.ts";
 import { carpetaDeLaMesa } from "./mesa.ts";
 
@@ -31,6 +33,19 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
       const caja = { oeste: c.west, sur: c.south, este: c.east, norte: c.north };
       const pedido = { idioma: viaje.language, cuantos: SITIOS_QUE_SE_TRAEN };
       return sitiosConEscalera(conMargen(caja, MARGEN), ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN, pedido);
+    },
+    // Lo que pidió el viajero en un mensaje y no estaba (8.6): solo esas clases, con menos fama, en la misma caja.
+    sitiosDeClases: (viaje, clases) => {
+      const c = viaje.destination.box;
+      const caja = { oeste: c.west, sur: c.south, este: c.east, norte: c.north };
+      const raices = raicesDeLasClases(clases);
+      if (raices.length === 0) return Promise.resolve([]);
+      return sitiosDe(conMargen(caja, MARGEN), {
+        idioma: viaje.language,
+        cuantos: SITIOS_DE_UNA_CLASE,
+        raices,
+        minimoDeEnlaces: 1,
+      });
     },
     // Cuántos se resumen lo decide quien llama, según las noches del viaje.
     resumenes: (sitios) => resumenesDe(sitios),

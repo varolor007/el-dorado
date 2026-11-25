@@ -9,6 +9,7 @@
 | `skip` | What is not, with its why |
 | `missing` | What this traveller would expect and the list does not have. Empty list if nothing |
 | `unknowns` | What you could not know, in plain sentences. Empty list if nothing |
+| `changed` | Only when `in/message.json` exists: what changed and why, for the traveller. Never otherwise |
 
 Every place of `in/sights.json` is in `go` or in `skip`, once.
 
@@ -40,6 +41,15 @@ Two examples of such a `why`, in English only to show the form: `An office build
 Or `A summit that its description gives as a full day of climbing: you asked for an easy pace.`
 
 `why` is in the traveller's language too: the traveller can read why something was left out.
+
+## `changed`
+
+`"changed": "<one to three sentences in the traveller's language: what you took out, what you brought in and what
+moved up, each with its reason from what they said>"`
+
+Two examples, in English only to show the form: `You asked for fewer museums: two of them are out, and the walk by
+the river and the market take their place.` Or `You asked for a beach day: there is no beach in what open data
+knows of this place, so nothing changed for that.`
 
 ## An entry of `missing`
 

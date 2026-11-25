@@ -47,7 +47,25 @@ it is: for instance somewhere to swim, a place with live music or an easy walk f
 a place that is not in the list and you do not add it to `go`. Today the house keeps what you say is missing but
 does not yet look for it in other sources: it is not added to the trip.
 
-## 6. Self-critique
+## 6. When there is a message
+
+If `in/message.json` exists, the traveller already has these days and asks for a change in their words: «fewer
+museums», «a beach day», «something calmer on the second day». You do the same job as above, over the whole list,
+with what they said as one more thing they want:
+
+- Read `said` as a wish about what is worth their time, next to what `in/trip.json` says. It does not erase their
+  tastes and limits: it adds to them or weighs over them where they clash.
+- Every place of `in/sights.json` gets its verdict again. What they ask for less of goes down the `go` list or to
+  `skip`; what they ask for more of goes up, if the list has it. Places in `new_sights` were found for this message:
+  judge them like any other.
+- Every `id` in `removed` goes to `skip`: the traveller took it out by hand, and it does not come back on its own.
+- You still do not put anything on a day: `open_day` and `days` tell you what the traveller was looking at, not
+  where things go. The house spreads your choice over the days again.
+- In `changed`, tell the traveller what changed and why, in one to three plain sentences, in their language: what
+  you took out, what you brought in and what moved up, each with the reason from what they said. If what they asked
+  for is not in the list, say so plainly, and put it in `missing` too.
+
+## 7. Self-critique
 
 Before delivering: a `go` chosen for its fame and not for this traveller; a `why` that would fit any place; a place
 with two verdicts or with none; something you know from memory that is not in `in/`.
