@@ -16,13 +16,19 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SITIOS_EN_TOTAL, SITIOS_POR_LLAMADA } from "../data/capa_entradas.ts";
-import type { FaltaDeUnaCapa } from "../data/capas.ts";
+import type { FaltaDeUnaCapa, SinMirar } from "../data/capas.ts";
 import { topesDeInternet } from "../data/internet.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { puertaEntradas } from "../gates/puerta_entradas.ts";
-import { pegasDeLasEntradas, type DeLasEntradas } from "../output/capas.ts";
+import { pegasDeLasEntradas, type DeLasEntradas, type EntradaDeUnSitio } from "../output/capas.ts";
 import { diasQueCierra } from "../scripts/capas.ts";
-import { paraEnsenarEntradas, type DatosAbiertos, type EntregaDeLasEntradas } from "../scripts/capa_entradas.ts";
+import {
+  entradaAbierta,
+  paraEnsenarEntradas,
+  type DatosAbiertos,
+  type EntregaDeLasEntradas,
+} from "../scripts/capa_entradas.ts";
+import type { Entendido } from "../scripts/formas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { capaDelRun, guardarEnElRun, pieza, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
 import { abiertas, leerConsultado } from "./consultado.ts";
@@ -32,8 +38,11 @@ export const ENTRADAS = "entradas.json";
 export const ABIERTOS = "abiertos.json";
 const ASIENTO = "tickets";
 
-/** Lo que trae los datos abiertos de unos sitios: es una fuente, y se le pasa a la investigación con las demás. */
-export type TraerAbiertos = (sitios: Sitio[]) => Promise<DatosAbiertos[]>;
+/**
+ * Lo que trae los datos abiertos de unos sitios: es una fuente, y se le pasa a la investigación con las demás. Si algo
+ * le falta (por ejemplo, que OpenStreetMap no contesta y no hay horarios), lo dice por `avisar`.
+ */
+export type TraerAbiertos = (sitios: Sitio[], avisar?: (texto: string) => void) => Promise<DatosAbiertos[]>;
 
 /** Los sitios que se miran: los elegidos, por orden de importancia, hasta el tope; en tandas de los de cada llamada. */
 export function tandasDeSitios(elegidos: Sitio[]): Sitio[][] {
@@ -60,7 +69,10 @@ export async function traerLosAbiertos(
   else
     try {
       const ids = new Set(elegidos.map((s) => s.id));
-      abiertos = (await traer(elegidos)).filter((a) => ids.has(a.sitio));
+      // Lo que la fuente avise se guarda con los avisos del run, no solo en la consola.
+      abiertos = (await traer(elegidos, (texto) => avisos.push(`datos abiertos: ${texto}`))).filter((a) =>
+        ids.has(a.sitio),
+      );
     } catch (error) {
       avisos.push(`sin datos abiertos de los sitios: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -140,15 +152,95 @@ export function capaDeLasEntradasDe(run: string | null): CapaDeIA<EntregaDeLasEn
     base: "entradas",
     tandas: (m) => tandasDeSitios(m.elegidos).map((sitios) => piezasDeLasEntradas(m, sitios)),
     puerta: (e, m, tanda) => puertaDeLasEntradas(e, m, tanda, run),
-    // Lo que no se miró (pasó del tope o su tanda falló) va con lo que dicen los datos abiertos.
+    // Lo que no se miró va con lo que dicen los datos abiertos, y con su porqué: pasó del tope o su tanda falló.
     ensenar: (entregas, m) =>
       paraEnsenarEntradas(
         entregas,
         m.elegidos.map((s) => s.id),
         m.abiertos,
+        porQueSinMirar(m.elegidos, entregas),
       ),
     sinElla: sinEntradas,
   };
+}
+
+/**
+ * Por qué no se miró cada sitio que no se miró: el que pasa del tope de sitios del viaje, por el tope; el de una
+ * tanda que no entregó (falló, tardó o no pasó su puerta), porque falló su tanda.
+ */
+export function porQueSinMirar(elegidos: Sitio[], entregas: readonly unknown[]): Record<string, SinMirar> {
+  const porQue: Record<string, SinMirar> = {};
+  for (const s of elegidos.slice(SITIOS_EN_TOTAL)) porQue[s.id] = "over_limit";
+  tandasDeSitios(elegidos).forEach((tanda, i) => {
+    if (entregas[i] == null) for (const s of tanda) porQue[s.id] = "failed";
+  });
+  return porQue;
+}
+
+/**
+ * Las entradas que sigue valiendo de la investigación de la que parte un run que rehace otro (14.7): las de antes, si
+ * son del mismo destino y de las mismas fechas y no faltaron. Con otras fechas, otro destino o sin ellas, null: se
+ * miran otra vez. Así un mensaje para un día o un sitio que añades no vuelven a pagar lo que ya se miró.
+ */
+export function entradasDeAntes(desde: string | null, ahora: Entendido): EntradaDeUnSitio[] | null {
+  if (desde === null || !existsSync(join(desde, "entendido.json"))) return null;
+  try {
+    const antes = JSON.parse(readFileSync(join(desde, "entendido.json"), "utf8")) as Entendido;
+    const igual =
+      antes.destination.name === ahora.destination.name &&
+      antes.destination.country === ahora.destination.country &&
+      antes.dates.check_in === ahora.dates.check_in &&
+      antes.dates.check_out === ahora.dates.check_out;
+    const e = capaDelRun<DeLasEntradas>(desde, ENTRADAS);
+    return igual && e !== undefined && e.falta === null ? e.sitios : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * El de las entradas en un run que se queda con las de antes (14.7): solo se miran los sitios pedidos (`m.elegidos`,
+ * los de tu botón); los demás van como estaban, y los que no estaban, con lo que dicen los datos abiertos y dicho que
+ * los añadiste tú. Si los pedidos no se pudieron mirar, van igual, con su porqué: la capa no falta por ello.
+ */
+export function conLasDeAntes(
+  c: CapaDeIA<EntregaDeLasEntradas, DeLasEntradas>,
+  fijas: EntradaDeUnSitio[],
+): CapaDeIA<EntregaDeLasEntradas, DeLasEntradas> {
+  const juntas = (nuevas: EntradaDeUnSitio[]): DeLasEntradas => ({
+    sitios: [...nuevas, ...fijas.filter((f) => !nuevas.some((n) => n.parada === f.parada))],
+    falta: null,
+  });
+  return {
+    ...c,
+    ensenar: (entregas, m) => juntas(c.ensenar(entregas, m).sitios),
+    sinElla: () => juntas([]),
+  };
+}
+
+/**
+ * Lo que va fijo en un run que se queda con las entradas de antes: de cada sitio elegido que no se pide mirar, su
+ * entrada de antes, o, si no estaba, lo que dicen los datos abiertos, añadido por ti. Y en `aMirar`, los pedidos.
+ */
+export function repartirLasEntradas(
+  elegidos: Sitio[],
+  deAntes: EntradaDeUnSitio[],
+  pedidos: readonly string[],
+  abiertos: DatosAbiertos[],
+): { aMirar: Sitio[]; fijas: EntradaDeUnSitio[] } {
+  const aMirar = elegidos.filter((s) => pedidos.includes(s.id));
+  const fijas = elegidos
+    .filter((s) => !pedidos.includes(s.id))
+    .map(
+      (s) =>
+        deAntes.find((e) => e.parada === s.id) ??
+        entradaAbierta(
+          s.id,
+          abiertos.find((a) => a.sitio === s.id),
+          "added",
+        ),
+    );
+  return { aMirar, fijas };
 }
 
 /** El de las entradas sin run: su puerta no tiene páginas abiertas que mirar, y las deja a la puerta de todos. */

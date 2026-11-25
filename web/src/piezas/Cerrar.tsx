@@ -226,6 +226,18 @@ export function Reservar({ t, idioma, viaje, cierre }: Comun & { viaje: Viaje; c
                   </b>
                   <span className="dato">{r.porQue.map((x) => t.cerrar.razon[x]).join(", ")}</span>
                   {r.frase !== undefined && <p>{r.frase}</p>}
+                  {/* El enlace a sus entradas (14.7); uno que no responde no se abre. */}
+                  {r.enlace !== undefined &&
+                    (r.enlace.comprobado === "down" ? (
+                      <span className="suave">
+                        {t.cerrar.entradas[r.enlace.clase]}: {t.cerrar.comprobado.down}
+                      </span>
+                    ) : (
+                      <a className="cerrar__enlace" href={r.enlace.url} target="_blank" rel="noreferrer nofollow">
+                        <span>{t.cerrar.entradas[r.enlace.clase]}</span>
+                        {r.enlace.comprobado === "unchecked" && <small>{t.cerrar.comprobado.unchecked}</small>}
+                      </a>
+                    ))}
                   {r.que === "sight" && cierre.mapas.paradas[r.ref] !== undefined && (
                     <a className="enlace" href={cierre.mapas.paradas[r.ref]} target="_blank" rel="noreferrer">
                       {t.viaje.enMapas}

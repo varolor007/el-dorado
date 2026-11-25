@@ -10,7 +10,12 @@ import { puertaDias } from "../../agent/gates/puerta_dias.ts";
 import { puertaEntradas, type ParaLasEntradas } from "../../agent/gates/puerta_entradas.ts";
 import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import { hayContrato } from "../../agent/launcher/capas.ts";
-import { losDiasSinEntradas, tandasDeSitios } from "../../agent/launcher/capa_entradas.ts";
+import {
+  ABIERTOS as ARCHIVO_DE_LOS_ABIERTOS,
+  losDiasSinEntradas,
+  tandasDeSitios,
+  traerLosAbiertos,
+} from "../../agent/launcher/capa_entradas.ts";
 import { comprobarViaje, type DeLasEntradas, type Parada, type Viaje } from "../../agent/output/viaje.ts";
 import { abreElDia } from "../../agent/scripts/capas.ts";
 import {
@@ -522,7 +527,15 @@ test("al viaje: manda lo que leyó el asiento; lo que no sabe, lo que dicen los 
     },
   ]);
   // El que no se miró, solo con lo que dicen los datos abiertos: sin ellos, nada.
-  assert.deepEqual(q3, { parada: "Q3", precios: null, horarios: null, reservar: null, web: null, mirado: false });
+  assert.deepEqual(q3, {
+    parada: "Q3",
+    precios: null,
+    horarios: null,
+    reservar: null,
+    web: null,
+    mirado: false,
+    sinMirar: "over_limit",
+  });
   const q1Abierto = entradaAbierta("Q1", ABIERTOS[0]);
   assert.equal(q1Abierto.mirado, false);
   assert.equal(abreElDia(q1Abierto.horarios, "2031-03-09"), false);
@@ -750,4 +763,18 @@ test("si hay más sitios que el tope: imprescindibles y con puerta primero, siem
   ]);
   assert.deepEqual(losDiasSinEntradas(paraEnsenarEntradas([], ids.slice(0, 24), [])), []);
   assert.equal(tandasDeSitios(ordenParaMirar(go, sitios, abiertos)).flat().length, 24);
+});
+
+test("lo que avisan los datos abiertos queda con los avisos del run, no solo en la consola", async () => {
+  const run = runNuevo();
+  const sitio = { id: "Q1", nombre: "Faro Inventado", punto: { lat: 10, lon: 20 } } as Sitio;
+  const traidos = await traerLosAbiertos(run, [sitio], async (sitios, avisar) => {
+    avisar?.("sin el horario ni si se paga de OpenStreetMap: ninguna instancia contesta");
+    return sitios.map((s) => ({ sitio: s.id, horario: null, dePago: null, web: null, fuentes: [] }));
+  });
+  assert.equal(traidos.length, 1);
+  assert.deepEqual(leerJson(join(run, ARCHIVO_DE_LOS_ABIERTOS)).avisos, [
+    "datos abiertos: sin el horario ni si se paga de OpenStreetMap: ninguna instancia contesta",
+  ]);
+  rmSync(run, { recursive: true, force: true });
 });

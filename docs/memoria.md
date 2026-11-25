@@ -198,6 +198,24 @@ para que haya tramos que no se andan. Sabido: el que escribe la guía no recibe 
 tienen la vuelta a donde duermes; un viaje cerrado enseña en las cuentas el presupuesto con los precios de la
 investigación, no los del cierre; sin niños en pantalla; sin IA.
 
+**Las capas en los demás momentos (14.7), junto** (25-nov). Entradas: `sinMirar` (`over_limit`, `failed`, `added`) en
+la forma; al rehacer con el mismo destino y las mismas fechas se quedan las de antes (`entradasDeAntes`,
+`repartirLasEntradas`, `conLasDeAntes`), y el paso `tickets` del impacto es código salvo con `destination`, `dates`
+u `other` (`MIRAN_TODAS_LAS_ENTRADAS`); la clase `tickets` y `POST /viajes/<id>/entradas` para tu botón
+(`prepararLasEntradas`, `pedirLasEntradas`; la pieza `web/src/piezas/LasEntradas.tsx`), con el tope de los mensajes,
+contado aparte. Lo que cierra en tus días: `cierranTusDias`, `stop_closed` al cerrar y el rótulo `fueraCierra`. El
+presupuesto delante: `agent/launcher/presupuesto_delante.ts`, con `budget.json` para el que cruza (por fila), para el
+que explica y para el orden al cerrar; CR10 y EX10 en sus contratos; el que cruza espera ahora a moverse y al
+destino. Cerrar: `Reserva.enlace` y `enlaceDeLaEntrada`, mirados por la puerta 8. El techo: `Trabajo.cota`,
+`gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`), **sin cifra enchufada**: con un
+techo puesto, una capa cortada sin decir lo que gastó sigue parando la investigación, como antes. Al juntar: la
+cuenta que ven el que cruza, el que explica y el cierre usa las zonas que trae el viaje, como la del viaje; y lo que
+avisan los datos abiertos (que Overpass no contesta) queda en los avisos del run (`abiertos.json`). Pruebas:
+`techo_de_las_capas`, `presupuesto_delante`, `cambios_con_capas`, `cierre` y `entradas`. Mirado en la web con una casa
+de mentira; el cierre con su enlace y el adelante del botón, solo en pruebas. Sabido: el primer mensaje para un día
+sobre un viaje de antes vuelve a lanzar una vez al que cruza y al que explica, porque su material cambia; y cambiar
+lo que buscas vuelve a lanzar al que conoce el destino, que no lo lee. Sin ver con IA.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee

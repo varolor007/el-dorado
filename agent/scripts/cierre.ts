@@ -11,6 +11,9 @@ import {
   SUBIDA_QUE_SE_PREGUNTA,
 } from "../data/cierre.ts";
 import { cuentasDeUnDia } from "../gates/puerta_dias.ts";
+import { cierraEnElViaje } from "./capa_entradas.ts";
+import { cierranTusDias } from "./dia_a_dia.ts";
+import { entradaDe } from "./capas.ts";
 import type {
   CambioDePrecio,
   ClaseDePieza,
@@ -296,20 +299,58 @@ const PESO: Record<RazonDelOrden, number> = {
  * se puede cancelar o no se sabe, después lo que se puede cancelar, y al final las paradas que hay que reservar con
  * tiempo, por su día. Lo que escribe el que explica de cada una es aparte, y pasa la puerta 7.
  */
-export function reservasDe(v: Viaje, piezas: PiezaElegida[], precios: PrecioDeHoy[]): Reserva[] {
+export function reservasDe(
+  v: Viaje,
+  piezas: PiezaElegida[],
+  precios: PrecioDeHoy[],
+  comprobados: Readonly<Record<string, ComprobacionDeEnlace>> = {},
+): Reserva[] {
   const conPeso = precios.map((p) => {
     const porQue = razonesDe(p, piezas.find((x) => x.ref === p.ref)?.guardado ?? false);
     return { que: p.pieza, ref: p.ref, porQue, peso: Math.min(...porQue.map((r) => PESO[r])) };
   });
   conPeso.sort((a, b) => a.peso - b.peso);
-  const puestas = v.dias.flatMap((d) => d.paradas);
-  const conTiempo = puestas.filter((id) => v.paradas.find((p) => p.id === id)?.reservar === true);
+  // Las paradas de tus días que hay que reservar con tiempo: las que lo dicen sus datos y las que dijo el de las
+  // entradas (14.7), por su día, una vez cada una.
+  const puestas = [...new Set(v.dias.flatMap((d) => d.paradas))];
+  const conTiempo = puestas.filter(
+    (id) =>
+      v.paradas.find((p) => p.id === id)?.reservar === true || entradaDe(v.entradas, id)?.reservar?.haceFalta === true,
+  );
   const todas = [
     ...conPeso.map(({ que, ref, porQue }) => ({ que, ref, porQue })),
-    ...conTiempo.map((ref) => ({ que: "sight" as const, ref, porQue: ["book_ahead" as const] })),
+    ...conTiempo.map((ref) => {
+      const enlace = enlaceDeLaEntrada(v, ref);
+      return {
+        que: "sight" as const,
+        ref,
+        porQue: ["book_ahead" as const],
+        ...(enlace === null ? {} : { enlace: { ...enlace, comprobado: comprobados[enlace.url] ?? "unchecked" } }),
+      };
+    }),
   ];
   return todas.map((r, i) => ({ n: i + 1, ...r }));
 }
+
+/**
+ * El enlace a las entradas de una parada que hay que reservar, de lo que dijo el de las entradas: la página donde se
+ * reserva, si la dijo, o si no su web oficial. Solo una dirección https sin claves; si no, ninguno.
+ */
+export function enlaceDeLaEntrada(
+  v: Pick<Viaje, "entradas">,
+  parada: string,
+): { url: string; clase: "booking" | "official_site" } | null {
+  const e = entradaDe(v.entradas, parada);
+  if (e === null) return null;
+  const donde = e.reservar?.donde ?? null;
+  if (donde !== null && enlaceSinClaves(donde)) return { url: donde, clase: "booking" };
+  if (e.web !== null && enlaceSinClaves(e.web)) return { url: e.web, clase: "official_site" };
+  return null;
+}
+
+/** Las direcciones de los enlaces a las entradas del orden: se comprueban con los demás al cerrar. */
+export const enlacesDeLasEntradas = (v: Viaje): string[] =>
+  reservasDe(v, [], []).flatMap((r) => (r.enlace === undefined ? [] : [r.enlace.url]));
 
 /** Los plazos de los papeles: cada casilla con un «antes de», por su fecha, y si ya pasó. */
 export function plazosDe(v: Viaje): PlazoDePapel[] {
@@ -359,6 +400,8 @@ export function sinConfirmarDe(
   const porId = new Map(v.paradas.map((p) => [p.id, p]));
   const c = caminosDe(v.caminos);
   for (const d of v.dias) if (cuentasDeUnDia(d, porId, c).noCabe.length > 0) pon("day_does_not_fit", d.fecha);
+  // Una parada que pusiste un día que se sabe que cierra (14.7): se queda donde la pusiste, sin confirmar.
+  for (const fecha of Object.keys(cierranTusDias(cierraEnElViaje(v), v.dias))) pon("stop_closed", fecha);
   return s;
 }
 

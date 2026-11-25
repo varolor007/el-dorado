@@ -98,6 +98,7 @@ export const CLASES_DE_CAMBIO = [
   "day",
   "flight",
   "new_country",
+  "tickets",
 ] as const;
 export type ClaseDeCambio = (typeof CLASES_DE_CAMBIO)[number];
 
@@ -170,6 +171,9 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   flight: { pasos: ["table"], quizas: ["papers"] },
   // Un aeropuerto del transporte en un país que no estaba en la tabla de los papeles (8.3): la tabla, otra vez, con él.
   new_country: { pasos: ["papers"], quizas: [] },
+  // Mirar las entradas de unos sitios que no se miraron, con tu botón (14.7): el de las entradas, solo para ellos; lo
+  // demás de las entradas se queda como estaba. Los días se vuelven a repartir con sus horarios, y la cuenta.
+  tickets: { pasos: ["tickets"], quizas: [] },
 };
 
 /** Las piezas del viaje que salen de cada paso: si el paso se rehace, se quedan por rehacer. */
@@ -203,7 +207,16 @@ export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {
 export const PIEZAS_DE_UNA_CLASE: Partial<Record<ClaseDeCambio, PiezaDelViaje[]>> = {
   flight: ["transport", "ways", "guide", "budget"],
   lodging: ["lodging", "ways", "guide", "budget"],
+  tickets: ["tickets", "days", "budget", "guide"],
 };
+
+/**
+ * Las clases de cambio que vuelven a mirar las entradas de todos los sitios: las que las nombran en `CAMBIOS` (otro
+ * destino, otras fechas, lo que no se sabe leer). Con las demás, si las entradas se rehacen porque cambian los sitios
+ * elegidos, las de antes siguen valiendo y no se vuelven a pagar: un sitio nuevo va con lo que dicen los datos
+ * abiertos, hasta que lo pidas con tu botón (la clase «tickets»). Lo mira `entradasQueSeMiran`, en `impacto.ts`.
+ */
+export const MIRAN_TODAS_LAS_ENTRADAS: readonly ClaseDeCambio[] = ["destination", "dates", "other"];
 
 /**
  * Lo que deja cada paso en su run, además de los puestos de su asiento (los que llevan su contrato en el sello). Es

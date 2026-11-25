@@ -52,7 +52,7 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     resumenes: (sitios) => resumenesDe(sitios),
     fotos: (archivos) => fotosDe(archivos),
     // Lo que dicen los datos abiertos de los sitios elegidos, para el de las entradas (14.4).
-    abiertos: (sitios) => abiertosDe(sitios),
+    abiertos: (sitios, avisar) => abiertosDe(sitios, avisar === undefined ? {} : { avisar }),
     desde: manana,
   };
   // Los aeropuertos de la fuente se guardan un día en la mesa, fuera del repositorio: son tres archivos grandes. La

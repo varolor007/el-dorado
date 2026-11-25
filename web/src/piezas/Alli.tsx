@@ -39,6 +39,7 @@ import {
 } from "../lib/alli.ts";
 import { diaCorto, diaDeLaSemana, enGoogleMaps } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
+import { SinMirar } from "./LasEntradas.tsx";
 
 type Comun = { t: Textos; idioma: string };
 /** Quiénes viajan, para lo que cuesta para el grupo: cuántos adultos, la edad de cada niño y la moneda del viaje. */
@@ -471,7 +472,7 @@ export function FichaDeLaEntrada({
           {t.alli.web}
         </a>
       )}
-      {!e.mirado && <p className="credito">{t.alli.soloAbiertos}</p>}
+      {!e.mirado && <SinMirar t={t} porQue={e.sinMirar ?? null} />}
     </div>
   );
 }

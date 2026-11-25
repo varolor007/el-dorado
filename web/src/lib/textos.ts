@@ -229,6 +229,7 @@ const en = {
     fuera: (_n: number) => "Left out at this pace",
     // Lo que el código dejó fuera por la distancia, no por el ritmo: ni con más paradas al día entraría.
     fueraLejos: (_n: number) => "Too far to fit in your days",
+    fueraCierra: (_n: number) => "Closed on the days it would fit",
     // Las maneras que tenga el viaje: una, dos o tres.
     maneras: (n: number) =>
       n === 0 ? "No way to do it yet" : `${conMayuscula(cuantasEn(n))} ${EN.plural(n, "way", "ways")} to do it`,
@@ -1042,6 +1043,7 @@ const en = {
       papers_doubtful: (pais: string) => `Your papers for ${pais}: something is unclear.`,
       papers_late: (pais: string) => `Your papers for ${pais}: a deadline has passed.`,
       day_does_not_fit: (fecha: string) => `Your day ${fecha} does not fit in a day: it is as you left it.`,
+      stop_closed: (fecha: string) => `On your day ${fecha} a stop is closed: it stays where you put it.`,
     } as Record<string, (de: string) => string>,
     llegada: {
       ok: (h: string | null) =>
@@ -1066,6 +1068,11 @@ const en = {
       ok: "",
       unchecked: "We could not check this link.",
       down: "This link did not answer today.",
+    } as Record<string, string>,
+    // El enlace a las entradas de una parada que hay que reservar (14.7).
+    entradas: {
+      booking: "Where its tickets are booked",
+      official_site: "Its official website, for its tickets",
     } as Record<string, string>,
     deOtroDia: "Another seller's price is from the day we searched. Today it may be different.",
     mapas: "On Google Maps",
@@ -1146,6 +1153,7 @@ const en = {
       day: "a day",
       flight: "other tickets for the same days",
       new_country: "a new country on the way",
+      tickets: "the tickets of the stops not looked at yet",
     } as Record<string, string>,
     piezas: {
       lodging: "where you sleep",
@@ -1438,6 +1446,20 @@ const en = {
     } as Record<string, string>,
     noCabeCorto: "Does not fit",
     tuEleccion: "It is your choice: you can keep it like this. When you close the trip, it stays as not confirmed.",
+    // Lo que pusiste tú un día que cierra (14.7): se queda donde lo pusiste, y se dice.
+    cierraEseDia: (nombres: string) => `Closed that day: ${nombres}. It stays where you put it.`,
+    // Por qué no se miró la entrada de una parada, y tu botón para mirarla (14.7).
+    sinMirar: {
+      over_limit:
+        "Its page was not looked at: there were more stops than are looked at per trip. Only what open data says.",
+      failed: "Its page could not be looked at this time. Only what open data says.",
+      added: "You added it after the tickets were looked at. For now, only what open data says.",
+    } as Record<string, string>,
+    mirarEntradas: (n: number) =>
+      `${EN.cuenta(n, "stop has", "stops have")} no tickets or opening hours looked at yet. Looking costs a little AI.`,
+    mirarEntradasBoton: "See what it would cost",
+    mirandoEntradas: "Looking at their tickets. When it is done, your trip will have a new version.",
+    verlasEntradas: "See your trip",
     masCerca: (nombre: string, min: number) => `Closest stay to this day: ${nombre}, about ${min} min on average`,
     laTuya: (min: number) => `Where you sleep is the closest stay to this day, about ${min} min on average`,
     escribe: "Ask for a change, in your words",
@@ -1477,6 +1499,7 @@ const en = {
         long_message: "That is a bit long: say it in fewer words.",
         bad_day: "That day is not in your trip.",
         too_many_messages: "You have sent several messages for this trip today. Try again tomorrow.",
+        nothing_to_look: "Every stop already has its tickets looked at.",
         already_running: "Your trip is already being worked on. Wait until it is done.",
         too_many_versions: "This trip has too many versions. Go back to one of before.",
         not_now: "Your trip cannot be changed right now.",
@@ -1635,6 +1658,7 @@ const es: Textos = {
     imprescindible: "Imprescindible",
     fuera: (n) => ES.plural(n, "Se queda fuera con este ritmo", "Se quedan fuera con este ritmo"),
     fueraLejos: (n) => ES.plural(n, "Queda demasiado lejos para tus días", "Quedan demasiado lejos para tus días"),
+    fueraCierra: (n) => ES.plural(n, "Cierra los días en que cabría", "Cierran los días en que cabrían"),
     maneras: (n) =>
       n === 0
         ? "Todavía no hay ninguna manera de hacerlo"
@@ -2409,6 +2433,7 @@ const es: Textos = {
       papers_doubtful: (pais) => `Tus papeles para ${pais}: algo no está claro.`,
       papers_late: (pais) => `Tus papeles para ${pais}: un plazo ya ha pasado.`,
       day_does_not_fit: (fecha) => `Tu día ${fecha} no cabe en un día: queda como lo dejaste.`,
+      stop_closed: (fecha) => `Tu día ${fecha} lleva una parada que cierra ese día: queda donde la pusiste.`,
     },
     llegada: {
       ok: (h) =>
@@ -2432,6 +2457,10 @@ const es: Textos = {
       ok: "",
       unchecked: "No hemos podido comprobar este enlace.",
       down: "Este enlace no ha respondido hoy.",
+    },
+    entradas: {
+      booking: "Donde se reservan sus entradas",
+      official_site: "Su web oficial, para sus entradas",
     },
     deOtroDia: "El precio de otro vendedor es el del día que buscamos. Hoy puede ser otro.",
     mapas: "En Google Maps",
@@ -2513,6 +2542,7 @@ const es: Textos = {
       day: "un día",
       flight: "otros billetes para los mismos días",
       new_country: "un país nuevo en el camino",
+      tickets: "las entradas de las paradas aún sin mirar",
     },
     piezas: {
       lodging: "dónde duermes",
@@ -2796,6 +2826,18 @@ const es: Textos = {
     },
     noCabeCorto: "No cabe",
     tuEleccion: "Es tu elección: puedes dejarlo así. Al cerrar el viaje, queda entre lo que no está confirmado.",
+    cierraEseDia: (nombres) => `Cierra ese día: ${nombres}. Se queda donde lo pusiste.`,
+    sinMirar: {
+      over_limit:
+        "Su página no se miró: había más paradas de las que se miran por viaje. Solo lo que dicen los datos abiertos.",
+      failed: "Su página no se pudo mirar esta vez. Solo lo que dicen los datos abiertos.",
+      added: "La añadiste después de mirar las entradas. De momento, solo lo que dicen los datos abiertos.",
+    },
+    mirarEntradas: (n) =>
+      `${ES.cuenta(n, "parada no tiene", "paradas no tienen")} todavía sus entradas ni su horario mirados. Mirarlos gasta un poco de IA.`,
+    mirarEntradasBoton: "Ver lo que costaría",
+    mirandoEntradas: "Mirando sus entradas. Al acabar, tu viaje tendrá una versión nueva.",
+    verlasEntradas: "Ver tu viaje",
     masCerca: (nombre, min) => `El alojamiento más cerca de este día: ${nombre}, a unos ${min} min de media`,
     laTuya: (min) => `Donde duermes es lo más cerca de este día, a unos ${min} min de media`,
     escribe: "Pide un cambio, con tus palabras",
@@ -2835,6 +2877,7 @@ const es: Textos = {
         long_message: "Es un poco largo: dilo con menos palabras.",
         bad_day: "Ese día no es de tu viaje.",
         too_many_messages: "Hoy ya has mandado varios mensajes de este viaje. Prueba mañana.",
+        nothing_to_look: "Todas tus paradas tienen ya sus entradas miradas.",
         already_running: "Ya se está trabajando en tu viaje. Espera a que acabe.",
         too_many_versions: "Este viaje tiene demasiadas versiones. Vuelve a una de antes.",
         not_now: "Ahora no se puede cambiar tu viaje.",

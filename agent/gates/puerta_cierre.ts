@@ -87,12 +87,20 @@ export function puertaCierre(v: Viaje, m: MaterialDelCierre): Veredicto {
     const visto = m.comprobados[e.url] ?? "unchecked";
     if (e.comprobado !== visto) rojo(`enlaces.${e.ref}`, `un enlace dice ${e.comprobado}, y lo que se vio es ${visto}`);
   }
+  // Y los de las entradas del orden (14.7): solo de lo que dijo el de las entradas, y como se vieron.
+  for (const r of c.reservas) {
+    if (r.enlace === undefined) continue;
+    if (r.que !== "sight") rojo(`reservas.${r.n}`, "lleva un enlace a las entradas y no es una parada");
+    const visto = m.comprobados[r.enlace.url] ?? "unchecked";
+    if (r.enlace.comprobado !== visto)
+      rojo(`reservas.${r.n}`, `su enlace dice ${r.enlace.comprobado}, y lo que se vio es ${visto}`);
+  }
 
   // El orden, los plazos, lo que queda sin confirmar y los mapas, los del código.
   if (
     !igual(
       c.reservas.map(({ frase: _, ...r }) => r),
-      reservasDe(v, m.piezas, c.precios),
+      reservasDe(v, m.piezas, c.precios, m.comprobados),
     )
   )
     rojo("reservas", "el orden de las reservas no es el del código");

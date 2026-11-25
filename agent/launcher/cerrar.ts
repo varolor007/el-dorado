@@ -30,6 +30,7 @@ import { conTuTransporte } from "../scripts/otro_transporte.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import type { Cierre, ComprobacionDeEnlace, EnlaceDeReserva, MANERAS, Viaje } from "../output/viaje.ts";
 import {
+  enlacesDeLasEntradas,
   enlacesSinComprobar,
   llegadaDe,
   mapasDe,
@@ -62,6 +63,7 @@ import { estanciaDe } from "./investigar.ts";
 import { guardarCierre, guardarJson, leerVersion, ultimoCierre, type ViajeEnLaMesa } from "./mesa.ts";
 import { montarPuesto, puestosDe, type Pieza } from "./puesto.ts";
 import { apuntarTrabajo } from "./trabajos.ts";
+import { presupuestoDelCierre, presupuestoParaElAsiento } from "./presupuesto_delante.ts";
 
 /** Las fuentes a las que se vuelve a pedir el precio, y quien comprueba los enlaces. */
 export type FuentesDelCierre = {
@@ -245,6 +247,12 @@ function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Via
   return { e, viaje, entendido: version.entendido as Entendido };
 }
 
+/** La carpeta del run de una versión, si la hay: de ella salen las zonas de la ruta para la cuenta. */
+function runDeLaVersion(v: ViajeEnLaMesa, version: number): string | null {
+  const run = v.ficha.versiones.find((x) => x.n === version)?.run;
+  return run === undefined ? null : join(v.carpeta, "runs", String(run));
+}
+
 /** Una promesa con su tiempo: si la fuente no contesta, no se le espera más. */
 function conTiempo<T>(p: Promise<T>, segundos: number): Promise<T> {
   let reloj: NodeJS.Timeout | undefined;
@@ -398,7 +406,7 @@ function montar(
     subida: { pide: pideSeguir(precios, m.total), sigue },
     enlaces,
     mapas: mapasDe(viaje, m.alojamiento),
-    reservas: reservasDe(viaje, piezas, precios),
+    reservas: reservasDe(viaje, piezas, precios, comprobados),
     papeles: plazosDe(viaje),
     sinConfirmar: sinConfirmarDe(viaje, precios, enlaces, llegada),
     llegada,
@@ -485,14 +493,18 @@ async function elOrden(
   cierre: Cierre,
   entendido: Entendido,
   o: AlCerrar,
+  run: string | null,
 ): Promise<DelOrden> {
   if (o.lanzador === null) return { entrega: null, falta: "no_ai" };
   const ahora = o.ahora ?? ((): Date => new Date());
   const dado = paraElOrden(viaje, cierre);
   const json = (x: unknown): string => JSON.stringify(x, null, 2);
+  // El presupuesto entero del viaje que cierras, de código, delante del que explica y de su puerta (14.7).
+  const presupuesto = presupuestoDelCierre(viaje, run);
   const piezas: Pieza[] = [
     { ruta: "trip.json", contenido: json(sinPalabras(entendido)) },
     { ruta: "closing.json", contenido: json(dado) },
+    { ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "way")) },
   ];
   let devuelto: Pieza | null = null;
   for (let vuelta = 1; vuelta <= 1 + VUELTAS_DEL_ORDEN; vuelta++) {
@@ -516,7 +528,7 @@ async function elOrden(
     const metodo = recogerAsiento(puesto);
     let rojos: Rojo[] = [...metodo.rojos];
     try {
-      if (metodo.entrega !== null) rojos.push(...puertaDelOrden(metodo.entrega, { dado }).rojos);
+      if (metodo.entrega !== null) rojos.push(...puertaDelOrden(metodo.entrega, { dado, presupuesto }).rojos);
     } catch {
       rojos = [...rojos, { donde: "delivery", que: "la entrega no tiene la forma de su contrato" }];
     }
@@ -597,10 +609,8 @@ export async function llevarElCierre(
     const { cierre } = montar(viaje, e, p, {}, sigue, cuando);
     guardarJson(
       join(carpeta, "enlaces.json"),
-      await comprobarLosEnlaces(
-        cierre.enlaces.map((x) => x.url),
-        o.fuentes,
-      ),
+      // Los de las piezas, y los de las entradas que hay que reservar, en su orden (14.7).
+      await comprobarLosEnlaces([...cierre.enlaces.map((x) => x.url), ...enlacesDeLasEntradas(viaje)], o.fuentes),
     );
   }
   const comprobados = leer<Record<string, ComprobacionDeEnlace>>(carpeta, "enlaces.json");
@@ -608,7 +618,10 @@ export async function llevarElCierre(
 
   // 3. El que explica deja el orden: el del código, con una frase de cada cosa que pasa la puerta 7.
   if (!hay(carpeta, "orden.json"))
-    guardarJson(join(carpeta, "orden.json"), await elOrden(carpeta, viaje, cierre, entendido, o));
+    guardarJson(
+      join(carpeta, "orden.json"),
+      await elOrden(carpeta, viaje, cierre, entendido, o, runDeLaVersion(v, e.version)),
+    );
   const cerrado: Viaje = { ...viaje, cierre: conSusFrases(cierre, leer<DelOrden>(carpeta, "orden.json")) };
 
   // 4. La puerta 8, con lo que dio cada fuente y lo que respondió cada enlace.

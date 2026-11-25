@@ -25,12 +25,14 @@ import { enGoogleMaps, noches, reloj, trayectoEnGoogleMaps } from "../lib/format
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 import { MeQuedo, Reservar } from "./Cerrar.tsx";
-import { masCercaDeCadaDia, noCabenTusDias } from "../../../agent/scripts/dia_a_dia.ts";
+import { cierranTusDias, masCercaDeCadaDia, noCabenTusDias, sitiosSinMirar } from "../../../agent/scripts/dia_a_dia.ts";
+import { cierraEnElViaje } from "../../../agent/scripts/capa_entradas.ts";
 import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
 import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
 import { Alli, CosteDelTrayecto, diceSiReservar, ElPresupuesto, EntradaDeLaParada, FichaDeLaEntrada } from "./Alli.tsx";
 import { grupoDelViaje, presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
+import { MirarLasEntradas } from "./LasEntradas.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -492,6 +494,9 @@ function Dias(x: DeViaje) {
   // Tus días, por las mismas cuentas de la puerta 9: el que no cabe lo dice, y se queda como lo dejaste (8.6).
   const noCaben = noCabenTusDias(viaje, reparto.dias);
   const noCabeElAbierto = abierto === null ? [] : (noCaben[abierto.fecha] ?? []);
+  // Lo que pusiste un día que se sabe que cierra: se queda donde lo pusiste, y se dice (14.7).
+  const cierranElAbierto =
+    abierto === null ? [] : (cierranTusDias(cierraEnElViaje(viaje), [abierto])[abierto.fecha] ?? []);
   // Quiénes viajan, para lo que cuesta cada entrada y cada trayecto para el grupo (14.6).
   const grupo = grupoDelViaje(viaje);
   // De la última parada del día abierto a donde duermes: también cuenta en lo que cuesta moverte (14.6).
@@ -575,6 +580,12 @@ function Dias(x: DeViaje) {
               {noCabeElAbierto.map((que) => (
                 <p key={que}>{t.diaADia.noCabe[que] ?? que}</p>
               ))}
+              <p className="dato">{t.diaADia.tuEleccion}</p>
+            </div>
+          )}
+          {cierranElAbierto.length > 0 && (
+            <div className="aviso dia__nocabe" role="note">
+              <p>{t.diaADia.cierraEseDia(cierranElAbierto.map((id) => deParada.get(id)?.nombre ?? id).join(", "))}</p>
               <p className="dato">{t.diaADia.tuEleccion}</p>
             </div>
           )}
@@ -740,8 +751,10 @@ function Dias(x: DeViaje) {
 
       {/* Lo que el código dejó fuera, con su porqué: no cabe con este ritmo, o queda lejos de todo lo demás. */}
       {[
-        { ids: fuera.filter((id) => reparto.porQue[id] !== "far"), rotulo: t.viaje.fuera },
+        { ids: fuera.filter((id) => !["far", "closed"].includes(reparto.porQue[id])), rotulo: t.viaje.fuera },
         { ids: fuera.filter((id) => reparto.porQue[id] === "far"), rotulo: t.viaje.fueraLejos },
+        // Lo que se queda fuera porque cierra los días en que cabría, con su rótulo (14.7).
+        { ids: fuera.filter((id) => reparto.porQue[id] === "closed"), rotulo: t.viaje.fueraCierra },
       ].map(
         (grupo, i) =>
           grupo.ids.length > 0 && (
@@ -768,6 +781,9 @@ function Dias(x: DeViaje) {
             ))}
           </div>
         </div>
+      )}
+      {x.paraMensajes != null && sitiosSinMirar(viaje).length > 0 && (
+        <MirarLasEntradas t={t} idioma={idioma} id={x.paraMensajes} cuantas={sitiosSinMirar(viaje).length} />
       )}
       {x.paraMensajes != null && (
         <TuMensaje t={t} idioma={idioma} id={x.paraMensajes} dia={x.dia} version={x.version ?? null} />

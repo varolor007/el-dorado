@@ -5,6 +5,9 @@
 /** La clase de un mensaje tuyo en lo que pide el momento (`rehecho.json`, campo `pedido`). */
 export const UN_MENSAJE = "day_message";
 
+/** La clase de lo que pide tu botón de mirar las entradas de unos sitios (14.7), en `rehecho.json`. */
+export const MIRAR_ENTRADAS = "tickets_look";
+
 /** Lo más que puede llevar un mensaje tuyo, en letras. */
 export const LARGO_DE_UN_MENSAJE = 300;
 

@@ -19,6 +19,11 @@ export type Trabajo = {
   gasto: Gasto | null;
   /** Por qué no acabó bien, si no acabó bien. Es para quien lleva el run: no viaja a la web. */
   fallo: string | null;
+  /**
+   * Lo más que pudo gastar, en dólares, si no se sabe lo que gastó y se puede acotar: solo una capa del destino que
+   * se cortó o falló sin decirlo (14.7). Cuenta para el techo del viajero, nunca como lo gastado.
+   */
+  cota?: number | null;
 };
 
 function trabajoQueVale(t: unknown): t is Trabajo {
@@ -28,7 +33,8 @@ function trabajoQueVale(t: unknown): t is Trabajo {
     typeof x.puesto === "string" &&
     typeof x.asiento === "string" &&
     ESTADOS_DE_UN_TRABAJO.includes(x.estado as EstadoDeUnTrabajo) &&
-    (x.gasto === null || gastoQueVale(x.gasto))
+    (x.gasto === null || gastoQueVale(x.gasto)) &&
+    (x.cota === undefined || x.cota === null || (typeof x.cota === "number" && Number.isFinite(x.cota) && x.cota >= 0))
   );
 }
 
@@ -73,4 +79,20 @@ export function gastoDe(run: string): Gasto & { sabido: boolean } {
     total.usd += t.gasto.usd;
   }
   return total;
+}
+
+/**
+ * Lo que cuenta para el techo del viajero: lo que se sabe que gastó el run y, de lo que no se sabe pero tiene su cota
+ * (una capa del destino cortada), lo más que pudo gastar. Así el techo nunca se pasa por contar de menos. Null si de
+ * algún trabajo acabado no se sabe lo que gastó ni se puede acotar: entonces no se sigue a ciegas.
+ */
+export function gastoParaElTecho(run: string): number | null {
+  let usd = 0;
+  for (const t of trabajosDe(run)) {
+    if (t.gasto !== null) usd += t.gasto.usd;
+    else if (t.estado === "queued" || t.estado === "working") continue;
+    else if (typeof t.cota === "number") usd += t.cota;
+    else return null;
+  }
+  return usd;
 }

@@ -385,6 +385,11 @@ export type Reserva = {
   que: ClaseDePieza | "sight";
   ref: string;
   porQue: RazonDelOrden[];
+  /**
+   * De una parada que hay que reservar, su enlace a las entradas (14.7): la página donde se reserva, si la dijo el de
+   * las entradas, o si no su web oficial; con lo que se supo de él al cerrar. Lo demás no lo lleva.
+   */
+  enlace?: { url: string; clase: "booking" | "official_site"; comprobado: ComprobacionDeEnlace };
   /** Lo que conviene saber de ella, en el idioma del viajero: del que explica, y pasó la puerta 7. */
   frase?: string;
 };
@@ -415,6 +420,7 @@ export const SIN_CONFIRMAR = [
   "papers_doubtful",
   "papers_late",
   "day_does_not_fit",
+  "stop_closed",
 ] as const;
 export type SinConfirmar = { que: (typeof SIN_CONFIRMAR)[number]; ref: string | null };
 

@@ -30,9 +30,9 @@ test("el contrato nombra los estados, las palancas de una manera y lo que se pue
   for (const marca of ["cheapest", "best_value", "different"]) assert.ok(entrega.includes("`" + marca + "`"));
 });
 
-test("las normas del que cruza van de la CR1 a la CR9, y el contrato dice que no hace cuentas", () => {
+test("las normas del que cruza van de la CR1 a la CR10, y el contrato dice que no hace cuentas", () => {
   const codigos = [...leer("RULES.md").matchAll(/^- \*\*(CR\d+)\./gm)].map((m) => m[1]);
-  assert.deepEqual(codigos, ["CR1", "CR2", "CR3", "CR4", "CR5", "CR6", "CR7", "CR8", "CR9"]);
+  assert.deepEqual(codigos, ["CR1", "CR2", "CR3", "CR4", "CR5", "CR6", "CR7", "CR8", "CR9", "CR10"]);
   assert.match(leer("RULES.md"), /saves at least one hundredth of the total it starts\s+from/);
   // Lo que pide la puerta, lo dice el contrato: la distinta no baja de la nota mínima, y no se pide dos veces.
   assert.match(leer("RULES.md"), /is not below `minimum_score`/);

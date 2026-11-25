@@ -74,6 +74,8 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}/alojamiento/impacto$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/alojamiento/pregunta$`), ["GET", "POST"]],
   [new RegExp(`^viajes/${ID}/dia$`), ["GET", "POST"]],
+  // Tu botón de mirar las entradas de las paradas que no se miraron (14.7).
+  [new RegExp(`^viajes/${ID}/entradas$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/transporte$`), ["GET", "POST"]],
   [new RegExp(`^viajes/${ID}/transporte/elegir$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/cambiar$`), ["GET", "POST"]],

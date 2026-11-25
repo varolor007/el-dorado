@@ -737,6 +737,18 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   donde duermes, para no quedarse corto: por eso puede cambiar de una manera a otra. Las cuentas se rehacen siempre
   con lo que el viajero tiene delante. Siete cifras que antes podían salir distintas en dos sitios salen ya
   iguales, con su prueba.
+- **Las capas en los demás momentos** (la sesión de obra del 14.7, con lo más prudente y a firma del PM): un mensaje
+  para un día, y cualquier cambio que no sea de destino o de fechas, no vuelve a mirar las entradas; lo nuevo va con
+  los datos abiertos y dice que no se ha mirado, y mirarlo es un botón del viajero, que gasta, mira ocho sitios como
+  mucho y tiene el tope de los mensajes (tres al día). El que cruza espera ahora a moverse y al destino, para tener
+  la cuenta delante. Al cerrar, el enlace a las entradas va dentro de su paso del orden, y un sitio sin enlace sigue
+  en el orden.
+- **El techo de gasto no se arregla acotando** (la sesión de obra del 14.7, y la sesión): la casa ya sabe seguir sin
+  una capa cortada contándole una cota, pero la cota honrada, con lo que la casa sabe hoy de una llamada, sale por
+  encima de lo que cuesta una investigación entera, así que con un techo normal pararía igual. No se enchufa
+  ninguna cifra. En su lugar, el lanzador va a decir lo gastado también cuando se corta, y el techo se mirará con lo
+  gastado de verdad. Lo hace otra sesión de obra en esta tanda. Mientras, con un techo puesto todo sigue como antes:
+  la investigación para. La web sigue sin poner techo.
 
 ## Pendientes
 
