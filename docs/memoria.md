@@ -46,6 +46,19 @@ a día (8.6) y los cambios (8.5). Vigilar el precio (8.7) es del PM.
 - **Quién responde**: `agent/data/responde.ts` (`quienResponde(sitio)`), la tabla de la hoja.
 - **Web**: `web/src/lib/elecciones.ts` (`useTusElecciones`, `useVersiones`) y `web/src/piezas/Momentos.tsx`
   (`TusVersiones` y `ElImpacto`, que se ve suelta con `?at=impact&change=<clase>`).
+- **Cómo lo usa un momento** (la receta para 8.2, 8.3, 8.6 y 8.5). Lo que pide el viajero (otra zona, otro
+  horario, su mensaje) va en `pedido`, que queda tal cual en `<run>/rehecho.json`: el paso que lo necesite lo lee
+  con `rehechoDe(run)?.pedido`. En la puerta, igual que `empezar`: comprobar que no hay nada en marcha (los mapas
+  `marchas` y `guias`); `conQuePiensa` y `claveDe` para el lanzador; `abandonarElCierre(v)` si un cierre esperaba el
+  sí; `rehacer(v, {clases, entendido?, pedido?})`; `darElAdelante(run, techo, hoy())` tras el botón del viajero si
+  `impacto.spends`; `apuntar(v, "button", {...})`; y `marchar(id, run, lanzador)`. La lleva `llevar`, por las mismas
+  puertas y con su techo, y si se corta se retoma desde el disco. Los asientos conservados no se lanzan. La versión
+  no se guarda a mano: al acabar la guarda `investigar.ts`. En la web, el impacto se enseña y el adelante se pide
+  con `<ElImpacto t idioma impacto alAdelante alAhoraNo mandando />`, con lo que devuelve `POST /impacto`
+  (`{changes: [clases]}` para una pieza, o `{understood}` para un cambio de lo entendido). Una clase de cambio
+  nueva va en `CLASES_DE_CAMBIO` y `CAMBIOS`, y en `t.momentos.cambios`, en los dos idiomas. Y si un momento deja
+  elegir otra pieza que la de la manera, cerrar tiene que usarla: va en `elegir` y `piezasDe`, con `paraElCierre`
+  como modelo. `rehacer.ts` y `mesa.ts` son el cimiento de los cuatro: no se tocan sin hablarlo.
 - **Topes de partida**, del PM: veinte versiones y treinta investigaciones por viaje. No se borra nada.
 - **Lo que no cuadra todavía con la hoja**, para el PM: un mensaje para un día rehace también al que cruza y al
   que explica (tres turnos, y la hoja dice uno); otro alojamiento rehace la búsqueda y mira a todos los finalistas
