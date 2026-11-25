@@ -426,7 +426,9 @@ test("la puerta 13: cada trampa, su rojo", () => {
     ["un precio de cero", (e) => (e.sights[0].prices[0].amount = 0), /importe/],
     ["gratis con moneda", (e) => (e.sights[1].prices[0].currency = "EUR"), /gratis/],
     ["sin el día en que se vio", (e) => (e.sights[0].prices[0].seen = "unknown"), /día en que se vio/],
-    ["visto después de hoy", (e) => (e.sights[0].hours[0].seen = "2031-03-01"), /después de hoy/],
+    ["visto después de hoy", (e) => (e.sights[0].hours[0].seen = "2031-03-01"), /no es hoy/],
+    ["visto hace años", (e) => (e.sights[0].prices[0].seen = "2015-06-01"), /no es hoy/],
+    ["visto hace una semana", (e) => (e.sights[0].booking.seen = "2031-02-13"), /no es hoy/],
     ["para quién, fuera de la lista", (e) => (e.sights[0].prices[0].for = "pensioner"), /para quién/],
     ["unas edades al revés", (e) => (e.sights[0].prices[1].ages = { from: 12, to: 3 }), /al revés/],
     // Ningún sitio que no esté entre los elegidos, y lo que no se sabe, dicho.

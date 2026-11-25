@@ -1,11 +1,13 @@
 // La puerta 13: ¿cada entrada y cada horario, con su página? Mira lo que entrega el de las entradas en una tanda de
 // sitios, con lo que el código puede medir: que cada precio, cada horario y cada reserva sale de una página que el
 // asiento abrió de verdad (de la memoria de lo consultado, que guarda la casa) y no de los datos abiertos que ya se le
-// dieron; que lleva su moneda y el día en que se vio; que no hay ningún sitio que no sea de su tanda, ni falta
-// ninguno, de modo que lo que no se sabe está dicho; que un horario vale para las fechas del viaje o dice para cuáles;
-// y que un enlace es una dirección que vale y sin claves dentro. Lo que no se puede medir (si la página es la oficial
-// del sitio, si el precio es el de hoy) no lo mira nadie aquí: lo dice su contrato y lo cubre quien lo revisa.
+// dieron; que lleva su moneda y el día en que se vio, que es hoy; que no hay ningún sitio que no sea de su tanda, ni
+// falta ninguno, de modo que lo que no se sabe está dicho; que un horario vale para las fechas del viaje o dice para
+// cuáles; y que un enlace es una dirección que vale y sin claves dentro. Lo que no se puede medir (si la página es la
+// oficial del sitio, si el precio que dice es el que se cobra) no lo mira nadie aquí: lo dice su contrato y lo cubre
+// quien lo revisa.
 
+import { DIAS_DE_HOLGURA } from "../data/capa_moverse.ts";
 import { DIAS_DE_LA_SEMANA, LO_MAS_DE_UNA_LISTA, PARA_QUIEN } from "../data/capas.ts";
 import { direccionComparable, direccionesEn, enlaceDeFuera } from "../launcher/consultado.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -56,6 +58,7 @@ const esFecha = (v: unknown): v is string =>
   !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) &&
   new Date(`${v}T00:00:00Z`).toISOString().startsWith(v);
 const esHora = (v: unknown): v is string => typeof v === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
+const diaDe = (fecha: string): number => Math.round(Date.parse(`${fecha}T00:00:00Z`) / 86_400_000);
 const esEdad = (v: unknown): boolean =>
   v === null || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= EDAD_MAXIMA);
 
@@ -84,7 +87,9 @@ export function puertaEntradas(v: unknown, p: ParaLasEntradas): Veredicto {
     else if (abiertas !== null && !abiertas.has(comparable))
       rojo(`${donde}.source`, "no es una página que abriera de verdad: un resultado de búsqueda no es una fuente");
     if (!esFecha(x.seen)) rojo(`${donde}.seen`, "no dice el día en que se vio, AAAA-MM-DD");
-    else if (x.seen > p.hoy) rojo(`${donde}.seen`, "dice que se vio después de hoy");
+    // Como en la puerta 11: el día en que se vio es hoy, con un día de holgura por la hora de cada sitio.
+    else if (Math.abs(diaDe(x.seen) - diaDe(p.hoy)) > DIAS_DE_HOLGURA)
+      rojo(`${donde}.seen`, `no es hoy, ${p.hoy}: un precio y un horario son los del día en que se vieron`);
   };
   // Un enlace que llega al viajero (dónde se reserva, su web): una página que abrió de verdad, o la web que dicen de
   // ese sitio los datos abiertos. Ni una que solo le salió en el buscador ni una que escribió sin abrirla.
