@@ -150,15 +150,19 @@ When `in/question.json` is there, `delivery.json` is one object with exactly the
 | `mode` | Always `"question"` |
 | `lodging_id` | The `lodging_id` of `in/sheet.json`, copied |
 | `question_id` | The `id` of `in/question.json`, copied |
+| `about` | `room` if it asks about the room being offered (look, space, light, beds, bathroom, view); else `lodging` |
 | `answer` | One of `yes`, `no`, `partly`, `unknown` |
-| `evidence` | What shows it: entries like those of `fields`, `{ "kind", "ref", "what" }`. At least one unless `unknown` |
-| `says` | One sentence for the traveller, in their language: the answer and what shows it. No link, no promise |
+| `evidence` | What shows it: entries `{ "kind", "ref", "what" }`, as in `fields`. At least one unless `unknown` |
+| `says` | One sentence for the traveller, in their language: the answer and what shows it |
 | `unknowns` | What would be needed to answer and is not in the material, in plain sentences. Empty list if nothing |
 
-`{ "seat": "lodging-viewer", "mode": "question", "lodging_id": "x7", "question_id": "q1", "answer": "partly",
-"evidence": [ { "kind": "photo", "ref": "hotel-04.jpg", "what": "two treadmills and a rack of dumbbells" } ],
-"says": "The gym photo shows a rack of dumbbells, but no bench or barbell.", "unknowns": [] }` is invented and shows
-the form only.
+`{ "seat": "lodging-viewer", "mode": "question", "lodging_id": "x7", "question_id": "q1", "about": "lodging",
+"answer": "partly", "evidence": [ { "kind": "photo", "ref": "hotel-04.jpg", "what": "two treadmills and a rack of
+dumbbells" } ], "says": "The gym photo shows a rack of dumbbells, but no bench or barbell.", "unknowns": [] }` is
+invented and shows the form only.
 
 `ref` follows the same rules as in `fields`: a photo of `in/photos/` with its extension, a reference of
-`in/reviews.json`, or a field of `in/sheet.json`. `says` is plain text in one line, of 500 characters at most.
+`in/reviews.json`, or a field of `in/sheet.json`. When `about` is `room`, a photo in `evidence` is a `room-NN` one
+(MI4): a `hotel-NN` photo may be of a better room. `says` is plain text in one line, of 500 characters at most, with
+no link, no promise and no money: no price, no discount, no percentage and no currency, because you do not see the
+price. Every number in `says` comes from `in/sheet.json` or from `in/reviews.json`.

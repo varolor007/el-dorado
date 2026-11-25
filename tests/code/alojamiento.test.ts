@@ -369,12 +369,15 @@ test("la puerta de la respuesta: de su lista, con su prueba, y una frase sin enl
     fotos: ["hotel-01.jpg", "room-01.jpg"],
     opiniones: ["r1", "r2"],
     pregunta: "q1",
+    textoDeLaPregunta: "Does the gym have free weights?",
+    textoDeLasOpiniones: "[]",
   };
   const buena = {
     seat: "lodging-viewer",
     mode: "question",
     lodging_id: "a1",
     question_id: "q1",
+    about: "lodging",
     answer: "partly",
     evidence: [{ kind: "review", ref: "r2", what: "a guest mentions dumbbells only" }],
     says: "A guest mentions dumbbells, but no photo shows a bench.",
@@ -402,6 +405,50 @@ test("la puerta de la respuesta: de su lista, con su prueba, y una frase sin enl
   assert.deepEqual(pegasDeLaPregunta("Does the gym have free weights?", 200), []);
   assert.notDeepEqual(pegasDeLaPregunta("see https://example.com", 200), []);
   assert.notDeepEqual(pegasDeLaPregunta("a".repeat(201), 200), []);
+});
+
+test("la puerta de la respuesta: sin dinero, con los números de su material y la habitación con su foto", () => {
+  const material = {
+    hoja: { lodging_id: "a1", room: { size_m2: 22 }, services: ["pool"] },
+    fotos: ["hotel-01.jpg", "room-01.jpg"],
+    opiniones: ["r1"],
+    pregunta: "q1",
+    textoDeLaPregunta: "Is the pool open all year?",
+    textoDeLasOpiniones: JSON.stringify([{ ref: "r1", text: "the pool is about 12 m long and open from 8" }]),
+  };
+  const buena = {
+    seat: "lodging-viewer",
+    mode: "question",
+    lodging_id: "a1",
+    question_id: "q1",
+    about: "lodging",
+    answer: "partly",
+    evidence: [{ kind: "review", ref: "r1", what: "a guest says it is 12 m long and opens at 8" }],
+    says: "A guest says the pool is about 12 m long and opens at 8, nothing about the winter.",
+    unknowns: [],
+  };
+  const verde = (cambio: Record<string, unknown>, m = material): boolean =>
+    puertaRespuesta({ ...buena, ...cambio }, m).verde;
+  assert.equal(verde({}), true);
+  // Las trampas que encontró la revisión: un precio y un descuento inventados.
+  assert.equal(verde({ says: "A day pass costs 45 euros, and the pool is 12 m long." }), false);
+  assert.equal(verde({ says: "Te hacemos un 20 % de descuento si reservas hoy." }), false);
+  assert.equal(verde({ says: "The pool is 30 m long." }), false, "un número que no sale de su material");
+  assert.equal(verde({ says: "It has a pool for €10." }), false);
+  assert.equal(verde({ says: "Book today and get a discount." }), false);
+  assert.equal(verde({ says: "Photo room-01 and review r1 say the room is 22 m2." }), true, "sus referencias valen");
+  // MI4: una pregunta de la habitación no se prueba con una foto del hotel, ni se dice que es del alojamiento.
+  const deLaHabitacion = { ...material, textoDeLaPregunta: "Does the room have a view of the sea?" };
+  const conFotoDelHotel = { evidence: [{ kind: "photo", ref: "hotel-01.jpg", what: "a sea view" }] };
+  assert.equal(verde({ about: "room", ...conFotoDelHotel }, deLaHabitacion), false);
+  assert.equal(verde(conFotoDelHotel, deLaHabitacion), false, "dice que es del alojamiento, y no lo es");
+  assert.equal(verde({ about: "room", ...conFotoDelHotel }), false, "dice que es de la habitación");
+  const conFotoDeLaSuya = { evidence: [{ kind: "photo", ref: "room-01.jpg", what: "the sea from the window" }] };
+  assert.equal(
+    verde({ about: "room", ...conFotoDeLaSuya, says: "The room photo shows the sea." }, deLaHabitacion),
+    true,
+  );
+  assert.equal(verde({ about: "kitchen" }), false);
 });
 
 // ---------- la puerta de la casa

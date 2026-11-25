@@ -417,7 +417,12 @@ export function siguePregunta(v: ViajeEnLaMesa, n: number): EstadoDeLaPregunta {
   let rojos = [...metodo.rojos];
   if (metodo.entrega !== null)
     rojos.push(
-      ...puertaRespuesta(metodo.entrega, { ...materialDe(puesto.carpeta), pregunta: ID_DE_LA_PREGUNTA }).rojos,
+      ...puertaRespuesta(metodo.entrega, {
+        ...materialDe(puesto.carpeta),
+        pregunta: ID_DE_LA_PREGUNTA,
+        textoDeLaPregunta: pedida.pregunta,
+        textoDeLasOpiniones: readFileSync(join(puesto.carpeta, "in", "reviews.json"), "utf8"),
+      }).rojos,
     );
   guardarJson(join(carpeta, `${puesto.id}.puertas.json`), { verde: rojos.length === 0, rojos });
   if (rojos.length === 0) {
