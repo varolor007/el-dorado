@@ -87,6 +87,7 @@ export type Detalle = Origen & {
   /** Las fotos del alojamiento en general. No dicen de qué son. */
   fotos: string[];
   servicios: string[];
+  /** Desde qué hora se entra y hasta cuál se sale, en veinticuatro horas («15:00»), la escriba como la escriba. */
   entradaDesde: string | null;
   salidaHasta: string | null;
   web: string | null;
@@ -135,6 +136,8 @@ export type Vuelo = Origen & {
   escalasIda: number | null;
   escalasVuelta: number | null;
   minutos: number | null;
+  /** Lo que dura la ida, en minutos, si la fuente lo dice: con ello se sabe a qué hora se llega. */
+  minutosIda?: number | null;
   /** Verdadero si el precio es de una búsqueda anterior de otra persona, y no de ahora. */
   guardado: boolean;
   enlace: string | null;

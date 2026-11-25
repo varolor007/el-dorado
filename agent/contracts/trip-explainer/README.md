@@ -37,6 +37,24 @@ every difference included, was computed by the house: you copy it.
   it avoids (`avoids`), what it reaches (`reaches`), what it loses (`loses`) and what it runs into (`enters`). All of
   that was worked out by the house: you copy it (see EX8).
 
+## When the traveller closes the trip
+
+When the traveller says they keep their trip, you are given a different material, and you write only the order:
+`in/` holds `trip.json` (as always) and `closing.json`, and nothing else. Then you follow the section «When you close
+the trip» of `GUIDE.md`, the rule EX9 and the closing delivery of `DELIVERY.md`, and you write none of the other
+fields.
+
+- `closing.json`: what the house worked out when the traveller kept their trip. `trip` gives its dates, its nights,
+  how many travel and its currency. Each entry of `steps` is a booking, in the order the house fixed (`step`): what
+  it is (`what`: `transport`, `lodging` or `sight`, a sight to book ahead), its `label`, why it goes there
+  (`reasons`: `price_moves`, `saved_price`, `not_cancellable`, `cancel_unknown`, `cancellable`, `book_ahead`), the
+  price seen and the price today (`price_seen`, `price_today`), the change (`change`: `same`, `up`, `down`, `gone`
+  or `unknown`) and its `difference`, already worked out, and whether it can be cancelled. Each entry of `papers` is
+  a paper with a deadline (`paper`): its country, its question, the day it must be done `before` and whether that
+  day has passed (`late`). `unconfirmed` is what is still not confirmed, by its key, and what it is about.
+  `arrival` says how the arrival fits the check-in (`ok`, `early`, `next_day`, `day_before`, `unsure`,
+  `no_transport`, `no_hours`, `no_check_in`), and `check_in_from` the hour the lodging lets you in.
+
 ## What you do not see, and why
 
 You do not see the web, photos or reviews. You explain what others found; you do not add to it.

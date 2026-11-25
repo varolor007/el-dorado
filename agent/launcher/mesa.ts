@@ -8,6 +8,7 @@
 //   diario.jsonl    lo que le ha ido pasando, en su orden; solo se añade
 //   runs/<n>/       cada investigación, con lo que deja cada paso (`agent/data/pasos.ts`)
 //   versiones/<n>/  cada versión que ha tenido el viaje, tal como salió de su run; no se vuelve a escribir
+//   cierres/<n>/    cada vez que se pulsó «me quedo con este», con lo que dejó (`agent/launcher/cerrar.ts`)
 
 import { randomBytes } from "node:crypto";
 import {
@@ -68,7 +69,8 @@ export function guardarJson(ruta: string, dato: unknown): void {
 
 // La carpeta de cada viaje.
 
-export type Version = { n: number; cuando: string; run: number; motivo: string };
+/** Una versión del viaje. La que sale de cerrarlo lleva el número de su cierre, y la de su run sigue siendo la otra. */
+export type Version = { n: number; cuando: string; run: number; motivo: string; cierre?: number };
 export type RunDelViaje = { n: number; cuando: string };
 
 export type Ficha = {
@@ -260,7 +262,7 @@ export function ultimoRun(v: ViajeEnLaMesa): string | null {
  * se vuelve a escribir: si ese run ya dejó la suya, se devuelve esa.
  */
 export function guardarVersion(v: ViajeEnLaMesa, run: number, motivo: string, cuando = new Date()): Version {
-  const ya = v.ficha.versiones.find((x) => x.run === run);
+  const ya = v.ficha.versiones.find((x) => x.run === run && x.cierre === undefined);
   if (ya !== undefined) return ya;
   if (!v.ficha.runs.some((r) => r.n === run)) throw new Error("ese run no es de este viaje");
   if (!SE_PASA_A[v.ficha.estado].includes("on_map")) throw new Error("este viaje no espera ninguna versión");
@@ -283,6 +285,73 @@ export function guardarVersion(v: ViajeEnLaMesa, run: number, motivo: string, cu
   v.ficha.estado = "on_map";
   escribirFicha(v, cuando);
   apuntar(v, "version", { version: n, run, motivo }, cuando);
+  return version;
+}
+
+const carpetaDelCierre = (v: ViajeEnLaMesa, n: number): string => join(v.carpeta, "cierres", String(n));
+
+/**
+ * Abre un cierre del viaje: «me quedo con este», sobre la versión que se enseña, que tiene que estar en el mapa.
+ * Cada vez que se pulsa es un cierre nuevo, con su carpeta; los de antes se quedan. Devuelve su carpeta y su número.
+ */
+export function nuevoCierre(v: ViajeEnLaMesa, cuando = new Date()): { carpeta: string; n: number } {
+  if (v.ficha.estado !== "on_map" || v.ficha.version === null) throw new Error("solo se cierra un viaje en el mapa");
+  const raiz = join(v.carpeta, "cierres");
+  const hechos = existsSync(raiz)
+    ? readdirSync(raiz)
+        .filter((x) => /^[1-9]\d*$/.test(x))
+        .map(Number)
+    : [];
+  const n = Math.max(0, ...hechos) + 1;
+  const carpeta = carpetaDelCierre(v, n);
+  mkdirSync(carpeta, { recursive: true, mode: 0o700 });
+  apuntar(v, "closing", { cierre: n, version: v.ficha.version }, cuando);
+  return { carpeta, n };
+}
+
+/** La carpeta del último cierre de un viaje, y su número; null si no ha tenido ninguno. */
+export function ultimoCierre(v: ViajeEnLaMesa): { carpeta: string; n: number } | null {
+  const raiz = join(v.carpeta, "cierres");
+  if (!existsSync(raiz)) return null;
+  const n = Math.max(
+    0,
+    ...readdirSync(raiz)
+      .filter((x) => /^[1-9]\d*$/.test(x))
+      .map(Number),
+  );
+  return n === 0 ? null : { carpeta: carpetaDelCierre(v, n), n };
+}
+
+/**
+ * Guarda el viaje cerrado como una versión más, y el viaje pasa a «cerrado». Lleva el viaje que dejó el cierre, y lo
+ * entendido y los sucesos de la versión que se cerró. Una versión no se vuelve a escribir: si ese cierre ya dejó la
+ * suya, se devuelve esa.
+ */
+export function guardarCierre(v: ViajeEnLaMesa, cierre: number, cuando = new Date()): Version {
+  const ya = v.ficha.versiones.find((x) => x.cierre === cierre);
+  if (ya !== undefined) return ya;
+  if (!SE_PASA_A[v.ficha.estado].includes("closed")) throw new Error("este viaje no se puede cerrar ahora");
+  const de = v.ficha.versiones.find((x) => x.n === v.ficha.version);
+  if (de === undefined) throw new Error("el viaje no tiene versión que cerrar");
+  const desde = carpetaDelCierre(v, cierre);
+  if (!existsSync(join(desde, "viaje.json"))) throw new Error("el cierre no ha dejado su viaje");
+  const n = v.ficha.versiones.length + 1;
+  const hasta = join(v.carpeta, "versiones", String(n));
+  if (existsSync(hasta)) throw new Error("esa versión ya está escrita");
+  const aparte = join(v.carpeta, "versiones", `.${n}.a-medias`);
+  mkdirSync(aparte, { recursive: true, mode: 0o700 });
+  copyFileSync(join(desde, "viaje.json"), join(aparte, "viaje.json"));
+  for (const nombre of ["sucesos.json", "entendido.json", ...SI_LO_HAY]) {
+    const suyo = join(v.carpeta, "versiones", String(de.n), nombre);
+    if (existsSync(suyo)) copyFileSync(suyo, join(aparte, nombre));
+  }
+  renameSync(aparte, hasta);
+  const version: Version = { n, cuando: cuando.toISOString(), run: de.run, motivo: "closed", cierre };
+  v.ficha.versiones.push(version);
+  v.ficha.version = n;
+  v.ficha.estado = "closed";
+  escribirFicha(v, cuando);
+  apuntar(v, "version", { version: n, run: de.run, motivo: "closed", cierre }, cuando);
   return version;
 }
 

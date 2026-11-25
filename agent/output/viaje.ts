@@ -15,6 +15,7 @@ import { avisosDe } from "../data/palabras.ts";
 import { pegasDelTexto } from "../gates/textos.ts";
 import { CASILLAS_POR_VIAJE } from "../data/moverse.ts";
 import { DIAS_ALREDEDOR } from "../data/transporte.ts";
+import { enlaceSinClaves } from "../tools/enlaces.ts";
 
 export type Punto = { lat: number; lon: number };
 
@@ -297,6 +298,160 @@ export type DeLosPapeles = {
   sigue: boolean;
 };
 
+/** Las piezas que se reservan de un viaje cerrado: dónde se duerme y cómo se llega. */
+export const PIEZAS = ["lodging", "transport"] as const;
+export type ClaseDePieza = (typeof PIEZAS)[number];
+
+/**
+ * Cómo está el precio de hoy de una pieza frente al que se vio: igual, sube o baja (la fuente lo dio hoy), ya no está
+ * (la fuente contestó y no lo tiene) o no se sabe (no se le pudo preguntar).
+ */
+export const CAMBIOS_DE_PRECIO = ["same", "up", "down", "gone", "unknown"] as const;
+export type CambioDePrecio = (typeof CAMBIOS_DE_PRECIO)[number];
+
+/** La edad de un precio al cerrar: visto ahora, guardado de hace días dentro de su edad, o caducado. */
+export const EDADES_DE_UN_PRECIO = ["now", "saved", "stale"] as const;
+export type EdadDeUnPrecio = (typeof EDADES_DE_UN_PRECIO)[number];
+
+/** El precio de hoy de una pieza: el que se vio, el de hoy si lo hay, y lo que ha cambiado, que cuenta el código. */
+export type PrecioDeHoy = {
+  pieza: ClaseDePieza;
+  /** El identificador de la pieza en el viaje: el de su alojamiento o el de su transporte. */
+  ref: string;
+  antes: Precio;
+  hoy: Precio | null;
+  cambio: CambioDePrecio;
+  /** El de hoy menos el que se vio, en su moneda; null si no hay de hoy. */
+  diferencia: number | null;
+  /** La edad del de hoy; null si no hay. */
+  edad: EdadDeUnPrecio | null;
+  /** Si se puede cancelar, según la fuente hoy; null si no lo dice. */
+  cancelable: boolean | null;
+  /** Para qué noches dio la fuente el precio de hoy, si lo dice. */
+  noches: { entrada: string; salida: string } | null;
+};
+
+/**
+ * Qué es un enlace de reserva: la página donde se vio ese precio, la búsqueda en la web de la fuente con las fechas
+ * ya puestas, o la web del propio alojamiento, que no es donde se vio el precio.
+ */
+export const CLASES_DE_ENLACE = ["where_priced", "search", "own_site"] as const;
+/** Lo que se supo de un enlace al cerrar: responde, no se pudo saber (la web no deja mirar) o no responde. */
+export const COMPROBACIONES_DE_ENLACE = ["ok", "unchecked", "down"] as const;
+export type ComprobacionDeEnlace = (typeof COMPROBACIONES_DE_ENLACE)[number];
+
+export type EnlaceDeReserva = {
+  pieza: ClaseDePieza;
+  ref: string;
+  clase: (typeof CLASES_DE_ENLACE)[number];
+  url: string;
+  /** Quién vende en esa página, si se sabe. */
+  vendedor: string | null;
+  /** El precio que se vio en esa página, si es de otro vendedor; null si es el de la pieza o no lo hay. */
+  precio: { total: number; moneda: string } | null;
+  comprobado: ComprobacionDeEnlace;
+};
+
+/** Por qué va una reserva en su sitio del orden: lo que no se cancela, lo que se mueve de precio, lo que se agota. */
+export const RAZONES_DEL_ORDEN = [
+  "not_cancellable",
+  "cancel_unknown",
+  "saved_price",
+  "price_moves",
+  "cancellable",
+  "book_ahead",
+] as const;
+export type RazonDelOrden = (typeof RAZONES_DEL_ORDEN)[number];
+
+/** Una reserva, en su orden: de qué pieza o de qué parada (si se reserva con tiempo) y por qué ahí. */
+export type Reserva = {
+  n: number;
+  que: ClaseDePieza | "sight";
+  ref: string;
+  porQue: RazonDelOrden[];
+  /** Lo que conviene saber de ella, en el idioma del viajero: del que explica, y pasó la puerta 7. */
+  frase?: string;
+};
+
+/** Un papel con plazo: de qué casilla de la tabla, para cuándo tiene que estar y si ese día ya pasó. */
+export type PlazoDePapel = {
+  casilla: number;
+  pais: string;
+  pregunta: (typeof PREGUNTAS)[number];
+  antesDe: string;
+  tarde: boolean;
+  frase?: string;
+};
+
+/** Lo que queda sin confirmar al cerrar, por su clave: la frase la pone la web. */
+export const SIN_CONFIRMAR = [
+  "price_gone",
+  "price_unknown",
+  "price_stale",
+  "saved_price",
+  "cancel_unknown",
+  "arrival_unknown",
+  "arrival_off",
+  "no_link",
+  "link_down",
+  "link_unchecked",
+  "papers_doubtful",
+  "papers_late",
+] as const;
+export type SinConfirmar = { que: (typeof SIN_CONFIRMAR)[number]; ref: string | null };
+
+/**
+ * La hora de llegada frente a la entrada al alojamiento: cuadra, se llega horas antes (esperar a la habitación),
+ * se llega al día siguiente (una noche sin usar) o el día de antes (una noche sin cama), no se sabe por la hora del
+ * destino, o no se puede decir porque no hay transporte, no hay horas o no se sabe desde cuándo se entra.
+ */
+export const LLEGADAS = [
+  "ok",
+  "early",
+  "next_day",
+  "day_before",
+  "unsure",
+  "no_transport",
+  "no_hours",
+  "no_check_in",
+] as const;
+export type Llegada = (typeof LLEGADAS)[number];
+
+/** Por qué un viaje cerrado no lleva las frases del que explica: no hay IA, falló, o lo que escribió no pasó. */
+export const SIN_FRASES = ["no_ai", "failed", "rejected"] as const;
+
+/**
+ * El viaje cerrado: con qué manera, los precios de ese día, el orden de las reservas, los plazos de los papeles, lo
+ * que queda sin confirmar y los enlaces. Todo por claves y números: la única frase es la del que explica.
+ */
+export type Cierre = {
+  /** Cuándo se cerró: la hora con la que se miden las edades de los precios. */
+  cuando: string;
+  /** La versión del viaje que se cerró. */
+  version: number;
+  manera: (typeof MANERAS)[number];
+  alojamiento: string;
+  transporte: string | null;
+  moneda: string;
+  /** El total de la manera como se vio, y el de hoy; null si alguna pieza no tiene precio de hoy. */
+  total: { antes: number; hoy: number | null };
+  precios: PrecioDeHoy[];
+  /** Si el cambio de precio pidió el sí del viajero, y si lo dio. */
+  subida: { pide: boolean; sigue: boolean };
+  enlaces: EnlaceDeReserva[];
+  /** Los enlaces a Google Maps: donde se duerme, cada parada y cada día. */
+  mapas: { alojamiento: string; paradas: Record<string, string>; dias: { fecha: string; url: string | null }[] };
+  reservas: Reserva[];
+  papeles: PlazoDePapel[];
+  sinConfirmar: SinConfirmar[];
+  llegada: Llegada;
+  /** Desde qué hora se entra al alojamiento, si la fuente lo dice (HH:MM). */
+  entradaDesde: string | null;
+  /** Lo que no se sabe, en el idioma del viajero: del que explica. Solo si lleva sus frases. */
+  dudas?: string[];
+  sinFrases: (typeof SIN_FRASES)[number] | null;
+};
+
 export const RITMOS = ["calm", "normal", "full"] as const;
 export type Ritmo = (typeof RITMOS)[number];
 
@@ -340,6 +495,8 @@ export type Viaje = {
   calendario?: DelCalendario;
   /** La tabla de los papeles, con sus fuentes y sus plazos, o por qué falta. Un viaje de antes no la trae. */
   papeles?: DeLosPapeles;
+  /** El viaje cerrado: los precios de ese día, el orden y los enlaces. Solo la versión cerrada lo lleva. */
+  cierre?: Cierre;
 };
 
 /** Lo que la casa cuenta en vivo. Solo datos: la frase la monta la web, en el idioma de quien mira. */
@@ -537,6 +694,76 @@ export function pegasDeLosPapeles(p: DeLosPapeles): Pega[] {
   return pegas;
 }
 
+/**
+ * Lo que se comprueba de un viaje cerrado antes de dárselo a la web: cada cosa por su clave y de su lista, sus piezas
+ * las de su manera, cada enlace una dirección https sin claves y cada frase del que explica, un texto para el
+ * viajero. Si todo cuadra lo mira la puerta 8, que lo cuenta otra vez desde lo que dio cada fuente.
+ */
+export function pegasDelCierre(c: Cierre, v: Viaje): Pega[] {
+  const pegas: Pega[] = [];
+  const pega = (donde: string, que: string): void => void pegas.push({ donde, que });
+  const deSuLista = <T extends string>(lista: readonly T[], x: unknown): boolean => lista.includes(x as T);
+  if (Number.isNaN(Date.parse(c.cuando))) pega("cierre", "no dice cuándo se cerró");
+  const m = v.maneras.find((x) => x.id === c.manera);
+  if (m === undefined) return [...pegas, { donde: "cierre", que: "su manera no es de este viaje" }];
+  if (m.alojamiento !== c.alojamiento || m.transporte !== c.transporte)
+    pega("cierre", "sus piezas no son las de su manera");
+  if (!/^[A-Z]{3}$/.test(c.moneda)) pega("cierre", "no dice su moneda");
+  if (!(c.total.antes > 0) || (c.total.hoy !== null && !(c.total.hoy > 0))) pega("cierre", "un total no es un importe");
+  const piezas = [c.alojamiento, ...(c.transporte === null ? [] : [c.transporte])];
+  c.precios.forEach((p, i) => {
+    const donde = `cierre.precios[${i}]`;
+    if (!deSuLista(PIEZAS, p.pieza) || !piezas.includes(p.ref)) pega(donde, "no es una pieza de su manera");
+    if (!deSuLista(CAMBIOS_DE_PRECIO, p.cambio)) pega(donde, "su cambio no es de su lista");
+    if (p.edad !== null && !deSuLista(EDADES_DE_UN_PRECIO, p.edad)) pega(donde, "su edad no es de su lista");
+    pegas.push(...pegasDelPrecio(p.antes, donde));
+    if (p.hoy !== null) pegas.push(...pegasDelPrecio(p.hoy, `${donde}.hoy`));
+    if ((p.hoy === null) !== (p.diferencia === null) || (p.hoy === null) !== (p.edad === null))
+      pega(donde, "lo de hoy no casa con lo que dice de él");
+  });
+  if (c.precios.length !== piezas.length) pega("cierre", "no lleva el precio de hoy de cada pieza");
+  c.enlaces.forEach((e, i) => {
+    const donde = `cierre.enlaces[${i}]`;
+    if (!enlaceSinClaves(e.url)) pega(donde, "no es una dirección https sin claves");
+    if (!deSuLista(CLASES_DE_ENLACE, e.clase) || !deSuLista(COMPROBACIONES_DE_ENLACE, e.comprobado))
+      pega(donde, "su clase o lo que se supo de él no son de su lista");
+    if (!piezas.includes(e.ref)) pega(donde, "no es de una pieza de su manera");
+  });
+  const mapas = [c.mapas.alojamiento, ...Object.values(c.mapas.paradas), ...c.mapas.dias.flatMap((d) => d.url ?? [])];
+  if (!mapas.every((u) => enlaceSinClaves(u) && new URL(u).hostname === "www.google.com"))
+    pega("cierre.mapas", "un enlace de los mapas no es de Google Maps");
+  for (const id of Object.keys(c.mapas.paradas))
+    if (!v.paradas.some((p) => p.id === id)) pega("cierre.mapas", `la parada ${id} no existe`);
+  c.reservas.forEach((r, i) => {
+    const donde = `cierre.reservas[${i}]`;
+    if (r.n !== i + 1) pega(donde, "no va en su orden");
+    const existe = r.que === "sight" ? v.paradas.some((p) => p.id === r.ref) : piezas.includes(r.ref);
+    if (!existe) pega(donde, "no es de una pieza ni de una parada del viaje");
+    if (!r.porQue.every((x) => deSuLista(RAZONES_DEL_ORDEN, x))) pega(donde, "un porqué no es de su lista");
+  });
+  c.papeles.forEach((p, i) => {
+    if (!fecha(p.antesDe) || !PREGUNTAS.includes(p.pregunta) || !/^[A-Z]{2}$/.test(p.pais))
+      pega(`cierre.papeles[${i}]`, "no es un plazo con su fecha");
+  });
+  for (const s of c.sinConfirmar)
+    if (!deSuLista(SIN_CONFIRMAR, s.que)) pega("cierre.sinConfirmar", "una clave no es de su lista");
+  if (!deSuLista(LLEGADAS, c.llegada)) pega("cierre", "su llegada no es de su lista");
+  if (c.entradaDesde !== null && !/^\d{2}:\d{2}$/.test(c.entradaDesde))
+    pega("cierre", "su hora de entrada no es una hora");
+  if (c.sinFrases !== null && !deSuLista(SIN_FRASES, c.sinFrases)) pega("cierre", "no dice por qué no lleva frases");
+  // Las frases del que explica van todas o ninguna: una por reserva y una por plazo, y lo que no se sabe.
+  const frases = [...c.reservas, ...c.papeles].map((x) => x.frase);
+  const con = frases.filter((x) => x !== undefined).length;
+  if (con > 0 && con !== frases.length) pega("cierre", "unas reservas llevan su frase y otras no");
+  if ((con > 0 || c.dudas !== undefined) && c.sinFrases !== null)
+    pega("cierre", "dice que no lleva frases, y las lleva");
+  for (const [i, f] of [...frases.filter((x) => x !== undefined), ...(c.dudas ?? [])].entries()) {
+    if (typeof f !== "string" || f.trim() === "") pega(`cierre.frases[${i}]`, "una frase no es un texto");
+    else for (const que of pegasDelTexto(f, { sinNumerosLargos: true })) pega(`cierre.frases[${i}]`, `su frase ${que}`);
+  }
+  return pegas;
+}
+
 /** Lo que el código puede comprobar de un viaje antes de dárselo a la web. No mira si el viaje es bueno. */
 export function comprobarViaje(v: Viaje): Pega[] {
   const pegas: Pega[] = [];
@@ -623,6 +850,7 @@ export function comprobarViaje(v: Viaje): Pega[] {
   if (v.caminos !== undefined) pegas.push(...pegasDeLosCaminos(v.caminos));
   if (v.calendario !== undefined) pegas.push(...pegasDelCalendario(v.calendario, v.entrada, v.salida));
   if (v.papeles !== undefined) pegas.push(...pegasDeLosPapeles(v.papeles));
+  if (v.cierre !== undefined) pegas.push(...pegasDelCierre(v.cierre, v));
   if (!RITMOS.includes(v.ritmo)) pega("ritmo", "el ritmo no es de su lista");
   if (!Number.isInteger(v.habitaciones) || v.habitaciones < 1 || v.habitaciones > Math.max(1, v.adultos))
     pega("habitaciones", "no dice en cuántas habitaciones duerme el grupo");

@@ -60,3 +60,20 @@ its other fields.
 
 Before delivering: a number that is not in the material; a promise; a word from inside; an adjective without its
 fact; a way without what it loses; a finding or a window without its sentence.
+
+## When you close the trip
+
+Only when `in/closing.json` is there: then these are your steps 3 to 5, instead of the ones above.
+
+1. **Each booking, in its order.** For each entry of `steps`, one sentence in the traveller's language: why it goes
+   there and what the traveller has to know before booking it, by its `reasons` and its price. If `change` is `up`
+   or `down`, say how much, with its `difference`; if it is `gone` or `unknown`, say that there is no price today
+   and that they will see it where they book. Two examples of the form, in English and of two different kinds, so
+   that you copy neither: `Book the flight first: its price moves, and it went up <amount> <currency> since you saw
+   it.`, or `The room can be cancelled, so it can wait until the flight is booked.`
+2. **Each paper, with its day.** For each entry of `papers`, one sentence: what has to be done and before which day;
+   if it is `late`, say plainly that the day has passed and that they should check it now.
+3. **What is not known.** In `unknowns`, one sentence for each thing of `unconfirmed` that matters, and for an
+   `arrival` that is not `ok`.
+4. **Self-critique.** A number that is not in `in/closing.json`; a promise; telling the traveller that something is
+   booked or paid; a step or a paper without its sentence.

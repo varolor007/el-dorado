@@ -1,0 +1,499 @@
+// Cerrar el viaje (el momento 7 de la hoja): «me quedo con este». Sobre la versión que se enseña y con la manera que
+// tiene elegida el viajero, la casa vuelve a pedir a su fuente el precio de cada pieza, para y pregunta si un
+// precio ha subido mucho o se ha quedado sin él, comprueba cada enlace sin tumbar ninguna web, le da al que explica
+// el orden que ha montado el código para que escriba una frase de cada cosa (puerta 7), lo pasa todo por la puerta 8
+// y lo guarda en la mesa como una versión más, ya cerrada. El Dorado propone y enlaza: no reserva ni cobra.
+//
+// Lo que deja en la carpeta de cada cierre (`viajes/<id>/cierres/<n>/`), en su orden, para retomarlo desde el disco:
+//
+//   elegido.json    qué versión y qué manera, y cuándo se pulsó
+//   precios.json    lo que dio cada fuente hoy, lo que se sabe de la llegada y del alojamiento
+//   seguir.json     el sí del viajero, si un precio subió mucho o se quedó sin él
+//   enlaces.json    lo que respondió cada enlace
+//   orden.json      lo que escribió el que explica, ya pasado por la puerta 7, o por qué no lo hay
+//   puerta8.json    lo que dijo la puerta 8
+//   viaje.json      el viaje cerrado, que pasa a ser una versión
+//   parado.json     si la puerta 8 lo paró, por qué; o si se rompió algo
+
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { COMPROBAR_ENLACES, ESPERA_A_LAS_FUENTES, VUELTAS_DEL_ORDEN } from "../data/cierre.ts";
+import { TOPE_DE_UN_ASIENTO } from "../data/pasos.ts";
+import { puertaCierre, type MaterialDelCierre } from "../gates/puerta_cierre.ts";
+import { puertaDelOrden } from "../gates/puerta_explica.ts";
+import type { Rojo } from "../gates/puerta_busqueda.ts";
+import type { Cierre, ComprobacionDeEnlace, EnlaceDeReserva, MANERAS, Viaje } from "../output/viaje.ts";
+import {
+  enlacesSinComprobar,
+  llegadaDe,
+  mapasDe,
+  paraElOrden,
+  piezasDe,
+  pideSeguir,
+  plazosDe,
+  precioDeHoy,
+  reservasDe,
+  sinConfirmarDe,
+  totalDeHoy,
+  type DeHoy,
+  type DelAlojamiento,
+  type ParaLaLlegada,
+  type PiezaElegida,
+} from "../scripts/cierre.ts";
+import type { Busqueda } from "../scripts/busqueda_alojamiento.ts";
+import type { Entendido } from "../scripts/formas.ts";
+import { enlaceQueVale } from "../tools/enlaces.ts";
+import { hora24 } from "../tools/horas.ts";
+import { completo } from "../scripts/finalistas.ts";
+import { paraElGrupo, type FuenteAlojamiento, type FuenteTransporte, type Vuelo } from "../tools/fuentes/tipos.ts";
+import { lanzarAsiento, recogerAsiento, type Lanzador, type Tope } from "./asiento.ts";
+import { paginaDeFuera } from "./consultado.ts";
+import { sinPalabras } from "./escuchar.ts";
+import { estanciaDe } from "./investigar.ts";
+import { guardarCierre, guardarJson, leerVersion, type ViajeEnLaMesa } from "./mesa.ts";
+import { montarPuesto, puestosDe, type Pieza } from "./puesto.ts";
+import { apuntarTrabajo } from "./trabajos.ts";
+
+/** Las fuentes a las que se vuelve a pedir el precio, y quien comprueba los enlaces. */
+export type FuentesDelCierre = {
+  alojamiento?: FuenteAlojamiento;
+  transporte?: FuenteTransporte;
+  /** Lo que responde un enlace. Sin ello, ningún enlace se comprueba: todos quedan «sin comprobar». */
+  comprobar?: (url: string) => Promise<ComprobacionDeEnlace>;
+};
+
+export type AlCerrar = {
+  fuentes: FuentesDelCierre;
+  /** Quien piensa en el que explica. Sin él, el viaje se cierra con el orden del código y sin sus frases. */
+  lanzador: Lanzador | null;
+  ahora?: () => Date;
+  tope?: Tope;
+};
+
+/** Por dónde va un cierre, como lo ve la web: solo claves y, si espera al viajero, lo que ha cambiado. */
+export const ETAPAS_DEL_CIERRE = ["prices", "yours", "links", "order", "check", "done", "stopped"] as const;
+export type EtapaDelCierre = (typeof ETAPAS_DEL_CIERRE)[number];
+
+const hay = (carpeta: string, nombre: string): boolean => existsSync(join(carpeta, nombre));
+const leer = <T>(carpeta: string, nombre: string): T => JSON.parse(readFileSync(join(carpeta, nombre), "utf8")) as T;
+
+type Elegido = { version: number; manera: (typeof MANERAS)[number]; cuando: string };
+type DeLosPrecios = {
+  dados: Record<string, DeHoy>;
+  llegada: ParaLaLlegada;
+  alojamiento: DelAlojamiento;
+  /** Si lo que cambió pide el sí del viajero antes de seguir. */
+  pide?: boolean;
+};
+type DelOrden = {
+  entrega: {
+    steps: { step: number; says: string }[];
+    papers: { paper: number; says: string }[];
+    unknowns: string[];
+  } | null;
+  falta: Cierre["sinFrases"];
+};
+
+export class FalloAlCerrar extends Error {}
+
+/** «Me quedo con este»: apunta qué versión y qué manera se cierran. La manera tiene que ser de esa versión. */
+export function elegir(v: ViajeEnLaMesa, carpeta: string, manera: unknown, cuando: Date): Elegido {
+  const version = leerVersion(v);
+  const viaje = version?.viaje as Viaje | undefined;
+  if (version === null || viaje === undefined || v.ficha.version === null) throw new FalloAlCerrar("not_now");
+  if (typeof manera !== "string" || !viaje.maneras.some((m) => m.id === manera)) throw new FalloAlCerrar("bad_way");
+  const elegido: Elegido = {
+    version: v.ficha.version,
+    manera: manera as Elegido["manera"],
+    cuando: cuando.toISOString(),
+  };
+  guardarJson(join(carpeta, "elegido.json"), elegido);
+  return elegido;
+}
+
+/** El sí del viajero a seguir con los precios de hoy: solo cuando el cierre lo está esperando. */
+export function seguir(carpeta: string, cuando: Date): void {
+  if (etapaDe(carpeta) !== "yours") throw new FalloAlCerrar("not_now");
+  guardarJson(join(carpeta, "seguir.json"), { cuando: cuando.toISOString() });
+}
+
+/** Lo que tiene el viaje de la versión que se cierra, y su manera. */
+function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Viaje; entendido: Entendido } {
+  const e = leer<Elegido>(carpeta, "elegido.json");
+  const version = leerVersion(v, e.version);
+  if (version === null) throw new Error("la versión que se cierra ya no está");
+  return { e, viaje: version.viaje as Viaje, entendido: version.entendido as Entendido };
+}
+
+/** Una promesa con su tiempo: si la fuente no contesta, no se le espera más. */
+function conTiempo<T>(p: Promise<T>, segundos: number): Promise<T> {
+  let reloj: NodeJS.Timeout | undefined;
+  const tarde = new Promise<never>((_, mal) => {
+    reloj = setTimeout(() => mal(new Error("la fuente no contestó a tiempo")), segundos * 1000);
+  });
+  return Promise.race([p, tarde]).finally(() => clearTimeout(reloj));
+}
+
+/** Lo que sabe el run de la versión del alojamiento elegido: su web y desde qué hora se entra. */
+function delRun(v: ViajeEnLaMesa, version: number, alojamiento: string): DelAlojamiento {
+  const run = v.ficha.versiones.find((x) => x.n === version)?.run;
+  const ruta = run === undefined ? null : join(v.carpeta, "runs", String(run), "busqueda.json");
+  if (ruta === null || !existsSync(ruta)) return { web: null, entradaDesde: null };
+  try {
+    const { busqueda } = JSON.parse(readFileSync(ruta, "utf8")) as { busqueda: Busqueda };
+    const f = busqueda.finalistas.find((x) => x.alojamiento.id === alojamiento);
+    const web = f?.detalle?.web ?? null;
+    // Una investigación de antes pudo guardar la hora como la escribe su fuente («03:00 PM»): se lee igual.
+    return { web: enlaceQueVale(web) ? web : null, entradaDesde: hora24(f?.detalle?.entradaDesde) };
+  } catch {
+    return { web: null, entradaDesde: null };
+  }
+}
+
+/** El vuelo de hoy que es el mismo que se eligió: mismos aeropuertos, misma salida y, si se sabía, misma compañía. */
+function elMismoVuelo(vuelos: Vuelo[], t: Viaje["transportes"][number]): Vuelo | null {
+  const mismos = vuelos.filter(
+    (x) =>
+      x.origen === t.de &&
+      x.destino === t.a &&
+      x.sale === t.sale &&
+      (x.vuelve ?? null) === (t.vuelve ?? null) &&
+      (t.precio.vendedor === null || x.aerolinea === t.precio.vendedor),
+  );
+  return mismos.sort((a, b) => a.precio - b.precio)[0] ?? null;
+}
+
+/** Vuelve a pedir a su fuente el precio de cada pieza. Lo que falla no rompe nada: queda «no se sabe». */
+async function preciosDeHoy(
+  v: ViajeEnLaMesa,
+  e: Elegido,
+  viaje: Viaje,
+  entendido: Entendido,
+  f: FuentesDelCierre,
+): Promise<DeLosPrecios> {
+  const m = viaje.maneras.find((x) => x.id === e.manera)!;
+  const dados: Record<string, DeHoy> = {};
+  if (f.alojamiento === undefined) dados[m.alojamiento] = "unknown";
+  else {
+    try {
+      const estancia = estanciaDe(entendido);
+      const precios = await conTiempo(f.alojamiento.precios([m.alojamiento], estancia), ESPERA_A_LAS_FUENTES);
+      const p = precios.find((x) => x.id === m.alojamiento);
+      dados[m.alojamiento] =
+        p === undefined
+          ? "gone"
+          : {
+              precio: { total: completo(p), moneda: p.moneda, vendedor: p.vendedor, visto: p.visto, enlace: p.enlace },
+              cancelable: p.cancelable,
+              noches: { entrada: p.entrada, salida: p.salida },
+              guardado: false,
+            };
+    } catch {
+      dados[m.alojamiento] = "unknown";
+    }
+  }
+  let llega: Vuelo | null = null;
+  const t = m.transporte === null ? undefined : viaje.transportes.find((x) => x.id === m.transporte);
+  if (t !== undefined) {
+    if (f.transporte === undefined) dados[t.id] = "unknown";
+    else {
+      try {
+        const vuelos = await conTiempo(
+          f.transporte.fechas({
+            origen: t.de,
+            destino: t.a,
+            ida: t.sale.slice(0, 10),
+            vuelta: t.vuelve === null ? null : t.vuelve.slice(0, 10),
+            moneda: t.precio.moneda,
+            mercado: (entendido.origin?.country ?? "").toLowerCase(),
+          }),
+          ESPERA_A_LAS_FUENTES,
+        );
+        llega = elMismoVuelo(vuelos, t);
+        const viajeros = viaje.adultos + viaje.ninos.length;
+        dados[t.id] =
+          llega === null
+            ? "gone"
+            : {
+                precio: {
+                  total: paraElGrupo(llega, viajeros),
+                  moneda: llega.moneda,
+                  vendedor: llega.aerolinea,
+                  visto: llega.visto,
+                  enlace: llega.enlace,
+                },
+                cancelable: null,
+                noches: null,
+                guardado: llega.guardado,
+              };
+      } catch {
+        dados[t.id] = "unknown";
+      }
+    }
+  }
+  const alojamiento = delRun(v, e.version, m.alojamiento);
+  return {
+    dados,
+    alojamiento,
+    llegada: {
+      hayTransporte: t !== undefined,
+      sale: llega?.sale ?? t?.sale ?? null,
+      minutosIda: llega?.minutosIda ?? null,
+      entrada: viaje.entrada,
+      entradaDesde: alojamiento.entradaDesde,
+      lon: viaje.destino.punto.lon,
+    },
+  };
+}
+
+/** Lo que se cuenta de un cierre sin frases todavía: todo lo del código, de lo que hay en su carpeta. */
+function montar(
+  viaje: Viaje,
+  e: Elegido,
+  p: DeLosPrecios,
+  comprobados: Record<string, ComprobacionDeEnlace>,
+  sigue: boolean,
+): { cierre: Cierre; piezas: PiezaElegida[] } {
+  const m = viaje.maneras.find((x) => x.id === e.manera)!;
+  const piezas = piezasDe(viaje, m);
+  const precios = piezas.map((x) => precioDeHoy(x, p.dados[x.ref] ?? "unknown", e.cuando));
+  const enlaces: EnlaceDeReserva[] = enlacesSinComprobar(viaje, m, precios, p.alojamiento).map((x) => ({
+    ...x,
+    comprobado: comprobados[x.url] ?? "unchecked",
+  }));
+  const llegada = llegadaDe(p.llegada);
+  const cierre: Cierre = {
+    cuando: e.cuando,
+    version: e.version,
+    manera: m.id,
+    alojamiento: m.alojamiento,
+    transporte: m.transporte,
+    moneda: m.moneda,
+    total: { antes: m.total, hoy: totalDeHoy(precios) },
+    precios,
+    subida: { pide: pideSeguir(precios, m.total), sigue },
+    enlaces,
+    mapas: mapasDe(viaje, m.alojamiento),
+    reservas: reservasDe(viaje, piezas, precios),
+    papeles: plazosDe(viaje),
+    sinConfirmar: sinConfirmarDe(viaje, precios, enlaces, llegada),
+    llegada,
+    entradaDesde: p.alojamiento.entradaDesde,
+    sinFrases: null,
+  };
+  return { cierre, piezas };
+}
+
+/** Por dónde va un cierre, leído de su carpeta. */
+export function etapaDe(carpeta: string): EtapaDelCierre {
+  if (hay(carpeta, "parado.json")) return "stopped";
+  if (hay(carpeta, "viaje.json")) return "done";
+  if (!hay(carpeta, "precios.json")) return "prices";
+  if (hay(carpeta, "puerta8.json")) return "check";
+  if (hay(carpeta, "orden.json")) return "check";
+  if (hay(carpeta, "enlaces.json")) return "order";
+  // Si el cambio de precio pide el sí del viajero y no lo ha dado, es su turno.
+  if (leer<DeLosPrecios>(carpeta, "precios.json").pide === true && !hay(carpeta, "seguir.json")) return "yours";
+  return "links";
+}
+
+/** Lo que la web ve de un cierre: su etapa y, cuando espera al viajero o ya está, lo que cambió de precio. */
+export function cierreDeCara(v: ViajeEnLaMesa, c: { carpeta: string; n: number }): Record<string, unknown> {
+  const etapa = etapaDe(c.carpeta);
+  const cara: Record<string, unknown> = { n: c.n, stage: etapa };
+  if (hay(c.carpeta, "elegido.json")) cara.way = leer<Elegido>(c.carpeta, "elegido.json").manera;
+  if (etapa === "yours") {
+    const { e, viaje } = delElegido(v, c.carpeta);
+    const p = leer<DeLosPrecios>(c.carpeta, "precios.json");
+    const { cierre } = montar(viaje, e, p, {}, false);
+    cara.prices = cierre.precios.map((x) => ({
+      piece: x.pieza,
+      ref: x.ref,
+      seen: x.antes.total,
+      today: x.hoy?.total ?? null,
+      change: x.cambio,
+      difference: x.diferencia,
+      currency: x.antes.moneda,
+    }));
+    cara.total = cierre.total;
+  }
+  if (etapa === "stopped") cara.why = "check";
+  return cara;
+}
+
+/** Comprueba cada enlace, de uno en uno y con su tope por cierre; los de más se quedan sin comprobar. */
+async function comprobarLosEnlaces(urls: string[], f: FuentesDelCierre): Promise<Record<string, ComprobacionDeEnlace>> {
+  const vistos: Record<string, ComprobacionDeEnlace> = {};
+  if (f.comprobar === undefined) return vistos;
+  for (const url of [...new Set(urls)].slice(0, COMPROBAR_ENLACES.porCierre)) {
+    try {
+      vistos[url] = await f.comprobar(url);
+    } catch {
+      vistos[url] = "unchecked";
+    }
+  }
+  return vistos;
+}
+
+/** Lanza al que explica para el orden, con sus vueltas si vuelve en rojo. Si no hay IA, o no sale, no hay frases. */
+async function elOrden(
+  carpeta: string,
+  viaje: Viaje,
+  cierre: Cierre,
+  entendido: Entendido,
+  o: AlCerrar,
+): Promise<DelOrden> {
+  if (o.lanzador === null) return { entrega: null, falta: "no_ai" };
+  const ahora = o.ahora ?? ((): Date => new Date());
+  const dado = paraElOrden(viaje, cierre);
+  const json = (x: unknown): string => JSON.stringify(x, null, 2);
+  const piezas: Pieza[] = [
+    { ruta: "trip.json", contenido: json(sinPalabras(entendido)) },
+    { ruta: "closing.json", contenido: json(dado) },
+  ];
+  let devuelto: Pieza | null = null;
+  for (let vuelta = 1; vuelta <= 1 + VUELTAS_DEL_ORDEN; vuelta++) {
+    const id = `orden-v${vuelta}`;
+    const puesto =
+      puestosDe(carpeta).find((p) => p.id === id) ??
+      montarPuesto(carpeta, id, "trip-explainer", devuelto === null ? piezas : [...piezas, devuelto]);
+    const base = { puesto: id, asiento: puesto.asiento, desde: ahora().toISOString(), hasta: null, gasto: null };
+    apuntarTrabajo(carpeta, { ...base, estado: "working", fallo: null });
+    const r = await lanzarAsiento(puesto, o.lanzador, o.tope ?? TOPE_DE_UN_ASIENTO);
+    const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
+    const estado = r.fueraDeTope ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
+    apuntarTrabajo(carpeta, {
+      ...base,
+      estado,
+      hasta: ahora().toISOString(),
+      gasto: r.gasto,
+      fallo: estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega"),
+    });
+    if (estado !== "done") return { entrega: null, falta: "failed" };
+    const metodo = recogerAsiento(puesto);
+    let rojos: Rojo[] = [...metodo.rojos];
+    try {
+      if (metodo.entrega !== null) rojos.push(...puertaDelOrden(metodo.entrega, { dado }).rojos);
+    } catch {
+      rojos = [...rojos, { donde: "delivery", que: "la entrega no tiene la forma de su contrato" }];
+    }
+    guardarJson(join(carpeta, `${id}.puertas.json`), { verde: rojos.length === 0, rojos });
+    if (rojos.length === 0 && metodo.entrega !== null)
+      return { entrega: (metodo.entrega as { closing: DelOrden["entrega"] }).closing, falta: null };
+    devuelto = { ruta: "returned.json", contenido: json({ what_was_wrong: rojos, delivery: metodo.entrega }) };
+  }
+  return { entrega: null, falta: "rejected" };
+}
+
+/** Las frases del que explica, puestas en el cierre: una por reserva y una por plazo, y lo que no se sabe. */
+function conSusFrases(cierre: Cierre, orden: DelOrden): Cierre {
+  if (orden.entrega === null) return { ...cierre, sinFrases: orden.falta ?? "failed" };
+  const de = orden.entrega;
+  return {
+    ...cierre,
+    reservas: cierre.reservas.map((r) => ({ ...r, frase: de.steps.find((s) => s.step === r.n)!.says })),
+    papeles: cierre.papeles.map((p, i) => ({ ...p, frase: de.papers.find((x) => x.paper === i)!.says })),
+    dudas: de.unknowns,
+    sinFrases: null,
+  };
+}
+
+export type Cerrado = { etapa: EtapaDelCierre; version: number | null };
+
+/**
+ * Lleva un cierre desde lo que hay en su carpeta hasta que esté hecho, espere al viajero o lo pare la puerta 8. Se
+ * puede llamar las veces que haga falta: sigue donde lo dejó.
+ */
+export async function llevarElCierre(
+  v: ViajeEnLaMesa,
+  c: { carpeta: string; n: number },
+  o: AlCerrar,
+): Promise<Cerrado> {
+  const ahora = o.ahora ?? ((): Date => new Date());
+  const { carpeta } = c;
+  if (hay(carpeta, "parado.json")) return { etapa: "stopped", version: null };
+  if (hay(carpeta, "viaje.json")) return { etapa: "done", version: guardarCierre(v, c.n, ahora()).n };
+  const { e, viaje, entendido } = delElegido(v, carpeta);
+
+  // 2. Los precios de hoy, a su fuente. Si alguno sube mucho o falta, se pregunta antes de seguir.
+  if (!hay(carpeta, "precios.json")) {
+    const p = await preciosDeHoy(v, e, viaje, entendido, o.fuentes);
+    const { cierre } = montar(viaje, e, p, {}, false);
+    guardarJson(join(carpeta, "precios.json"), { ...p, pide: cierre.subida.pide });
+  }
+  if (etapaDe(carpeta) === "yours") return { etapa: "yours", version: null };
+  const p = leer<DeLosPrecios>(carpeta, "precios.json");
+  const sigue = hay(carpeta, "seguir.json");
+
+  // 5. Los enlaces: cada uno, comprobado una vez.
+  if (!hay(carpeta, "enlaces.json")) {
+    const { cierre } = montar(viaje, e, p, {}, sigue);
+    guardarJson(
+      join(carpeta, "enlaces.json"),
+      await comprobarLosEnlaces(
+        cierre.enlaces.map((x) => x.url),
+        o.fuentes,
+      ),
+    );
+  }
+  const comprobados = leer<Record<string, ComprobacionDeEnlace>>(carpeta, "enlaces.json");
+  const { cierre, piezas } = montar(viaje, e, p, comprobados, sigue);
+
+  // 3. El que explica deja el orden: el del código, con una frase de cada cosa que pasa la puerta 7.
+  if (!hay(carpeta, "orden.json"))
+    guardarJson(join(carpeta, "orden.json"), await elOrden(carpeta, viaje, cierre, entendido, o));
+  const cerrado: Viaje = { ...viaje, cierre: conSusFrases(cierre, leer<DelOrden>(carpeta, "orden.json")) };
+
+  // 4. La puerta 8, con lo que dio cada fuente y lo que respondió cada enlace.
+  const material: MaterialDelCierre = { piezas, dados: p.dados, comprobados, llegada: p.llegada };
+  const veredicto = puertaCierre(cerrado, material);
+  guardarJson(join(carpeta, "puerta8.json"), veredicto);
+  if (!veredicto.verde) {
+    guardarJson(join(carpeta, "parado.json"), { paso: "la puerta 8", rojos: veredicto.rojos });
+    return { etapa: "stopped", version: null };
+  }
+  // 6. Sale el viaje cerrado: una versión más, y el viaje, cerrado.
+  guardarJson(join(carpeta, "viaje.json"), cerrado);
+  return { etapa: "done", version: guardarCierre(v, c.n, ahora()).n };
+}
+
+/**
+ * Lo que responde un enlace, sin tumbar la web ni gastar: una petición que solo pide la cabecera (y, si no la
+ * admite, el primer byte), con su tiempo, siguiendo unas pocas redirecciones y solo por https. Responde si contesta
+ * bien; no responde si no existe (404, 410) o su nombre no existe; si la web no deja mirar, no se sabe.
+ */
+export async function comprobarEnlace(url: string, pedir: typeof fetch = fetch): Promise<ComprobacionDeEnlace> {
+  let actual = url;
+  const una = (metodo: "HEAD" | "GET"): Promise<Response> =>
+    pedir(actual, {
+      method: metodo,
+      redirect: "manual",
+      signal: AbortSignal.timeout(COMPROBAR_ENLACES.segundos * 1000),
+      headers: { "user-agent": "El Dorado link check", ...(metodo === "GET" ? { range: "bytes=0-0" } : {}) },
+    });
+  for (let salto = 0; salto <= COMPROBAR_ENLACES.redirecciones; salto++) {
+    // Solo se llama a una página de fuera: https, con nombre, sin puerto y que no sea de dentro de la red de la
+    // casa. Un enlace lo trae una fuente, y una redirección, cualquiera: ni uno ni otra mandan a la casa a su red.
+    if (!enlaceQueVale(actual) || !paginaDeFuera(actual)) return "unchecked";
+    let r: Response;
+    try {
+      r = await una("HEAD");
+      if ([403, 405, 501].includes(r.status)) {
+        r = await una("GET");
+        await r.body?.cancel();
+      }
+    } catch (error) {
+      const codigo = (error as { cause?: { code?: string } }).cause?.code;
+      return codigo === "ENOTFOUND" ? "down" : "unchecked";
+    }
+    if (r.status >= 300 && r.status < 400) {
+      const donde = r.headers.get("location");
+      if (donde === null) return "unchecked";
+      actual = new URL(donde, actual).href;
+      continue;
+    }
+    if (r.status >= 200 && r.status < 300) return "ok";
+    return r.status === 404 || r.status === 410 ? "down" : "unchecked";
+  }
+  return "unchecked";
+}

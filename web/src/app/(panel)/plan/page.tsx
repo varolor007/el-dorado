@@ -106,6 +106,7 @@ export default function Planear() {
     if (pedido.get("day") !== null) setDia(Number(pedido.get("day")) - 1);
     const pedida = pedido.get("tab");
     if (pedida === "days" || pedida === "stay" || pedida === "money" || pedida === "notes") setPestana(pedida);
+    if (pedida === "book" && grabado.viaje.cierre) setPestana("book");
     if (pedido.get("stay") !== null) setFicha(grabado.viaje.alojamientos[Number(pedido.get("stay")) - 1]?.id ?? null);
   }, [grabado]);
 
@@ -121,6 +122,13 @@ export default function Planear() {
   }, [comoEsta, enElMapa, entendido]);
 
   const viaje = grabado?.viaje ?? null;
+  // Un viaje cerrado se enseña con la manera con que se cerró, y abre por lo que hay que reservar.
+  const cerradaCon = viaje?.cierre?.manera;
+  useEffect(() => {
+    if (cerradaCon === undefined) return;
+    setManera(cerradaCon);
+    setPestana("book");
+  }, [cerradaCon]);
   // El ritmo de partida es el del viaje, no uno puesto aquí: si quien mira lo mueve, manda el suyo.
   const ritmo: Ritmo = ritmoPedido ?? RITMOS.find((x) => x === viaje?.ritmo) ?? "normal";
   const r = useReproductor(grabado?.sucesos ?? [], etapa === "vivo");
@@ -507,6 +515,7 @@ export default function Planear() {
             alQuitar={quita}
             alAnadir={anade}
             alMover={mueve}
+            tuyo={pedido != null && comoEsta === "on_map" ? pedido : null}
           />
           {pedido != null && comoEsta === "closed" && (
             <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />

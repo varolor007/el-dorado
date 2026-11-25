@@ -231,7 +231,8 @@ test("LiteAPI: el detalle trae las habitaciones con sus metros y sus fotos, y lo
   });
   assert.deepEqual(d.fotos, ["https://fotos.invalid/h.jpg"]);
   assert.deepEqual(d.servicios, ["Fitness center", "Pool"]);
-  assert.equal(d.entradaDesde, "03:00 PM");
+  // La hora llega como la escribe la fuente («03:00 PM») y sale en veinticuatro horas.
+  assert.equal(d.entradaDesde, "15:00");
   assert.equal(d.web, null);
   assert.deepEqual(d.contras, ["Ruido"]);
   assert.equal(leerDetalle({}, VISTO).habitaciones.length, 0);

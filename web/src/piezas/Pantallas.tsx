@@ -24,6 +24,7 @@ import type { Ir } from "../lib/formato.ts";
 import { enGoogleMaps, noches, reloj, trayectoEnGoogleMaps } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
+import { MeQuedo, Reservar } from "./Cerrar.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -381,7 +382,7 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
   );
 }
 
-export type Pestana = "days" | "stay" | "money" | "notes";
+export type Pestana = "days" | "stay" | "money" | "notes" | "book";
 
 type DeViaje = Comun & {
   viaje: Viaje;
@@ -402,6 +403,8 @@ type DeViaje = Comun & {
   alQuitar: (id: string) => void;
   alAnadir: (id: string) => void;
   alMover: (id: string, dia: number) => void;
+  /** El identificador del viaje si es tuyo y está en el mapa: entonces se puede cerrar. */
+  tuyo?: string | null;
 };
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
@@ -676,6 +679,7 @@ function Dormir(x: DeViaje) {
                         {t.dormir.ficha}
                       </button>
                     )}
+                    {x.tuyo != null && <MeQuedo t={t} idioma={idioma} viaje={viaje} id={x.tuyo} manera={m.id} />}
                   </div>
                 )}
               </div>
@@ -968,7 +972,8 @@ export function TuViaje(x: DeViaje) {
   const c = caminosDe(viaje.caminos);
   const trayectosAPie = reparto.dias.every((d) => seAndaElDia(d, deParada, c));
   const todoAPie = trayectosAPie && viaje.alojamientos.every((a) => a.aPie !== false);
-  const pestanas: Pestana[] = ["days", "stay", "money", "notes"];
+  // Un viaje cerrado abre con lo que hay que reservar.
+  const pestanas: Pestana[] = [...(viaje.cierre ? (["book"] as const) : []), "days", "stay", "money", "notes"];
   // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega.
   const llega = comoSeLlega(viaje, elegida);
   return (
@@ -991,12 +996,17 @@ export function TuViaje(x: DeViaje) {
       <div className="pestanas" role="tablist" aria-label={t.viaje.rotulo}>
         {pestanas.map((p) => (
           <button key={p} type="button" role="tab" aria-selected={x.pestana === p} onClick={() => x.aLaPestana(p)}>
-            {t.pestanas[p]}
+            {p === "book" ? t.cerrar.pestana : t.pestanas[p]}
             {p === "notes" && viaje.avisos.length > 0 && <i>{viaje.avisos.length}</i>}
           </button>
         ))}
       </div>
-      <div className="pestana" role="tabpanel" aria-label={t.pestanas[x.pestana]}>
+      <div
+        className="pestana"
+        role="tabpanel"
+        aria-label={x.pestana === "book" ? t.cerrar.pestana : t.pestanas[x.pestana]}
+      >
+        {x.pestana === "book" && viaje.cierre && <Reservar t={t} idioma={idioma} viaje={viaje} cierre={viaje.cierre} />}
         {x.pestana === "days" && <Dias {...x} />}
         {x.pestana === "stay" && <Dormir {...x} />}
         {x.pestana === "money" && <Cuentas {...x} />}

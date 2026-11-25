@@ -15,6 +15,7 @@ import type {
   Precio,
 } from "./tipos.ts";
 import { repartirEnHabitaciones } from "./tipos.ts";
+import { hora24 } from "../horas.ts";
 
 const BASE = "https://api.liteapi.travel/v3.0";
 const NOMBRE = "liteapi";
@@ -230,8 +231,8 @@ export function leerDetalle(json: unknown, visto: string): Detalle {
     habitaciones,
     fotos,
     servicios,
-    entradaDesde: texto(horas.checkin_start),
-    salidaHasta: texto(horas.checkout),
+    entradaDesde: hora24(texto(horas.checkin_start)),
+    salidaHasta: hora24(texto(horas.checkout)),
     web: texto(d.website),
     resumen,
     contras,

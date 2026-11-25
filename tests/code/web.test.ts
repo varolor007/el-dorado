@@ -2,6 +2,7 @@
 // que comprueba la casa: una clave sin frase saldría en pantalla con su nombre de dentro.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "node:test";
 import {
@@ -761,4 +762,22 @@ test("el reloj de un suceso cabe en su columna: segundos hasta el minuto y, desd
   assert.equal(reloj(18 * 60_000 + 7_000), "18:07");
   assert.equal(reloj(-5), "0 s");
   for (const ms of [0, 999, 61_000, 3_599_000, 5_400_000]) assert.ok(reloj(ms).length <= 6, reloj(ms));
+});
+
+test("la hoja de estilos de la web cierra todo lo que abre: una regla a medias la rompe entera", () => {
+  // Al juntar dos ramas que añaden al final de la hoja, una regla se quedó sin cerrar y la web dejó de pintarse,
+  // con los tipos y el resto de la batería en verde. Aquí se cuentan las llaves, sin comentarios ni cadenas.
+  const hoja = readFileSync(resolve(import.meta.dirname, "../../web/src/app/globals.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/"[^"\n]*"|'[^'\n]*'/g, "");
+  let hondo = 0;
+  let linea = 1;
+  for (const letra of hoja) {
+    if (letra === "\n") linea += 1;
+    if (letra === "{") hondo += 1;
+    if (letra === "}") hondo -= 1;
+    assert.ok(hondo >= 0, `se cierra una llave de más cerca de la línea ${linea} (sin contar comentarios)`);
+    assert.ok(hondo <= 3, `hay una regla sin cerrar antes de la línea ${linea} (sin contar comentarios)`);
+  }
+  assert.equal(hondo, 0, "queda una regla sin cerrar al final de la hoja");
 });
