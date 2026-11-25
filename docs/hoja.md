@@ -303,14 +303,14 @@ otra zona, otros mínimos o mirar otro. Se abre: cuando quieras.
 
 **Flujo**
 
-1. **Tú abres el alojamiento** (tú). Tocas en el mapa dónde duermes, o una de sus alternativas, y se abre su ficha: sus fotos, cómo es de verdad con su prueba, lo que se dice de él, su precio con su fecha y lo que te deja cerca.
-2. **Tú, tus gustos** (tú) *(solo si hace falta, por decidir)*. De cada cosa (las vistas, el diseño, el gimnasio, la piscina, el tamaño, la tranquilidad) dices si es imprescindible, si te gusta o si te da igual. Lo imprescindible descarta; lo que te gusta sube la nota. El estilo se elige tocando fotos de ejemplo, no con palabras.
+1. **Tú abres el alojamiento** (tú) *(hecho)*. Tocas en el mapa dónde duermes, o una de sus alternativas, y se abre su ficha: sus fotos, cómo es de verdad con su prueba, lo que se dice de él, su precio con su fecha y lo que te deja cerca.
+2. **Tú, tus gustos** (tú) *(solo si hace falta, en parte, por decidir)*. De cada cosa (las vistas, el diseño, el gimnasio, la piscina, el tamaño, la tranquilidad) dices si es imprescindible, si te gusta o si te da igual. Lo imprescindible descarta; lo que te gusta sube la nota. El estilo se elige tocando fotos de ejemplo, no con palabras. Lo que falta: el estilo con fotos de ejemplo, que sigue por diseñar. Lo que se mide de cada cosa (imprescindible, me gusta o me da igual) está hecho, y se cruza al instante.
 3. **La búsqueda de alojamiento, otra vez** (código de la casa) *(hecho)*. La misma búsqueda, con otra zona, otros mínimos u otro tope de gasto. Segundos, y sin gastar IA.
 4. **Los gustos** (código de la casa) *(hecho)*. Cruza la ficha de cómo es cada alojamiento con lo que marcaste: lo imprescindible descarta, y lo que te gusta sube la nota. El asiento describe; quien decide si te gusta eres tú.
-5. **El que mira el alojamiento** (asiento de ia). Mira un candidato nuevo con la misma lista y los mismos niveles, o contesta lo que preguntes de uno («¿el gimnasio tiene pesas?») con su prueba.
-6. **El que cruza** (asiento de ia) *(solo si hace falta)*. Si el alojamiento nuevo cambia el total, o la zona cambia cómo se llega, rehace las cuentas del viaje con la tabla del código.
-7. **Las puertas 4 y 5, otra vez** (puerta). Lo que entra nuevo pasa por las mismas puertas: la de la búsqueda y la de cómo es.
-8. **Tu elección** (tu aprobación). Eliges el alojamiento de ese viaje. Lo de antes no se pisa: queda en su versión.
+5. **El que mira el alojamiento** (asiento de ia) *(en parte)*. Mira un candidato nuevo con la misma lista y los mismos niveles, o contesta lo que preguntes de uno («¿el gimnasio tiene pesas?») con su prueba. A quien ya se miró no se le vuelve a mirar, y de los nuevos se mira a dos como mucho. Lo que falta: verlo con IA de verdad. Está hecho y probado con el caso inventado.
+6. **El que cruza** (asiento de ia) *(solo si hace falta, en parte)*. Si el alojamiento nuevo cambia el total, o la zona cambia cómo se llega, rehace las cuentas del viaje con la tabla del código. Lo que falta: verlo con IA de verdad. Con él vuelve también el que explica, que lee lo que cruza.
+7. **Las puertas 4 y 5, otra vez** (puerta) *(hecho)*. Lo que entra nuevo pasa por las mismas puertas: la de la búsqueda y la de cómo es.
+8. **Tu elección** (tu aprobación) *(hecho)*. Eliges el alojamiento de ese viaje, con «Dormir aquí»: se guarda como tu elección, y el cierre cierra con él y con su total. Lo de antes no se pisa: queda en su versión.
 
 **Te espera**
 
@@ -367,12 +367,12 @@ otro día, otro aeropuerto u otro horario. Se abre: cuando quieras.
 
 **Flujo**
 
-1. **Tú abres el transporte** (tú). Entras en los vuelos o los trenes de tu viaje: horas, escalas, lo que incluye y su precio con su fecha.
-2. **La búsqueda de transporte, otra vez** (código de la casa) *(por decidir)*. La misma parrilla, movida a donde pides.
-3. **El que cruza** (asiento de ia). Un vuelo en otro día cambia las noches, y con ellas el precio del alojamiento: nunca se mezclan precios de fechas distintas, se busca otra vez. Dice lo que ahorras y lo que pierdes.
-4. **El de los papeles** (asiento de ia) *(solo si hace falta)*. Una escala en otro país puede pedir permiso de tránsito: su tabla se rehace para esa escala.
-5. **Las puertas 2 y 6, otra vez** (puerta). La de los papeles, si hay un país nuevo, y la de los números del cruce.
-6. **Tu elección** (tu aprobación). Eliges el transporte de ese viaje.
+1. **Tú abres el transporte** (tú) *(en parte)*. Entras en los vuelos o los trenes de tu viaje: horas, escalas, lo que incluye y su precio con su fecha. Lo que falta: el tren, que espera a tener de dónde saberlo, y lo que incluye cada billete, que la fuente no dice (y se dice). Los vuelos están hechos, con sus horas, sus escalas, su compañía y su precio con su fecha.
+2. **La búsqueda de transporte, otra vez** (código de la casa) *(en parte, por decidir)*. La misma parrilla, movida a donde pides: tres días antes o después, otro aeropuerto de los de alrededor, otro horario o solo directos. Sin IA. Cada opción dice sus noches, si pasa por un país nuevo, si hace escala y lo que sube o baja. Lo que falta: el precio en vivo. Está hecha con los precios que guarda la fuente.
+3. **El que cruza** (asiento de ia) *(en parte)*. Un vuelo en otro día cambia las noches, y con ellas el precio del alojamiento: nunca se mezclan precios de fechas distintas, se busca otra vez. Dice lo que ahorras y lo que pierdes. Lo que falta: verlo con IA de verdad. Otro vuelo los mismos días rehace la tabla y lo que cruza, y con él vuelve el que explica; otro día es un cambio de fechas.
+4. **El de los papeles** (asiento de ia) *(solo si hace falta, en parte)*. Una escala en otro país puede pedir permiso de tránsito: su tabla se rehace para esa escala. Lo que falta: la escala: la fuente no dice dónde es, se avisa, y su permiso de tránsito no se puede mirar. Está hecho para un aeropuerto de salida o de llegada en otro país.
+5. **Las puertas 2 y 6, otra vez** (puerta) *(hecho)*. La de los papeles, si hay un país nuevo, y la de los números del cruce.
+6. **Tu elección** (tu aprobación) *(hecho)*. Eliges el transporte de ese viaje. La versión nueva dice lo de antes y lo de ahora, y te quedas con ella o vuelves.
 
 **Te espera**
 
@@ -427,14 +427,14 @@ cada día, una capa del mapa. Se abre: cuando quieras.
 
 **Flujo**
 
-1. **Tú abres un día** (tú). El mapa de tu destino tiene una capa por día, y otra con todos. Al abrir un día ves sus paradas numeradas, cada una con su foto en un círculo y una flecha a la siguiente, y al lado, la misma lista en tarjetas: tocar una enciende la otra. No es una ruta de navegador: dice el orden y lo que se anda. Cada parada lleva su enlace para abrirla en Google Maps, y cada día, el suyo con el recorrido.
-2. **Tú, el ritmo** (tú) *(solo si hace falta)*. Un mando con tres posiciones dice cuántas cosas quieres ver al día. Al moverlo, las paradas se reparten de nuevo al instante, sin IA: con el ritmo tranquilo quedan las imprescindibles.
-3. **Tú quitas, añades o mueves** (tú) *(solo si hace falta)*. Quitas una parada, la pasas a otro día o añades una de las que se quedaron fuera. Lo que quitas no vuelve solo. También puedes escribir: «menos museos», «un día de playa».
-4. **Los sitios que ver, otra vez** (código de la casa). Si pides algo que no estaba (playas, mercados, miradores), vuelve a los datos abiertos por ello.
-5. **El del día a día** (asiento de ia) *(solo si hace falta)*. Si pides un cambio con tus palabras, vuelve a elegir y a ordenar los sitios con lo que has dicho, y explica qué ha cambiado y por qué.
-6. **El ritmo, otra vez** (código de la casa). Reparte las paradas por días con tu ritmo y tus cambios, las ordena y calcula lo que se anda. Dice también qué alojamiento te deja más cerca de cada día.
+1. **Tú abres un día** (tú) *(hecho)*. El mapa de tu destino tiene una capa por día, y otra con todos. Al abrir un día ves sus paradas numeradas, cada una con su foto en un círculo y una flecha a la siguiente, y al lado, la misma lista en tarjetas: tocar una enciende la otra. No es una ruta de navegador: dice el orden y lo que se anda. Cada parada lleva su enlace para abrirla en Google Maps, y cada día, el suyo con el recorrido.
+2. **Tú, el ritmo** (tú) *(solo si hace falta, hecho)*. Un mando con tres posiciones dice cuántas cosas quieres ver al día. Al moverlo, las paradas se reparten de nuevo al instante, sin IA: con el ritmo tranquilo quedan las imprescindibles.
+3. **Tú quitas, añades o mueves** (tú) *(solo si hace falta, hecho)*. Quitas una parada, la pasas a otro día o añades una de las que se quedaron fuera. Lo que quitas no vuelve solo. También puedes escribir: «menos museos», «un día de playa».
+4. **Los sitios que ver, otra vez** (código de la casa) *(en parte)*. Si pides algo que no estaba (playas, mercados, miradores), vuelve a los datos abiertos por ello. Lo que falta: otros idiomas. Se busca por las palabras de una lista, que hoy solo está en inglés y en español: en otro idioma no se busca nada nuevo, y se dice.
+5. **El del día a día** (asiento de ia) *(solo si hace falta, en parte)*. Si pides un cambio con tus palabras, vuelve a elegir y a ordenar los sitios con lo que has dicho, y explica qué ha cambiado y por qué. Lo que falta: verlo con IA de verdad, y que salga al buscador, que hoy no sale. Lee tus palabras tal cual, y lo que dice vuelve por la puerta 9.
+6. **El ritmo, otra vez** (código de la casa) *(hecho)*. Reparte las paradas por días con tu ritmo y tus cambios, las ordena y calcula lo que se anda. Dice también qué alojamiento te deja más cerca de cada día.
 7. **El del calendario** (asiento de ia) *(solo si hace falta)*. Mira qué cierra el día que vas y qué entradas hay que sacar con tiempo.
-8. **La puerta 9, otra vez** (puerta). Lo que cambia pasa por la misma puerta: cada sitio existe y cada día cabe.
+8. **La puerta 9, otra vez** (puerta) *(hecho)*. Lo que cambia pasa por la misma puerta: cada sitio existe y cada día cabe.
 
 **Te espera**
 
@@ -598,16 +598,16 @@ las fechas, quién viaja, el gasto o los gustos. Se abre: en cualquier momento.
 
 **Flujo**
 
-1. **Tú cambias algo** (tú). Las fechas, quién viaja, lo que quieres gastar, un gusto o el destino.
-2. **El impacto** (código de la casa). Dice, sin IA, qué deja de valer con tu cambio: unas fechas nuevas tiran todos los precios y pueden tirar los avisos; un viajero más cambia la habitación y el precio; un gusto nuevo, solo el alojamiento. Y cuánto costaría rehacerlo.
-3. **Tu adelante** (tu aprobación). Si rehacer pide trabajo de la IA, lo ves antes y das el adelante.
+1. **Tú cambias algo** (tú) *(en parte)*. Las fechas, quién viaja, lo que quieres gastar, un gusto o el destino. Lo que falta: el destino: otro destino abre un viaje nuevo, y este se queda como está (lo más prudente; espera tu sí). Lo demás está hecho: las fechas, quién viaja, lo que quieres gastar, lo que buscas y lo que te importa donde duermes.
+2. **El impacto** (código de la casa) *(hecho)*. Dice, sin IA, qué deja de valer con tu cambio: unas fechas nuevas tiran todos los precios y pueden tirar los avisos; un viajero más cambia la habitación y el precio; un gusto nuevo, solo el alojamiento. Y cuánto costaría rehacerlo.
+3. **Tu adelante** (tu aprobación) *(hecho)*. Si rehacer pide trabajo de la IA, lo ves antes y das el adelante.
    *según lo que cambia, lo lleva*
-5. **El del calendario** (asiento de ia). Los avisos de las fechas nuevas.
-6. **El de los papeles** (asiento de ia). La tabla, para lo que ha cambiado.
-7. **Las búsquedas, otra vez** (código de la casa). Un precio es de unas noches y de un grupo: si cambian, se busca de nuevo.
-8. **El que cruza** (asiento de ia). Rehace las tres maneras de hacerlo con la tabla nueva.
-9. **El ritmo, otra vez** (código de la casa). Si cambian los días o las bases, reparte las paradas de nuevo.
-10. **La versión** (código de la casa). Guarda el viaje nuevo como una versión más. La de antes se queda, por si quieres volver.
+5. **El del calendario** (asiento de ia) *(en parte)*. Los avisos de las fechas nuevas. Lo que falta: verlo con IA de verdad. Está hecho y probado con el caso inventado.
+6. **El de los papeles** (asiento de ia) *(en parte)*. La tabla, para lo que ha cambiado. Lo que falta: verlo con IA de verdad. Está hecho y probado con el caso inventado.
+7. **Las búsquedas, otra vez** (código de la casa) *(hecho)*. Un precio es de unas noches y de un grupo: si cambian, se busca de nuevo.
+8. **El que cruza** (asiento de ia) *(en parte)*. Rehace las tres maneras de hacerlo con la tabla nueva. Lo que falta: verlo con IA de verdad. Está hecho y probado con el caso inventado.
+9. **El ritmo, otra vez** (código de la casa) *(hecho)*. Si cambian los días o las bases, reparte las paradas de nuevo.
+10. **La versión** (código de la casa) *(hecho)*. Guarda el viaje nuevo como una versión más. La de antes se queda, por si quieres volver.
 
 **Te espera**
 
@@ -679,7 +679,7 @@ Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de u
 | Puerta | Momento | Qué se comprueba | Estado |
 |---|---|---|---|
 | 1. ¿El viaje, claro? | Empezar | Los campos base, completos; cada gusto y cada límite, con su cita literal; tres preguntas de más como mucho | hecho |
-| 2. ¿Algún papel bloquea? | Empezar, El transporte y Cambios | La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes de sitios distintos o una del gobierno del destino; si bloquea, se para antes de lo caro (mirar cada alojamiento y elegir qué ver). Hecha al empezar; falta en el transporte y en los cambios | en parte |
+| 2. ¿Algún papel bloquea? | Empezar, El transporte y Cambios | La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes de sitios distintos o una del gobierno del destino; si bloquea, se para antes de lo caro (mirar cada alojamiento y elegir qué ver). Hecha al empezar, en el transporte (con el país de un aeropuerto nuevo) y en los cambios (otro pasaporte). De una escala no se sabe el país, y no se mira | en parte |
 | 3. ¿Las noches suman? | La investigación | Las noches, los traslados con su duración y su fuente, dos noches por base, lo imprescindible, dentro, y cada zona con su centro y su radio | hecho |
 | 4. ¿La búsqueda es de fiar? | La investigación y El alojamiento | Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio | en parte |
 | 5. ¿Cada nivel, con su prueba? | La investigación y El alojamiento | Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe» | hecho |

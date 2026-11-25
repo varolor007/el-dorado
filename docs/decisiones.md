@@ -678,6 +678,19 @@ Lo que deja el 25-nov, a decisión del PM:
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.
+- **Lo que deja la revisión de la tanda 6, porque toca la hoja** (entero en `revisiones/tanda-6.md`). Los
+  momentos 4 y 5 dicen que el alojamiento y el transporte se ponen en marcha con «un mensaje tuyo» («más cerca del
+  centro», «sin madrugar»): se han construido con mandos (la zona, los mínimos, el tope, el horario, solo directos)
+  y sin caja de mensaje, que es más barato y no gasta IA, pero no es lo que dice la hoja. Buscar otro alojamiento, y
+  rehacer las maneras con tus gustos, lanza también al que cruza y al que explica, y la fila de la hoja solo cuenta
+  las miradas. Si lo que pides en un momento (un vuelo, una zona, unos gustos) tiene que durar cuando después
+  cambias otra cosa: se ha construido que dure mientras siga valiendo. Si mientras se rehace un cambio se sigue
+  viendo la versión de antes en el mapa: hoy se ve la investigación en vivo. Preguntar por un alojamiento gasta con
+  un solo botón y sin techo, diciendo antes lo que cuesta cada pregunta. El permiso de tránsito de una escala no se
+  puede mirar, porque la fuente de vuelos no dice dónde se hace: hoy solo se avisa. Si un día que no cabe, porque
+  moviste o añadiste una parada, debe impedir guardar o cerrar: hoy se dice y no se impide. Si se ofrecen
+  aeropuertos de otro país que el del destino cuando están cerca: hoy sí, y se avisa. Y el tope de elegir otro
+  transporte, seis por viaje al día, de partida.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
 - **Del viaje a ratos (8.1)**: cuántas versiones e investigaciones caben en un viaje (veinte y treinta), y cuánto

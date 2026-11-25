@@ -573,13 +573,14 @@ const flujo = [
   ],
   // El alojamiento
   [
-    { tipo: "tu", k: "Tú abres el alojamiento", x: "tocas su punto en el mapa", d: "Tocas en el mapa dónde duermes, o una de sus alternativas, y se abre su ficha: sus fotos, cómo es de verdad con su prueba, lo que se dice de él, su precio con su fecha y lo que te deja cerca." },
+    { tipo: "tu", hecho: true, k: "Tú abres el alojamiento", x: "tocas su punto en el mapa", d: "Tocas en el mapa dónde duermes, o una de sus alternativas, y se abre su ficha: sus fotos, cómo es de verdad con su prueba, lo que se dice de él, su precio con su fecha y lo que te deja cerca." },
     {
       tipo: "tu",
       opt: true,
       k: "Tú, tus gustos",
       x: "imprescindible, me gusta o me da igual",
       d: "De cada cosa (las vistas, el diseño, el gimnasio, la piscina, el tamaño, la tranquilidad) dices si es imprescindible, si te gusta o si te da igual. Lo imprescindible descarta; lo que te gusta sube la nota. El estilo se elige tocando fotos de ejemplo, no con palabras.",
+      parte: "el estilo con fotos de ejemplo, que sigue por diseñar. Lo que se mide de cada cosa (imprescindible, me gusta o me da igual) está hecho, y se cruza al instante.",
       n: "Por diseñar: las fotos de ejemplo de cada estilo.",
     },
     {
@@ -603,7 +604,8 @@ const flujo = [
       web: true,
       k: "El que mira el alojamiento",
       x: "otro candidato, o tu pregunta sobre este",
-      d: "Mira un candidato nuevo con la misma lista y los mismos niveles, o contesta lo que preguntes de uno («¿el gimnasio tiene pesas?») con su prueba.",
+      d: "Mira un candidato nuevo con la misma lista y los mismos niveles, o contesta lo que preguntes de uno («¿el gimnasio tiene pesas?») con su prueba. A quien ya se miró no se le vuelve a mirar, y de los nuevos se mira a dos como mucho.",
+      parte: "verlo con IA de verdad. Está hecho y probado con el caso inventado.",
     },
     {
       tipo: "asiento",
@@ -611,25 +613,28 @@ const flujo = [
       k: "El que cruza",
       x: "si cambia el total del viaje",
       d: "Si el alojamiento nuevo cambia el total, o la zona cambia cómo se llega, rehace las cuentas del viaje con la tabla del código.",
+      parte: "verlo con IA de verdad. Con él vuelve también el que explica, que lee lo que cruza.",
     },
     {
       tipo: "puerta",
       k: "Puertas 4 y 5",
       x: "las mismas que en la investigación",
+      hecho: true,
       titulo: "Las puertas 4 y 5, otra vez",
       d: "Lo que entra nuevo pasa por las mismas puertas: la de la búsqueda y la de cómo es.",
     },
-    { tipo: "firma", k: "Tu elección", x: "te quedas con uno", d: "Eliges el alojamiento de ese viaje. Lo de antes no se pisa: queda en su versión." },
+    { tipo: "firma", hecho: true, k: "Tu elección", x: "te quedas con uno", d: "Eliges el alojamiento de ese viaje, con «Dormir aquí»: se guarda como tu elección, y el cierre cierra con él y con su total. Lo de antes no se pisa: queda en su versión." },
   ],
   // El transporte
   [
-    { tipo: "tu", k: "Tú abres el transporte", x: "cómo llegas y cómo te vas", d: "Entras en los vuelos o los trenes de tu viaje: horas, escalas, lo que incluye y su precio con su fecha." },
+    { tipo: "tu", parte: "el tren, que espera a tener de dónde saberlo, y lo que incluye cada billete, que la fuente no dice (y se dice). Los vuelos están hechos, con sus horas, sus escalas, su compañía y su precio con su fecha.", k: "Tú abres el transporte", x: "cómo llegas y cómo te vas", d: "Entras en los vuelos o los trenes de tu viaje: horas, escalas, lo que incluye y su precio con su fecha." },
     {
       tipo: "codigo",
       k: "busqueda_transporte",
       x: "otro día, otro aeropuerto u otro horario",
       titulo: "La búsqueda de transporte, otra vez",
-      d: "La misma parrilla, movida a donde pides.",
+      d: "La misma parrilla, movida a donde pides: tres días antes o después, otro aeropuerto de los de alrededor, otro horario o solo directos. Sin IA. Cada opción dice sus noches, si pasa por un país nuevo, si hace escala y lo que sube o baja.",
+      parte: "el precio en vivo. Está hecha con los precios que guarda la fuente.",
       n: "Por decidir: la fuente del precio en vivo.",
     },
     {
@@ -637,6 +642,7 @@ const flujo = [
       k: "El que cruza",
       x: "lo que cambia en noches y en total",
       d: "Un vuelo en otro día cambia las noches, y con ellas el precio del alojamiento: nunca se mezclan precios de fechas distintas, se busca otra vez. Dice lo que ahorras y lo que pierdes.",
+      parte: "verlo con IA de verdad. Otro vuelo los mismos días rehace la tabla y lo que cruza, y con él vuelve el que explica; otro día es un cambio de fechas.",
     },
     {
       tipo: "asiento",
@@ -645,14 +651,16 @@ const flujo = [
       k: "El de los papeles",
       x: "si aparece una escala nueva",
       d: "Una escala en otro país puede pedir permiso de tránsito: su tabla se rehace para esa escala.",
+      parte: "la escala: la fuente no dice dónde es, se avisa, y su permiso de tránsito no se puede mirar. Está hecho para un aeropuerto de salida o de llegada en otro país.",
     },
-    { tipo: "puerta", k: "Puertas 2 y 6", x: "papeles y números, otra vez", titulo: "Las puertas 2 y 6, otra vez", d: "La de los papeles, si hay un país nuevo, y la de los números del cruce." },
-    { tipo: "firma", k: "Tu elección", x: "te quedas con uno", d: "Eliges el transporte de ese viaje." },
+    { tipo: "puerta", hecho: true, k: "Puertas 2 y 6", x: "papeles y números, otra vez", titulo: "Las puertas 2 y 6, otra vez", d: "La de los papeles, si hay un país nuevo, y la de los números del cruce." },
+    { tipo: "firma", hecho: true, k: "Tu elección", x: "te quedas con uno", d: "Eliges el transporte de ese viaje. La versión nueva dice lo de antes y lo de ahora, y te quedas con ella o vuelves." },
   ],
   // El día a día
   [
     {
       tipo: "tu",
+      hecho: true,
       k: "Tú abres un día",
       x: "cada día es una capa del mapa",
       d: "El mapa de tu destino tiene una capa por día, y otra con todos. Al abrir un día ves sus paradas numeradas, cada una con su foto en un círculo y una flecha a la siguiente, y al lado, la misma lista en tarjetas: tocar una enciende la otra. No es una ruta de navegador: dice el orden y lo que se anda. Cada parada lleva su enlace para abrirla en Google Maps, y cada día, el suyo con el recorrido.",
@@ -660,6 +668,7 @@ const flujo = [
     {
       tipo: "tu",
       opt: true,
+      hecho: true,
       k: "Tú, el ritmo",
       x: "tranquilo, normal o intenso",
       d: "Un mando con tres posiciones dice cuántas cosas quieres ver al día. Al moverlo, las paradas se reparten de nuevo al instante, sin IA: con el ritmo tranquilo quedan las imprescindibles.",
@@ -670,6 +679,7 @@ const flujo = [
       k: "Tú quitas, añades o mueves",
       x: "una parada, de un día a otro",
       d: "Quitas una parada, la pasas a otro día o añades una de las que se quedaron fuera. Lo que quitas no vuelve solo. También puedes escribir: «menos museos», «un día de playa».",
+      hecho: true,
     },
     {
       tipo: "codigo",
@@ -677,6 +687,7 @@ const flujo = [
       x: "más sitios, si pides otra cosa",
       titulo: "Los sitios que ver, otra vez",
       d: "Si pides algo que no estaba (playas, mercados, miradores), vuelve a los datos abiertos por ello.",
+      parte: "otros idiomas. Se busca por las palabras de una lista, que hoy solo está en inglés y en español: en otro idioma no se busca nada nuevo, y se dice.",
     },
     {
       tipo: "asiento",
@@ -685,6 +696,7 @@ const flujo = [
       k: "El del día a día",
       x: "solo si escribes un mensaje",
       d: "Si pides un cambio con tus palabras, vuelve a elegir y a ordenar los sitios con lo que has dicho, y explica qué ha cambiado y por qué.",
+      parte: "verlo con IA de verdad, y que salga al buscador, que hoy no sale. Lee tus palabras tal cual, y lo que dice vuelve por la puerta 9.",
     },
     {
       tipo: "codigo",
@@ -692,6 +704,7 @@ const flujo = [
       x: "reparte de nuevo, al instante",
       titulo: "El ritmo, otra vez",
       d: "Reparte las paradas por días con tu ritmo y tus cambios, las ordena y calcula lo que se anda. Dice también qué alojamiento te deja más cerca de cada día.",
+      hecho: true,
     },
     {
       tipo: "asiento",
@@ -701,7 +714,7 @@ const flujo = [
       x: "lo que cierra ese día y lo que se agota",
       d: "Mira qué cierra el día que vas y qué entradas hay que sacar con tiempo.",
     },
-    { tipo: "puerta", k: "Puerta 9", x: "la misma que en la investigación", titulo: "La puerta 9, otra vez", d: "Lo que cambia pasa por la misma puerta: cada sitio existe y cada día cabe." },
+    { tipo: "puerta", hecho: true, k: "Puerta 9", x: "la misma que en la investigación", titulo: "La puerta 9, otra vez", d: "Lo que cambia pasa por la misma puerta: cada sitio existe y cada día cabe." },
   ],
   // Cerrar el viaje
   [
@@ -790,22 +803,23 @@ const flujo = [
   ],
   // Cambios
   [
-    { tipo: "tu", k: "Tú cambias algo", x: "desde donde estés", d: "Las fechas, quién viaja, lo que quieres gastar, un gusto o el destino." },
+    { tipo: "tu", parte: "el destino: otro destino abre un viaje nuevo, y este se queda como está (lo más prudente; espera tu sí). Lo demás está hecho: las fechas, quién viaja, lo que quieres gastar, lo que buscas y lo que te importa donde duermes.", k: "Tú cambias algo", x: "desde donde estés", d: "Las fechas, quién viaja, lo que quieres gastar, un gusto o el destino." },
     {
       tipo: "codigo",
       k: "impacto",
       x: "qué piezas dejan de valer, antes de rehacer nada",
+      hecho: true,
       titulo: "El impacto",
       d: "Dice, sin IA, qué deja de valer con tu cambio: unas fechas nuevas tiran todos los precios y pueden tirar los avisos; un viajero más cambia la habitación y el precio; un gusto nuevo, solo el alojamiento. Y cuánto costaría rehacerlo.",
     },
-    { tipo: "firma", k: "Tu adelante", x: "si rehacer gasta", d: "Si rehacer pide trabajo de la IA, lo ves antes y das el adelante." },
+    { tipo: "firma", hecho: true, k: "Tu adelante", x: "si rehacer gasta", d: "Si rehacer pide trabajo de la IA, lo ves antes y das el adelante." },
     { grupo: "según lo que cambia, lo lleva" },
-    { tipo: "asiento", web: true, k: "El del calendario", x: "unas fechas nuevas", d: "Los avisos de las fechas nuevas." },
-    { tipo: "asiento", web: true, k: "El de los papeles", x: "otro pasaporte, otro destino u otra escala", d: "La tabla, para lo que ha cambiado." },
-    { tipo: "codigo", k: "busquedas", x: "otras fechas u otro grupo: todos los precios, otra vez", titulo: "Las búsquedas, otra vez", d: "Un precio es de unas noches y de un grupo: si cambian, se busca de nuevo." },
-    { tipo: "asiento", k: "El que cruza", x: "el viaje, de nuevo", d: "Rehace las tres maneras de hacerlo con la tabla nueva." },
-    { tipo: "codigo", k: "ritmo", x: "los días, si cambian las fechas o la ruta", titulo: "El ritmo, otra vez", d: "Si cambian los días o las bases, reparte las paradas de nuevo." },
-    { tipo: "codigo", k: "version", x: "lo de antes no se pisa", titulo: "La versión", d: "Guarda el viaje nuevo como una versión más. La de antes se queda, por si quieres volver." },
+    { tipo: "asiento", web: true, parte: "verlo con IA de verdad. Está hecho y probado con el caso inventado.", k: "El del calendario", x: "unas fechas nuevas", d: "Los avisos de las fechas nuevas." },
+    { tipo: "asiento", web: true, parte: "verlo con IA de verdad. Está hecho y probado con el caso inventado.", k: "El de los papeles", x: "otro pasaporte, otro destino u otra escala", d: "La tabla, para lo que ha cambiado." },
+    { tipo: "codigo", hecho: true, k: "busquedas", x: "otras fechas u otro grupo: todos los precios, otra vez", titulo: "Las búsquedas, otra vez", d: "Un precio es de unas noches y de un grupo: si cambian, se busca de nuevo." },
+    { tipo: "asiento", parte: "verlo con IA de verdad. Está hecho y probado con el caso inventado.", k: "El que cruza", x: "el viaje, de nuevo", d: "Rehace las tres maneras de hacerlo con la tabla nueva." },
+    { tipo: "codigo", hecho: true, k: "ritmo", x: "los días, si cambian las fechas o la ruta", titulo: "El ritmo, otra vez", d: "Si cambian los días o las bases, reparte las paradas de nuevo." },
+    { tipo: "codigo", hecho: true, k: "version", x: "lo de antes no se pisa", titulo: "La versión", d: "Guarda el viaje nuevo como una versión más. La de antes se queda, por si quieres volver." },
   ],
 ];
 
@@ -861,7 +875,7 @@ const secciones = [
         estados: true,
         filas: [
           ["1. ¿El viaje, claro?", "Empezar", "Los campos base, completos; cada gusto y cada límite, con su cita literal; tres preguntas de más como mucho", "hecho"],
-          ["2. ¿Algún papel bloquea?", "Empezar, El transporte y Cambios", "La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes de sitios distintos o una del gobierno del destino; si bloquea, se para antes de lo caro (mirar cada alojamiento y elegir qué ver). Hecha al empezar; falta en el transporte y en los cambios", "parte"],
+          ["2. ¿Algún papel bloquea?", "Empezar, El transporte y Cambios", "La tabla, completa; cada respuesta, de un dominio oficial y con su fecha; «en regla», con dos fuentes de sitios distintos o una del gobierno del destino; si bloquea, se para antes de lo caro (mirar cada alojamiento y elegir qué ver). Hecha al empezar, en el transporte (con el país de un aeropuerto nuevo) y en los cambios (otro pasaporte). De una escala no se sabe el país, y no se mira", "parte"],
           ["3. ¿Las noches suman?", "La investigación", "Las noches, los traslados con su duración y su fuente, dos noches por base, lo imprescindible, dentro, y cada zona con su centro y su radio", "hecho"],
           ["4. ¿La búsqueda es de fiar?", "La investigación y El alojamiento", "Los mínimos, uno a uno; el precio, de esas fechas y ese grupo; cada dato, con su fuente; la habitación, la de ese precio", "parte"],
           ["5. ¿Cada nivel, con su prueba?", "La investigación y El alojamiento", "Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe»", "hecho"],
