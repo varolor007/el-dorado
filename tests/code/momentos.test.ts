@@ -570,7 +570,7 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
 
 // ---------- lo que deja la revisión de la tanda 6
 
-test("lo entendido del viaje es siempre el de la versión que se enseña: al rehacer, al acabar y al volver", async () => {
+test("lo entendido del viaje es siempre el de la versión que se enseña: al rehacer, al salir y al volver", async () => {
   const { mesa, v } = await viajeEnElMapa();
   try {
     const delViaje = (): Entendido => leerJson(join(v.carpeta, "entendido.json")) as unknown as Entendido;
