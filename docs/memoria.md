@@ -139,6 +139,16 @@ cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`,
 `manerasDeLlegar`), sin Node, para el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
 viaje, y por dónde se llega sale de lo entendido, no del vuelo elegido. Sin ver con IA.
 
+**El presupuesto entero (14.5), junto** (25-nov). La cuenta, en `agent/scripts/presupuesto.ts`, sin Node:
+`lasEntradas`, `moverseAlli`, `llegarADormir` y `comidasDe`; `presupuestoDe(v, capas, {zonas, moverse})`; y
+`conOtrosDias` para la web, que rehace las entradas y moverse allí y conserva llegar. Moverse allí usa por defecto la
+cuenta del de moverse (`LA_CUENTA_DE_MOVERSE`, que llama a `cuentaDelGrupo` de 14.2; se enchufó al juntar, con su
+prueba), y un trayecto que no se anda es el que pasa de 3.500 metros, lo mismo que anda la casa. Las zonas, de
+`ruta.json` (`zonasDelRun`). Los números de partida, en `agent/data/presupuesto.ts`. Las puertas 6 y 7 miran las
+frases del presupuesto entero con `agent/gates/cifras_del_presupuesto.ts`, y sus materiales aceptan `presupuesto`, que
+hoy nadie les pasa: sin él, una cifra en una frase del presupuesto entero sale roja. Al viaje le falta el id de la
+zona de cada alojamiento. Sin ver con IA ni con fuentes de verdad.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee

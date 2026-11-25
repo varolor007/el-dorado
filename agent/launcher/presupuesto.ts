@@ -4,11 +4,14 @@
 //
 //   presupuesto.json   el presupuesto entero, por manera, con de dónde sale cada parte
 //
-// La cuenta es de `agent/scripts/presupuesto.ts`; su sesión (14.5) la rellena allí, no aquí. Sin IA.
+// La cuenta es de `agent/scripts/presupuesto.ts`; aquí solo se leen del run las capas y las zonas de la ruta. Sin IA.
 
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { DeLasEntradas, DeMoverse, DelDestino } from "../output/capas.ts";
 import type { Viaje } from "../output/viaje.ts";
-import { presupuestoDe, type CapasParaLaCuenta } from "../scripts/presupuesto.ts";
+import type { ZonaResuelta } from "../scripts/formas.ts";
+import { presupuestoDe, type CapasParaLaCuenta, type ZonaParaLaCuenta } from "../scripts/presupuesto.ts";
 import { capaDelRun, guardarEnElRun } from "./capas.ts";
 import { SABER } from "./capa_destino.ts";
 import { ENTRADAS } from "./capa_entradas.ts";
@@ -30,6 +33,21 @@ export function capasDelRun(run: string, paradas: readonly string[]): CapasParaL
   };
 }
 
+/**
+ * Las zonas de la ruta del run, por su id y por el nombre con que el viaje dice la zona de cada alojamiento: con ellas
+ * se sabe a qué zona hay que llegar desde donde se aterriza. Sin la ruta, ninguna.
+ */
+export function zonasDelRun(run: string): ZonaParaLaCuenta[] {
+  const ruta = join(run, "ruta.json");
+  if (!existsSync(ruta)) return [];
+  try {
+    const { zonas } = JSON.parse(readFileSync(ruta, "utf8")) as { zonas?: ZonaResuelta[] };
+    return (zonas ?? []).map((z) => ({ id: z.id, nombre: z.label }));
+  } catch {
+    return [];
+  }
+}
+
 /** El viaje con sus capas y su presupuesto entero, que se guarda también en el run. */
 export function conLasCapas(run: string, v: Viaje): Viaje {
   const capas = capasDelRun(
@@ -37,7 +55,7 @@ export function conLasCapas(run: string, v: Viaje): Viaje {
     v.paradas.map((p) => p.id),
   );
   const conEllas: Viaje = { ...v, ...capas };
-  const presupuesto = presupuestoDe(conEllas, capas);
+  const presupuesto = presupuestoDe(conEllas, capas, { zonas: zonasDelRun(run) });
   guardarEnElRun(run, PRESUPUESTO, presupuesto);
   return { ...conEllas, presupuesto };
 }

@@ -10,12 +10,22 @@ import { avisosDe, DE_ABARATAR } from "../data/palabras.ts";
 import type { FechasParaExplicar, HallazgoParaExplicar, ParaExplicar } from "../scripts/explica.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import type { ParaElOrden } from "../scripts/cierre.ts";
+import type { Presupuesto } from "../output/capas.ts";
+import {
+  cifrasQueNoSonDeLaCuenta,
+  conLaCuenta,
+  contadosDelViaje,
+  queDiceDelPresupuesto,
+} from "./cifras_del_presupuesto.ts";
 import { numerosEn } from "./puerta_cruce.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 
-/** Lo que tuvo delante el asiento, y los avisos que la casa pone en lo que se entrega. */
-export type MaterialDeExplicar = { viaje: Entendido; dado: ParaExplicar; avisos: string[] };
+/**
+ * Lo que tuvo delante el asiento, y los avisos que la casa pone en lo que se entrega; y el presupuesto entero, si se
+ * le dio (14.5).
+ */
+export type MaterialDeExplicar = { viaje: Entendido; dado: ParaExplicar; avisos: string[]; presupuesto?: Presupuesto };
 
 const LO_QUE_LLEVA = ["seat", "language", "ways", "levers", "unknowns"];
 /** Lo que lleva además, solo si se le dieron los avisos de las fechas. */
@@ -81,11 +91,19 @@ export function puertaExplica(entrega: unknown, m: MaterialDeExplicar): Veredict
     if (nombre in entrega && !Array.isArray(entrega[nombre])) rojo(nombre, "no es una lista");
 
   const numeros = numerosDeLaCasa(m);
-  /** Un texto para el viajero: con algo dicho, sin palabras prohibidas y sin números que no dio la casa. */
+  const { dates, travellers } = m.viaje;
+  const contados = contadosDelViaje(dates.check_in, dates.check_out, travellers.adults, travellers.children);
+  /**
+   * Un texto para el viajero: con algo dicho, sin palabras prohibidas y sin números que no dio la casa; y si habla del
+   * presupuesto entero, con la cifra de la cuenta.
+   */
   const texto = (donde: string, v: unknown): void => {
     if (!esTexto(v)) return rojo(donde, "está en blanco");
     for (const pega of pegasDelTexto(v)) rojo(donde, pega);
-    for (const n of numerosDeMas(v, numeros)) rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+    for (const n of numerosDeMas(v, conLaCuenta(v, numeros, m.presupuesto)))
+      rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+    for (const n of cifrasQueNoSonDeLaCuenta(v, contados, m.presupuesto))
+      rojo(donde, queDiceDelPresupuesto(n, m.presupuesto !== undefined));
   };
 
   // Cada manera, una vez, con su porqué, lo que gana y lo que pierde.
@@ -291,8 +309,11 @@ function pegasDeLasFechas(crudo: unknown, m: MaterialDeExplicar): [string, strin
 // por plazo de papel, ni más ni menos, y lo que no se sabe. Lo que pasa la puerta 7 es lo mismo que siempre: un texto
 // para el viajero, sin promesas, sin enlaces y con los números de lo que se le dio.
 
-/** Lo que tuvo delante el que explica al cerrar: lo que montó el código, en inglés y con sus números. */
-export type MaterialDelOrden = { dado: ParaElOrden };
+/**
+ * Lo que tuvo delante el que explica al cerrar: lo que montó el código, en inglés y con sus números; y el presupuesto
+ * entero, si se le dio (14.5).
+ */
+export type MaterialDelOrden = { dado: ParaElOrden; presupuesto?: Presupuesto };
 
 const DEL_ORDEN = ["seat", "language", "closing"];
 const DEL_CIERRE = ["steps", "papers", "unknowns"];
@@ -331,10 +352,15 @@ export function puertaDelOrden(entrega: unknown, m: MaterialDelOrden): Veredicto
   for (const campo of Object.keys(c)) if (!DEL_CIERRE.includes(campo)) rojo(`closing.${campo}`, "no es de la entrega");
 
   const numeros = numerosDelOrden(m.dado);
+  const t = m.dado.trip;
+  const contados = contadosDelViaje(t.check_in, t.check_out, t.adults, t.children);
   const texto = (donde: string, v: unknown): void => {
     if (!esTexto(v)) return rojo(donde, "está en blanco");
     for (const pega of pegasDelTexto(v, { sinNumerosLargos: true })) rojo(donde, pega);
-    for (const n of numerosDeMas(v, numeros)) rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+    for (const n of numerosDeMas(v, conLaCuenta(v, numeros, m.presupuesto)))
+      rojo(donde, `dice ${n}, que no está en lo que se le dio`);
+    for (const n of cifrasQueNoSonDeLaCuenta(v, contados, m.presupuesto))
+      rojo(donde, queDiceDelPresupuesto(n, m.presupuesto !== undefined));
   };
   /** Una entrada por cada una de las dadas, ni más ni menos, cada una con su frase. */
   const unaPorCada = (campo: "steps" | "papers", clave: "step" | "paper", dadas: number[]): void => {

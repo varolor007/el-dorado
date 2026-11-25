@@ -13,11 +13,19 @@ import {
   RONDAS,
   SE_PUEDE_PEDIR,
 } from "../data/palancas.ts";
+import type { Presupuesto } from "../output/capas.ts";
 import { ESTADOS_EN_EL_CRUCE, type Entendido, type FilaDelCruce, type Tabla } from "../scripts/formas.ts";
+import {
+  cifrasQueNoSonDeLaCuenta,
+  conLaCuenta,
+  contadosDelViaje,
+  queDiceDelPresupuesto,
+} from "./cifras_del_presupuesto.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas } from "./textos.ts";
 
-export type MaterialDeCruce = { tabla: Tabla; viaje: Entendido };
+/** Lo que tuvo delante: la tabla y el viaje; y el presupuesto entero, si se le dio (14.5). */
+export type MaterialDeCruce = { tabla: Tabla; viaje: Entendido; presupuesto?: Presupuesto };
 
 const LO_QUE_LLEVA = ["seat", "levers", "ways", "tell", "checks", "requests", "unknowns"];
 const ESTADOS_DE_UNA_MIRADA = ["ok", "problem", "unknown"];
@@ -60,10 +68,18 @@ export function puertaCruce(entrega: unknown, m: MaterialDeCruce): Veredicto {
     ...t.rows.flatMap((r) => [r.id, r.lodging, r.zone ?? "", r.transport ?? ""]),
     ...t.levers.map((l) => l.id),
   ];
-  /** Un texto del asiento no puede traer un número que no esté en la tabla, vaya suelto o pegado a una letra. */
+  const { dates, travellers } = m.viaje;
+  const contados = contadosDelViaje(dates.check_in, dates.check_out, travellers.adults, travellers.children);
+  /**
+   * Un texto del asiento no puede traer un número que no esté en la tabla, vaya suelto o pegado a una letra; y si
+   * habla del presupuesto entero, su cifra tiene que ser la de la cuenta.
+   */
   const sinNumerosSuyos = (donde: string, texto: unknown): void => {
     if (typeof texto !== "string") return;
-    for (const n of numerosDeMas(texto, numeros, ids)) rojo(donde, `dice ${n}, que no está en la tabla`);
+    for (const n of numerosDeMas(texto, conLaCuenta(texto, numeros, m.presupuesto), ids))
+      rojo(donde, `dice ${n}, que no está en la tabla`);
+    for (const n of cifrasQueNoSonDeLaCuenta(texto, contados, m.presupuesto, ids))
+      rojo(donde, queDiceDelPresupuesto(n, m.presupuesto !== undefined));
   };
 
   // 2. Las palancas: la lista fija, entera, cada una una vez y con su estado.

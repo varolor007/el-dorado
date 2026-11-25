@@ -52,8 +52,10 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   `tests/code/destino.test.ts`.
 - **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts`,
   `agent/launcher/capa_entradas.ts` y, de mentira, `tests/cases/inventado/entradas.ts`.
-- **El presupuesto entero (14.5)**: `agent/data/presupuesto.ts`, `agent/scripts/presupuesto.ts` (la cuenta) y
-  `agent/launcher/presupuesto.ts` (cuando se monta el viaje).
+- **El presupuesto entero (14.5)**: `agent/data/presupuesto.ts`, `agent/scripts/presupuesto.ts` (la cuenta, sin
+  Node, que la web puede rehacer con otros días con `conOtrosDias`), `agent/launcher/presupuesto.ts` (cuando se monta
+  el viaje, con las zonas de la ruta), `agent/gates/cifras_del_presupuesto.ts` (lo que miran las puertas 6 y 7 de sus
+  cifras) y sus pruebas, en `tests/code/presupuesto.test.ts`.
 - **En la web (14.6)**: la pestaña «Allí» y los huecos de la parada y de las cuentas, en `web/src/piezas/Alli.tsx`.
 
 ## Lo que aún no existe
