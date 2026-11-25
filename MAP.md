@@ -53,7 +53,7 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   pasa al viaje y lo que cierra cada día, `cierraEnElViaje`), `agent/launcher/capa_entradas.ts` (su material, su
   puerta con lo que abrió cada puesto y `cierraEnElRun`), su contrato en `agent/contracts/tickets/`, su puerta 13 en
   `agent/gates/puerta_entradas.ts`, los datos abiertos de verdad en `agent/tools/abiertos.ts` (el horario y si se
-  paga, de OpenStreetMap; la web, de Wikidata) y el horario de OpenStreetMap leído en lo corriente en
+  paga, de OpenStreetMap por Overpass, con sus instancias en `ELDORADO_OVERPASS`; la web, de Wikidata) y el horario de OpenStreetMap leído en lo corriente en
   `agent/tools/horarios.ts`; lo que cierra cada día lo miran el ritmo (`agent/scripts/ritmo.ts`) y la puerta 9
   (`agent/gates/puerta_dias.ts`). De mentira, `tests/cases/inventado/entradas.ts`; sus pruebas, en
   `tests/code/entradas.test.ts`.

@@ -725,6 +725,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   el 3.5): en una vuelta de más, la entrega que se le devuelve al asiento contaba como su material, y una página
   que había escrito sin abrirla pasaba. Ya no cuenta; a cambio vale lo que abrió en sus vueltas de antes. Tocaba a
   todo asiento con internet: el del calendario, el de los papeles y las tres capas.
+- **OpenStreetMap se lee por su servicio de lectura** (la sesión, al leer sus condiciones, y una sesión de obra):
+  el de las entradas traía el objeto de cada sitio por la API de OpenStreetMap, que es la de editar y no admite
+  proyectos de solo lectura, y buscaba por nombre en su buscador, que prohíbe las consultas sistemáticas. Las dos
+  cosas se quitan: se lee por Overpass, con una consulta por tanda y solo etiquetas. Qué instancia se usa va por el
+  entorno y es del PM. Sin Overpass el viaje sale igual: el horario de los datos abiertos no se sabe, se dice, y el
+  asiento lo lee de la web del sitio, que Wikidata sí da.
 
 ## Pendientes
 
@@ -738,9 +744,10 @@ Lo que deja el 25-nov, a decisión del PM:
   números de partida que pusieron sus sesiones: dos comidas de pago al día y cuatro por taxi; 1.200 metros y tres
   sitios por día para comer; el día de holgura de una página vista y los 31 días de un abono. Qué precio se coge si
   valen varios: hoy, el más barato en las entradas y el más caro en los billetes. Si la llegada al aeropuerto se
-  cuenta de ida y vuelta (hoy, sí, si el transporte vuelve). Si vale usar el buscador de OpenStreetMap, que es una
-  salida nueva del código, y sus condiciones (citar a OpenStreetMap, una consulta por segundo), que van a
-  `condiciones.md` antes de vender. Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
+  cuenta de ida y vuelta (hoy, sí, si el transporte vuelve). Qué instancias de Overpass se usan para leer
+  OpenStreetMap: la principal pide que lo comercial vaya a una propia o de pago, y desde esta nube no contesta; hay
+  otras dos públicas de alcance mundial (la de VK Maps, rusa, y la de Private.coffee) y varias con clave o de pago
+  (`condiciones.md`). Que el que escribe la guía vea los precios de allí, cuando la hoja decía que no
   veía precios. Lo que te pierdes en autobús, que la hoja nombra y sigue sin hacer. Si en «Allí» se puede escribir
   un mensaje: hoy solo se lee. Y verlo con IA de verdad, que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,

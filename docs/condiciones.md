@@ -142,10 +142,19 @@ paga de cada sitio (OpenStreetMap) y su web oficial (Wikidata). No llevan clave 
   («Results must be cached on your side») y prohíbe las consultas sistemáticas. Se usaba, a una por segundo, para
   los sitios de los que Wikidata no sabe el objeto. **Se quita con el mismo cambio**: Overpass los encuentra por su
   identificador.
-- **Overpass tiene varias instancias públicas**, de dueños distintos, y no todas contestan desde todas partes: desde
-  la nube donde se trabaja, la principal corta la conexión. **Cuáles se usan es una decisión del PM**, y antes de
-  vender hay que leer lo que pide la que se elija, o montar una propia. A Overpass solo van identificadores de
-  sitios y puntos del mapa: nada del viajero.
+- **Overpass tiene varias instancias públicas**, de dueños distintos, y no todas contestan desde todas partes.
+  **Cuáles se usan es una decisión del PM** (van en `ELDORADO_OVERPASS`), y antes de vender hay que leer lo que pide
+  la que se elija, o montar una propia. A Overpass solo van identificadores de sitios y puntos del mapa: nada del
+  viajero. Lo que dice la wiki de OpenStreetMap de las tres de alcance mundial, según la sesión de obra que hizo
+  el cambio (sin comprobar aparte todavía):
+  - La principal (`overpass-api.de`, de FOSSGIS): no más de 10.000 consultas ni 1 GB al día, y mucho menos si el uso
+    se repite; identificarse; nada en paralelo; guardar lo que contesta; y **lo comercial, a una instancia propia o
+    de pago**. Desde la nube donde se trabaja no contesta (corta la conexión o dice 503).
+  - La de VK Maps (`maps.mail.ru`, rusa): dice que vale para cualquier proyecto y que hoy no tiene límites. Desde
+    esta nube contestó bien una vez y después 504.
+  - La de Private.coffee (`overpass.private.coffee`): cualquier proyecto, avisando antes si es a gran escala. Desde
+    esta nube no contestó.
+  Hay además instancias con clave o de pago (Geofabrik y otras), que hoy no caben: la dirección no lleva claves.
 
 ## Lo que sale de aquí
 

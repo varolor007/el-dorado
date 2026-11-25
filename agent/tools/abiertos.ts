@@ -2,50 +2,105 @@
 // OpenStreetMap, y su web oficial, de Wikidata. Son datos libres y piden citar la fuente: cada dato lleva la página de
 // donde sale. El horario se guarda tal cual lo escribe la fuente; lo que de él se entiende lo lee el código después
 // (`agent/tools/horarios.ts`), y lo que no, no se sabe. No se adivina nada: un objeto de OpenStreetMap solo es de un
-// sitio si lo dice Wikidata o si él mismo lleva el identificador del sitio.
+// sitio si lo dice Wikidata o si él mismo lleva el identificador del sitio; nada por nombre.
 //
-// Cómo se llega a cada uno: Wikidata dice su web y, si lo sabe, su objeto de OpenStreetMap; ese objeto se pide a la
-// API de OpenStreetMap. Del que Wikidata no lo sabe, se busca por su nombre junto a su punto en el buscador de
-// OpenStreetMap, y vale solo el resultado que lleve el identificador del sitio. El buscador pide una consulta por
-// segundo: se le pide de una en una.
+// Cómo se llega a cada uno: Wikidata dice su web y, si lo sabe, su objeto de OpenStreetMap. Los objetos se leen por
+// Overpass, el servicio de OpenStreetMap para leer (su API es la de editar, y su buscador no es para consultas en
+// serie): en una consulta para todos los sitios, los objetos que dice Wikidata, por su tipo y su número, y, de cada
+// sitio, el objeto que lleve su identificador cerca de su punto, por si Wikidata no lo sabe o el que dice es de otro.
+// Solo sus etiquetas.
+// Overpass tiene varias instancias públicas y no todas contestan desde todas partes: se prueban en orden, las de
+// `ELDORADO_OVERPASS`, con un tope de tiempo y pocos intentos. Si ninguna contesta, el horario y si se paga no se
+// saben, se dice, y la web de Wikidata llega igual.
 
 import type { DatosAbiertos } from "../scripts/capa_entradas.ts";
 import type { FuenteDeUnDato } from "../output/capas.ts";
 import { enlaceSinClaves } from "./enlaces.ts";
-import { AGENTE, type Respuesta, type Salida, type Sitio, type Traer } from "./sitios.ts";
+import { AGENTE, type Respuesta, type Salida, type Sitio } from "./sitios.ts";
 
 const WIKIDATA = "https://query.wikidata.org/sparql";
-const API_DE_OSM = "https://api.openstreetmap.org/api/0.6";
-const BUSCADOR_DE_OSM = "https://nominatim.openstreetmap.org/search";
 
-/** Lo que se espera entre dos consultas al buscador de OpenStreetMap: pide una por segundo como mucho. */
-export const ESPERA_DEL_BUSCADOR = 1100;
-/** Lo que se aparta la caja de búsqueda del punto del sitio, en grados: unos quinientos metros. */
-const CERCA = 0.005;
+/** Dónde está Overpass si el entorno no dice otra cosa: su instancia principal. */
+export const OVERPASS_POR_DEFECTO = ["https://overpass-api.de/api/interpreter"];
+/** Cuántas instancias se prueban como mucho, digan las que diga el entorno. */
+const INSTANCIAS_COMO_MUCHO = 4;
+/** El tope de tiempo de Overpass en total, en milisegundos: muy por debajo de la espera de las entradas. */
+export const TOPE_DE_OVERPASS = 90_000;
+/** Lo que se le da a una instancia para contestar, en milisegundos, y lo que se le pide que tarde como mucho. */
+const TOPE_DE_UNA_INSTANCIA = 40_000;
+const TOPE_EN_EL_SERVIDOR = 30;
+/** Lo más que se espera si una instancia dice que se espere, en segundos; si pide más, se deja. */
+const ESPERA_COMO_MUCHO = 30;
+/** Lo lejos que puede estar del punto del sitio el objeto que lleva su identificador, en metros. */
+export const CERCA = 500;
+/** Cuántos sitios van en una consulta: así la dirección no se hace demasiado larga. */
+const SITIOS_POR_CONSULTA = 30;
 
 const TIPOS = ["node", "way", "relation"] as const;
 type Tipo = (typeof TIPOS)[number];
 type Objeto = { tipo: Tipo; id: number; etiquetas: Record<string, string> };
 
+/** Pedir a una instancia de Overpass, con lo que se le da para contestar. */
+export type TraerConTope = (url: string, ms: number) => Promise<Respuesta>;
+
+/**
+ * Cómo sale a internet: la de siempre (`traer`, `dormir`, `intentos`) y, para Overpass, sus instancias (si no se dan,
+ * las del entorno), su tope de tiempo en total y dónde se dice lo que no se pudo saber.
+ */
+export type SalidaDeLosAbiertos = Omit<Salida, "traer"> & {
+  traer?: TraerConTope;
+  overpass?: string[];
+  tope?: number;
+  avisar?: (texto: string) => void;
+  ahora?: () => number;
+};
+
 const esId = (id: string): boolean => /^Q\d{1,12}$/.test(id);
 const esNumero = (v: unknown): v is string => typeof v === "string" && /^\d{1,15}$/.test(v);
 
-const deInternet: Traer = async (url) => {
+const esPunto = (p: unknown): p is { lat: number; lon: number } => {
+  const x = p as { lat?: unknown; lon?: unknown } | null;
+  return (
+    typeof x?.lat === "number" &&
+    typeof x?.lon === "number" &&
+    Number.isFinite(x.lat) &&
+    Number.isFinite(x.lon) &&
+    Math.abs(x.lat) <= 90 &&
+    Math.abs(x.lon) <= 180
+  );
+};
+
+const deInternet: TraerConTope = async (url, ms) => {
   const r = await fetch(url, {
     headers: { "User-Agent": AGENTE, Accept: "application/json" },
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(ms),
   });
   const espera = Number(r.headers.get("retry-after"));
   return { estado: r.status, cuerpo: await r.text(), esperar: Number.isFinite(espera) && espera > 0 ? espera : null };
 };
 
-/** Pide una dirección y devuelve su JSON; si dice que se espere, espera y lo vuelve a pedir, unas pocas veces. */
-async function pedir(url: string, o: Salida): Promise<unknown> {
+const dormirDe = (o: SalidaDeLosAbiertos) => o.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+
+/** Lo que tarde de más una respuesta se corta, aunque quien la pide no sepa cortarla. */
+async function conTope<T>(promesa: Promise<T>, ms: number): Promise<T> {
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const tarde = new Promise<never>((_, mal) => {
+    reloj = setTimeout(() => mal(new Error("no contesta a tiempo")), ms);
+  });
+  try {
+    return await Promise.race([promesa, tarde]);
+  } finally {
+    clearTimeout(reloj);
+  }
+}
+
+/** Pide a Wikidata y devuelve su JSON; si dice que se espere, espera y lo vuelve a pedir, unas pocas veces. */
+async function pedir(url: string, o: SalidaDeLosAbiertos): Promise<unknown> {
   const traer = o.traer ?? deInternet;
-  const dormir = o.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const dormir = dormirDe(o);
   const intentos = o.intentos ?? 3;
   for (let intento = 1; ; intento++) {
-    const r: Respuesta = await traer(url);
+    const r: Respuesta = await traer(url, 60_000);
     if (r.estado === 200) {
       try {
         return JSON.parse(r.cuerpo);
@@ -100,22 +155,13 @@ function etiquetasDe(t: unknown): Record<string, string> {
   return Object.fromEntries(Object.entries(t).filter((x): x is [string, string] => typeof x[1] === "string"));
 }
 
-/** Lo que contesta la API de OpenStreetMap: cada objeto, con su tipo, su número y sus etiquetas. */
+/** Los objetos de lo que contesta Overpass: cada uno, con su tipo, su número y sus etiquetas; nada más. */
 export function leerObjetos(json: unknown): Objeto[] {
   const elementos = (json as { elements?: unknown[] })?.elements;
   return (Array.isArray(elementos) ? elementos : []).flatMap((e) => {
     const x = e as { type?: unknown; id?: unknown; tags?: unknown };
     if (!TIPOS.includes(x.type as Tipo) || !Number.isSafeInteger(x.id)) return [];
     return [{ tipo: x.type as Tipo, id: x.id as number, etiquetas: etiquetasDe(x.tags) }];
-  });
-}
-
-/** Lo que contesta el buscador de OpenStreetMap: cada resultado como un objeto, con sus etiquetas de más. */
-export function leerBusqueda(json: unknown): Objeto[] {
-  return (Array.isArray(json) ? json : []).flatMap((e) => {
-    const x = e as { osm_type?: unknown; osm_id?: unknown; extratags?: unknown };
-    if (!TIPOS.includes(x.osm_type as Tipo) || !Number.isSafeInteger(x.osm_id)) return [];
-    return [{ tipo: x.osm_type as Tipo, id: x.osm_id as number, etiquetas: etiquetasDe(x.extratags) }];
   });
 }
 
@@ -165,45 +211,133 @@ export function datosDe(id: string, wd: DeWikidata | undefined, o: Objeto | null
   return { sitio: id, horario, dePago, web: w?.web ?? null, fuentes, de };
 }
 
-/** Los objetos de un tipo, de una vez; si falla uno, de uno en uno, y el que no está se deja. */
-async function objetosDe(tipo: Tipo, ids: number[], o: Salida): Promise<Objeto[]> {
-  if (ids.length === 0) return [];
+// ---------- Overpass
+
+/** Una dirección de Overpass que vale: https, sin usuario ni clave, sin nada tras ella (ni `?` ni `#`). */
+export function esInstancia(texto: string): boolean {
+  if (texto.length > 200 || /\s/.test(texto)) return false;
   try {
-    return leerObjetos(await pedir(`${API_DE_OSM}/${tipo}s.json?${tipo}s=${ids.join(",")}`, o));
+    const u = new URL(texto);
+    return u.protocol === "https:" && u.hostname !== "" && !u.username && !u.password && !u.search && !u.hash;
   } catch {
-    const salida: Objeto[] = [];
-    for (const id of ids)
-      try {
-        salida.push(...leerObjetos(await pedir(`${API_DE_OSM}/${tipo}/${id}.json`, o)));
-      } catch {
-        // Un objeto que ya no está (borrado, o mal dicho en Wikidata) no es de nadie.
-      }
-    return salida;
+    return false;
   }
 }
 
-/** La consulta al buscador de OpenStreetMap: el nombre del sitio, solo cerca de su punto, con sus etiquetas de más. */
-export function busquedaDe(s: Sitio): string {
-  const { lat, lon } = s.punto;
-  const caja = [lon - CERCA, lat + CERCA, lon + CERCA, lat - CERCA].map((n) => n.toFixed(5)).join(",");
-  const q = new URLSearchParams({
-    q: s.nombre,
-    format: "jsonv2",
-    extratags: "1",
-    limit: "5",
-    viewbox: caja,
-    bounded: "1",
-  });
-  return `${BUSCADOR_DE_OSM}?${q}`;
+/**
+ * Las instancias de Overpass, de `ELDORADO_OVERPASS` (direcciones https separadas por comas), en su orden y sin
+ * repetir; sin él, la principal. Las que no valen se dejan, y se dice cuántas.
+ */
+export function instanciasDeOverpass(texto: string | undefined): { instancias: string[]; malas: number } {
+  if (texto === undefined || texto.trim() === "") return { instancias: [...OVERPASS_POR_DEFECTO], malas: 0 };
+  const dichas = texto
+    .split(",")
+    .map((x) => x.trim())
+    .filter((x) => x !== "");
+  const buenas = [...new Set(dichas.filter(esInstancia))];
+  return { instancias: buenas.slice(0, INSTANCIAS_COMO_MUCHO), malas: dichas.filter((x) => !esInstancia(x)).length };
+}
+
+/** Lo que se le pide a Overpass: unos objetos por su tipo y su número, y unos sitios por su identificador y punto. */
+export type PedidoAOverpass = {
+  objetos: { tipo: Tipo; id: number }[];
+  cerca: { id: string; punto: { lat: number; lon: number } }[];
+};
+
+/**
+ * La consulta a Overpass: los objetos por su tipo y su número; de cada sitio, el objeto que lleve su identificador
+ * cerca de su punto; y de todos, solo sus etiquetas. Lo que no es un número, un identificador o un punto no entra.
+ */
+export function consultaDeOverpass(p: PedidoAOverpass): string | null {
+  const partes: string[] = [];
+  for (const tipo of TIPOS) {
+    const ids = [...new Set(p.objetos.filter((x) => x.tipo === tipo && esNumeroDeObjeto(x.id)).map((x) => x.id))];
+    if (ids.length > 0) partes.push(`${tipo}(id:${ids.sort((a, b) => a - b).join(",")});`);
+  }
+  for (const s of p.cerca)
+    if (esId(s.id) && esPunto(s.punto))
+      partes.push(`nwr["wikidata"="${s.id}"](around:${CERCA},${s.punto.lat.toFixed(6)},${s.punto.lon.toFixed(6)});`);
+  if (partes.length === 0) return null;
+  return `[out:json][timeout:${TOPE_EN_EL_SERVIDOR}];\n(\n${partes.join("\n")}\n);\nout tags;`;
+}
+
+const esNumeroDeObjeto = (n: unknown): n is number => Number.isSafeInteger(n) && (n as number) > 0;
+
+/** Lo que contesta Overpass: sus objetos; si no es lo suyo, o dice que se cortó a medias, no vale. */
+export function leerOverpass(cuerpo: string): Objeto[] {
+  let json: unknown;
+  try {
+    json = JSON.parse(cuerpo);
+  } catch {
+    throw new Error("no contesta con datos");
+  }
+  const x = json as { elements?: unknown; remark?: unknown } | null;
+  if (!Array.isArray(x?.elements)) throw new Error("no contesta con datos");
+  // Si se le acaba el tiempo o la memoria, Overpass lo dice en `remark` y da lo que llevaba: a medias no vale.
+  if (typeof x.remark === "string" && /error|timed out|out of memory/i.test(x.remark))
+    throw new Error("contesta a medias");
+  return leerObjetos(json);
+}
+
+const nombreDe = (url: string): string => new URL(url).hostname;
+
+/**
+ * Una consulta a Overpass, por sus instancias en orden: si una no contesta a tiempo, dice que se espere o contesta
+ * mal, se pasa a la siguiente. Una sola vez de más, y solo a la que dijo cuánto esperar, si cabe en el tope.
+ */
+async function deOverpass(
+  consulta: string,
+  instancias: string[],
+  hasta: number,
+  o: SalidaDeLosAbiertos,
+): Promise<{ objetos: Objeto[]; instancia: string }> {
+  const traer = o.traer ?? deInternet;
+  const ahora = o.ahora ?? Date.now;
+  const fallos: string[] = [];
+  const queEsperan: { instancia: string; esperar: number }[] = [];
+  const probar = async (instancia: string): Promise<Objeto[] | null> => {
+    const queda = Math.min(TOPE_DE_UNA_INSTANCIA, hasta - ahora());
+    if (queda < 1000) {
+      fallos.push(`${nombreDe(instancia)}: sin tiempo`);
+      return null;
+    }
+    try {
+      const r = await conTope(traer(`${instancia}?data=${encodeURIComponent(consulta)}`, queda), queda);
+      if (r.estado === 200) return leerOverpass(r.cuerpo);
+      if ([429, 503, 504].includes(r.estado) && r.esperar !== null && r.esperar <= ESPERA_COMO_MUCHO)
+        queEsperan.push({ instancia, esperar: r.esperar });
+      fallos.push(`${nombreDe(instancia)} contesta ${r.estado}`);
+    } catch (error) {
+      fallos.push(`${nombreDe(instancia)}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return null;
+  };
+  for (const instancia of instancias) {
+    const objetos = await probar(instancia);
+    if (objetos !== null) return { objetos, instancia };
+  }
+  const otra = queEsperan.sort((a, b) => a.esperar - b.esperar)[0];
+  if (otra !== undefined && ahora() + otra.esperar * 1000 + 1000 < hasta) {
+    await dormirDe(o)(otra.esperar * 1000);
+    const objetos = await probar(otra.instancia);
+    if (objetos !== null) return { objetos, instancia: otra.instancia };
+  }
+  throw new Error(`Overpass no contesta (${fallos.join("; ")})`);
 }
 
 /**
- * Lo que dicen los datos abiertos de unos sitios. Si una de las fuentes falla, se sigue con lo que dijeron las otras;
- * si fallan todas, se dice. Lo que no dicen es null.
+ * Lo que dicen los datos abiertos de unos sitios. Si una de las fuentes falla, se sigue con lo que dijeron las otras,
+ * y se dice; si fallan todas, se dice con un error. Lo que no dicen es null.
  */
-export async function abiertosDe(sitios: Sitio[], o: Salida = {}, hoy: Date = new Date()): Promise<DatosAbiertos[]> {
+export async function abiertosDe(
+  sitios: Sitio[],
+  o: SalidaDeLosAbiertos = {},
+  hoy: Date = new Date(),
+): Promise<DatosAbiertos[]> {
   const visto = hoy.toISOString().slice(0, 10);
-  const dormir = o.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const ahora = o.ahora ?? Date.now;
+  const hasta = ahora() + (o.tope ?? TOPE_DE_OVERPASS);
+  const avisar = o.avisar ?? ((texto: string) => console.warn(`datos abiertos: ${texto}`));
   const validos = sitios.filter((s) => esId(s.id));
   if (validos.length === 0) return [];
   const fallos: string[] = [];
@@ -215,41 +349,48 @@ export async function abiertosDe(sitios: Sitio[], o: Salida = {}, hoy: Date = ne
     fallos.push(error instanceof Error ? error.message : String(error));
   }
 
-  // Los objetos que dice Wikidata, por tipo; cada uno vale para su sitio si no lleva el de otro.
-  const deCadaSitio = new Map<string, Objeto>();
-  try {
-    for (const tipo of TIPOS) {
-      const pedidos = validos.flatMap((s) => (wikidata.get(s.id)?.objetos ?? []).filter((x) => x.tipo === tipo));
-      const ids = [...new Set(pedidos.map((x) => x.id))].sort((a, b) => a - b);
-      const traidos = await objetosDe(tipo, ids, o);
-      for (const s of validos) {
-        if (deCadaSitio.has(s.id)) continue;
-        const suyos =
-          wikidata
-            .get(s.id)
-            ?.objetos.filter((x) => x.tipo === tipo)
-            .map((x) => x.id) ?? [];
-        const uno = traidos.find((x) => suyos.includes(x.id) && esDelSitio(x, s.id, true));
-        if (uno !== undefined) deCadaSitio.set(s.id, uno);
-      }
+  // Overpass, en una consulta por cada tanda de sitios: los objetos que dice Wikidata y, de cada sitio, el que lleve
+  // su identificador cerca de su punto (por si Wikidata no lo sabe, o el que dice es de otro).
+  let instancias = o.overpass;
+  if (instancias === undefined) {
+    const delEntorno = instanciasDeOverpass(process.env.ELDORADO_OVERPASS);
+    if (delEntorno.malas > 0) avisar(`${delEntorno.malas} de las direcciones de Overpass no valen y se dejan`);
+    instancias = delEntorno.instancias;
+  }
+  instancias = instancias.filter(esInstancia).slice(0, INSTANCIAS_COMO_MUCHO);
+  const traidos: Objeto[] = [];
+  let sinOverpass: string | null = instancias.length === 0 ? "no hay ninguna dirección de Overpass que valga" : null;
+  for (let i = 0; i < validos.length && sinOverpass === null; i += SITIOS_POR_CONSULTA) {
+    const tanda = validos.slice(i, i + SITIOS_POR_CONSULTA);
+    const consulta = consultaDeOverpass({
+      objetos: tanda.flatMap((s) => wikidata.get(s.id)?.objetos ?? []),
+      cerca: tanda.map((s) => ({ id: s.id, punto: s.punto })),
+    });
+    if (consulta === null) continue;
+    try {
+      const r = await deOverpass(consulta, instancias, hasta, o);
+      traidos.push(...r.objetos);
+      // La que contestó va delante para la tanda siguiente: no se insiste en las que no.
+      instancias = [r.instancia, ...instancias.filter((x) => x !== r.instancia)];
+    } catch (error) {
+      sinOverpass = error instanceof Error ? error.message : String(error);
     }
-  } catch (error) {
-    fallos.push(error instanceof Error ? error.message : String(error));
   }
 
-  // Los que siguen sin objeto, al buscador: vale solo el que lleve el identificador del sitio.
-  let busquedas = 0;
+  // Un objeto es de su sitio si lo dice Wikidata (y no lleva el identificador de otro) o si él lleva el del sitio.
+  const deCadaSitio = new Map<string, Objeto>();
   for (const s of validos) {
-    if (deCadaSitio.has(s.id)) continue;
-    if (busquedas++ > 0) await dormir(ESPERA_DEL_BUSCADOR);
-    try {
-      const uno = leerBusqueda(await pedir(busquedaDe(s), o)).find((x) => esDelSitio(x, s.id, false));
-      if (uno !== undefined) deCadaSitio.set(s.id, uno);
-    } catch (error) {
-      fallos.push(error instanceof Error ? error.message : String(error));
-      // Si el buscador no contesta, no se le sigue pidiendo.
-      break;
-    }
+    const suyos = wikidata.get(s.id)?.objetos ?? [];
+    const porWikidata = traidos.find(
+      (x) => suyos.some((y) => y.tipo === x.tipo && y.id === x.id) && esDelSitio(x, s.id, true),
+    );
+    const uno = porWikidata ?? traidos.find((x) => esDelSitio(x, s.id, false));
+    if (uno !== undefined) deCadaSitio.set(s.id, uno);
+  }
+
+  if (sinOverpass !== null) {
+    fallos.push(sinOverpass);
+    avisar(`sin el horario ni si se paga de OpenStreetMap: ${sinOverpass}`);
   }
   if (wikidata.size === 0 && deCadaSitio.size === 0 && fallos.length > 0) throw new Error(fallos[0]);
   return validos.map((s) => datosDe(s.id, wikidata.get(s.id), deCadaSitio.get(s.id) ?? null, visto));

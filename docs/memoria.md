@@ -149,18 +149,23 @@ frases del presupuesto entero con `agent/gates/cifras_del_presupuesto.ts`, y sus
 hoy nadie les pasa: sin él, una cifra en una frase del presupuesto entero sale roja. Al viaje le falta el id de la
 zona de cada alojamiento. Sin ver con IA ni con fuentes de verdad.
 
-**El de las entradas (14.4), junto** (25-nov). Datos abiertos en `agent/tools/abiertos.ts` (Wikidata para la web y
-el objeto de OpenStreetMap; la API de OpenStreetMap; el buscador de OpenStreetMap, una consulta por segundo, solo si
-el resultado lleva el identificador del sitio) y el horario en `agent/tools/horarios.ts`. Contrato en
+**El de las entradas (14.4), junto** (25-nov). Datos abiertos en `agent/tools/abiertos.ts`: Wikidata para la web y
+el objeto de OpenStreetMap, y Overpass, el servicio de lectura de OpenStreetMap, para sus etiquetas (una consulta
+por tanda de hasta 30 sitios: por el número que dice Wikidata y por el identificador del sitio a 500 metros de su
+punto; solo etiquetas). Sus instancias, en `ELDORADO_OVERPASS` (https, separadas por comas, cuatro como mucho; sin
+ella, la principal), en orden, con 40 segundos por instancia y 90 en total; si ninguna contesta, se avisa y el
+horario no se sabe. Antes se leía por la API de editar y por el buscador, que sus condiciones no dejan
+(`condiciones.md`). Desde esta nube ninguna instancia pública contestó bien (la principal, 503; la de VK Maps, 504
+casi siempre; la de Private.coffee, nada): el camino bueno solo se ha visto con una consulta suelta. El horario se
+lee en `agent/tools/horarios.ts`. Contrato en
 `agent/contracts/tickets/` (TK1 a TK8); puerta 13 en `agent/gates/puerta_entradas.ts`, con las páginas abiertas del
 puesto (`capaDeLasEntradasDe(run)`). Al viaje, manda el asiento; su «unknown» y lo no mirado, con los datos abiertos.
 Lo que cierra cada día: `cierraEnElRun` y `cierraEnElViaje`; el ritmo lo recibe como séptimo parámetro, con el motivo
 «closed», y la puerta 9 lo mira con `cierra`. Lo usan la casa, el montaje del viaje, `diasElegidos` y la web. Si pasan
 del tope, `ordenParaMirar`: primero los imprescindibles y los que tienen puerta; el aviso, con los del run. Sabido: el
 viaje no distingue un sitio sin mirar por el tope de uno cuya tanda falló; «closed» sale en la web con lo que no cabe
-a ese ritmo; el buscador de OpenStreetMap es una salida nueva del código, y sus condiciones (citar a OpenStreetMap,
-una consulta por segundo) van a `docs/condiciones.md` antes de vender. Sin pantalla nueva ni capturas, y sin ver con
-IA.
+a ese ritmo; el aviso de que Overpass no contesta sale por la consola y aún no llega a los avisos del run; y qué
+instancias de Overpass se usan es del PM. Sin pantalla nueva ni capturas, y sin ver con IA.
 
 **La web de las capas (14.6), junta** (25-nov). `web/src/piezas/Alli.tsx` (`Alli`, `EntradaDeLaParada`,
 `FichaDeLaEntrada`, `CosteDelTrayecto`, `ElPresupuesto`) y sus cuentas en `web/src/lib/alli.ts` (`paraTuGrupo`,
