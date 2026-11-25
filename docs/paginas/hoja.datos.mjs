@@ -709,7 +709,7 @@ const flujo = [
       hecho: true,
       titulo: "Los precios de hoy",
       d: "Vuelve a pedir el precio de cada pieza a su fuente. Si alguno ha cambiado desde que lo viste, lo dice antes de que reserves; y si el total sube mucho, o algo se queda sin precio, para y te pregunta.",
-      n: "Por decidir: cuánto es mucho (hoy, un 10 %). Y falta saber si el precio de hoy es de la misma habitación que miraste.",
+      n: "Por decidir: cuánto es mucho (hoy, un 10 %). Si el precio de hoy es de otra habitación que la que miraste, lo dice.",
     },
     {
       tipo: "asiento",

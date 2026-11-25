@@ -606,6 +606,9 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   con que se cerró.
 - **Toda hora de una fuente, en veinticuatro horas** (la sesión, al cerrar el primer viaje de verdad): la fuente
   escribe «03:00 PM», y se leía como las tres de la madrugada. Lo que no se entiende como una hora no se adivina.
+- **El precio de hoy se compara con el de la misma habitación, o se dice que es otra** (la sesión, al cerrar el
+  viaje del ensayo): la fuente da hoy lo más barato que tiene. Si su habitación no es la que se miró, el cierre lo
+  dice y lo deja sin confirmar, sin parar.
 - **El enlace de otro vendedor se dice como de otro vendedor** (la sesión): con su precio del día que se buscó, y
   una línea que dice que hoy puede ser otro. Antes se leía «donde vimos el precio» junto a un precio que no era el
   de hoy.

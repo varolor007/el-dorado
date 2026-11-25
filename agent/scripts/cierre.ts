@@ -16,6 +16,7 @@ import type {
   ComprobacionDeEnlace,
   EdadDeUnPrecio,
   EnlaceDeReserva,
+  HabitacionDeHoy,
   Llegada,
   Manera,
   PlazoDePapel,
@@ -33,17 +34,26 @@ import { diaEnGoogleMaps, enlaceSinClaves, sitioEnGoogleMaps } from "../tools/en
 const redondo = (n: number): number => Math.round(n * 100) / 100;
 
 /** Una pieza del viaje elegido: dónde se duerme o cómo se llega, con el precio que se vio. */
-export type PiezaElegida = { pieza: ClaseDePieza; ref: string; antes: Precio; guardado: boolean };
+export type PiezaElegida = {
+  pieza: ClaseDePieza;
+  ref: string;
+  antes: Precio;
+  guardado: boolean;
+  /** La habitación de ese precio, por su nombre, si es un alojamiento y se sabe. */
+  habitacion: string | null;
+};
 
 /** Las piezas de una manera, con el precio con que se vieron. */
 export function piezasDe(v: Viaje, m: Manera): PiezaElegida[] {
   const a = v.alojamientos.find((x) => x.id === m.alojamiento);
   if (a === undefined) throw new Error("el alojamiento de la manera no está en el viaje");
-  const piezas: PiezaElegida[] = [{ pieza: "lodging", ref: a.id, antes: a.precio, guardado: false }];
+  const piezas: PiezaElegida[] = [
+    { pieza: "lodging", ref: a.id, antes: a.precio, guardado: false, habitacion: a.habitacion },
+  ];
   if (m.transporte !== null) {
     const t = v.transportes.find((x) => x.id === m.transporte);
     if (t === undefined) throw new Error("el transporte de la manera no está en el viaje");
-    piezas.push({ pieza: "transport", ref: t.id, antes: t.precio, guardado: t.guardado });
+    piezas.push({ pieza: "transport", ref: t.id, antes: t.precio, guardado: t.guardado, habitacion: null });
   }
   return piezas;
 }
@@ -59,6 +69,8 @@ export type DeHoy =
       noches: { entrada: string; salida: string } | null;
       /** Verdadero si es un precio guardado de búsquedas de otros, y no pedido ahora. */
       guardado: boolean;
+      /** La habitación de ese precio, por su nombre, si la fuente la dice. */
+      habitacion?: string | null;
     }
   | "gone"
   | "unknown";
@@ -78,13 +90,25 @@ export function cambioDe(antes: number, hoy: number): Exclude<CambioDePrecio, "g
 }
 
 /** El precio de hoy de una pieza, frente al que se vio, a la hora del cierre. */
+/** Un nombre de habitación, para compararlo: sin mayúsculas ni espacios de más. */
+const nombreLlano = (x: string): string => x.trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * Si el precio de hoy de un alojamiento es de la habitación que se miró. La fuente da hoy lo más barato que tiene, y
+ * puede ser otra: comparar los dos precios sin decirlo sería comparar dos cosas distintas.
+ */
+export function habitacionDeHoy(p: PiezaElegida, deHoy: string | null | undefined): HabitacionDeHoy | null {
+  if (p.pieza !== "lodging") return null;
+  if (p.habitacion === null || deHoy == null || deHoy.trim() === "") return "unknown";
+  return nombreLlano(p.habitacion) === nombreLlano(deHoy) ? "same" : "other";
+}
+
 export function precioDeHoy(p: PiezaElegida, dado: DeHoy, cuando: string): PrecioDeHoy {
   const base = { pieza: p.pieza, ref: p.ref, antes: p.antes };
-  if (dado === "gone" || dado === "unknown")
-    return { ...base, hoy: null, cambio: dado, diferencia: null, edad: null, cancelable: null, noches: null };
+  const sin = { hoy: null, diferencia: null, edad: null, cancelable: null, noches: null, habitacion: null };
+  if (dado === "gone" || dado === "unknown") return { ...base, ...sin, cambio: dado };
   // Un cambio de moneda no es un cambio de precio: si la fuente contesta en otra, no se puede comparar.
-  if (dado.precio.moneda !== p.antes.moneda)
-    return { ...base, hoy: null, cambio: "unknown", diferencia: null, edad: null, cancelable: null, noches: null };
+  if (dado.precio.moneda !== p.antes.moneda) return { ...base, ...sin, cambio: "unknown" };
   return {
     ...base,
     hoy: dado.precio,
@@ -93,6 +117,7 @@ export function precioDeHoy(p: PiezaElegida, dado: DeHoy, cuando: string): Preci
     edad: edadDe(dado.precio.visto, cuando, dado.guardado),
     cancelable: dado.cancelable,
     noches: dado.noches,
+    habitacion: habitacionDeHoy(p, dado.habitacion),
   };
 }
 
@@ -300,6 +325,7 @@ export function sinConfirmarDe(
     if (p.edad === "stale") pon("price_stale", p.ref);
     if (p.edad === "saved") pon("saved_price", p.ref);
     if (p.pieza === "lodging" && p.hoy !== null && p.cancelable === null) pon("cancel_unknown", p.ref);
+    if (p.habitacion === "other") pon("other_room", p.ref);
     const suyos = enlaces.filter((e) => e.ref === p.ref);
     if (suyos.length === 0) pon("no_link", p.ref);
     for (const e of suyos) {

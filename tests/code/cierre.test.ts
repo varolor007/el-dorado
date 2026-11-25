@@ -245,7 +245,7 @@ function enElMapa(viaje: Viaje = viajeParaCerrar(), entradaDesde = "12:00"): { m
 /** Una fuente de alojamiento que da hoy el precio que se le diga, para las noches que se le piden. */
 function alojamientoHoy(
   total: number | null,
-  o: { cancelable?: boolean | null; falla?: boolean } = {},
+  o: { cancelable?: boolean | null; falla?: boolean; habitacion?: string | null } = {},
 ): FuenteAlojamiento {
   return {
     nombre: "inventada",
@@ -264,7 +264,7 @@ function alojamientoHoy(
         total,
         tasasAparte: 0,
         moneda: "EUR",
-        habitacion: "Doble",
+        habitacion: o.habitacion === undefined ? "Doble pequeña" : o.habitacion,
         idHabitacion: null,
         regimen: null,
         cancelable: o.cancelable === undefined ? true : o.cancelable,
@@ -398,6 +398,32 @@ test("trampa: una hora de entrada guardada como la escribe la fuente no se lee d
       await cerrarCon(v, fuentes(alojamientoHoy(180)), null);
       const cierre = (leerVersion(leerViaje(v.ficha.id, "u-1", mesa))!.viaje as Viaje).cierre!;
       assert.equal(cierre.entradaDesde, es, guardada);
+    } finally {
+      rmSync(mesa, { recursive: true, force: true });
+    }
+  }
+});
+
+test("trampa: el precio de hoy de otra habitación no se compara callando con el de la que se miró", async () => {
+  // La fuente da hoy lo más barato que tiene. Si es de otra habitación, se dice, y queda sin confirmar.
+  for (const [deHoy, es] of [
+    ["Doble pequeña", "same"],
+    ["  doble   PEQUEÑA ", "same"],
+    ["Suite con vistas", "other"],
+    [null, "unknown"],
+  ] as const) {
+    const { mesa, v } = enElMapa();
+    try {
+      await cerrarCon(v, fuentes(alojamientoHoy(180, { habitacion: deHoy })), null);
+      const cierre = (leerVersion(leerViaje(v.ficha.id, "u-1", mesa))!.viaje as Viaje).cierre!;
+      const delAlojamiento = cierre.precios.find((p) => p.pieza === "lodging")!;
+      assert.equal(delAlojamiento.habitacion, es, String(deHoy));
+      assert.equal(cierre.precios.find((p) => p.pieza === "transport")?.habitacion ?? null, null);
+      assert.equal(
+        cierre.sinConfirmar.some((s) => s.que === "other_room" && s.ref === delAlojamiento.ref),
+        es === "other",
+        String(deHoy),
+      );
     } finally {
       rmSync(mesa, { recursive: true, force: true });
     }

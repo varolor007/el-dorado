@@ -329,7 +329,16 @@ export type PrecioDeHoy = {
   cancelable: boolean | null;
   /** Para qué noches dio la fuente el precio de hoy, si lo dice. */
   noches: { entrada: string; salida: string } | null;
+  /**
+   * Si el precio de hoy de un alojamiento es de la misma habitación que se miró: la fuente da hoy lo más barato que
+   * tiene, que puede ser otra. Null en lo que no es un alojamiento o no tiene precio de hoy.
+   */
+  habitacion: HabitacionDeHoy | null;
 };
+
+/** La habitación del precio de hoy frente a la que se miró: la misma, otra, o no se sabe (falta un nombre). */
+export const HABITACION_DE_HOY = ["same", "other", "unknown"] as const;
+export type HabitacionDeHoy = (typeof HABITACION_DE_HOY)[number];
 
 /**
  * Qué es un enlace de reserva: la página donde se vio ese precio, la búsqueda en la web de la fuente con las fechas
@@ -390,6 +399,7 @@ export const SIN_CONFIRMAR = [
   "price_stale",
   "saved_price",
   "cancel_unknown",
+  "other_room",
   "arrival_unknown",
   "arrival_off",
   "no_link",

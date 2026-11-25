@@ -218,6 +218,7 @@ async function preciosDeHoy(
               cancelable: p.cancelable,
               noches: { entrada: p.entrada, salida: p.salida },
               guardado: false,
+              habitacion: p.habitacion,
             };
     } catch {
       dados[m.alojamiento] = "unknown";

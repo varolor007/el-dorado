@@ -32,10 +32,12 @@ de verdad, sin IA: el precio de hoy llegó y el enlace respondió. De ahí: toda
 veinticuatro horas (`agent/tools/horas.ts`; la de entrada llegaba como «03:00 PM» y se leía como las tres de la
 madrugada); comprobar un enlace solo llama a páginas de fuera (`paginaDeFuera`), también tras una redirección; y el
 enlace de otro vendedor se dice como tal (`other_seller`), con su precio del día que se buscó. La guía toma del
-cierre la manera y los días. **Falta**: las frases del que explica con IA de verdad; un viaje con vuelo; saber si el
-precio de hoy es de la misma habitación que se miró (la fuente da su nombre con cada precio y el cierre no lo
-guarda: en dos cierres seguidos el más barato se movió 20 euros); un freno a cerrar muchas veces; y lo que pasa en
-vivo, que la web pregunta cada segundo.
+cierre la manera y los días. El precio de hoy es lo más barato que tiene la fuente, que puede ser de otra
+habitación: `habitacionDeHoy` la compara por su nombre con la que se miró y, si es otra, queda sin confirmar
+(`other_room`). En tres cierres seguidos del viaje del ensayo, la misma habitación fue de 261 a 281 euros: el precio
+de la fuente se mueve de una llamada a otra, y eso hay que medirlo en el ensayo de la tanda 7. **Falta**: las frases
+del que explica con IA de verdad; un viaje con vuelo; un freno a cerrar muchas veces; y lo que pasa en vivo, que la
+web pregunta cada segundo.
 
 **Lo que enseñó juntar dos ramas a la vez** (25-nov): las dos añadían al final de la hoja de estilos, y al juntarlas
 una regla se quedó sin cerrar; la web dejó de pintarse con los tipos y la batería en verde. La batería cuenta ahora
