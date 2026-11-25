@@ -133,3 +133,20 @@ test("una ficha rota o de otro, en la carpeta de la mesa, no se cuela", () => {
     assert.deepEqual(gastoDeLaCuenta("../ana", mesa).viajes, []);
   });
 });
+
+test("lo que gastan las preguntas sobre un alojamiento cuenta en su viaje, no en la media de una investigación", () => {
+  conMesa((mesa) => {
+    const dia = new Date("2027-01-01T10:00:00Z");
+    const v = abrirViaje({ dueno: "ana", entendido: ENTENDIDO, mesa, cuando: dia, id: "uno" });
+    investiga(v, [trabajo("a", 0.5, "2027-01-01T10:01:00Z")], true, dia);
+    // La trampa de la revisión: la carpeta `preguntas/` no se leía.
+    const pregunta = join(v.carpeta, "preguntas", "1");
+    mkdirSync(pregunta, { recursive: true });
+    apuntarTrabajo(pregunta, { ...trabajo("pregunta-v1", 0.05, "2027-01-02T10:00:00Z"), asiento: "lodging-viewer" });
+    const g = gastoDeLaCuenta("ana", mesa);
+    assert.ok(cerca(g.viajes[0].usd, 0.55));
+    assert.equal(g.viajes[0].llamadas, 2);
+    assert.equal(g.viajes[0].ultima, "2027-01-02T10:00:00Z");
+    assert.ok(cerca(g.siguiente?.usd ?? 0, 0.5));
+  });
+});
