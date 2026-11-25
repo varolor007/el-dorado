@@ -463,6 +463,7 @@ const en = {
     comerNota: "Areas, markets and dishes. No restaurant is named: that would need a source of reviews.",
     cuesta: (desde: string, hasta: string) => `Usually ${desde} to ${hasta}`,
     nadaDe: "Nothing found of this.",
+    sinFrases: "These notes are not available in your language yet: here are their facts and their sources.",
     // Las entradas, en cada parada y en la pestaña.
     entrada: "Ticket",
     tusDias: "On your days",
@@ -1877,6 +1878,7 @@ const es: Textos = {
     comerNota: "Zonas, mercados y platos. Ningún restaurante con nombre: para eso haría falta una fuente de opiniones.",
     cuesta: (desde, hasta) => `Suele costar de ${desde} a ${hasta}`,
     nadaDe: "No se encontró nada de esto.",
+    sinFrases: "Estas explicaciones todavía no están disponibles en tu idioma: aquí van sus datos y sus fuentes.",
     entrada: "Entrada",
     tusDias: "En tus días",
     abre: (franjas) =>

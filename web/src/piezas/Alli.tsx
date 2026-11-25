@@ -260,6 +260,9 @@ function Saber({ t, idioma, s }: Comun & { s: DelDestino | undefined }) {
     );
   const deClase = (clase: string): CosaDelDestino[] => s.cosas.filter((c) => c.clase === clase);
   const comer = DE_COMER.some((c) => deClase(c).length > 0);
+  // Si el idioma del viajero todavía no tiene las palabras de la puerta 12, sus frases no llegan: se dice.
+  const sinFrases = (clases: readonly string[]) =>
+    clases.some((c) => deClase(c).some((x) => x.sinFrase === true)) && <p className="suave">{t.alli.sinFrases}</p>;
   const bloque = (clases: readonly string[]) =>
     clases
       .filter((c) => deClase(c).length > 0)
@@ -277,10 +280,12 @@ function Saber({ t, idioma, s }: Comun & { s: DelDestino | undefined }) {
     <>
       <div className="grupo alli">
         <h2 className="titulo">{t.alli.saber}</h2>
+        {sinFrases(DE_SABER)}
         {DE_SABER.some((c) => deClase(c).length > 0) ? bloque(DE_SABER) : <p className="suave">{t.alli.nadaDe}</p>}
       </div>
       <div className="grupo alli">
         <h2 className="titulo">{t.alli.comer}</h2>
+        {sinFrases(DE_COMER)}
         {comer ? bloque(DE_COMER) : <p className="suave">{t.alli.nadaDe}</p>}
         <p className="credito">{t.alli.comerNota}</p>
       </div>
@@ -293,7 +298,7 @@ function Cosa({ t, idioma, x }: Comun & { x: CosaDelDestino }) {
   return (
     <li className="fecha alli__cosa">
       {x.nombre !== null && <b>{x.nombre}</b>}
-      <span className="fecha__frase">{x.frase}</span>
+      {x.sinFrase !== true && <span className="fecha__frase">{x.frase}</span>}
       {x.cuesta !== null && (
         <span className="alli__precio">
           {t.alli.cuesta(

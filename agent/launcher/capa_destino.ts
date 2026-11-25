@@ -52,7 +52,7 @@ export function puertaDelDestino(e: unknown, m: Material): Rojo[] {
   const { rojos } = puertaDestino(e, { zonas: m.zonas, hoy: m.hoy });
   if (rojos.length > 0) return rojos;
   return pegasDelDestino(
-    paraEnsenarDestino(e as EntregaDelDestino),
+    paraEnsenarDestino(e as EntregaDelDestino, m.viaje.language),
     m.zonas.map((z) => z.id),
   );
 }
@@ -67,6 +67,6 @@ export const capaDelDestino: CapaDeIA<EntregaDelDestino, DelDestino> = {
   base: "saber",
   tandas: (m) => [piezasDelDestino(m)],
   puerta: (e, m) => puertaDelDestino(e, m),
-  ensenar: ([e]) => (e == null ? sinDestino("failed") : paraEnsenarDestino(e)),
+  ensenar: ([e], m) => (e == null ? sinDestino("failed") : paraEnsenarDestino(e, m.viaje.language)),
   sinElla: sinDestino,
 };

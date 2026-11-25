@@ -6,11 +6,13 @@ import assert from "node:assert/strict";
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../../agent/data/capa_destino.ts";
+import { IDIOMAS_CON_SUS_LISTAS, LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../../agent/data/capa_destino.ts";
+import { IDIOMAS_DE_LA_GUIA } from "../../agent/data/guia.ts";
+import { pegasDelDestino } from "../../agent/output/capas.ts";
 import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import type { Material } from "../../agent/launcher/capas.ts";
-import { piezasDelDestino, puertaDelDestino } from "../../agent/launcher/capa_destino.ts";
+import { capaDelDestino, piezasDelDestino, puertaDelDestino } from "../../agent/launcher/capa_destino.ts";
 import { paginasEn } from "../../agent/launcher/consultado.ts";
 import { puertaDestino, type ParaElDestino } from "../../agent/gates/puerta_destino.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
@@ -286,6 +288,38 @@ test("puerta 12: en ninguna clase un canal ni una dirección dicha; en evitar y 
     pasa(conCosa(I.practico, { says, figures: [112] }));
   pasa(conCosa(I.plato, { says: "Un plato llamado así por el puerto." }));
   pasa(evitar("Avoid the main square at noon: it is crowded."));
+});
+
+test("en un idioma sin sus listas de palabras, ninguna frase llega al viaje: llegan sus datos", () => {
+  // La trampa: en alemán, un restaurante con nombre, sus estrellas y una garantía no los ve ninguna lista.
+  const e = conCosa(I.plato, { says: "Im Gasthaus Zum Löwen, mit drei Sternen: garantiert das beste Essen." });
+  pasa(e);
+  for (const idioma of ["de", "fr", "ja"]) {
+    const m = { ...MATERIAL, viaje: { ...MATERIAL.viaje, language: idioma } };
+    assert.deepEqual(puertaDelDestino(e, m), []);
+    const d = capaDelDestino.ensenar([e as never], m);
+    assert.ok(
+      d.cosas.every((c) => c.frase === "" && c.sinFrase === true),
+      idioma,
+    );
+    // Los datos sí: su nombre, lo que cuesta y su página.
+    assert.deepEqual(d.cosas.at(-1)?.cuesta, { desde: 12, hasta: 18, moneda: "EUR" });
+    assert.ok(d.cosas.every((c) => c.fuente.url === PAGINA_DEL_DESTINO));
+    assert.deepEqual(pegasDelDestino(d, ["z1", "z2"]), []);
+    assert.ok(!JSON.stringify(d).includes("Gasthaus"));
+  }
+  // En los idiomas que tienen sus listas, la frase llega.
+  for (const idioma of IDIOMAS_CON_SUS_LISTAS) {
+    const d = paraEnsenarDestino(buena() as never, idioma);
+    assert.ok(d.cosas.every((c) => c.frase !== "" && c.sinFrase === undefined));
+  }
+  // Una frase que no llega no va escondida en el viaje.
+  const d = paraEnsenarDestino(buena() as never, "de");
+  d.cosas[0].frase = "Garantiert.";
+  assert.match(JSON.stringify(pegasDelDestino(d)), /no llega en este idioma/);
+  // La guía solo sale en idiomas que tienen estas listas: si se añade uno a la guía, que tenga las suyas.
+  for (const idioma of IDIOMAS_DE_LA_GUIA)
+    assert.ok((IDIOMAS_CON_SUS_LISTAS as readonly string[]).includes(idioma), idioma);
 });
 
 // ---------- lo que ve

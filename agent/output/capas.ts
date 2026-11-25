@@ -143,6 +143,11 @@ export type CosaDelDestino = {
   nombre: string | null;
   punto: { lat: number; lon: number } | null;
   frase: string;
+  /**
+   * Si su frase no llega a la pantalla porque el idioma del viajero todavía no tiene sus listas de palabras: entonces
+   * `frase` va vacía, y llegan sus datos. Un viaje de antes no lo lleva.
+   */
+  sinFrase?: boolean;
   /** Lo que suele costar, de tanto a tanto: solo en las clases de comer. */
   cuesta: { desde: number; hasta: number; moneda: string } | null;
   fuente: FuenteDeUnDato;
@@ -370,7 +375,11 @@ export function pegasDelDestino(d: DelDestino, zonas: readonly string[] | null =
       !(esNumero(Math.abs(x.punto?.lat)) && Math.abs(x.punto.lat) <= 90 && Math.abs(x.punto.lon) <= 180)
     )
       pegas.push({ donde, que: "su sitio no está en el mapa" });
-    if (typeof x.frase !== "string" || x.frase.trim() === "" || x.frase.length > LETRAS_DE_UNA_COSA)
+    if (x.sinFrase !== undefined && typeof x.sinFrase !== "boolean")
+      pegas.push({ donde, que: "no dice si su frase llega" });
+    if (x.sinFrase === true) {
+      if (x.frase !== "") pegas.push({ donde, que: "su frase no llega en este idioma, y aun así la lleva" });
+    } else if (typeof x.frase !== "string" || x.frase.trim() === "" || x.frase.length > LETRAS_DE_UNA_COSA)
       pegas.push({ donde, que: `no es una frase de hasta ${LETRAS_DE_UNA_COSA} letras` });
     else
       for (const p of pegasDelTexto(x.frase, { sinNumerosLargos: true })) pegas.push({ donde, que: `su frase ${p}` });

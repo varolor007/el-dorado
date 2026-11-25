@@ -2,7 +2,7 @@
 // (`local-knowledge`, su contrato en `agent/contracts/local-knowledge/DELIVERY.md`) y cómo se pasa a la del viaje.
 // Lo mira antes su puerta 12 (`agent/gates/puerta_destino.ts`).
 
-import type { ClaseDelDestino } from "../data/capa_destino.ts";
+import { tieneSusListas, type ClaseDelDestino } from "../data/capa_destino.ts";
 import type { DelDestino } from "../output/capas.ts";
 import { fuenteDe, sabido } from "./capas.ts";
 import type { SIN_SABER } from "./formas.ts";
@@ -27,8 +27,13 @@ export type EntregaDelDestino = {
   unknowns: string[];
 };
 
-/** Lo que se enseña de lo que entregó, en la forma del viaje: cada cosa con su frase corta, que pasó su puerta. */
-export function paraEnsenarDestino(e: EntregaDelDestino): DelDestino {
+/**
+ * Lo que se enseña de lo que entregó, en la forma del viaje: cada cosa con su frase corta, que pasó su puerta. Si el
+ * idioma del viajero todavía no tiene las listas de palabras de esa puerta, la frase no ha pasado una de verdad: no
+ * llega, y llegan sus datos (su nombre, su sitio, lo que cuesta y su página).
+ */
+export function paraEnsenarDestino(e: EntregaDelDestino, idioma?: string): DelDestino {
+  const sinFrase = idioma !== undefined && !tieneSusListas(idioma);
   return {
     cosas: e.items.map((x) => {
       const cuesta = sabido(x.costs);
@@ -37,7 +42,8 @@ export function paraEnsenarDestino(e: EntregaDelDestino): DelDestino {
         zona: x.zone,
         nombre: sabido(x.name),
         punto: sabido(x.point),
-        frase: x.says,
+        frase: sinFrase ? "" : x.says,
+        ...(sinFrase ? { sinFrase } : {}),
         cuesta:
           cuesta === null ? null : { desde: cuesta.from, hasta: cuesta.to, moneda: cuesta.currency.toUpperCase() },
         fuente: fuenteDe(x),
