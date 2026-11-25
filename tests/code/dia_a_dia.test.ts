@@ -13,9 +13,11 @@ import { RAICES } from "../../agent/data/sitios.ts";
 import { puertaSitios } from "../../agent/gates/puerta_dias.ts";
 import { adelanteDe, darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
+  ampliarLosSitios,
   conservarElCruce,
   FalloDeUnDia,
   mensajeDeCara,
+  mensajeParaElegir,
   pedirUnDia,
   prepararUnDia,
 } from "../../agent/launcher/dia_a_dia.ts";
@@ -307,6 +309,35 @@ test("«un día de playa»: se vuelve a los datos abiertos por lo que no estaba,
   }
 });
 
+test("cada mensaje cuenta lo suyo: lo añadido antes no se repite ni se cuenta otra vez", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const LAGO: Sitio = { ...PLAYA, id: "Q12", nombre: "Lago Inventado", clase: "nature", clases: ["nature"] };
+    // La trampa: con lo nuevo, la fuente devuelve otra vez la playa que ya se añadió.
+    const todo: Fuentes = {
+      ...fuentesInventadas(),
+      sitiosDeClases: async (_viaje, clases) => (clases.includes("beach") ? [PLAYA] : [PLAYA, LAGO]),
+    };
+    const uno = await mandarYLlevar(mesa, v.ficha.id, "un día de playa", todo);
+    assert.equal(mensajeDeCara(uno.v, false)?.found, 1);
+    const dos = await mandarYLlevar(mesa, v.ficha.id, "un lago", todo);
+    const sitios = leerJson(join(dos.run, "sitios.json"));
+    assert.deepEqual(sitios.anadidos, ["Q11", "Q12"]);
+    assert.equal(mensajeDeCara(dos.v, false)?.found, 1);
+    assert.deepEqual(mensajeParaElegir(dos.run)?.new_sights, ["Q12"]);
+    // Un mensaje que no busca nada no ha encontrado nada, aunque los de antes sí.
+    const tres = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo", todo);
+    assert.equal(mensajeDeCara(tres.v, false)?.found, 0);
+    assert.deepEqual(mensajeParaElegir(tres.run)?.new_sights, []);
+    assert.deepEqual(leerJson(join(tres.run, "sitios.json")).anadidos, ["Q11", "Q12"]);
+    // Lo que se avisó una vez no se repite en cada mensaje.
+    const avisos = leerJson(join(tres.run, "sitios.json")).avisos as string[];
+    assert.equal(new Set(avisos).size, avisos.length);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
 test("el que cruza solo se conserva si la tabla decide lo mismo y lo que entregó sigue pasando su puerta", async () => {
   const { mesa, v } = await viajeEnElMapa();
   try {
@@ -467,6 +498,30 @@ test("la puerta: lo que costaría sin cambiar nada; con tu botón, sale; y cómo
   } finally {
     await puerta.cerrar?.();
     puerta.servidor.close();
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo añadido por un mensaje de antes, detrás del corte, ya se da: no se vuelve a añadir", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const { run } = pedirUnDia(v, { said: "un día de playa", cuando: ahora() });
+    // Más sitios de los que caben antes del corte, y la playa detrás, añadida por un mensaje de antes.
+    const relleno = Array.from({ length: 130 }, (_, i) => ({ ...SITIOS[9], id: `R${i}`, enlaces: 1 }));
+    const d = leerJson(join(run, "sitios.json"));
+    writeFileSync(
+      join(run, "sitios.json"),
+      JSON.stringify({ ...d, sitios: [...relleno, PLAYA], anadidos: ["Q11"], buscadosEn: "1", avisos: ["uno"] }),
+    );
+    const resumenes = async () => new Map<string, string>();
+    const avisos = await ampliarLosSitios(run, ENTENDIDO, { sitiosDeClases: async () => [PLAYA], resumenes });
+    assert.deepEqual(avisos, []);
+    const luego = leerJson(join(run, "sitios.json"));
+    assert.deepEqual(luego.anadidos, ["Q11"]);
+    assert.deepEqual(luego.anadidosEn, []);
+    assert.equal(luego.sitios.filter((s: Sitio) => s.id === "Q11").length, 1);
+    assert.deepEqual(mensajeParaElegir(run)?.new_sights, []);
+  } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
 });

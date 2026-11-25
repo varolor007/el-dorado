@@ -39,8 +39,10 @@ export type DeLosSitios = {
   /** Las clases que se buscaron por los mensajes de este viaje, y el run que buscó las últimas. */
   buscados?: string[];
   buscadosEn?: string;
-  /** Los sitios que se dan a elegir además de los de siempre, porque los pidió un mensaje. */
+  /** Los sitios que se dan a elegir además de los de siempre, porque los pidió un mensaje: de todos, sin repetir. */
   anadidos?: string[];
+  /** Los que añadió el mensaje del run `buscadosEn`, y solo esos: lo que encontró ese mensaje. */
+  anadidosEn?: string[];
 };
 
 const leer = <T>(run: string, nombre: string): T => JSON.parse(readFileSync(join(run, nombre), "utf8")) as T;
@@ -141,7 +143,9 @@ export async function ampliarLosSitios(
     }
   }
   const tope = SITIOS_DE_UNA_CLASE * pedido.look_for.length;
-  const yaDados = new Set(sitiosParaElegir(d.sitios, noches(viaje)).map((s) => s.id));
+  // Ya se dan los de siempre y lo que añadieron los mensajes de antes: eso no se vuelve a añadir ni a contar.
+  const antes = d.anadidos ?? [];
+  const yaDados = new Set(sitiosParaElegir(d.sitios, noches(viaje), new Map(), antes).map((s) => s.id));
   const vistos = new Set<string>();
   const elegibles = traidos.filter((s) => !yaDados.has(s.id) && !vistos.has(s.id) && vistos.add(s.id)).slice(0, tope);
   const porId = new Set(d.sitios.map((s) => s.id));
@@ -156,10 +160,11 @@ export async function ampliarLosSitios(
     ...d,
     sitios: [...d.sitios, ...nuevos],
     resumenes,
-    avisos: [...(d.avisos ?? []), ...avisos],
+    avisos: [...new Set([...(d.avisos ?? []), ...avisos])],
     buscados: [...new Set([...(d.buscados ?? []), ...pedido.look_for])],
     buscadosEn: basename(run),
-    anadidos: [...(d.anadidos ?? []), ...elegibles.map((s) => s.id)],
+    anadidos: [...new Set([...antes, ...elegibles.map((s) => s.id)])],
+    anadidosEn: elegibles.map((s) => s.id),
   } satisfies DeLosSitios);
   return avisos;
 }
@@ -175,8 +180,13 @@ export function mensajeParaElegir(run: string): Record<string, unknown> | null {
     days: p.days.map((x, i) => ({ day: i + 1, date: x.fecha, stops: x.paradas })),
     removed: p.removed,
     looked_for: d?.buscadosEn === basename(run) ? p.look_for : [],
-    new_sights: d?.anadidos ?? [],
+    new_sights: loQueEncontro(run, d),
   };
+}
+
+/** Los sitios que encontró el mensaje de un run, y solo los suyos: ni los de los mensajes de antes. */
+function loQueEncontro(run: string, d: DeLosSitios | null): string[] {
+  return d !== null && d.buscadosEn === basename(run) ? (d.anadidosEn ?? []) : [];
 }
 
 /** Lo que mira la puerta 9 de la entrega con un mensaje: lo que quitaste, y los números que puede decir. */
@@ -272,7 +282,7 @@ export type MensajeDeCara = {
   from: number;
   version: number | null;
   state: "working" | "done" | "stopped";
-  /** Las clases que se buscaron en los datos abiertos, y cuántos sitios nuevos se dieron a elegir. */
+  /** Las clases que se buscaron en los datos abiertos, y cuántos sitios nuevos dio a elegir este mensaje. */
   looked_for: string[];
   found: number;
   /** Lo que explicó el del día a día de lo que cambió, si pasó la puerta de palabras; si no, null. */
@@ -304,7 +314,7 @@ export function mensajeDeCara(v: ViajeEnLaMesa, corre: boolean): MensajeDeCara |
       version,
       state,
       looked_for: p.look_for,
-      found: d?.anadidos?.length ?? 0,
+      found: loQueEncontro(run, d).length,
       changed,
     };
   }
