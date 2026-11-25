@@ -25,6 +25,8 @@ import { enGoogleMaps, noches, reloj, trayectoEnGoogleMaps } from "../lib/format
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 import { MeQuedo, Reservar } from "./Cerrar.tsx";
+import { masCercaDeCadaDia } from "../../../agent/scripts/dia_a_dia.ts";
+import { TuMensaje } from "./DiaADia.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -407,6 +409,12 @@ type DeViaje = Comun & {
   tuyo?: string | null;
   /** La versión que se enseña de un viaje tuyo: solo se sigue el cierre que es de ella. */
   version?: number | null;
+  /** Lo que moviste de día (8.6): la parada dice que la moviste tú. */
+  fijadas?: Record<string, number>;
+  /** Volver a poner una parada que quitaste: vuelve a lo propuesto, sin forzarla en un día. */
+  alReponer?: (id: string) => void;
+  /** El identificador del viaje si es tuyo y se le puede mandar un mensaje para tus días (8.6). */
+  paraMensajes?: string | null;
 };
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
@@ -433,6 +441,12 @@ function Dias(x: DeViaje) {
   // Con la tabla de caminos del viaje, cada trayecto dice lo que dijo la fuente; sin ella, la cuenta de la casa.
   const c = caminosDe(viaje.caminos);
   const desdeLaCama = cama !== null && primera !== undefined ? irEntre(cama.punto, primera.punto, c, idioma) : null;
+  // Qué alojamiento del viaje te deja más cerca del día abierto, como lo cuenta la casa (8.6).
+  const cerca =
+    abierto === null || x.dia === null
+      ? null
+      : (masCercaDeCadaDia(viaje, [{ fecha: abierto.fecha, paradas: abierto.paradas }])[0] ?? null);
+  const cercana = viaje.alojamientos.find((a) => a.id === cerca?.alojamiento) ?? null;
   return (
     <>
       <div className="grupo">
@@ -503,6 +517,13 @@ function Dias(x: DeViaje) {
               : ""}
           </span>
           {abierto.paradas.length === 0 && <p className="suave">{t.viaje.sinParadas}</p>}
+          {cercana !== null && cerca?.minutos != null && (
+            <span className="dato">
+              {cercana.id === cama?.id
+                ? t.diaADia.laTuya(cerca.minutos)
+                : t.diaADia.masCerca(cercana.nombre, cerca.minutos)}
+            </span>
+          )}
           <div className="paradas">
             {/* De donde duermes a la primera parada: lo que hay y cómo se va. Si no se anda, lo enseña Google. */}
             {cama !== null && primera !== undefined && desdeLaCama !== null && (
@@ -544,6 +565,9 @@ function Dias(x: DeViaje) {
                         )}
                         {p.reservar === true && <span className="pastilla">{t.parada.reservar}</span>}
                         {x.anadidas.includes(p.id) && <span className="pastilla">{t.acciones.tuya}</span>}
+                        {!x.anadidas.includes(p.id) && x.fijadas?.[p.id] !== undefined && (
+                          <span className="pastilla">{t.diaADia.movida}</span>
+                        )}
                       </span>
                     </span>
                   </button>
@@ -630,12 +654,15 @@ function Dias(x: DeViaje) {
           <span className="rotulo">{t.acciones.quitadas(x.quitadas.length)}</span>
           <div className="cabecera__linea">
             {x.quitadas.map((id) => (
-              <button key={id} type="button" className="toque" onClick={() => x.alAnadir(id)}>
+              <button key={id} type="button" className="toque" onClick={() => (x.alReponer ?? x.alAnadir)(id)}>
                 {t.acciones.reponer}: {deParada.get(id)?.nombre}
               </button>
             ))}
           </div>
         </div>
+      )}
+      {x.paraMensajes != null && (
+        <TuMensaje t={t} idioma={idioma} id={x.paraMensajes} dia={x.dia} version={x.version ?? null} />
       )}
     </>
   );

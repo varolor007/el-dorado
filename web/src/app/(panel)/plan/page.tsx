@@ -225,6 +225,11 @@ export default function Planear() {
     setQuitadas((q) => q.filter((x) => x !== id));
     setAnadidas((a) => [...a.filter((x) => x !== id), id]);
   };
+  // Volver a poner lo que quitaste: vuelve a lo propuesto, y el ritmo dice dónde cabe (8.6).
+  const repone = (id: string): void => {
+    toca();
+    setQuitadas((q) => q.filter((x) => x !== id));
+  };
   const mueve = (id: string, aDia: number): void => {
     toca();
     setFijadas((f) => ({ ...f, [id]: aDia }));
@@ -574,6 +579,9 @@ export default function Planear() {
             alQuitar={quita}
             alAnadir={anade}
             alMover={mueve}
+            alReponer={repone}
+            fijadas={fijadas}
+            paraMensajes={pedido != null && (comoEsta === "on_map" || comoEsta === "closed") ? pedido : null}
             tuyo={pedido != null && comoEsta === "on_map" ? pedido : null}
             version={vivo.estado?.trip.version ?? null}
           />
