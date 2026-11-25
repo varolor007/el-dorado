@@ -6,13 +6,15 @@
 //
 //   saber.json   lo que entregó y pasó su puerta, en la forma del viaje; o por qué falta
 //
-// Es de la sesión de 14.3: su contrato (`agent/contracts/local-knowledge/`) y su puerta 12 (`puertaDelDestino`, que
-// hoy solo mira la forma). Este archivo no llama a ninguna IA ni lanza nada.
+// Su contrato, en `agent/contracts/local-knowledge/`; su puerta 12, en `agent/gates/puerta_destino.ts`, y con ella lo
+// que se comprueba de la forma del viaje. Este archivo no llama a ninguna IA ni lanza nada.
 
-import { LETRAS_DE_UNA_COSA, TOPE_POR_CLASE } from "../data/capa_destino.ts";
+import { CIFRAS_DE_UNA_COSA, LETRAS_DE_UNA_COSA, LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../data/capa_destino.ts";
+import { LETRAS_DE_UN_NOMBRE } from "../data/capas.ts";
 import type { FaltaDeUnaCapa } from "../data/capas.ts";
 import { topesDeInternet } from "../data/internet.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
+import { puertaDestino } from "../gates/puerta_destino.ts";
 import { pegasDelDestino, type DelDestino } from "../output/capas.ts";
 import { paraEnsenarDestino, type EntregaDelDestino } from "../scripts/capa_destino.ts";
 import { pieza, rutaParaLasCapas, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
@@ -21,19 +23,34 @@ import type { Pieza } from "./puesto.ts";
 export const SABER = "saber.json";
 const ASIENTO = "local-knowledge";
 
-/** Lo que ve: lo mismo que el de moverse y lo que busca el viajero; sus clases, con su tope, y su largo. */
+/**
+ * Lo que ve: el destino, sus fechas, su idioma y su moneda, y lo que busca el viajero (de sus toques o resumido por
+ * el que escucha, nunca sus palabras); la ruta, con sus zonas; y sus topes: cuántas cosas en total y por clase, lo
+ * largo de cada frase y de cada nombre, cuántas cifras y lo que puede salir a internet. Ni quién viaja, ni sus
+ * precios.
+ */
 export function piezasDelDestino(m: Material): Pieza[] {
   return [
     pieza("trip.json", { ...viajeParaLasCapas(m), looking_for: m.viaje.looking_for }),
     pieza("route.json", rutaParaLasCapas(m)),
-    pieza("limits.json", { per_kind: TOPE_POR_CLASE, letters: LETRAS_DE_UNA_COSA, ...topesDeInternet(ASIENTO) }),
+    pieza("limits.json", {
+      items_allowed: LO_MAS_DE_COSAS,
+      per_kind: TOPE_POR_CLASE,
+      letters: LETRAS_DE_UNA_COSA,
+      name_letters: LETRAS_DE_UN_NOMBRE,
+      figures_allowed: CIFRAS_DE_UNA_COSA,
+      ...topesDeInternet(ASIENTO),
+    }),
   ];
 }
 
-/** Su puerta. Hasta que esté la puerta 12, solo la forma, con las zonas de la ruta. */
+/**
+ * Su puerta, la 12 (`agent/gates/puerta_destino.ts`), con las zonas de la ruta y el día de hoy; y, si pasa, lo que
+ * se comprueba de su forma en el viaje.
+ */
 export function puertaDelDestino(e: unknown, m: Material): Rojo[] {
-  if ((e as { seat?: unknown })?.seat !== ASIENTO)
-    return [{ donde: "seat", que: "no es la entrega del que conoce el destino" }];
+  const { rojos } = puertaDestino(e, { zonas: m.zonas, hoy: m.hoy });
+  if (rojos.length > 0) return rojos;
   return pegasDelDestino(
     paraEnsenarDestino(e as EntregaDelDestino),
     m.zonas.map((z) => z.id),

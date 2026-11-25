@@ -45,7 +45,9 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
 - **El de moverse (14.2)**: `agent/data/capa_moverse.ts`, `agent/scripts/capa_moverse.ts`, `agent/launcher/capa_moverse.ts`
   y, de mentira, `tests/cases/inventado/moverse.ts`.
 - **El que conoce el destino (14.3)**: `agent/data/capa_destino.ts`, `agent/scripts/capa_destino.ts`,
-  `agent/launcher/capa_destino.ts` y, de mentira, `tests/cases/inventado/destino.ts`.
+  `agent/launcher/capa_destino.ts` y, de mentira, `tests/cases/inventado/destino.ts`. Su contrato, en
+  `agent/contracts/local-knowledge/`; su puerta 12, en `agent/gates/puerta_destino.ts`; sus pruebas, en
+  `tests/code/destino.test.ts`.
 - **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts`,
   `agent/launcher/capa_entradas.ts` y, de mentira, `tests/cases/inventado/entradas.ts`.
 - **El presupuesto entero (14.5)**: `agent/data/presupuesto.ts`, `agent/scripts/presupuesto.ts` (la cuenta) y

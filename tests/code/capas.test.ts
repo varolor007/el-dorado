@@ -80,7 +80,7 @@ test("la investigación inventada, entera, con las tres capas de mentira: cada u
     // Lo que conviene saber: cosas cortas, en su clase; ningún restaurante con nombre.
     assert.deepEqual(
       v.saber?.cosas.map((c) => c.clase),
-      ["neighbourhood", "dish", "meal_cost"],
+      ["neighbourhood", "hours", "market", "practical", "dish", "meal_cost"],
     );
     // Las entradas: una por parada del viaje, todas miradas; una de ellas cierra los lunes.
     assert.equal(v.entradas?.falta, null);

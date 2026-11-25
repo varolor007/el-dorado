@@ -1,6 +1,6 @@
 // El que conoce el destino (14.3) en código, sin nada de Node: la forma de lo que entrega su asiento
-// (`local-knowledge`) y cómo se pasa a la del viaje. La forma mínima la dejó el suelo (14.1); su sesión la afina con
-// su contrato y su puerta 12, que mira además las palabras de cada frase y que no nombre restaurantes.
+// (`local-knowledge`, su contrato en `agent/contracts/local-knowledge/DELIVERY.md`) y cómo se pasa a la del viaje.
+// Lo mira antes su puerta 12 (`agent/gates/puerta_destino.ts`).
 
 import type { ClaseDelDestino } from "../data/capa_destino.ts";
 import type { DelDestino } from "../output/capas.ts";
@@ -18,6 +18,8 @@ export type EntregaDelDestino = {
     name: string | NoSe;
     point: { lat: number; lon: number } | NoSe;
     says: string;
+    /** Las cifras que dice la frase, como las da la página: un número (un voltaje, las urgencias) o una hora HH:MM. */
+    figures: (number | string)[];
     costs: { from: number; to: number; currency: string } | NoSe;
     source: string;
     seen: string;
