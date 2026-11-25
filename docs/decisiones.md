@@ -780,8 +780,12 @@ Lo que deja el 25-nov, a decisión del PM:
   cuando pasan del tope: los imprescindibles y los que tienen puerta, primero. Que una página de datos abiertos no
   vale como fuente de un precio que da el asiento. Qué se hace cuando quitas o mueves una parada y cambia la cuenta: no se rehace a nadie, porque una elección no
   gasta, y el porqué de cada manera sigue dicho con la cuenta de antes; lo prudente sería una nota en la web. Que un
-  niño sin precio suyo paga el de adulto también en los billetes, que sube lo de moverse de las familias. Si en el
-  ensayo se prueba a cortar a Claude con cuidado, por su
+  niño sin precio suyo paga el de adulto también en los billetes, que sube lo de moverse de las familias. Si en la puerta 12 lo visto tiene que
+  ser de hoy, como en las otras dos, o vale la fecha que da la página, como dice su contrato. Que en «evitar» y en
+  «lo práctico» no se nombre ningún negocio, ni para bien: es una regla nueva, puesta con lo más prudente. Si una
+  página que no es de quien lleva el transporte o el sitio (un blog, un agregador) vale como fuente de un precio:
+  hoy vale cualquiera que el asiento abriera. Si «dónde reservar» puede ser de otro dominio que la web del sitio
+  (un revendedor): hoy, sí, si el asiento la abrió. Si en el ensayo se prueba a cortar a Claude con cuidado, por su
   entrada, para que diga lo gastado: no está documentado y no se puede probar sin gastar. Y verlo con IA de verdad,
   que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,

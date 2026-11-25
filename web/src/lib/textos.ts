@@ -473,6 +473,7 @@ const en = {
     comerNota: "Areas, markets and dishes. No restaurant is named: that would need a source of reviews.",
     cuesta: (desde: string, hasta: string) => `Usually ${desde} to ${hasta}`,
     nadaDe: "Nothing found of this.",
+    sinFrases: "These notes are not available in your language yet: here are their facts and their sources.",
     // Las entradas, en cada parada y en la pestaña.
     entrada: "Ticket",
     tusDias: "On your days",
@@ -488,6 +489,7 @@ const en = {
     reservar: (hace: boolean): string => (hace ? "Booking needed" : "No booking needed"),
     reservarAqui: "Book here",
     web: "Its official website",
+    webDeLosAbiertos: "Its website, as open data gives it",
     soloAbiertos: "Its page was not looked at: only what open data says.",
     resumen: (conPrecio: number, conHorario: number, de: number) =>
       `Of your ${EN.cuenta(de, "stop", "stops")}: ${EN.cifra(conPrecio)} with ${EN.plural(conPrecio, "its", "their")} price, ${EN.cifra(conHorario)} with ${EN.plural(conHorario, "its", "their")} hours. Each one, in its stop.`,
@@ -498,6 +500,8 @@ const en = {
     // Lo que te conviene para moverte con tus días: la cuenta del código, la misma de «moverte allí» en las cuentas.
     teConviene: "What suits you best for your days",
     convieneNada: "On your days every leg is walked: you need no tickets.",
+    soloEnCoche: (n: number, ademas: boolean) =>
+      `${ademas ? "Besides, " : ""}${EN.cuenta(n, "leg is", "legs are")} only done by car: ${EN.plural(n, "it takes", "they take")} no ticket, and what the car costs is not known, so it is missing from getting around.`,
     tusTrayectos: (viajes: number, dias: number) =>
       `${EN.cuenta(viajes, "leg is", "legs are")} not walked on ${EN.cuenta(dias, "day", "days")}, counting from and back to where you sleep.`,
     cadaAdulto: (n: number): string => (n === 1 ? "Adult" : "Each adult"),
@@ -1900,6 +1904,7 @@ const es: Textos = {
     comerNota: "Zonas, mercados y platos. Ningún restaurante con nombre: para eso haría falta una fuente de opiniones.",
     cuesta: (desde, hasta) => `Suele costar de ${desde} a ${hasta}`,
     nadaDe: "No se encontró nada de esto.",
+    sinFrases: "Estas explicaciones todavía no están disponibles en tu idioma: aquí van sus datos y sus fuentes.",
     entrada: "Entrada",
     tusDias: "En tus días",
     abre: (franjas) =>
@@ -1913,6 +1918,7 @@ const es: Textos = {
     reservar: (hace) => (hace ? "Hay que reservar" : "Sin reserva"),
     reservarAqui: "Reservar aquí",
     web: "Su web oficial",
+    webDeLosAbiertos: "Su web, según los datos abiertos",
     soloAbiertos: "Su página no se miró: solo lo que dicen los datos abiertos.",
     resumen: (conPrecio, conHorario, de) =>
       `De tus ${ES.cuenta(de, "parada", "paradas")}: ${ES.cifra(conPrecio)} con su precio y ${ES.cifra(conHorario)} con su horario. Cada una, en su parada.`,
@@ -1921,6 +1927,8 @@ const es: Textos = {
     suelto: (dinero) => `En transporte, un billete suelto: ${dinero}`,
     teConviene: "Lo que te conviene para tus días",
     convieneNada: "En tus días todo se anda: no te hace falta ningún billete.",
+    soloEnCoche: (n, ademas) =>
+      `${ademas ? "Además, " : ""}${ES.cuenta(n, "trayecto solo se hace", "trayectos solo se hacen")} en coche: no ${ES.plural(n, "lleva", "llevan")} billete, y lo que cuesta el coche no se sabe, así que falta en moverte allí.`,
     tusTrayectos: (viajes, dias) =>
       `${ES.cuenta(viajes, "trayecto no se anda", "trayectos no se andan")} en ${ES.cuenta(dias, "día", "días")}, contando la ida y la vuelta a donde duermes.`,
     cadaAdulto: (n) => (n === 1 ? "Adulto" : "Cada adulto"),

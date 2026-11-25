@@ -1,14 +1,15 @@
 // La puerta 13: ¿cada entrada y cada horario, con su página? Mira lo que entrega el de las entradas en una tanda de
 // sitios, con lo que el código puede medir: que cada precio, cada horario y cada reserva sale de una página que el
 // asiento abrió de verdad (de la memoria de lo consultado, que guarda la casa) y no de los datos abiertos que ya se le
-// dieron; que lleva su moneda y el día en que se vio; que no hay ningún sitio que no sea de su tanda, ni falta
-// ninguno, de modo que lo que no se sabe está dicho; que un horario vale para las fechas del viaje o dice para cuáles;
-// y que un enlace es una dirección que vale y sin claves dentro. Lo que no se puede medir (si la página es la oficial
-// del sitio, si el precio es el de hoy) no lo mira nadie aquí: lo dice su contrato y lo cubre quien lo revisa.
+// dieron; que lleva su moneda y el día en que se vio, que es hoy; que no hay ningún sitio que no sea de su tanda, ni
+// falta ninguno, de modo que lo que no se sabe está dicho; que un horario vale para las fechas del viaje o dice para
+// cuáles; y que un enlace es una dirección que vale y sin claves dentro. Lo que no se puede medir (si la página es la
+// oficial del sitio, si el precio que dice es el que se cobra) no lo mira nadie aquí: lo dice su contrato y lo cubre
+// quien lo revisa.
 
+import { DIAS_DE_HOLGURA } from "../data/capa_moverse.ts";
 import { DIAS_DE_LA_SEMANA, LO_MAS_DE_UNA_LISTA, PARA_QUIEN } from "../data/capas.ts";
-import { direccionComparable, direccionesEn } from "../launcher/consultado.ts";
-import { enlaceSinClaves } from "../tools/enlaces.ts";
+import { direccionComparable, direccionesEn, enlaceDeFuera } from "../launcher/consultado.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
 type Objeto = Record<string, unknown>;
@@ -43,6 +44,11 @@ export type ParaLasEntradas = {
   abiertas: readonly string[] | null;
   /** Las páginas de los datos abiertos que se le dieron: no son la fuente de un precio ni de un horario. */
   deLosAbiertos: readonly string[];
+  /**
+   * La web que dicen los datos abiertos de cada sitio, por su id. Dónde se reserva y la web de un sitio son una página
+   * que abrió de verdad o, si no, esa: ninguna otra llega al viajero.
+   */
+  websDeLosAbiertos?: Readonly<Record<string, string | null>>;
 };
 
 const esObjeto = (v: unknown): v is Objeto => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -52,6 +58,7 @@ const esFecha = (v: unknown): v is string =>
   !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) &&
   new Date(`${v}T00:00:00Z`).toISOString().startsWith(v);
 const esHora = (v: unknown): v is string => typeof v === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
+const diaDe = (fecha: string): number => Math.round(Date.parse(`${fecha}T00:00:00Z`) / 86_400_000);
 const esEdad = (v: unknown): boolean =>
   v === null || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= EDAD_MAXIMA);
 
@@ -72,14 +79,28 @@ export function puertaEntradas(v: unknown, p: ParaLasEntradas): Veredicto {
   // La página de un dato: una dirección que vale, sin claves, que abrió de verdad y que no es de los datos abiertos.
   const fuente = (x: Objeto, donde: string): void => {
     const url = x.source;
-    if (!enlaceSinClaves(url)) return rojo(`${donde}.source`, "no es la dirección https de la página de donde sale");
+    if (!enlaceDeFuera(url))
+      return rojo(`${donde}.source`, "no es la dirección https de la página de donde sale, en su forma normal");
     const comparable = direccionComparable(url);
     if (comparable !== null && deLosAbiertos.has(comparable))
       rojo(`${donde}.source`, "es una página de los datos abiertos que se le dieron: la fuente es la web del sitio");
     else if (abiertas !== null && !abiertas.has(comparable))
       rojo(`${donde}.source`, "no es una página que abriera de verdad: un resultado de búsqueda no es una fuente");
     if (!esFecha(x.seen)) rojo(`${donde}.seen`, "no dice el día en que se vio, AAAA-MM-DD");
-    else if (x.seen > p.hoy) rojo(`${donde}.seen`, "dice que se vio después de hoy");
+    // Como en la puerta 11: el día en que se vio es hoy, con un día de holgura por la hora de cada sitio.
+    else if (Math.abs(diaDe(x.seen) - diaDe(p.hoy)) > DIAS_DE_HOLGURA)
+      rojo(`${donde}.seen`, `no es hoy, ${p.hoy}: un precio y un horario son los del día en que se vieron`);
+  };
+  // Un enlace que llega al viajero (dónde se reserva, su web): una página que abrió de verdad, o la web que dicen de
+  // ese sitio los datos abiertos. Ni una que solo le salió en el buscador ni una que escribió sin abrirla.
+  const enlace = (url: unknown, sitio: unknown, donde: string): void => {
+    if (url === SIN_SABER) return;
+    if (!enlaceDeFuera(url)) return rojo(donde, "no es una dirección https sin claves, en su forma normal, ni unknown");
+    if (abiertas === null) return;
+    const comparable = direccionComparable(url);
+    const web = typeof sitio === "string" ? (p.websDeLosAbiertos?.[sitio] ?? null) : null;
+    if (abiertas.has(comparable) || (web !== null && direccionComparable(web) === comparable)) return;
+    rojo(donde, "no es una página que abriera de verdad, ni la web que dicen de este sitio los datos abiertos");
   };
 
   // Cada sitio de su tanda, una vez, y ninguno más: lo que no se sabe va dicho con «unknown».
@@ -96,9 +117,8 @@ export function puertaEntradas(v: unknown, p: ParaLasEntradas): Veredicto {
     else vistos.add(id);
     precios(s.prices, `${donde}.prices`);
     horarios(s.hours, `${donde}.hours`);
-    reserva(s.booking, `${donde}.booking`);
-    if (s.official_site !== SIN_SABER && !enlaceSinClaves(s.official_site))
-      rojo(`${donde}.official_site`, "no es una dirección https sin claves, ni unknown");
+    reserva(s.booking, `${donde}.booking`, s.id);
+    enlace(s.official_site, s.id, `${donde}.official_site`);
   });
   for (const id of p.sitios)
     if (sitios !== null && !vistos.has(id)) rojo("sights", `falta el sitio ${id}: lo que no se sabe, se dice`);
@@ -178,13 +198,12 @@ export function puertaEntradas(v: unknown, p: ParaLasEntradas): Veredicto {
     });
   }
 
-  function reserva(x: unknown, donde: string): void {
+  function reserva(x: unknown, donde: string, sitio: unknown): void {
     if (x === SIN_SABER) return;
     if (!esObjeto(x)) return rojo(donde, "no es un objeto, ni unknown");
     campos(x, DE_UNA_RESERVA, donde);
     if (typeof x.needed !== "boolean") rojo(`${donde}.needed`, "no dice si hay que reservar: true o false");
-    if (x.where !== SIN_SABER && !enlaceSinClaves(x.where))
-      rojo(`${donde}.where`, "no es una dirección https sin claves dentro, ni unknown");
+    enlace(x.where, sitio, `${donde}.where`);
     fuente(x, donde);
   }
 

@@ -6,11 +6,14 @@ import assert from "node:assert/strict";
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../../agent/data/capa_destino.ts";
+import { IDIOMAS_CON_SUS_LISTAS, LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../../agent/data/capa_destino.ts";
+import { IDIOMAS_DE_LA_GUIA } from "../../agent/data/guia.ts";
+import { pegasDelDestino } from "../../agent/output/capas.ts";
 import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import type { Material } from "../../agent/launcher/capas.ts";
-import { piezasDelDestino, puertaDelDestino } from "../../agent/launcher/capa_destino.ts";
+import { capaDelDestino, piezasDelDestino, puertaDelDestino } from "../../agent/launcher/capa_destino.ts";
+import { paginasEn } from "../../agent/launcher/consultado.ts";
 import { puertaDestino, type ParaElDestino } from "../../agent/gates/puerta_destino.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
 import { paraEnsenarDestino } from "../../agent/scripts/capa_destino.ts";
@@ -133,6 +136,26 @@ test("puerta 12: cada cosa, con su página https y su fecha, que no es de despu�
 
 // ---------- sus zonas
 
+/** Textos que un navegador abre como una página https, y que no están escritos en su forma normal. */
+const RAROS = (pagina: string): string[] => {
+  const resto = pagina.slice("https://".length);
+  return [
+    `https:${resto}`,
+    `https:/${resto}`,
+    `https:\\\\${resto.replaceAll("/", "\\")}`,
+    `h\nttps://${resto}`,
+    ` ${pagina}`,
+    `HTTPS://${resto}`,
+    `https://user@${resto}`,
+    `https://127.0.0.1/x`,
+  ];
+};
+
+test("puerta 12: una página que el navegador abriría, pero no escrita en su forma normal, no vale", () => {
+  for (const raro of RAROS(PAGINA_DEL_DESTINO))
+    noPasa(conCosa(0, { source: raro }), /^items\[0\]\.source: .*forma normal/);
+});
+
 test("puerta 12: cada zona es de la ruta; un barrio, una zona de comer y un mercado, con la suya", () => {
   noPasa(conCosa(I.barrio, { zone: "z9" }), /items\[0\]\.zone: habla de una zona que no es de la ruta/);
   noPasa(conCosa(I.barrio, { zone: 3 }), /items\[0\]\.zone: habla de una zona que no es de la ruta/);
@@ -223,6 +246,82 @@ test("puerta 12: lo de comer, sin el nombre de un restaurante ni opiniones, en l
   pasa(conCosa(I.mercado, { name: "Mercado de Abastos" }));
 });
 
+test("puerta 12: en ninguna clase un canal ni una dirección dicha; en evitar y en lo práctico, ningún negocio", () => {
+  // Un canal, en cualquier clase.
+  for (const [i, says] of [
+    [I.practico, "Message on WhatsApp before you arrive."],
+    [I.barrio, "Locals use Telegram groups to sell tickets."],
+    [I.horas, "Call ahead: many places close at lunch."],
+    [I.practico, "Escribe a la oficina antes de ir."],
+    [I.practico, "Llama al ayuntamiento para saberlo."],
+    [I.practico, "For emergencies, dial 112."],
+  ] as const)
+    noPasa(conCosa(i, { says, figures: [112] }), new RegExp(`items\\[${i}\\]\\.says: manda a hablar con alguien`));
+  // Una dirección escrita con palabras, en cualquier clase.
+  for (const says of [
+    "See tinyurl com slash abc for the timetable.",
+    "Check islandferries dot com for the timetable.",
+    "Mira islaferries punto es antes de ir.",
+    "Los billetes, en la web con la arroba de la oficina.",
+  ])
+    noPasa(conCosa(I.horas, { says }), /items\[1\]\.says: escribe una dirección con palabras/);
+  // Un negocio con nombre, en lo que conviene evitar y en lo práctico.
+  const evitar = (says: string) => conCosa(I.practico, { kind: "avoid", says });
+  for (const says of [
+    "Book with Juan's Taxis at the port.",
+    "Avoid Sol Tours on the main square.",
+    "Taxis García overcharge at night.",
+    "No reserves con Marta en la plaza.",
+    "Avoid the restaurant Casa Pepe by the port.",
+  ]) {
+    noPasa(evitar(says), /items\[3\]\.says: nombra un negocio/);
+    noPasa(conCosa(I.practico, { says }), /items\[3\]\.says: nombra un negocio/);
+  }
+  noPasa(conCosa(I.practico, { name: "Juan's Taxis" }), /items\[3\]\.name: nombra un negocio/);
+  // Lo de siempre sigue pasando: el móvil, los taxis en general, las urgencias como un número, un plato llamado así.
+  for (const says of [
+    "Taxis wait at the port; agree the fare first.",
+    "Mobile data is cheap: a local SIM works everywhere.",
+    "The emergency number is 112.",
+    "Shops close for lunch; the old town is quiet then.",
+  ])
+    pasa(conCosa(I.practico, { says, figures: [112] }));
+  pasa(conCosa(I.plato, { says: "Un plato llamado así por el puerto." }));
+  pasa(evitar("Avoid the main square at noon: it is crowded."));
+});
+
+test("en un idioma sin sus listas de palabras, ninguna frase llega al viaje: llegan sus datos", () => {
+  // La trampa: en alemán, un restaurante con nombre, sus estrellas y una garantía no los ve ninguna lista.
+  const e = conCosa(I.plato, { says: "Im Gasthaus Zum Löwen, mit drei Sternen: garantiert das beste Essen." });
+  pasa(e);
+  for (const idioma of ["de", "fr", "ja"]) {
+    const m = { ...MATERIAL, viaje: { ...MATERIAL.viaje, language: idioma } };
+    assert.deepEqual(puertaDelDestino(e, m), []);
+    const d = capaDelDestino.ensenar([e as never], m);
+    assert.ok(
+      d.cosas.every((c) => c.frase === "" && c.sinFrase === true),
+      idioma,
+    );
+    // Los datos sí: su nombre, lo que cuesta y su página.
+    assert.deepEqual(d.cosas.at(-1)?.cuesta, { desde: 12, hasta: 18, moneda: "EUR" });
+    assert.ok(d.cosas.every((c) => c.fuente.url === PAGINA_DEL_DESTINO));
+    assert.deepEqual(pegasDelDestino(d, ["z1", "z2"]), []);
+    assert.ok(!JSON.stringify(d).includes("Gasthaus"));
+  }
+  // En los idiomas que tienen sus listas, la frase llega.
+  for (const idioma of IDIOMAS_CON_SUS_LISTAS) {
+    const d = paraEnsenarDestino(buena() as never, idioma);
+    assert.ok(d.cosas.every((c) => c.frase !== "" && c.sinFrase === undefined));
+  }
+  // Una frase que no llega no va escondida en el viaje.
+  const d = paraEnsenarDestino(buena() as never, "de");
+  d.cosas[0].frase = "Garantiert.";
+  assert.match(JSON.stringify(pegasDelDestino(d)), /no llega en este idioma/);
+  // La guía solo sale en idiomas que tienen estas listas: si se añade uno a la guía, que tenga las suyas.
+  for (const idioma of IDIOMAS_DE_LA_GUIA)
+    assert.ok((IDIOMAS_CON_SUS_LISTAS as readonly string[]).includes(idioma), idioma);
+});
+
 // ---------- lo que ve
 
 test("lo que ve el que conoce el destino: el destino, la ruta, las fechas y lo que busca; nunca quién viaja", () => {
@@ -234,6 +333,8 @@ test("lo que ve el que conoce el destino: el destino, la ruta, las fechas y lo q
   assert.deepEqual(Object.keys(viaje).sort(), ["currency", "dates", "destination", "language", "looking_for", "today"]);
   const todo = JSON.stringify(piezas);
   for (const nada of ["travellers", "passports", "budget", "said", "email", "origin"]) assert.ok(!todo.includes(nada));
+  // Ninguna página: así, la puerta de todos solo le deja citar las que abrió de verdad, en cualquiera de sus vueltas.
+  assert.deepEqual(paginasEn(todo), []);
   assert.deepEqual(
     piezas["route.json"].zones.map((z: Objeto) => z.id),
     ["z1", "z2"],

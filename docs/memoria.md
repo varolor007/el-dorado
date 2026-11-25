@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (1.012 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (1.027 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -253,8 +253,12 @@ billetes), que lee `elQueSeCoge`. Llegar a donde duermes solo cuenta las maneras
 la dice. `loQueCuestaLlegar` es la cuenta de cada manera de llegar, por coche o por persona, y la usan el presupuesto
 y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona y como cuenta
 (`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
-(`refDeUnaDuda`, en `web/src/lib/formato.ts`). El caso inventado trae llegar a cada zona de la ruta. Sabido: un
-tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
+(`refDeUnaDuda`, en `web/src/lib/formato.ts`). Las pestañas del viaje caben a 390 de ancho, también las seis del
+viaje cerrado; en uno más estrecho la fila se desliza y su borde se desvanece mientras quede algo por ver. El caso
+inventado trae llegar a cada zona de la ruta. Un tramo
+que no se anda solo lleva billete si el transporte está entre sus maneras (`conBillete`, en `capa_moverse.ts`); uno
+que solo se hace en coche no suma un billete y falta en «moverte allí», sin inventar lo que cuesta el coche, y lo
+dicen igual el presupuesto, «Allí», cada tramo y la guía (`soloEnCoche`).
 
 **La casa y la guía, tras la revisión del bloque 14** (25-nov, una sesión de arreglos). La guía de un viaje con días
 libres sale: el material marca `free`, el contrato dice qué se escribe (GW10: un día libre se queda libre), la puerta
@@ -270,6 +274,25 @@ el calendario; otro idioma no se alcanza y, si se ofreciera, se rehace entero. P
 `cruce_sin_esperar`, `lo_dicho_del_presupuesto` y `lo_que_se_busca`. Sabido: quitar o mover una parada cambia la
 cuenta sin rehacer a nadie, y el porqué de cada manera sigue dicho con la cuenta de antes; en la última hoja impresa
 de la guía, el título de las fuentes de allí se monta sobre la lista de encima. Sin IA.
+
+**Las puertas de las capas y los enlaces, tras la revisión (3.5, 14.3, 14.4 y 14.5)** (25-nov, una sesión de
+arreglos). Un enlace de fuera vale solo escrito en su forma normal (`formaNormal` y `enlaceQueVale`, en
+`agent/tools/enlaces.ts`: https, sin usuario ni clave), y se guarda y se pinta esa; la puerta de todos mira cualquier
+cosa que un navegador abriría como una dirección, en cada texto de la entrega y en cada renglón de las notas
+(`paginasEn`, `aDondeLleva` y `enlaceDeFuera`, en `agent/launcher/consultado.ts`). En la puerta 13, dónde reservar y
+la web oficial tienen que ser una página que el asiento abrió, en cualquiera de sus vueltas, o la que dicen los datos
+abiertos de ese sitio; lo visto, hoy con un día de holgura, como en la 11. El viaje dice si la web de un sitio es la
+de los datos abiertos (`webDeLosAbiertos`): la web la enseña como «su web, según los datos abiertos», y al cerrar
+solo vale como enlace a las entradas la que el asiento abrió. En un idioma sin las listas de palabras de las puertas
+11 y 12 (`IDIOMAS_CON_SUS_LISTAS`: inglés y español), las frases del que conoce el destino no llegan a la pantalla
+ni a la guía (`sinFrase`); los datos sí, y la web dice que esa explicación todavía no está en ese idioma. La 12 no
+deja pasar canales (mensajería, llamar a alguien), direcciones dichas con palabras ni negocios con nombre, tampoco
+en «evitar» y en «lo práctico». El presupuesto entero, con más maneras de decirlo. Los datos abiertos: instancias
+solo de fuera y sin redirecciones, Wikidata dentro del tope (dos minutos en total), y un fallo entero no se guarda
+como respuesta. El horario: solo «24:00» vale como las 24, y lee «Su,PH off» y «10:00-12:00, 14:00-18:00». Sabido: la
+12 sigue pidiendo solo que lo visto no sea después de hoy, porque su contrato deja poner la fecha que da la página;
+la regla de los negocios puede dar algún rojo falso; y el cuaderno de la guía aún no distingue la web de los datos
+abiertos. Sin ver con IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

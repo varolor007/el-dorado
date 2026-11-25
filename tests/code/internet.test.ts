@@ -30,6 +30,7 @@ import {
 } from "../../agent/launcher/ia_de_claude_code.ts";
 import { consultadoDe, pensarConClaude, type ClienteDeIA } from "../../agent/launcher/ia_de_verdad.ts";
 import { montarPuesto, type Pieza, type Puesto } from "../../agent/launcher/puesto.ts";
+import { diaEnGoogleMaps, enlaceQueVale, formaNormal, sitioEnGoogleMaps } from "../../agent/tools/enlaces.ts";
 
 const RAIZ = resolve(import.meta.dirname, "..", "..");
 const TEMPORAL = mkdtempSync(join(tmpdir(), "el-dorado-internet-"));
@@ -119,6 +120,42 @@ test("dos maneras de escribir la misma página dicen lo mismo; otra página, no"
   ]);
 });
 
+test("un enlace vale solo escrito en su forma normal, y los de Google Maps salen ya en ella", () => {
+  for (const bien of ["https://sitio.invalid/x", "https://sitio.invalid/", "https://sitio.invalid/a?b=c#d"])
+    assert.equal(formaNormal(bien), bien);
+  // Sin la barra de un sitio sin camino, se perdona y se guarda con ella.
+  assert.equal(formaNormal("https://sitio.invalid"), "https://sitio.invalid/");
+  for (const mal of [
+    "https:sitio.invalid/x",
+    "https:/sitio.invalid/x",
+    "https:\\\\sitio.invalid\\x",
+    "h\nttps://sitio.invalid/x",
+    " https://sitio.invalid/x",
+    "https://Sitio.invalid/x",
+    "https://sitio.invalid/a b",
+    "https://u:p@sitio.invalid/x",
+    "http://sitio.invalid/x",
+    "//sitio.invalid/x",
+  ]) {
+    assert.equal(formaNormal(mal), null, JSON.stringify(mal));
+    assert.equal(enlaceQueVale(mal), false, JSON.stringify(mal));
+  }
+  const nombre = "Juan's café [1]";
+  assert.ok(enlaceQueVale(sitioEnGoogleMaps({ lat: 1, lon: 2 }, nombre)));
+  assert.ok(
+    enlaceQueVale(
+      diaEnGoogleMaps(
+        [
+          { lat: 1, lon: 2 },
+          { lat: 3, lon: 4 },
+          { lat: 5, lon: 6 },
+        ],
+        true,
+      ),
+    ),
+  );
+});
+
 test("solo sale a internet el asiento que lo dice en su contrato, con los topes de la casa", () => {
   const con = monta("seat-online");
   const sin = monta("seat-offline");
@@ -204,6 +241,46 @@ test("la puerta: la misma página escrita de otra forma vale; una que ni se inte
   // Sin la memoria, lo que se abrió tampoco vale: la puerta no se fía de lo que diga el asiento.
   rmSync(join(resolve(p.carpeta, "..", ".."), "consultado"), { recursive: true });
   assert.ok(recogerAsiento(p).rojos.some((x) => x.que.includes(`la página HTTPS://OFICIAL.invalid/requisitos/#visa`)));
+});
+
+test("la puerta: lo que un navegador abriría como una dirección se mira, se escriba como se escriba", async () => {
+  const p = monta("seat-online");
+  const notas = [
+    "- A visa is needed. [https:/escondida.invalid/a] [seen]",
+    "- The office says so, see https:\\\\escondida.invalid\\b for it. [in/trip.json] [seen]",
+    `- The rules page. [${ABIERTA}] [seen]`,
+    `  and its copy at HTTPS:${ABIERTA.slice(6)} too.`,
+  ];
+  const entrega = {
+    // Cada una de estas, puesta en un enlace, la abre el navegador: ninguna se abrió.
+    sin_barras: "https:escondida.invalid/c",
+    una_barra: "https:/escondida.invalid/d",
+    al_reves: "https:\\\\escondida.invalid\\e",
+    partida: "h\nttps://escondida.invalid/f",
+    sin_esquema: "//escondida.invalid/g",
+    con_espacios: "  https://escondida.invalid/h  ",
+    // La que se abrió, escrita de otra forma, es la misma página; un camino de la propia web no es una página.
+    abierta: `https:${ABIERTA.slice(6)}`,
+    camino: "/plan?at=trip",
+    hora: "08:00",
+  };
+  const { pensar } = busca(respuesta(notas, entrega));
+  const r = await lanzarAsiento(p, lanzadorDirecto(pensar, { entrada: 4, salida: 20 }), { segundos: 5 });
+  const rojos = r.metodo.rojos.map((x) => `${x.donde}: ${x.que}`);
+  assert.deepEqual(
+    rojos.filter((x) => x.startsWith("out/delivery.json")).map((x) => x.split(":")[0]),
+    ["sin_barras", "una_barra", "al_reves", "partida", "sin_esquema", "con_espacios"].map(
+      (k) => `out/delivery.json.${k}`,
+    ),
+  );
+  assert.deepEqual(
+    rojos.filter((x) => x.startsWith("out/3-notes.md")),
+    [
+      "out/3-notes.md:1: la nota cita la página https:/escondida.invalid/a, que ni se abrió ni se intentó abrir",
+      "out/3-notes.md:2: la nota nombra la página https:\\\\escondida.invalid\\b, " +
+        "que ni se abrió ni se intentó abrir ni venía en su material",
+    ],
+  );
 });
 
 test("otra vuelta: lo devuelto no hace buena una página sin abrir, y lo abierto antes sigue valiendo", async () => {

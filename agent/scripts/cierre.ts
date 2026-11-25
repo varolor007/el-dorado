@@ -335,7 +335,8 @@ export function reservasDe(
 
 /**
  * El enlace a las entradas de una parada que hay que reservar, de lo que dijo el de las entradas: la página donde se
- * reserva, si la dijo, o si no su web oficial. Solo una dirección https sin claves; si no, ninguno.
+ * reserva, si la dijo, o si no su web oficial, solo si la abrió (no la que dicen los datos abiertos, que edita
+ * cualquiera, ni la de un viaje de antes que no lo sabe). Solo una dirección https sin claves; si no, ninguno.
  */
 export function enlaceDeLaEntrada(
   v: Pick<Viaje, "entradas">,
@@ -345,7 +346,8 @@ export function enlaceDeLaEntrada(
   if (e === null) return null;
   const donde = e.reservar?.donde ?? null;
   if (donde !== null && enlaceSinClaves(donde)) return { url: donde, clase: "booking" };
-  if (e.web !== null && enlaceSinClaves(e.web)) return { url: e.web, clase: "official_site" };
+  if (e.web !== null && e.webDeLosAbiertos === false && enlaceSinClaves(e.web))
+    return { url: e.web, clase: "official_site" };
   return null;
 }
 

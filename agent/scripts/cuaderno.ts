@@ -101,6 +101,8 @@ export type ComerDelCuaderno = { cosa: CosaDelDestino; cerca: string; metros: nu
 export type ConvieneDelCuaderno = {
   manera: string | null;
   viajes: number;
+  /** Los trayectos que solo se hacen en coche: no llevan billete, y lo que cuesta el coche no se sabe. */
+  soloEnCoche: number;
   dias: number;
   total: number | null;
   moneda: string | null;
@@ -121,7 +123,7 @@ export type ConvieneDelCuaderno = {
 export function convieneDelCuaderno(v: Viaje, manera: Manera | null): ConvieneDelCuaderno | null {
   const m = capaQueVale(v.moverse);
   if (!moverseConAlgo(m)) return null;
-  const { dias, viajes, grupo } = cuentaDeMoverseDelViaje(v, manera ?? undefined, m);
+  const { dias, viajes, soloEnCoche, grupo } = cuentaDeMoverseDelViaje(v, manera ?? undefined, m);
   const redondo = (n: number): number => Math.round(n * 100) / 100;
   const sueltos = grupo.porPersona.every((c) => c.sueltos !== null)
     ? redondo(grupo.porPersona.reduce((s, c) => s + (c.sueltos ?? 0), 0))
@@ -132,6 +134,7 @@ export function convieneDelCuaderno(v: Viaje, manera: Manera | null): ConvieneDe
   return {
     manera: manera?.id ?? null,
     viajes,
+    soloEnCoche,
     dias: dias.filter((d) => d.trayectos > 0).length,
     total: grupo.total,
     moneda: grupo.moneda,
@@ -1163,9 +1166,12 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
     const enDinero = (n: number, moneda: string | null): string =>
       moneda === null ? String(n) : dinero(c.idioma, { total: n, moneda });
     const filas: string[] = [];
-    if (cv.viajes === 0) filas.push(t("p", null, r.convieneNada));
+    // Los que solo se hacen en coche no llevan billete: se dice, y lo que cuesta el coche no se inventa.
+    const enCoche = cv.soloEnCoche > 0 ? t("p", "nota", r.soloEnCoche(cv.soloEnCoche, cv.viajes > 0)) : null;
+    if (cv.viajes === 0) filas.push(enCoche ?? t("p", null, r.convieneNada));
     else {
       filas.push(t("p", "nota", r.tusTrayectos(cv.viajes, cv.dias)));
+      if (enCoche !== null) filas.push(enCoche);
       const adultos = cv.personas.filter((x) => x.edad === null).length;
       const personas = cv.personas.filter(
         (x, i) => x.edad !== null || cv.personas.findIndex((y) => y.edad === null) === i,

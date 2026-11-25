@@ -47,6 +47,17 @@ export type CualSeCoge = (typeof SI_VALEN_VARIOS)[keyof typeof SI_VALEN_VARIOS];
  * 7): el total de una manera es dormir y llegar, no el viaje entero.
  */
 export const DEL_PRESUPUESTO_ENTERO = entera(
-  "budgets?|whole trip|entire trip|full trip|all[- ]in(?:clusive)?|everything included|all included|" +
+  [
+    "budgets?|whole trip|entire trip|full trip|all[- ]in(?:clusive)?|everything included|all included|all told",
+    // El viaje como lo que cuesta: «the trip costs you», «overall trip spend», «the cost of your trip».
+    "(?:the|your|this|our) trip (?:costs?|will cost|comes? to|totals?|adds? up to|sets? you back|runs? you)",
+    // Una excursión o un billete de ida y vuelta no son el viaje: «the day trip costs», «the round trip price».
+    "(?<!(?:day|boat|round|return|side|one-way)[ -])trip (?:costs?|spend(?:ing)?|price|total)",
+    "(?:cost|price|spend(?:ing)?) of (?:the|your|this) trip",
     "presupuestos?|todo incluido|viaje (?:entero|completo)|todo el viaje",
+    // «el viaje te sale por», «tu viaje cuesta», «el coste del viaje», «lo que gastarás en el viaje».
+    "(?:el|tu|vuestro|este) viaje (?:te |os |les |nos )?" +
+      "(?:sale|saldrá|cuesta|costará|suma|asciende|va a (?:costar|salir))",
+    "(?:coste|costo|precio|gasto)s? (?:total )?de(?:l| tu| vuestro) viaje|gastar[áa]s? en (?:el|tu) viaje",
+  ].join("|"),
 );
