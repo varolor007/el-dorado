@@ -114,6 +114,14 @@ test("la investigación inventada, entera, con las tres capas de mentira: cada u
         assert.ok(parte(x).fuentes.length > 0);
       }
     }
+    // El viaje trae el nombre de las zonas de su ruta (14.6), y el de cada alojamiento es uno de ellos.
+    assert.ok((v.zonasDeLaRuta ?? []).length > 0);
+    for (const a of v.alojamientos)
+      if (a.zona != null)
+        assert.ok(
+          v.zonasDeLaRuta!.some((z) => z.nombre === a.zona),
+          a.id,
+        );
     // Las tres maneras se siguen comparando por dormir y llegar: sus totales no cambian.
     const tabla = leerJson(join(run, "tabla-1.json"));
     for (const m of v.maneras) assert.equal(m.total, tabla.rows.find((x: Objeto) => x.lodging === m.alojamiento).total);

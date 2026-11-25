@@ -61,16 +61,20 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   Node, que la web puede rehacer con otros días con `conOtrosDias`), `agent/launcher/presupuesto.ts` (cuando se monta
   el viaje, con las zonas de la ruta), `agent/gates/cifras_del_presupuesto.ts` (lo que miran las puertas 6 y 7 de sus
   cifras) y sus pruebas, en `tests/code/presupuesto.test.ts`.
-- **En la web (14.6)**: la pestaña «Allí», la entrada y el horario de cada parada (su tarjeta y su ficha), lo que
-  cuesta un trayecto que no se anda y el presupuesto entero en las cuentas, en `web/src/piezas/Alli.tsx`; sus cuentas
-  sin pantalla (el precio para tu grupo, cuándo abre en tus días, el billete suelto), en `web/src/lib/alli.ts`; sus
-  textos, en el bloque `alli` de `web/src/lib/textos.ts`; lo que cuentan en vivo, con `sucesosDeLasCapas`
-  (`agent/scripts/monta_viaje.ts`, y `agent/launcher/vivo.ts`); sus pruebas, en `tests/code/alli_web.test.ts`.
+- **En la web (14.6)**: la pestaña «Allí», con lo que te conviene para moverte, la entrada y el horario de cada parada
+  (su tarjeta y su ficha), lo que cuesta un trayecto que no se anda y el presupuesto entero en las cuentas, en
+  `web/src/piezas/Alli.tsx`; sus cuentas sin pantalla (el precio para tu grupo, cuándo abre en tus días, el billete
+  suelto, lo que te conviene y el presupuesto rehecho con tus días), en `web/src/lib/alli.ts`, sin reglas suyas: llaman
+  a las del presupuesto (`cadaUnoDelGrupo`, `trayectosQueNoSeAndan`, `cuentaDeMoverseDelViaje`, `presupuestoDe`) y a
+  la de moverse (`sueltoDelGrupo`); el nombre de las zonas, en `zonasDeLaRuta` del viaje; sus textos, en el bloque
+  `alli` de `web/src/lib/textos.ts`; lo que cuentan en vivo, con `sucesosDeLasCapas` (`agent/scripts/monta_viaje.ts`,
+  y `agent/launcher/vivo.ts`); sus pruebas, en `tests/code/alli_web.test.ts`.
 - **En la guía (14.6)**: lo que se le da al que escribe la guía de lo de allí y dónde se come cada día
-  (`agent/scripts/guia.ts`), su contrato (`agent/contracts/guide-writer/`), «Cómo moverte», «Antes de ir», la entrada de
-  cada parada y dónde comer en el cuaderno (`agent/scripts/cuaderno.ts`), sus rótulos y lo cerca que cae un sitio de
-  comer (`agent/data/guia.ts`), la puerta 10 con lo de allí (`agent/gates/puerta_guia.ts`) y sus pruebas
-  (`tests/code/guia_alli.test.ts`); de mentira, las capas del viaje de la guía, en `tests/cases/inventado/guia.ts`.
+  (`agent/scripts/guia.ts`), su contrato (`agent/contracts/guide-writer/`), «Cómo moverte» (con lo que te conviene,
+  `convieneDelCuaderno`, la cuenta del presupuesto), «Antes de ir», la entrada de cada parada y dónde comer en el
+  cuaderno (`agent/scripts/cuaderno.ts`), sus rótulos y lo cerca que cae un sitio de comer (`agent/data/guia.ts`), la
+  puerta 10 con lo de allí (`agent/gates/puerta_guia.ts`) y sus pruebas (`tests/code/guia_alli.test.ts`); de
+  mentira, las capas del viaje de la guía, en `tests/cases/inventado/guia.ts`.
 
 ## Lo que aún no existe
 

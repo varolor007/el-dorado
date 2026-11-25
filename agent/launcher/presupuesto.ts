@@ -54,8 +54,10 @@ export function conLasCapas(run: string, v: Viaje): Viaje {
     run,
     v.paradas.map((p) => p.id),
   );
-  const conEllas: Viaje = { ...v, ...capas };
-  const presupuesto = presupuestoDe(conEllas, capas, { zonas: zonasDelRun(run) });
+  // Las zonas, las que trae el viaje montado o, si no, las de la ruta del run: el viaje se va con ellas (14.6).
+  const zonas = v.zonasDeLaRuta ?? zonasDelRun(run);
+  const conEllas: Viaje = { ...v, ...capas, ...(zonas.length === 0 ? {} : { zonasDeLaRuta: zonas }) };
+  const presupuesto = presupuestoDe(conEllas, capas, { zonas });
   guardarEnElRun(run, PRESUPUESTO, presupuesto);
   return { ...conEllas, presupuesto };
 }

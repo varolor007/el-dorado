@@ -407,6 +407,61 @@ export function cuentaDelGrupo(
   return { porPersona, total, moneda, faltan };
 }
 
+/**
+ * El billete suelto con que la cuenta paga un trayecto a una persona: el mismo que usa `cuentaDeMoverse` (de los
+ * del transporte público con un precio para ella, en la moneda que se pide o en la que más sale, el de un viaje más
+ * caro). Lo que cuesta un trayecto que no se anda en la web es este: así un tramo y moverte allí dicen lo mismo.
+ * Null si no se sabe.
+ */
+export function sueltoPara(
+  m: DeMoverse | undefined,
+  edad: number | null = null,
+  pedida: string | null = null,
+): { billete: number; precio: number; moneda: string } | null {
+  if (m === undefined || m.falta !== null) return null;
+  const publicos = m.billetes.map((b, i) => ({ b, i })).filter(({ b }) => esPublico(b) && b.clase !== "travel_card");
+  const monedas = monedasDe(publicos.map((x) => x.b));
+  const moneda = pedida !== null && monedas.includes(pedida) ? pedida : (monedas[0] ?? pedida);
+  if (moneda === null) return null;
+  let mejor: { billete: number; precio: number; moneda: string } | null = null;
+  for (const { b, i } of publicos) {
+    if (b.clase !== "single" || (b.viajes ?? 1) !== 1) continue;
+    const p = precioPara(b.precios, edad, moneda);
+    if (p === null) continue;
+    const precio = p === "free" ? 0 : p;
+    if (mejor === null || precio > mejor.precio) mejor = { billete: i, precio, moneda };
+  }
+  return mejor;
+}
+
+/**
+ * Lo que cuesta un trayecto con billetes sueltos para el grupo: el suelto de cada uno, sumado, con sus páginas, y a
+ * cuántos no se les sabe. Null si no se sabe de ninguno.
+ */
+export function sueltoDelGrupo(
+  m: DeMoverse | undefined,
+  adultos: number,
+  ninos: readonly number[],
+  pedida: string | null = null,
+): { importe: number; moneda: string; faltan: number; cuantos: number; fuentes: FuenteDeUnDato[] } | null {
+  const edades: (number | null)[] = [...Array.from({ length: Math.max(0, adultos) }, () => null), ...ninos];
+  const cada = edades.map((e) => sueltoPara(m, e, pedida));
+  const sabidos = cada.filter((x) => x !== null);
+  if (m === undefined || sabidos.length === 0) return null;
+  const fuentes: FuenteDeUnDato[] = [];
+  for (const x of sabidos) {
+    const f = m.billetes[x.billete].fuente;
+    if (!fuentes.some((y) => y.url === f.url)) fuentes.push({ ...f });
+  }
+  return {
+    importe: centimos(sabidos.reduce((s, x) => s + x.precio, 0)),
+    moneda: sabidos[0].moneda,
+    faltan: cada.length - sabidos.length,
+    cuantos: cada.length,
+    fuentes,
+  };
+}
+
 // 5. Llegar de donde se aterriza.
 
 /**

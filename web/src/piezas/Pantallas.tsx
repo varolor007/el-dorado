@@ -30,7 +30,7 @@ import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
 import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
 import { Alli, CosteDelTrayecto, diceSiReservar, ElPresupuesto, EntradaDeLaParada, FichaDeLaEntrada } from "./Alli.tsx";
-import { presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
+import { grupoDelViaje, presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -475,8 +475,9 @@ function Dias(x: DeViaje) {
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
   const abierto = x.dia === null ? null : (reparto.dias[x.dia] ?? null);
   // Donde se duerme con la manera elegida, y la primera parada del día abierto: de una a otra se empieza el día.
+  // Con el alojamiento que elegiste, si elegiste otro: el mismo con que se hacen las cuentas (14.6).
   const cama =
-    viaje.alojamientos.find((a) => a.id === viaje.maneras.find((m) => m.id === x.manera)?.alojamiento) ?? null;
+    viaje.alojamientos.find((a) => a.id === conLoTuyo(x).maneras.find((m) => m.id === x.manera)?.alojamiento) ?? null;
   const primera = abierto === null ? undefined : deParada.get(abierto.paradas[0] ?? "");
   const fuera = reparto.fuera.filter((id) => !x.quitadas.includes(id));
   // Con la tabla de caminos del viaje, cada trayecto dice lo que dijo la fuente; sin ella, la cuenta de la casa.
@@ -492,7 +493,10 @@ function Dias(x: DeViaje) {
   const noCaben = noCabenTusDias(viaje, reparto.dias);
   const noCabeElAbierto = abierto === null ? [] : (noCaben[abierto.fecha] ?? []);
   // Quiénes viajan, para lo que cuesta cada entrada y cada trayecto para el grupo (14.6).
-  const grupo = { adultos: viaje.adultos, ninos: viaje.ninos };
+  const grupo = grupoDelViaje(viaje);
+  // De la última parada del día abierto a donde duermes: también cuenta en lo que cuesta moverte (14.6).
+  const ultima = abierto === null ? undefined : deParada.get(abierto.paradas[abierto.paradas.length - 1] ?? "");
+  const aLaCama = cama !== null && ultima !== undefined ? irEntre(ultima.punto, cama.punto, c, idioma) : null;
   return (
     <>
       <div className="grupo">
@@ -695,6 +699,26 @@ function Dias(x: DeViaje) {
                   )}
                 </div>
               ))}
+            {cama !== null && ultima !== undefined && aLaCama !== null && (
+              <div className="tramo">
+                <span className="tramo__texto">
+                  <span className="dato">{t.viaje.aLaCama(tramo(t, aLaCama))}</span>
+                  {aLaCama.cogiendo.length > 0 && (
+                    <a
+                      className="enlace"
+                      href={trayectoEnGoogleMaps(ultima.punto, cama.punto, false)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t.viaje.comoIr}
+                    </a>
+                  )}
+                  {aLaCama.cogiendo.length > 0 && (
+                    <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
+                  )}
+                </span>
+              </div>
+            )}
           </div>
           {abierto.paradas.length > 1 && (
             <a
@@ -894,7 +918,7 @@ function Cuentas(x: DeViaje) {
         idioma={idioma}
         manera={marcada?.id ?? ""}
         dias={x.reparto.dias.length}
-        {...presupuestoQueSeEnsena(viaje.presupuesto, tusCambios(x, viaje, marcada))}
+        {...presupuestoQueSeEnsena(viaje, x.reparto.dias, tusCambios(x, viaje, marcada))}
       />
       {viaje.palancas.length > 0 && (
         <div className="grupo">
@@ -1090,6 +1114,12 @@ function Avisos({ t, idioma, viaje, manera, reparto }: DeViaje) {
   };
   // Si la fuente de rutas dio algún coche, sus tiempos son sin tráfico, y se dice así.
   const conCoche = (viaje.caminos?.caminos ?? []).some((x) => x.enCoche !== undefined);
+  // Lo que se sabe del transporte de allí (14.6): sus maneras, o null si la capa no está.
+  const m = viaje.moverse;
+  const modos =
+    m === undefined || m.falta !== null
+      ? null
+      : [...new Set(m.transportes.map((x) => x.modo))].map((x) => t.alli.modo[x] ?? x);
   return (
     <>
       <div className="grupo">
@@ -1098,7 +1128,7 @@ function Avisos({ t, idioma, viaje, manera, reparto }: DeViaje) {
         {(viaje.alojamientos.some((a) => a.aPie === false) ||
           viaje.dias.some((d) => !seAndaElDia(d, deParada, c)) ||
           reparto.dias.some((d) => !seAndaDesdeLaCama(d))) && (
-          <p className="aviso">{conCoche ? t.viaje.noSeAndaSinTrafico : t.viaje.noSeAnda}</p>
+          <p className="aviso">{conCoche ? t.viaje.noSeAndaSinTrafico(modos) : t.viaje.noSeAnda(modos)}</p>
         )}
         {viaje.avisos.map((a) => (
           <p className="aviso" key={a}>
@@ -1183,7 +1213,15 @@ export function TuViaje(x: DeViaje) {
         {x.pestana === "days" && <Dias {...x} />}
         {x.pestana === "stay" && <Dormir {...x} viaje={conLoTuyo(x)} />}
         {x.pestana === "money" && <Cuentas {...x} viaje={conLoTuyo(x)} />}
-        {x.pestana === "there" && <Alli t={t} idioma={idioma} viaje={viaje} dias={reparto.dias} />}
+        {x.pestana === "there" && (
+          <Alli
+            t={t}
+            idioma={idioma}
+            viaje={conLoTuyo(x)}
+            dias={reparto.dias}
+            manera={conLoTuyo(x).maneras.find((m) => m.id === elegida?.id)}
+          />
+        )}
         {x.pestana === "notes" && <Avisos {...x} />}
       </div>
     </>

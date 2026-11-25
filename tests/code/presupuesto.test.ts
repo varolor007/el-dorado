@@ -127,18 +127,66 @@ const sueltosOAbono: CuentaDeMoverse = (m, dias, grupo, moneda) => {
 
 const LEJOS = SALTO_MAXIMO + 1;
 
+/**
+ * El viaje con una tabla de caminos inventada entre todos sus puntos (paradas y alojamientos): se anda todo, a 1.000
+ * metros, salvo los pares que se dicen, que pasan de lo que se anda. Los trayectos se cuentan por los caminos, como
+ * en la web y en la guía (14.6), no por los metros del día.
+ */
+function conCaminos(v: Viaje, lejos: [string, string][] = [], metros = LEJOS): Viaje {
+  const puntos = [
+    ...v.paradas.map((p) => [p.id, p.punto] as const),
+    ...v.alojamientos.map((a) => [a.id, a.punto] as const),
+  ];
+  const esLejos = (a: string, b: string): boolean =>
+    lejos.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+  const caminos = [];
+  for (let i = 0; i < puntos.length; i++)
+    for (let j = i + 1; j < puntos.length; j++) {
+      const lejano = esLejos(puntos[i][0], puntos[j][0]);
+      caminos.push({
+        de: puntos[i][1],
+        a: puntos[j][1],
+        aPie: { metros: lejano ? metros : 1000, minutos: lejano ? 60 : 13 },
+      });
+    }
+  return { ...v, caminos: { fuente: "inventada", visto: "2027-01-10", caminos } };
+}
+
 /** El viaje inventado con unos días que tienen trayectos que no se andan: dos el primero, ninguno el segundo. */
 function conTrayectos(v: Viaje = viajeInventado()): Viaje {
-  return {
-    ...v,
-    dias: [
-      { fecha: "2027-02-12", titulo: "El centro", paradas: ["p1", "p2", "p4"], metros: [LEJOS, LEJOS] },
-      { fecha: "2027-02-13", titulo: "Lo alto", paradas: ["p3"], metros: [] },
+  return conCaminos(
+    {
+      ...v,
+      dias: [
+        { fecha: "2027-02-12", titulo: "El centro", paradas: ["p1", "p2", "p4"], metros: [LEJOS, LEJOS] },
+        { fecha: "2027-02-13", titulo: "Lo alto", paradas: ["p3"], metros: [] },
+      ],
+      fuera: [],
+      porQueFuera: {},
+    },
+    [
+      ["p1", "p2"],
+      ["p2", "p4"],
     ],
-    fuera: [],
-    porQueFuera: {},
-  };
+  );
 }
+
+/** Un día con n trayectos que no se andan, de p1 a p2 y vuelta, una y otra vez. */
+const conN = (n: number): Viaje =>
+  conCaminos(
+    {
+      ...conTrayectos(),
+      dias: [
+        {
+          fecha: "2027-02-12",
+          titulo: "Lejos",
+          paradas: Array.from({ length: n + 1 }, (_, i) => (i % 2 === 0 ? "p1" : "p2")),
+          metros: Array(n).fill(LEJOS),
+        },
+      ],
+    },
+    [["p1", "p2"]],
+  );
 
 const parte = (p: Presupuesto, manera: string, cual: string) =>
   p.maneras.find((m) => m.manera === manera)!.partes.find((x) => x.parte === cual)!;
@@ -326,7 +374,7 @@ test("llegar a donde se duerme: a la zona del alojamiento de cada manera, por el
 });
 
 test("ningún trayecto que no se anda: moverse allí es cero, sin preguntar a la cuenta", () => {
-  const v = viajeInventado();
+  const v = conCaminos(viajeInventado());
   assert.deepEqual(
     trayectosQueNoSeAndan(v).map((d) => d.trayectos),
     [0, 0],
@@ -336,16 +384,12 @@ test("ningún trayecto que no se anda: moverse allí es cero, sin preguntar a la
   const alli = parte(presupuestoDe(v, {}, { moverse: cuenta }), "cheapest", "getting_around");
   assert.deepEqual([alli.origen, alli.total, alli.faltan], ["computed", 0, 0]);
   assert.equal(llamada, false);
-  // Justo en lo que se anda, se anda.
-  const enElBorde: Viaje = { ...v, dias: [{ ...v.dias[0], metros: [SALTO_MAXIMO] }, v.dias[1]] };
-  assert.equal(trayectosQueNoSeAndan(enElBorde)[0].trayectos, 0);
+  // Justo en lo que se anda, se anda; un metro más, no.
+  assert.equal(trayectosQueNoSeAndan(conCaminos(v, [["p1", "p2"]], SALTO_MAXIMO))[0].trayectos, 0);
+  assert.equal(trayectosQueNoSeAndan(conCaminos(v, [["p1", "p2"]], SALTO_MAXIMO + 1))[0].trayectos, 1);
 });
 
 test("sueltos contra abono en el borde: la cuenta suma lo que da la de moverse, ni más ni menos", () => {
-  const conN = (n: number): Viaje => ({
-    ...conTrayectos(),
-    dias: [{ fecha: "2027-02-12", titulo: "Lejos", paradas: ["p1"], metros: Array(n).fill(LEJOS) }],
-  });
   const alli = (n: number) =>
     parte(presupuestoDe(conN(n), { moverse: moverse() }, { moverse: sueltosOAbono }), "cheapest", "getting_around");
   // Dos sueltos cuestan 4; tres, 6, lo mismo que el abono; cuatro, 8, y conviene el abono: para dos.
@@ -369,10 +413,6 @@ test("sueltos contra abono en el borde: la cuenta suma lo que da la de moverse, 
 });
 
 test("juntos (14.2 y 14.5): sin decir otra, la cuenta de moverse es la del de moverse, para cada uno del grupo", () => {
-  const conN = (n: number): Viaje => ({
-    ...conTrayectos(),
-    dias: [{ fecha: "2027-02-12", titulo: "Lejos", paradas: ["p1"], metros: Array(n).fill(LEJOS) }],
-  });
   const alli = (n: number, capa = moverse()) =>
     parte(presupuestoDe(conN(n), { moverse: capa }), "cheapest", "getting_around");
   // Dos adultos: dos sueltos a 2 cada uno; con cuatro trayectos, a cada uno le sale mejor el abono de un día, a 6.
@@ -431,6 +471,7 @@ test("la misma entrada, la misma cuenta; y con otros días, la web rehace solo l
   const sinP4: Viaje = {
     ...v,
     dias: [{ ...v.dias[0], paradas: ["p1", "p2"], metros: [LEJOS] }, v.dias[1]],
+    paradas: v.paradas,
     fuera: ["p4"],
     porQueFuera: { p4: "removed" },
   };

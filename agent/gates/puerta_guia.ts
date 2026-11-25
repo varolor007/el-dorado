@@ -11,14 +11,15 @@
 // - El cuaderno ya montado: que cada foto lleva su autor y su licencia, cada precio su fecha y cada enlace es una
 //   dirección https sin claves; que todo es del viaje cerrado, de la versión de la que sale, también lo de allí (la
 //   entrada y el horario de cada parada, dónde comer, cómo moverte y antes de ir), cada dato con su página y su día;
-//   y que lleva el aviso de IA y el de los precios, con la fecha de los precios.
+//   que lo que te conviene para moverte es la cuenta del presupuesto, la misma de «moverte allí»; y que lleva el
+//   aviso de IA y el de los precios, con la fecha de los precios.
 //
 // No mide si la guía cuenta bien lo que cuenta: eso lo cubre quien la lee.
 
 import { HORAS, DE_DINERO, LARGO_EN_LA_GUIA, MODOS_EN_UN_TEXTO, TOPES_DE_LA_GUIA } from "../data/guia.ts";
 import { avisosDe } from "../data/palabras.ts";
 import type { Viaje } from "../output/viaje.ts";
-import { entradaDelCuaderno, fuentesDeAlli, type Cuaderno } from "../scripts/cuaderno.ts";
+import { convieneDelCuaderno, entradaDelCuaderno, fuentesDeAlli, type Cuaderno } from "../scripts/cuaderno.ts";
 import { entradaDe } from "../scripts/capas.ts";
 import { andando } from "../tools/distancias.ts";
 import { capaQueVale, comerPorDias, modosDelViaje, moverseConAlgo, type ParaLaGuia } from "../scripts/guia.ts";
@@ -597,6 +598,18 @@ export function rojosDeLoDeAlli(c: Cuaderno, v: Viaje): Rojo[] {
         });
       if (!igual(m.coche, moverse.coche)) rojo("moverse.coche", "no dice lo que dice el viaje del coche");
     }
+  }
+  // Lo que te conviene para moverte: la cuenta del presupuesto con los días, el grupo y donde duerme su manera, y
+  // ninguna otra (14.6). Su manera es la del cuaderno: donde dice que duermes.
+  const cv = c.conviene ?? null;
+  if (cv !== null) {
+    const manera = cv.manera === null ? null : (v.maneras.find((x) => x.id === cv.manera) ?? null);
+    const duerme = manera === null ? null : (v.alojamientos.find((a) => a.id === manera.alojamiento) ?? null);
+    if (cv.manera !== null && manera === null) rojo("conviene", "su manera no es una del viaje");
+    else if ((duerme?.nombre ?? null) !== (c.duermes?.nombre ?? null))
+      rojo("conviene", "no es la cuenta de donde dice el cuaderno que duermes");
+    else if (!igual(cv, convieneDelCuaderno(v, manera)))
+      rojo("conviene", "no es la cuenta de lo que te conviene para moverte del viaje");
   }
   (c.saber ?? []).forEach((x, j) => {
     if (saber === null || !esDe(saber.cosas, x))
