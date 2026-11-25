@@ -13,6 +13,29 @@ cerrar el viaje con sus enlaces (8.4 y 3.13, `claude/eldorado-8-4-cerrar-el-viaj
 de afiliado (3.9), la edad máxima de un precio, los dibujos de la guía (12.3) y cualquier dependencia nueva. Al
 juntarlas: los tipos, la batería, las biblias, las capturas y los tres adversarios.
 
+**La guía (12.1 y 12.2), junta** (25-nov). Con el viaje cerrado, `POST /viajes/<id>/guia` (`{way}`, y un techo si
+se quiere) lanza al que escribe la guía: `agent/contracts/guide-writer/`, sin internet, con su material en
+`agent/scripts/guia.ts` (el viaje, sus días con lo que dicen de cada parada sus fuentes abiertas, sacado del
+`sitios.json` del run de esa versión, los tramos medidos como en la web, y lo que hay que llevar hecho; ningún
+precio). La lleva `agent/launcher/guia.ts` (`pedirGuia`, `sigueLaGuia`, `llevarLaGuia`), con el adelante del viajero,
+dos devoluciones como mucho y su gasto en sus `trabajos.json`. La puerta 10 (`agent/gates/puerta_guia.ts`) tiene dos
+mitades: `puertaGuia`, sobre lo escrito (cada sitio, número y hora, del viaje; nombrar un sitio conocido que no es
+del viaje, rojo; el dinero, rojo), y `puertaCuaderno`, sobre el cuaderno montado (cada foto con autor y licencia,
+cada precio del viaje y con su fecha, enlaces https, y sus avisos). El cuaderno lo monta y lo pinta
+`agent/scripts/cuaderno.ts`: una página que se basta sola, sin programas y sin letras de fuera, con las fotos
+dentro, que se imprime en A5. Todo queda en `viajes/<id>/guias/<n>/` (`pedida.json`, `escrita.json`, `guia.json`,
+`guia.html`), con la versión del viaje; si el viaje cambia, dice que se ha quedado atrás. La web: `/guide?trip=<id>`
+(`web/src/app/(panel)/guide/page.tsx`), con el documento en un marco sin programas, «Imprimir o guardar como PDF» y
+«Descargar»; y el paso a la guía desde el viaje cerrado (`web/src/piezas/TuGuia.tsx`). Al juntarla, quien orquesta
+la miró en pantalla y como quedaría impresa, y retocó dos cosas: cada cosa de «lo que hay que llevar hecho» dice de
+qué va con los datos del viaje (la parada, el papel), y no solo con la frase del asiento; y al imprimir, los dos
+lados de cada doble página corren seguidos (de once hojas con varias casi en blanco, a ocho). Se probó también sobre
+el viaje del ensayo, con el asiento de mentira: sale con sus catorce paradas y sus fotos de verdad dentro. **Falta**:
+su primera guía con IA de verdad (un gasto: espera al PM); que tome los días y la manera con que se cerró el viaje,
+porque hoy la web reparte los días a su manera (ritmo, quitar, añadir) y la guía usa los guardados; que el gasto de
+las guías cuente en la cuenta (`gasto.ts` solo suma los runs); un tope de guías por viaje; y el nombre del autor de
+algunas fotos, que llega de la fuente como una frase («No machine-readable author provided»).
+
 **Para cerrar la tanda 4 faltan tres cosas del PM**: el arranque (un botón o dos), si la frase del conductor se
 enseña al viajero, y su visto bueno. La página de su revisión, con el ensayo pantalla a pantalla y esas dos
 decisiones a la vista: https://claude.ai/artifact/XhWTz37RrGYU4gYHejZ77H. Sus capturas se sacaron sin gastar,

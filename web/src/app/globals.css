@@ -2135,3 +2135,106 @@ select.toque {
   border-left-style: dashed;
   border-left-color: var(--tinta-tenue);
 }
+
+/* ---------- Tu guía (12.2): el cuaderno de un viaje cerrado, como se imprime */
+
+.guia {
+  max-width: 1240px;
+}
+.guia__destino {
+  display: block;
+  font-size: 0.55em;
+  color: var(--tinta-suave);
+}
+.guia__maneras {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.guia__maneras legend {
+  padding: 0 0 6px;
+}
+.guia__maneras .otro input {
+  accent-color: var(--oro);
+  margin: 0 10px 0 0;
+}
+.guia__maneras .otro > span {
+  flex: 1;
+}
+.otro--elegido > span {
+  color: var(--tinta);
+}
+.aviso--oro {
+  display: block;
+  padding: 12px 14px;
+  border-radius: var(--radio);
+  background: var(--oro-tinte);
+  color: var(--tinta);
+}
+.aviso--oro::before {
+  content: none;
+}
+.guia__escribe {
+  flex-direction: row;
+  align-items: center;
+}
+.guia__escribe > * {
+  width: auto;
+}
+.guia__pluma {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--oro);
+  animation: guia-pulso 1.6s var(--suave) infinite;
+}
+@keyframes guia-pulso {
+  0% {
+    box-shadow: 0 0 0 0 var(--oro-tinte);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guia__pluma {
+    animation: none;
+  }
+}
+.guia__hecha {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.guia__botones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.guia__marco {
+  width: 100%;
+  border: 0;
+  border-radius: var(--radio-hoja);
+  background: var(--fondo);
+  display: block;
+}
+.a-tu-guia {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radio);
+  background: var(--oro-tinte);
+  text-decoration: none;
+}
+.a-tu-guia .suave {
+  grid-column: 1;
+}
+.a-tu-guia .enlace {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}

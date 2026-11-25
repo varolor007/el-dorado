@@ -24,6 +24,9 @@
 //   POST   /viajes/<id>/reintentar     volver a intentarlo en un run parado: solo el paso que lo paró, y sigue
 //   GET    /viajes/<id>/eventos        lo que pasa, en vivo (sucesos del servidor)
 //   GET    /viajes/<id>/version[/<n>]  el viaje que se enseña, o una versión de antes
+//   POST   /viajes/<id>/guia           «Quiero mi guía», con el viaje cerrado, su manera ({ "way" }) y su techo
+//   GET    /viajes/<id>/guia           cómo está la última guía: si sale, si salió, de qué versión y si se quedó atrás
+//   GET    /viajes/<id>/guia/documento la guía hecha, como documento: la página que se ve, se imprime y se descarga
 
 import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -58,6 +61,7 @@ import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
 import { FalloAlReintentar, reintentar } from "./reintentar.ts";
+import { documentoDeLaGuia, FalloDeLaGuia, guiaDeCara, llevarLaGuia, pedirGuia, type AlLlevarLaGuia } from "./guia.ts";
 import {
   abrirViaje,
   apuntar,
@@ -115,6 +119,8 @@ export type OpcionesDeLaPuerta = {
   correosDeLaCasa?: string[];
   hoy?: () => Date;
   alLlevar?: AlLlevar;
+  /** Cómo se lleva una guía: su tope y de dónde se bajan sus fotos. */
+  alLlevarLaGuia?: AlLlevarLaGuia;
   /** Cada cuánto mira la casa si hay algo nuevo que contar a quien escucha, y cada cuánto le da señal de vida. */
   cadaMs?: number;
   latidoMs?: number;
@@ -258,6 +264,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   const llave = Buffer.from(o.llave);
   const hoy = o.hoy ?? ((): Date => new Date());
   const marchas = new Map<string, Promise<void>>();
+  /** Las guías que se están escribiendo ahora, por su viaje: una a la vez por viaje. */
+  const guias = new Map<string, Promise<void>>();
   const oyentes = new Map<string, number>();
   const oyentesDeCuenta = new Map<string, number>();
   const abiertos = new Set<ServerResponse>();
@@ -595,6 +603,47 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     marchas.set(id, marcha);
   }
 
+  /**
+   * «Quiero mi guía»: solo su dueño, con el viaje cerrado y sin otra guía en marcha, y con la misma cuenta o clave con
+   * la que piensa. Sale de la versión que se enseña, con la manera que diga si el viaje tiene más de una.
+   */
+  function pedirLaGuia(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (guias.has(id) || marchas.has(id)) throw new Fallo(409, "already_running");
+    if (v.ficha.estado !== "closed") throw new Fallo(409, "not_closed");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    const manera = pedido.way === undefined || pedido.way === null ? null : pedido.way;
+    if (manera !== null && (typeof manera !== "string" || !/^[a-z_]{1,32}$/.test(manera)))
+      throw new Fallo(400, "bad_way");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let n: number;
+    try {
+      n = pedirGuia(v, { manera, techo, hoy: hoy() }).n;
+    } catch (error) {
+      if (error instanceof FalloDeLaGuia) throw new Fallo(error.message === "which_way" ? 400 : 409, error.message);
+      throw error;
+    }
+    apuntar(v, "button", { boton: "guide", guia: n, techo }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    // Si la casa se rompe a medias, la guía no se queda colgada: sin nadie que la lleve, se cuenta como parada.
+    const marcha = llevarLaGuia(v, n, lanzador, { hoy, ...o.alLlevarLaGuia })
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => guias.delete(id));
+    guias.set(id, marcha);
+    return { estado: 202, cuerpo: { guide: n } };
+  }
+
   function atender(p: Peticion): Respuesta {
     const [raiz, id, que, cual] = p.partes;
     if (raiz !== "viajes" || p.partes.length > 4) throw NO_HAY();
@@ -650,6 +699,18 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       const version = Number.isNaN(n) ? null : leerVersion(v, n);
       if (version === null) throw NO_HAY();
       return { estado: 200, cuerpo: { n, trip: version.viaje, events: version.sucesos } };
+    }
+    if (que === "guia" && cual === undefined) {
+      if (p.metodo === "POST") return pedirLaGuia(p);
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      return { estado: 200, cuerpo: { guide: guiaDeCara(v, guias.has(v.ficha.id)) } };
+    }
+    if (que === "guia" && cual === "documento") {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const documento = documentoDeLaGuia(suViaje(p));
+      if (documento === null) throw NO_HAY();
+      return { estado: 200, cuerpo: { html: documento } };
     }
     throw NO_HAY();
   }
@@ -793,7 +854,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     servidor,
     enMarcha: () => [...marchas.keys()],
     esperar: async () => {
-      while (marchas.size > 0) await Promise.all([...marchas.values()]);
+      while (marchas.size > 0 || guias.size > 0) await Promise.all([...marchas.values(), ...guias.values()]);
     },
     cerrar: async () => {
       for (const res of abiertos) res.end();

@@ -593,6 +593,16 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   ensayo pantalla a pantalla, y la parada enseñada de las dos maneras, con la frase del conductor y sin ella, para
   que el PM elija viéndolas. Sus capturas, sin gastar: la mesa guardada del ensayo, abierta con una casa sin
   modelo ni cuenta.
+- **La guía se guarda como una página que se imprime** (la sesión de obra, con lo más prudente y a confirmar por
+  el PM): un documento HTML que se basta solo, con sus fotos dentro. El PDF sale del diálogo de imprimir del
+  navegador, y además se descarga la página. Un PDF hecho por la casa pide una pieza de fuera, que es del PM.
+- **El mapa de cada día de la guía es un croquis** (la sesión de obra): los puntos del día, con el norte y la
+  escala, dibujados por el código. Sin mapas de calles, que piden un servicio o una clave.
+- **Al que escribe la guía no se le da ningún precio** (la sesión de obra): los pone el cuaderno, con su fecha. Así
+  «cada precio de la guía está en el viaje» lo mide el código sin leer frases.
+- **De qué va cada cosa que hay que llevar hecha lo dicen los datos** (la sesión, al mirar la guía): el nombre de la
+  parada o del papel lo pone el código, y la frase, el asiento. Y lo impreso corre seguido: ocho hojas donde había
+  once.
 - **La batería de GitHub se mira después de cada subida** (la sesión, por un fallo suyo): estuvo en rojo desde la
   mañana del 24-nov, 63 subidas, con la de la nube en verde. Una prueba del lanzador montaba un puesto suelto y la
   casa guardaba su respuesta dos carpetas más arriba: en la nube, donde se trabaja como administrador, cabía en la
@@ -611,6 +621,9 @@ Lo que deja el 25-nov, a decisión del PM:
   O esperar al ensayo de la tanda 7.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
+- **De la guía**: dónde parar a comer y lo que te pierdes en autobús, que la hoja nombra y no están en el viaje
+  (añadirlos es añadir sitios: por ejemplo, sitios de paso de los datos abiertos cerca del camino); si vale que el
+  PDF salga del navegador; cuántas guías se pueden pedir de un viaje; y lanzar la primera guía con IA de verdad.
 
 Lo que deja la obra del 24-nov, a decisión del PM:
 

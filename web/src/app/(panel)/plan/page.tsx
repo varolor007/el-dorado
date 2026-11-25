@@ -17,6 +17,7 @@ import { Empezar, TODOS_LOS_TOQUES_DE_BUSCAR } from "../../../piezas/Empezar.tsx
 import { EnCasa } from "../../../piezas/EnCasa.tsx";
 import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
+import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
 import { useCuenta, useViajeDeLaCasa } from "../../../lib/cuenta.ts";
 import { monedaDelNavegador, sitioDe } from "../../../lib/empezar.ts";
@@ -507,6 +508,9 @@ export default function Planear() {
             alAnadir={anade}
             alMover={mueve}
           />
+          {pedido != null && comoEsta === "closed" && (
+            <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />
+          )}
         </Hoja>
       )}
       {etapa === "viaje" && viaje !== null && abierta !== null && (

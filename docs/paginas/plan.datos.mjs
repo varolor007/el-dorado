@@ -223,14 +223,14 @@ const bloques = [
   {
     n: 12,
     nombre: "La guía",
-    estado: "pendiente",
+    estado: "parte",
     intro: "Lo que te llevas: tu viaje, en un cuaderno.",
     deja: "una guía de tu viaje, para descargar",
     prueba: "con el viaje grabado; la puerta 10, con sus trampas",
     firma: "al ver la primera guía",
     puntos: [
-      { n: "12.1", b: "El que escribe la guía.", t: "Su contrato y la puerta 10: solo cuenta lo que hay en tu viaje.", estado: "pendiente" },
-      { n: "12.2", b: "La maqueta.", t: "El cuaderno: la portada, el viaje de un vistazo y una doble página por día, pintado como una página y guardado como documento.", estado: "pendiente" },
+      { n: "12.1", b: "El que escribe la guía.", t: "Su contrato y la puerta 10: solo cuenta lo que hay en tu viaje. Hecho por una sesión de obra, revisado y junto (25-nov): el asiento, sin internet, cuenta de cada parada qué es, por qué se va y a qué hora conviene; de cada tramo, lo que se anda; y lo que hay que llevar hecho. No ve ningún precio. La puerta 10, con sus trampas: cada sitio, cada número y cada hora son los del viaje cerrado, y nombrar un sitio que no es del viaje es rojo; y en el cuaderno, cada foto con su autor y su licencia, cada precio con su fecha, y sus avisos. Probado con un asiento de mentira, también sobre el viaje del ensayo. **Falta** su primera guía con IA de verdad, que es un gasto y espera tu sí; y dos cosas de la hoja que no están en el viaje y son tuyas: dónde parar a comer y lo que te pierdes en autobús.", estado: "parte" },
+      { n: "12.2", b: "La maqueta.", t: "El cuaderno: la portada, el viaje de un vistazo y una doble página por día, pintado como una página y guardado como documento. Hecho y junto (25-nov): cada día con su croquis, que dibuja el código sin mapas de pago ni claves; dónde duermes, cómo llegas, dónde se reserva, lo que hay que llevar hecho con su plazo, tus papeles y lo que no se sabe. Es una página que se basta sola: se ve en la web, se imprime o se guarda como PDF desde el navegador y se descarga con sus fotos dentro, para leerla sin internet. Se guarda con la versión del viaje, y dice si se ha quedado atrás. Solo su dueño, con el viaje cerrado. **Falta**: que tome los días y la manera con que se cerró el viaje (va con el 8.4), que su gasto cuente en tu cuenta, y tu sí a que el PDF salga del navegador: que lo haga la casa pide una pieza de fuera.", estado: "parte" },
       { n: "12.3", b: "Los dibujos.", t: "Una colección propia o generados para cada viaje.", estado: "decidir" },
     ],
   },
