@@ -230,6 +230,20 @@ const sinMarcas = (html: unknown): string | null => {
   return limpio === "" ? null : limpio.slice(0, 160);
 };
 
+/**
+ * Cuando el autor de una foto no está escrito para que lo lea un programa, Commons lo dice con una frase suya y,
+ * dentro, a quién se lo supone. El autor es ese nombre, no la frase; y si la frase no trae nombre, no hay autor.
+ */
+const AUTOR_SUPUESTO = /^No machine-readable author provided\.?\s*(?:(.+?)\s+assumed(?:\s*\(.*\))?\.?)?$/i;
+
+const autorDe = (artista: unknown): string | null => {
+  const limpio = sinMarcas(artista);
+  if (limpio === null) return null;
+  const supuesto = AUTOR_SUPUESTO.exec(limpio);
+  if (supuesto === null) return limpio;
+  return supuesto[1]?.trim() || null;
+};
+
 /** Lo que devuelve Commons de unas fotos: de cada una, su miniatura, su autor, su licencia y su página. */
 export function leerFotos(json: unknown): Map<string, Foto> {
   const consulta = objeto(objeto(json).query);
@@ -248,7 +262,7 @@ export function leerFotos(json: unknown): Map<string, Foto> {
     const meta = objeto(info.extmetadata);
     const foto: Foto = {
       url,
-      autor: sinMarcas(objeto(meta.Artist).value),
+      autor: autorDe(objeto(meta.Artist).value),
       licencia: sinMarcas(objeto(meta.LicenseShortName).value),
       pagina: deWikimedia(typeof info.descriptionurl === "string" ? info.descriptionurl : null),
     };

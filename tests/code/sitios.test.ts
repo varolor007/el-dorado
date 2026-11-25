@@ -314,6 +314,15 @@ test("trampa: un autor enorme hecho de marcas no para la casa: se corta antes de
   // Lo que queda más allá del corte no se lee, y una marca partida por el corte no pasa por texto.
   assert.equal(autorDe("<".repeat(5000) + ">Ana"), null);
   assert.equal(autorDe(`Ana <a href="${"x".repeat(5000)}">y compañía</a>`), "Ana");
+  // Cuando Commons no tiene al autor escrito para máquinas, lo dice con su frase: el autor es el nombre de dentro.
+  const frase = "No machine-readable author provided. Ana assumed (based on copyright claims).";
+  assert.equal(autorDe(frase), "Ana");
+  assert.equal(
+    autorDe(`No machine-readable author provided. <a href="//x">Ana & Co</a> assumed (based on copyright claims).`),
+    "Ana & Co",
+  );
+  assert.equal(autorDe("No machine-readable author provided."), null);
+  assert.equal(autorDe("no machine-readable author provided. Ana assumed"), "Ana");
   // Un autor de los de siempre sale como salía.
   assert.equal(autorDe('<a href="//commons.wikimedia.org/wiki/User:Ana">Ana &amp; Co</a>'), "Ana & Co");
   assert.equal(autorDe("Ana < Co"), "Ana < Co");

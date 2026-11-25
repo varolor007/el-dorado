@@ -33,8 +33,9 @@ lados de cada doble página corren seguidos (de once hojas con varias casi en bl
 el viaje del ensayo, con el asiento de mentira: sale con sus catorce paradas y sus fotos de verdad dentro. **Falta**:
 su primera guía con IA de verdad (un gasto: espera al PM); que tome los días y la manera con que se cerró el viaje,
 porque hoy la web reparte los días a su manera (ritmo, quitar, añadir) y la guía usa los guardados; que el gasto de
-las guías cuente en la cuenta (`gasto.ts` solo suma los runs); un tope de guías por viaje; y el nombre del autor de
-algunas fotos, que llega de la fuente como una frase («No machine-readable author provided»).
+las guías cuente en la cuenta (`gasto.ts` solo suma los runs); y un tope de guías por viaje. Al mirarla salió
+también el autor de algunas fotos, que Commons da como una frase suya («No machine-readable author provided. Fulano
+assumed»): desde el 25-nov el autor es el nombre de dentro, y sin nombre no hay autor (3.10, `agent/tools/sitios.ts`).
 
 **Para cerrar la tanda 4 faltan tres cosas del PM**: el arranque (un botón o dos), si la frase del conductor se
 enseña al viajero, y su visto bueno. La página de su revisión, con el ensayo pantalla a pantalla y esas dos
