@@ -162,6 +162,25 @@ a ese ritmo; el buscador de OpenStreetMap es una salida nueva del código, y sus
 una consulta por segundo) van a `docs/condiciones.md` antes de vender. Sin pantalla nueva ni capturas, y sin ver con
 IA.
 
+**La web de las capas (14.6), junta** (25-nov). `web/src/piezas/Alli.tsx` (`Alli`, `EntradaDeLaParada`,
+`FichaDeLaEntrada`, `CosteDelTrayecto`, `ElPresupuesto`) y sus cuentas en `web/src/lib/alli.ts` (`paraTuGrupo`,
+`abreTusDias`, `billeteSuelto`, `presupuestoQueSeEnsena`: hoy enseña el presupuesto del viaje y dice «de antes» si
+cambiaste ritmo, paradas, dormir o llegar). Lo vivo: `ways_around`, `good_to_know` y `tickets_known`
+(`sucesosDeLasCapas`, en `monta_viaje.ts`, la misma cuenta en vivo y grabada). Sabido: el viaje no trae el nombre de
+las zonas, y se numeran; `noSeAnda` sigue diciendo que no se sabe el transporte; la web cuenta el precio del grupo por
+su lado (`paraTuGrupo`) y el presupuesto por el suyo (`delGrupo`); el coste de un trayecto no se ha visto en pantalla
+(el caso inventado se anda entero).
+
+**La guía con las capas (14.6), junta** (25-nov). Material: `ticket`, `eat`, `around` y `know` en
+`agent/scripts/guia.ts`, solo si la capa vale (`capaQueVale`); dónde comer por cercanía a las paradas
+(`comerPorDias`, `PARA_COMER` en `agent/data/guia.ts`: 1.200 metros y tres por día, de partida). Cuaderno: secciones
+nuevas y `fuentesDeAlli` en `agent/scripts/cuaderno.ts`. Puerta 10: importes y horas del material, `eat` por día,
+transportes del viaje (`MODOS_EN_UN_TEXTO`) y `rojosDeLoDeAlli`. Contrato: GW3 cambiada (el que escribe puede decir
+un precio o una hora de allí, solo de su material; antes no veía precios) y GW9 nueva. Pruebas en
+`tests/code/guia_alli.test.ts`; el viaje con capas, `viajeParaLaGuia({ capas: true })`. Sabido: la guía enseña los
+billetes, no cuál conviene; «metro» en español es también la unidad y puede dar un rojo falso; lo que te pierdes en
+autobús sigue sin hacer. Sin ver con IA.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee

@@ -2,21 +2,26 @@
 // las dos de la misma puerta:
 //
 // - Lo que escribe el que escribe la guía: que cuenta cada día, cada parada, cada tramo y cada cosa que llevar hecha,
-//   una vez y sin otras; que no nombra un sitio que no es del viaje (los que se quedaron fuera, los demás sitios del
-//   destino que se conocen y cualquier nombre que no está en su material); que sus números son los del viaje; que no
-//   dice precios ni horas que el viaje no trae; que no lleva palabras prohibidas, enlaces, correos ni teléfonos; y
-//   que lo que no se sabe está dicho.
+//   una vez y sin otras, y dónde comer el día que el viaje lo sabe, y solo ese; que no nombra un sitio que no es del
+//   viaje (los que se quedaron fuera, los demás sitios del destino que se conocen y cualquier nombre que no está en su
+//   material); que sus números son los del viaje; que cada precio y cada hora que dice son de los que trae el viaje
+//   (los del transporte, las entradas, cómo moverse y lo que suele costar comer); que un tramo que no se anda no dice
+//   un transporte que el viaje no trae; que no lleva palabras prohibidas, enlaces, correos ni teléfonos; y que lo que
+//   no se sabe está dicho.
 // - El cuaderno ya montado: que cada foto lleva su autor y su licencia, cada precio su fecha y cada enlace es una
-//   dirección https sin claves; que todo es del viaje cerrado, de la versión de la que sale; y que lleva el aviso de
-//   IA y el de los precios, con la fecha de los precios.
+//   dirección https sin claves; que todo es del viaje cerrado, de la versión de la que sale, también lo de allí (la
+//   entrada y el horario de cada parada, dónde comer, cómo moverte y antes de ir), cada dato con su página y su día;
+//   y que lleva el aviso de IA y el de los precios, con la fecha de los precios.
 //
 // No mide si la guía cuenta bien lo que cuenta: eso lo cubre quien la lee.
 
-import { HORAS, DE_DINERO, LARGO_EN_LA_GUIA, TOPES_DE_LA_GUIA } from "../data/guia.ts";
+import { HORAS, DE_DINERO, LARGO_EN_LA_GUIA, MODOS_EN_UN_TEXTO, TOPES_DE_LA_GUIA } from "../data/guia.ts";
 import { avisosDe } from "../data/palabras.ts";
 import type { Viaje } from "../output/viaje.ts";
-import type { Cuaderno } from "../scripts/cuaderno.ts";
-import type { ParaLaGuia } from "../scripts/guia.ts";
+import { entradaDelCuaderno, fuentesDeAlli, type Cuaderno } from "../scripts/cuaderno.ts";
+import { entradaDe } from "../scripts/capas.ts";
+import { andando } from "../tools/distancias.ts";
+import { capaQueVale, comerPorDias, modosDelViaje, moverseConAlgo, type ParaLaGuia } from "../scripts/guia.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { numerosDe, numerosDeMas, pegasDelTexto } from "./textos.ts";
 import { enlaceSinClaves } from "../tools/enlaces.ts";
@@ -31,6 +36,8 @@ export type EntregaDeLaGuia = {
     intro: string;
     stops: { id: string; what: string; why: string; when: string }[];
     legs: { from: string; to: string; says: string }[];
+    /** Dónde parar a comer ese día: solo si el material lo trae (14.6). */
+    eat?: string;
   }[];
   todo: { item: number; says: string }[];
   unknowns: string[];
@@ -45,7 +52,7 @@ export type MaterialDeLaGuia = { dado: ParaLaGuia; otrosSitios: string[]; horas:
 
 const LO_QUE_LLEVA = ["seat", "language", "cover", "days", "todo", "unknowns"];
 /** Los campos del material que son una frase de otro: sus números no son de la casa. */
-const FRASES = new Set(["about", "why", "looking_for"]);
+const FRASES = new Set(["about", "why", "looking_for", "says"]);
 /** Los idiomas que escriben con mayúscula cada nombre común: en ellos no se buscan nombres por su mayúscula. */
 const CON_MAYUSCULA_EN_TODO = new Set(["de", "lb"]);
 
@@ -158,6 +165,55 @@ function horasEn(texto: string): string[] {
   return halladas;
 }
 
+/** Las horas que trae el material de las capas: cuándo abre y cierra cada parada y hasta qué hora funciona algo. */
+export function horasDelMaterial(dado: ParaLaGuia): string[] {
+  const horas: string[] = [];
+  const recorre = (algo: unknown, campo: string): void => {
+    if (typeof algo === "string" && ["opens", "closes", "until"].includes(campo)) {
+      const h = /^(\d{1,2}):(\d{2})$/.exec(algo);
+      if (h !== null) horas.push(`${Number(h[1])}:${h[2]}`);
+    } else if (Array.isArray(algo)) for (const x of algo) recorre(x, campo);
+    else if (esObjeto(algo)) for (const [k, x] of Object.entries(algo)) recorre(x, k);
+  };
+  recorre(dado, "");
+  return horas;
+}
+
+/** Los importes que trae el material: lo que cuesta cada entrada, cada billete y cada manera de llegar, y comer. */
+export function importesDelMaterial(dado: ParaLaGuia): Set<number> {
+  const importes = new Set<number>();
+  const recorre = (algo: unknown, campo: string): void => {
+    if (typeof algo === "number" && campo === "amount") importes.add(algo);
+    else if (Array.isArray(algo)) for (const x of algo) recorre(x, campo);
+    else if (esObjeto(algo)) {
+      if (campo === "costs" && typeof algo.from === "number" && typeof algo.to === "number") {
+        importes.add(algo.from);
+        importes.add(algo.to);
+      }
+      for (const [k, x] of Object.entries(algo)) recorre(x, k);
+    }
+  };
+  recorre(dado, "");
+  return importes;
+}
+
+/** Un importe dicho con su moneda, delante o detrás: «10 €», «€10», «10,50 EUR», «12 euros». */
+const IMPORTE = "(\\d+(?:[.,]\\d{1,2})?)";
+const CON_IMPORTE = new RegExp(
+  `(?:(?:${DE_DINERO.source})\\s?${IMPORTE})|(?:(?<![\\p{N}.,])${IMPORTE}\\s?(?:${DE_DINERO.source}))`,
+  "giu",
+);
+
+/** Los importes que dice un texto junto a una moneda, como números. */
+export function importesEn(texto: string): number[] {
+  const hallados: number[] = [];
+  for (const m of texto.matchAll(CON_IMPORTE)) {
+    const crudo = m[1] ?? m[2];
+    if (crudo !== undefined) hallados.push(Number(crudo.replace(",", ".")));
+  }
+  return hallados;
+}
+
 /** Verdadero si hay algo que la guía tiene que decir que no se sabe: una parada sin fuentes o un tramo a ojo. */
 export function hayAlgoSinSaberEnLaGuia(dado: ParaLaGuia): boolean {
   return (
@@ -198,7 +254,11 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
     ...(dado.stay.lodging === "unknown" ? [] : [dado.stay.lodging]),
     ...(dado.stay.zone === "unknown" ? [] : [dado.stay.zone]),
     ...(dado.stay.transport === "unknown" ? [] : [dado.stay.transport.from, dado.stay.transport.to]),
-  ];
+    // Lo de allí que nombra el viaje: una zona o un mercado donde comer, un plato, un barrio; y de dónde se llega.
+    ...dado.days.flatMap((d) => (d.eat ?? []).map((x) => x.name)),
+    ...(dado.know ?? []).map((x) => x.name),
+    ...(dado.around?.arrivals ?? []).map((x) => x.from_name),
+  ].filter((x) => x !== "unknown");
   const prohibidos = [...new Set(m.otrosSitios)].filter(
     (otro) => otro.trim().length >= 3 && !permitidos.some((p) => nombra(p, otro)),
   );
@@ -208,15 +268,22 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
     delMaterial.add(p.toLowerCase());
   const conNombres = !CON_MAYUSCULA_EN_TODO.has(dado.trip.language);
   const numeros = numerosDeLaGuia(dado);
-  const horas = new Set(m.horas);
-  const horasSueltas = new Set(m.horas.map((h) => h.split(":")[0]));
+  const todasLasHoras = [...m.horas, ...horasDelMaterial(dado)];
+  const horas = new Set(todasLasHoras);
+  const horasSueltas = new Set(todasLasHoras.map((h) => h.split(":")[0]));
+  const importes = importesDelMaterial(dado);
+  const modos = modosDelViaje(dado);
 
   /** Un texto para el viajero: dicho, corto, sin palabras prohibidas, y solo con lo que hay en el viaje. */
   const texto = (donde: string, v: unknown, largo: number = LARGO_EN_LA_GUIA.texto): void => {
     if (!esTexto(v)) return rojo(donde, "está en blanco");
     if (v.length > largo) rojo(donde, `tiene ${v.length} letras, y caben ${largo}`);
     for (const pega of pegasDelTexto(v, { sinNumerosLargos: true })) rojo(donde, pega);
-    if (DE_DINERO.test(v)) rojo(donde, "habla de dinero: los precios los pone el cuaderno, con su fecha");
+    // Sin precios en el material, el dinero es todo suyo. Con ellos, cada importe que dice es uno de los del viaje.
+    if (importes.size === 0 && DE_DINERO.test(v))
+      rojo(donde, "habla de dinero: los precios los pone el cuaderno, con su fecha");
+    for (const n of importesEn(v))
+      if (importes.size > 0 && !importes.has(n)) rojo(donde, `dice el precio ${n}, que no está en el viaje`);
     for (const h of horasEn(v))
       if (h.includes(":") ? !horas.has(h) : !horasSueltas.has(h))
         rojo(donde, `dice la hora ${h}, que no está en el viaje`);
@@ -246,11 +313,16 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
     const crudo = escritos[i];
     if (!esObjeto(crudo)) return rojo(donde, `falta el día ${dia.date}`);
     if (crudo.date !== dia.date) return rojo(`${donde}.date`, `tenía que ser el día ${dia.date}, en su orden`);
+    const conComer = (dia.eat ?? []).length > 0;
     for (const campo of Object.keys(crudo))
-      if (!["date", "title", "intro", "stops", "legs"].includes(campo))
-        rojo(`${donde}.${campo}`, "no es de la entrega");
+      if (!["date", "title", "intro", "stops", "legs", ...(conComer ? ["eat"] : [])].includes(campo))
+        rojo(
+          `${donde}.${campo}`,
+          campo === "eat" ? "ese día el viaje no sabe dónde comer: no se dice" : "no es de la entrega",
+        );
     texto(`${donde}.title`, crudo.title, LARGO_EN_LA_GUIA.titulo);
     texto(`${donde}.intro`, crudo.intro);
+    if (conComer) texto(`${donde}.eat`, crudo.eat);
     const ids = dia.stops.map((p) => p.id);
     const vistas = new Set<string>();
     lista(crudo.stops).forEach((p, j) => {
@@ -287,6 +359,11 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
         /\b(?:on foot|walk\w*|andando|a pie|caminando)\b/iu.test(l.says)
       )
         rojo(`${aqui}.says`, "lo cuenta a pie, y ese tramo no se anda");
+      // Un tramo que no se anda solo dice un transporte de los que trae el viaje.
+      if (dadoDelTramo !== undefined && !dadoDelTramo.on_foot && esTexto(l.says))
+        for (const [modo, palabra] of Object.entries(MODOS_EN_UN_TEXTO[dado.trip.language] ?? MODOS_EN_UN_TEXTO.en))
+          if (palabra?.test(l.says) && !modos.has(modo as never))
+            rojo(`${aqui}.says`, `dice que se va en ${modo}, y el viaje no lo trae`);
     });
     for (const par of tramos)
       if (!contados.has(par)) rojo(`${donde}.legs`, `falta el tramo ${par.replace(">", " a ")}`);
@@ -460,10 +537,74 @@ export function puertaCuaderno(c: Cuaderno, v: Viaje, version: number = v.versio
         rojo(`reservas[${i}]`, "no dice cuántos enlaces no respondieron al cerrar");
     }
   }
+  rojos.push(...rojosDeLoDeAlli(c, v));
   if (precios.length > 0 && (c.preciosDel === null || Number.isNaN(Date.parse(c.preciosDel))))
     rojo("preciosDel", "lleva precios y no dice de cuándo son");
   const avisos = avisosDe(v.idioma);
   if (c.avisos.ia !== avisos.ia) rojo("avisos", "falta el aviso de que está hecha con IA");
   if (c.avisos.precios !== avisos.precios) rojo("avisos", "falta el aviso de que los precios son orientativos");
   return { verde: rojos.length === 0, rojos };
+}
+
+const igual = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+const esDe = (lista: readonly unknown[], x: unknown): boolean => lista.some((y) => igual(x, y));
+
+/**
+ * Lo de allí del cuaderno, contra las capas del viaje cerrado (14.6): cada entrada es la de su parada ese día, cada
+ * sitio donde comer es uno de lo que conviene saber y le toca ese día, cada cosa de cómo moverte y de antes de ir es
+ * una del viaje, y cada dato dice de qué página sale y el día en que se vio. Una capa que falta no se nombra.
+ */
+export function rojosDeLoDeAlli(c: Cuaderno, v: Viaje): Rojo[] {
+  const rojos: Rojo[] = [];
+  const rojo = (donde: string, que: string): void => void rojos.push({ donde, que });
+  const entradas = capaQueVale(v.entradas) ?? undefined;
+  const saber = capaQueVale(v.saber);
+  const moverse = capaQueVale(v.moverse);
+  const comer = comerPorDias(v);
+  c.dias.forEach((d, i) => {
+    d.paradas.forEach((p, j) => {
+      const suya = p.entrada ?? null;
+      if (suya === null) return;
+      const debe = entradaDelCuaderno(entradaDe(entradas, p.id), d.fecha);
+      if (!igual(suya, debe))
+        rojo(`dias[${i}].paradas[${j}].entrada`, "no es la entrada ni el horario de esa parada ese día en el viaje");
+    });
+    const deComer = d.comer ?? [];
+    const leToca = (comer.porDia.get(d.fecha) ?? []).map((x) => ({
+      cosa: x.cosa,
+      cerca: x.parada.id,
+      metros: x.metros,
+    }));
+    deComer.forEach((x, j) => {
+      const aqui = `dias[${i}].comer[${j}]`;
+      if (saber === null || !esDe(saber.cosas, x.cosa))
+        return rojo(aqui, "no es un sitio de lo que conviene saber del viaje");
+      if (!esDe(leToca, x)) rojo(aqui, "no le toca a ese día, o no está a lo que se anda de esa parada");
+      const parada = v.paradas.find((y) => y.id === x.cerca);
+      if (parada === undefined || x.cosa.punto === null || andando(parada.punto, x.cosa.punto) !== x.metros)
+        rojo(aqui, "lo que se anda hasta él no es la cuenta de la casa");
+    });
+    if (deComer.length === 0 && (d.comerDice ?? null) !== null)
+      rojo(`dias[${i}].comerDice`, "dice dónde comer, y ese día no hay dónde");
+  });
+  const m = c.moverse ?? null;
+  if (m !== null) {
+    if (!moverseConAlgo(moverse)) rojo("moverse", "el viaje no sabe cómo moverse allí, y el cuaderno lo cuenta");
+    else {
+      for (const clave of ["llegar", "transportes", "billetes", "pagos"] as const)
+        (m[clave] as unknown[]).forEach((x, j) => {
+          if (!esDe(moverse[clave] as unknown[], x)) rojo(`moverse.${clave}[${j}]`, "no es una del viaje");
+        });
+      if (!igual(m.coche, moverse.coche)) rojo("moverse.coche", "no dice lo que dice el viaje del coche");
+    }
+  }
+  (c.saber ?? []).forEach((x, j) => {
+    if (saber === null || !esDe(saber.cosas, x))
+      rojo(`saber[${j}]`, "no es una cosa de lo que conviene saber del viaje");
+  });
+  // Cada dato de allí, con su página que se puede abrir y el día en que se vio.
+  for (const f of fuentesDeAlli(c))
+    if (!direccionQueVale(f.url) || !/^\d{4}-\d{2}-\d{2}/.test(f.visto) || Number.isNaN(Date.parse(f.visto)))
+      rojo("fuentes", `un dato de allí no dice de qué página sale o cuándo se vio: ${f.url}`);
+  return rojos;
 }

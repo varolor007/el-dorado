@@ -63,7 +63,7 @@ test("el contrato del que escribe la guía está entero, en inglés, y dice lo q
   const leer = (n: string): string => readFileSync(join(CONTRATO, n), "utf8");
   assert.match(leer("DELIVERY.md"), /\| `seat` \| Always `"guide-writer"` \|/);
   assert.match(leer("RULES.md"), /\*\*GW1\. Only the places of the trip\.\*\*/);
-  assert.match(leer("RULES.md"), /\*\*GW3\. No prices and no clock times\.\*\*/);
+  assert.match(leer("RULES.md"), /\*\*GW3\. Only the prices and the clock times of your material\.\*\*/);
   assert.match(leer("README.md"), /You do not use the internet/);
   // Sin internet: no lleva lo que sí llevan los que salen a buscar.
   assert.ok(!existsSync(join(CONTRATO, "INTERNET.md")));

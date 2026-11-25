@@ -133,6 +133,9 @@ const piezasDe = (m: MaterialDeLaGuia): Pieza[] => [
   { ruta: "days.json", contenido: json(m.dado.days) },
   { ruta: "stay.json", contenido: json(m.dado.stay) },
   { ruta: "todo.json", contenido: json(m.dado.todo) },
+  // Lo de allí (14.6), solo si el viaje lo sabe: una capa que falta no se le da, ni vacía.
+  ...(m.dado.around === undefined ? [] : [{ ruta: "around.json", contenido: json(m.dado.around) }]),
+  ...(m.dado.know === undefined ? [] : [{ ruta: "know.json", contenido: json(m.dado.know) }]),
 ];
 
 function puestoDe(carpeta: string): Puesto | null {
