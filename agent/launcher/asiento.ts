@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { puertaMetodo, type VeredictoDelMetodo } from "../gates/puerta_metodo.ts";
-import { abiertas, intentadas, leerConsultado } from "./consultado.ts";
+import { abiertas, intentadas, leerConsultadoEnSusVueltas } from "./consultado.ts";
 import { leerSello, type Puesto } from "./puesto.ts";
 
 const ORDEN = resolve(import.meta.dirname, "..", "contracts", "common", "LAUNCH.md");
@@ -57,7 +57,8 @@ export function ordenDeApertura(): string {
  * las que intentó abrir sin conseguirlo, de la memoria de lo consultado que guardó la casa en el run.
  */
 export function recogerAsiento(p: Puesto): VeredictoDelMetodo {
-  const consultado = leerConsultado(p);
+  // Con lo que abrió en sus vueltas de antes: corregir una entrega no obliga a abrir otra vez la misma página.
+  const consultado = leerConsultadoEnSusVueltas(p);
   return puertaMetodo(p.carpeta, leerSello(p), abiertas(consultado), intentadas(consultado));
 }
 

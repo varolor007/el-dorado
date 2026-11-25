@@ -707,7 +707,10 @@ cuenta lo que pide según llega y lo corta al pasar de su tope. Lo que buscó y 
 que devuelve quien piensa y lo guarda en `consultado/<puesto>.json` del run, sin lo que decían las páginas
 (`agent/launcher/consultado.ts`). La puerta de todos da rojo a la nota que cite una página que no se abrió, y al
 dato de la entrega que lleve una dirección que ni se abrió ni venía en su material; un resultado del buscador no
-es una fuente. Un asiento sin internet que sale, o uno que pasa de sus topes, no entrega. A un asiento con internet
+es una fuente. En una vuelta de más (25-nov), lo que se le devuelve (`in/returned.json`) no cuenta como su
+material, y sí lo que abrió en sus vueltas de antes (`leerConsultadoEnSusVueltas`): corregir no obliga a abrir otra
+vez la misma página, y una que escribió sin abrirla sigue en rojo. Un asiento sin internet que sale, o uno que pasa
+de sus topes, no entrega. A un asiento con internet
 no se le manda un material con un correo o una clave; que no salga un nombre propio depende de su material, y lo
 tiene que mirar el adversario. Las búsquedas cuentan en el gasto (0,01 dólares cada una en la llamada directa).
 Estrenado con la cuenta del PM (una búsqueda y una página, 23 segundos, unos 5 céntimos de equivalente): lo que

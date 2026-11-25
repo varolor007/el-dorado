@@ -138,8 +138,30 @@ export function guardarConsultado(p: Puesto, c: Consultado): void {
 /** Lo consultado por un asiento, del run; si no hay nada guardado, no consultó nada. Lo que no se lee, tampoco. */
 export function leerConsultado(p: Puesto): Consultado {
   const run = runDe(p);
-  if (run === null) return NADA_CONSULTADO;
-  const archivo = archivoDe(run, p.id);
+  return run === null ? NADA_CONSULTADO : leerDelRun(run, p.id);
+}
+
+/**
+ * Lo consultado por un asiento en esta vuelta y en las suyas de antes (`<base>-v1`, `<base>-v2`...): una vuelta que
+ * corrige su entrega puede citar la página que abrió en la anterior sin volver a abrirla. Lo que no vale es citar una
+ * página porque venía en la entrega que se le devolvió: eso no es haberla abierto.
+ */
+export function leerConsultadoEnSusVueltas(p: Puesto): Consultado {
+  const suyo = leerConsultado(p);
+  const run = runDe(p);
+  const vuelta = /^(.+)-v(\d+)$/.exec(p.id);
+  if (run === null || vuelta === null) return suyo;
+  const partes = [suyo];
+  for (let n = 1; n < Number(vuelta[2]); n++) partes.push(leerDelRun(run, `${vuelta[1]}-v${n}`));
+  return {
+    busquedas: partes.flatMap((x) => x.busquedas),
+    paginas: partes.flatMap((x) => x.paginas),
+    fallidas: partes.flatMap((x) => x.fallidas),
+  };
+}
+
+function leerDelRun(run: string, id: string): Consultado {
+  const archivo = archivoDe(run, id);
   if (!existsSync(archivo)) return NADA_CONSULTADO;
   try {
     const leido = JSON.parse(readFileSync(archivo, "utf8")) as Partial<Consultado>;

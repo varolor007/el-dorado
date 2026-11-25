@@ -169,10 +169,18 @@ function fuentesDe(entreCorchetes: string): string[] {
     .filter((f) => f !== "");
 }
 
-/** Las direcciones que lleva el material de texto del puesto: un dato puede repetir una que le dio la casa. */
+/** Donde va, en el material de una vuelta de más, la entrega que se le devolvió al asiento con sus rojos. */
+const LO_DEVUELTO = "in/returned.json";
+
+/**
+ * Las direcciones que lleva el material de texto del puesto: un dato puede repetir una que le dio la casa. Lo que se
+ * le devolvió no cuenta: es su propia entrega de antes, y una página que escribió sin abrirla no pasa a ser de su
+ * material por haberla escrito.
+ */
 function direccionesDelMaterial(puesto: string, sello: Sello): Set<string> {
   const salida = new Set<string>();
   for (const archivo of Object.keys(sello.archivos)) {
+    if (archivo === LO_DEVUELTO) continue;
     if (!archivo.startsWith("in/") || !/\.(json|md|txt|csv)$/i.test(archivo)) continue;
     const ruta = join(puesto, archivo);
     if (!existsSync(ruta)) continue;

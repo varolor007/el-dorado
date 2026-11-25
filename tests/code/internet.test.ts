@@ -206,6 +206,35 @@ test("la puerta: la misma página escrita de otra forma vale; una que ni se inte
   assert.ok(recogerAsiento(p).rojos.some((x) => x.que.includes(`la página HTTPS://OFICIAL.invalid/requisitos/#visa`)));
 });
 
+test("otra vuelta: lo devuelto no hace buena una página sin abrir, y lo abierto antes sigue valiendo", async () => {
+  const run = join(TEMPORAL, `run-${++cuenta}`);
+  const INVENTADA = "https://inventada.invalid/datos";
+  const nota = [`- A visa is needed. [${ABIERTA}] [seen]`];
+  const entrega = { ok: ABIERTA, source: INVENTADA };
+  const v1 = montarPuesto(run, "x-v1", "seat-online", PIEZAS, { contratos: CONTRATOS });
+  const una = busca(respuesta(nota, entrega));
+  const r1 = await lanzarAsiento(v1, lanzadorDirecto(una.pensar, { entrada: 4, salida: 20 }), { segundos: 5 });
+  const rojo = `el dato cita la página ${INVENTADA}, que no se abrió ni venía en su material`;
+  assert.deepEqual(
+    r1.metodo.rojos.map((x) => x.que),
+    [rojo],
+  );
+  // La casa le devuelve su entrega, con la página inventada dentro. En esta vuelta no abre nada.
+  const devuelto: Pieza = {
+    ruta: "returned.json",
+    contenido: JSON.stringify({ what_was_wrong: r1.metodo.rojos, delivery: r1.metodo.entrega }),
+  };
+  const v2 = montarPuesto(run, "x-v2", "seat-online", [...PIEZAS, devuelto], { contratos: CONTRATOS });
+  const acusa = respuesta(nota, entrega).replace("I received trip.json.", "I received trip.json and returned.json.");
+  const otra = busca(acusa, null);
+  const r2 = await lanzarAsiento(v2, lanzadorDirecto(otra.pensar, { entrada: 4, salida: 20 }), { segundos: 5 });
+  // La que abrió en la primera vuelta vale sin abrirla otra vez; la inventada sigue siendo un rojo.
+  assert.deepEqual(
+    r2.metodo.rojos.map((x) => x.que),
+    [rojo],
+  );
+});
+
 test("un asiento sin internet no cita páginas, salvo en su entrega las de su material", async () => {
   const p = monta("seat-offline");
   const texto = respuesta([`- A visa is needed. [${ABIERTA}] [seen]`], {
