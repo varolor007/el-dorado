@@ -16,6 +16,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { hayGuiaEn } from "../data/guia.ts";
 import { TOPE_DE_UN_ASIENTO } from "../data/pasos.ts";
 import { puertaCuaderno, puertaGuia, type EntregaDeLaGuia, type MaterialDeLaGuia } from "../gates/puerta_guia.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
@@ -78,6 +79,8 @@ export function pedirGuia(
   const hoy = o.hoy ?? new Date();
   if (v.ficha.estado !== "closed" || v.ficha.version === null) throw new FalloDeLaGuia("not_closed");
   const { viaje } = deLaVersion(v, v.ficha.version);
+  // Solo en los idiomas que tienen sus rótulos y sus palabras prohibidas: en otro, ni se lanza a nadie.
+  if (!hayGuiaEn(viaje.idioma)) throw new FalloDeLaGuia("language");
   const manera = maneraDeLaGuia(viaje, o.manera ?? null);
   if (manera === null && (o.manera != null || viaje.maneras.length > 1)) throw new FalloDeLaGuia("which_way");
   const hechas = guiasDe(v);
@@ -177,14 +180,18 @@ export function sigueLaGuia(v: ViajeEnLaMesa, n: number): EstadoDeLaGuia {
   }
   const metodo = recogerAsiento(puesto);
   let rojos = [...metodo.rojos];
+  // Los avisos de la puerta 10 no vuelven al asiento ni paran la guía: se guardan con su veredicto, para quien revise.
+  let avisos: Rojo[] = [];
   if (metodo.entrega !== null) {
     try {
-      rojos.push(...puertaGuia(metodo.entrega, m).rojos);
+      const veredicto = puertaGuia(metodo.entrega, m);
+      rojos.push(...veredicto.rojos);
+      avisos = veredicto.avisos;
     } catch {
       rojos.push({ donde: "delivery", que: "la entrega no tiene la forma de su contrato: la puerta no la pudo leer" });
     }
   }
-  guardarJson(join(carpeta, `${puesto.id}.puertas.json`), { verde: rojos.length === 0, rojos });
+  guardarJson(join(carpeta, `${puesto.id}.puertas.json`), { verde: rojos.length === 0, rojos, avisos });
   if (rojos.length === 0) {
     guardarJson(join(carpeta, "escrita.json"), metodo.entrega);
     return { estado: "working", espera: null };

@@ -1,5 +1,6 @@
-// Lo que ha gastado de IA cada viaje de una cuenta, sumando todas sus investigaciones, y lo que va a gastar la
-// siguiente. Sin IA: sale de lo que apuntó cada trabajo (`trabajos.json` de cada run). Del disco se lee lo justo: la
+// Lo que ha gastado de IA cada viaje de una cuenta, sumando sus investigaciones, sus cierres y sus guías, y lo que va
+// a gastar la siguiente investigación. Sin IA: sale de lo que apuntó cada trabajo (`trabajos.json` de cada run, de
+// cada cierre y de cada guía). Del disco se lee lo justo: la
 // ficha de cada viaje, los trabajos de cada run y, solo de los viajes que han gastado algo, a dónde van.
 //
 // Lo que va a gastar lo siguiente no se inventa: es lo que costó de media una investigación entera de esa misma
@@ -68,9 +69,12 @@ function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
   };
 }
 
-/** Lo que gastaron los cierres de un viaje: el que explica, una vez por cierre. */
-function deLosCierres(v: ViajeEnLaMesa): Omit<DeUnRun, "entera"> {
-  const raiz = join(v.carpeta, "cierres");
+/**
+ * Lo que gastaron las carpetas numeradas de un viaje que no son una investigación: los cierres (el que explica, una
+ * vez por cierre) y las guías (el que escribe la guía, con sus vueltas).
+ */
+function deLasCarpetas(v: ViajeEnLaMesa, cuales: "cierres" | "guias"): Omit<DeUnRun, "entera"> {
+  const raiz = join(v.carpeta, cuales);
   const suma = { usd: 0, llamadas: 0, sabido: true, ultima: null as string | null };
   if (!existsSync(raiz)) return suma;
   for (const n of readdirSync(raiz).filter((x) => /^[1-9]\d*$/.test(x))) {
@@ -98,15 +102,20 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
     const v: ViajeEnLaMesa = { carpeta: join(resolve(mesa), "viajes", ficha.id), ficha };
     const runs = v.ficha.runs.map((r) => deUnRun(v, r.n));
     for (const r of runs) if (r.entera) enteras.push(r.usd);
-    // Lo que gastó el que explica al cerrar el viaje cuenta en el viaje, no en la media de una investigación.
-    const cierres = deLosCierres(v);
-    const ultimas = [...runs.flatMap((r) => r.ultima ?? []), ...(cierres.ultima ?? [])].sort();
+    // Lo que gastaron el que explica al cerrar el viaje y el que escribe su guía cuenta en el viaje, no en la media
+    // de una investigación.
+    const cierres = deLasCarpetas(v, "cierres");
+    const guias = deLasCarpetas(v, "guias");
+    // Cada última es un texto o null: va entera, no letra a letra.
+    const ultimas = [...runs.map((r) => r.ultima), cierres.ultima, guias.ultima]
+      .filter((x): x is string => x !== null)
+      .sort();
     viajes.push({
       id: v.ficha.id,
       ...aDonde(v),
-      usd: runs.reduce((s, r) => s + r.usd, 0) + cierres.usd,
-      llamadas: runs.reduce((s, r) => s + r.llamadas, 0) + cierres.llamadas,
-      sabido: runs.every((r) => r.sabido) && cierres.sabido,
+      usd: runs.reduce((s, r) => s + r.usd, 0) + cierres.usd + guias.usd,
+      llamadas: runs.reduce((s, r) => s + r.llamadas, 0) + cierres.llamadas + guias.llamadas,
+      sabido: runs.every((r) => r.sabido) && cierres.sabido && guias.sabido,
       ultima: ultimas.at(-1) ?? null,
       investigaciones: runs.length,
     });

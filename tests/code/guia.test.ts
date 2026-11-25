@@ -20,16 +20,22 @@ import {
   materialDeLaGuia,
   pedirGuia,
 } from "../../agent/launcher/guia.ts";
-import { guardarVersion, leerViaje, nuevoRun, pasar } from "../../agent/launcher/mesa.ts";
+import { guardarVersion, leerVersion, leerViaje, nuevoRun, pasar } from "../../agent/launcher/mesa.ts";
 import { comprobarViaje } from "../../agent/output/viaje.ts";
 import { montarCuaderno, pintarCuaderno, proyectar } from "../../agent/scripts/cuaderno.ts";
+import { IDIOMAS_DE_LA_GUIA, ROTULOS } from "../../agent/data/guia.ts";
+import { AVISOS } from "../../agent/data/palabras.ts";
+import { gastoDeLaCuenta } from "../../agent/launcher/gasto.ts";
+import type { Viaje } from "../../agent/output/viaje.ts";
 import { JPEG, type Objeto } from "../cases/inventado/asientos.ts";
 import { SUCESOS_INVENTADOS } from "../cases/inventado/viaje.ts";
 import {
+  ENLACES_DEL_CIERRE,
   entregaDeLaGuia,
   HOY,
   lanzadorDeLaGuia,
   viajeCerradoEnLaMesa,
+  viajeCerradoPorSuFlujo,
   viajeParaLaGuia,
 } from "../cases/inventado/guia.ts";
 
@@ -124,8 +130,6 @@ test("la puerta 10 caza cada trampa: un sitio de fuera, un precio, una hora, un 
       /Palacio Olvidado.*no es una parada/,
     );
     trampa((e) => (parada(e).why = "Y después, el museo museo inventado."), /Museo Inventado.*no es una parada/);
-    // Un nombre que no está en su material: un café de memoria.
-    trampa((e) => (parada(e).when = "Para desayunar, el Café Nicola de enfrente."), /nombra «Nicola», que no está/);
     // Un precio, en cualquier forma; una hora del reloj.
     trampa((e) => (parada(e).when = "La entrada cuesta 12 €."), /habla de dinero/);
     trampa((e) => (parada(e).when = "Abre a las 9 de la mañana."), /dice la hora 9/);
@@ -211,7 +215,7 @@ test("el cuaderno junta el viaje y lo escrito; su puerta caza una foto sin autor
     roto.dias[0].paradas[0].foto = { url: "https://fotos.invalid/x.jpg", autor: "", licencia: "CC0", pagina: null };
     roto.duermes!.precio = { ...roto.duermes!.precio, total: 1 };
     roto.avisos.ia = "";
-    roto.reservas[0].precio = { ...roto.reservas[0].precio, enlace: "http://reservas.inventado.example/x" };
+    roto.reservas[0].enlaces[0].url = "http://reservas.inventado.example/x";
     const rojos = puertaCuaderno(roto, m.viaje).rojos.map((r) => r.que);
     for (const espera of [/sin su autor/, /no es uno del viaje/, /aviso de que está hecha con IA/, /https sin claves/])
       assert.ok(
@@ -243,9 +247,9 @@ test("el cuaderno se pinta como una página que se basta sola: sin programas, es
     assert.doesNotMatch(html, PROHIBIDOS);
     assert.ok(!html.includes("Tu viaje ha cambiado"));
     assert.match(pintarCuaderno(c, { atras: true }), /Tu viaje ha cambiado desde que se hizo esta guía/);
-    // En inglés, los rótulos en inglés; en un idioma sin rótulos, también en inglés.
+    // En inglés, los rótulos en inglés; en un idioma sin rótulos, ninguno por defecto: no se pinta.
     assert.match(pintarCuaderno({ ...c, idioma: "en" }), /Where you sleep/);
-    assert.match(pintarCuaderno({ ...c, idioma: "fi" }), /Where you sleep/);
+    assert.throws(() => pintarCuaderno({ ...c, idioma: "fi" }), /no sale en fi/);
   });
 });
 
@@ -396,6 +400,276 @@ test("la guía no gasta sin el botón del viajero ni por encima de su techo", as
     const cara = lanzadorDeLaGuia((e) => ((e.cover as Objeto).intro = "Te va a encantar."));
     assert.equal((await llevarLaGuia(v, q.n, cara, { sinFotos: true })).estado, "stopped");
     assert.equal(cara.veces, 1);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+// Lo que dejó la revisión de la tanda 5.
+
+test("la puerta 10: una palabra con mayúscula que no está en el material es un aviso, no un rojo", () => {
+  conMaterial((m) => {
+    const conTexto = (idioma: string, dice: string): ReturnType<typeof puertaGuia> => {
+      const material = structuredClone(m);
+      material.dado.trip.language = idioma;
+      const e = entregaDeLaGuia(material.dado) as unknown as EntregaDeLaGuia;
+      e.days[0].stops[0].what = dice;
+      return puertaGuia(e as unknown, material);
+    };
+    // Los falsos rojos de antes: en inglés, en español, tras un guion, tras un salto de línea y en un título.
+    const normales: [string, string][] = [
+      ["en", "I'm sure the tower is worth it, and I love it."],
+      ["en", "A Gothic tower with a Roman base and a Spanish roof."],
+      ["en", "Lovely at Christmas and at Easter."],
+      ["en", "The Tower Of The Old Town Above The Square"],
+      ["es", "Una torre de estilo Gótico, con un remate Barroco."],
+      ["es", "Muy animada en Navidad."],
+      ["es", "Una torre de piedra - Gótica por fuera."],
+    ];
+    for (const [idioma, dice] of normales) {
+      const v = conTexto(idioma, dice);
+      assert.deepEqual(v.rojos, [], `${dice}: ${JSON.stringify(v.rojos)}`);
+    }
+    // Tras un salto de línea: el salto es rojo por su regla, pero la palabra que sigue no se toma por un nombre.
+    const salto = conTexto("es", "Una torre de piedra\nGótica por fuera.");
+    assert.ok(!salto.rojos.some((r) => /nombra/.test(r.que)) && !salto.avisos.some((a) => /Gótica/.test(a.que)));
+    // Lo que no está en el material sigue saliendo, como aviso, para quien revise.
+    const cafe = conTexto("es", "Para desayunar, el Café Nicola de enfrente.");
+    assert.deepEqual(cafe.rojos, []);
+    assert.ok(cafe.avisos.some((a) => /nombra «Nicola», que no está en el viaje/.test(a.que)));
+    assert.ok(conTexto("en", "A Gothic tower.").avisos.some((a) => /Gothic/.test(a.que)));
+    // Trampa: un sitio conocido que no es del viaje, nombrado entero, sigue en rojo, en inglés y en español.
+    for (const idioma of ["en", "es"]) {
+      const fuera = conTexto(idioma, "Next to the Palacio Olvidado.");
+      assert.ok(
+        fuera.rojos.some((r) => /Palacio Olvidado.*no es una parada/.test(r.que)),
+        JSON.stringify(fuera.rojos),
+      );
+    }
+  });
+});
+
+test("los avisos de la puerta 10 se guardan con su veredicto, y la guía sale igual", async () => {
+  const { mesa, v } = viajeCerradoEnLaMesa();
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const lanzador = lanzadorDeLaGuia((e) => {
+      const dia = (e.days as Objeto[])[0];
+      ((dia.stops as Objeto[])[0] as Objeto).what = "Una torre de estilo Gótico.";
+    });
+    assert.deepEqual(await llevarLaGuia(v, p.n, lanzador, { hoy: () => HOY, sinFotos: true }), { estado: "ready" });
+    assert.equal(lanzador.veces, 1);
+    const puertas = JSON.parse(readFileSync(join(carpetaDeLaGuia(v, p.n), "guia-v1.puertas.json"), "utf8"));
+    assert.equal(puertas.verde, true);
+    assert.ok(puertas.avisos.some((a: { que: string }) => /Gótico/.test(a.que)));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("la guía solo se pide en los idiomas que tienen sus rótulos y sus palabras: en otro, se niega sin lanzar", () => {
+  // Cada idioma de la guía tiene sus rótulos y sus avisos; y la web dice la negativa en inglés y en español.
+  for (const idioma of IDIOMAS_DE_LA_GUIA) {
+    assert.ok(Object.hasOwn(ROTULOS, idioma), idioma);
+    assert.ok(Object.hasOwn(AVISOS, idioma), idioma);
+  }
+  const textos = readFileSync(resolve(import.meta.dirname, "..", "..", "web", "src", "lib", "textos.ts"), "utf8");
+  assert.match(textos, /language: "Your guide can be made in English or Spanish/);
+  assert.match(textos, /language: "Tu guía se puede hacer en inglés o en español/);
+  const viaje = viajeParaLaGuia();
+  viaje.idioma = "fi";
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    assert.throws(
+      () => pedirGuia(v, { manera: "best_value", hoy: HOY }),
+      (e: unknown) => e instanceof FalloDeLaGuia && e.message === "language",
+    );
+    // Ni una guía pedida: nada que lanzar.
+    assert.equal(guiaDeCara(v, false), null);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo que gasta la guía cuenta en el viaje de la cuenta, y no en la media de una investigación", async () => {
+  const { mesa, v } = viajeCerradoEnLaMesa();
+  try {
+    const antes = gastoDeLaCuenta("ana", mesa);
+    assert.equal(antes.viajes[0].llamadas, 0);
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    // Dos vueltas: la primera pone un precio y vuelve; cada una gasta lo suyo.
+    const lanzador = lanzadorDeLaGuia((e, vez) => {
+      if (vez === 1) (e.cover as Objeto).intro = "Todo por 300 euros.";
+    });
+    await llevarLaGuia(v, p.n, lanzador, { hoy: () => HOY, sinFotos: true });
+    const despues = gastoDeLaCuenta("ana", mesa);
+    assert.equal(despues.viajes[0].llamadas, 2);
+    assert.ok(Math.abs(despues.viajes[0].usd - 0.08) < 1e-9, String(despues.viajes[0].usd));
+    assert.equal(despues.total.llamadas, 2);
+    assert.equal(despues.viajes[0].ultima, HOY.toISOString());
+    // Trampa: la guía no entra en lo que costaría la siguiente investigación.
+    assert.deepEqual(despues.siguiente, antes.siguiente);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("el croquis junta las paradas a los dos lados del meridiano 180, con su escala de verdad", () => {
+  const puntos = [
+    { lat: -16.5, lon: 179.9 },
+    { lat: -16.51, lon: -179.9 },
+  ];
+  const { donde, metrosPorPunto } = proyectar(puntos, 600, 400, 50);
+  const a = donde(puntos[0]);
+  const b = donde(puntos[1]);
+  // Juntas en el centro, la del oeste del 180 a la derecha; y la escala, de unos pocos kilómetros, no de medio mundo.
+  assert.ok(b.x > a.x, `${a.x} ${b.x}`);
+  assert.ok(a.x >= 50 - 1e-6 && b.x <= 550 + 1e-6 && b.y > a.y);
+  assert.ok(metrosPorPunto * 500 < 50_000, String(metrosPorPunto));
+  // Trampa: lejos del 180, una longitud negativa sigue donde estaba.
+  const cerca = proyectar(
+    [
+      { lat: 40, lon: -0.01 },
+      { lat: 40, lon: 0.01 },
+    ],
+    600,
+    400,
+    50,
+  ).donde;
+  assert.ok(cerca({ lat: 40, lon: -0.01 }).x < cerca({ lat: 40, lon: 0.01 }).x);
+});
+
+test("el autor de una foto con la frase de Commons sale limpio en el cuaderno, o la foto no entra", () => {
+  conMaterial((m) => {
+    const escrita = entregaDeLaGuia(m.dado) as unknown as EntregaDeLaGuia;
+    const viaje = structuredClone(m.viaje);
+    viaje.paradas[0].foto!.autor = "No machine-readable author provided. Fulano assumed (based on copyright claims).";
+    const c = montarCuaderno(viaje, m.dado, escrita, { manera: "best_value", hecha: HOY });
+    assert.equal(c.dias[0].paradas[0].foto?.autor, "Fulano");
+    assert.ok(!pintarCuaderno(c).includes("machine-readable"));
+    // Trampa: la frase sin nombre dentro no es un autor, y la foto no se enseña.
+    viaje.paradas[0].foto!.autor = "No machine-readable author provided.";
+    const sin = montarCuaderno(viaje, m.dado, escrita, { manera: "best_value", hecha: HOY });
+    assert.equal(sin.dias[0].paradas[0].foto, null);
+  });
+});
+
+test("la guía de un viaje cerrado por su flujo: precio y total de ese día, y enlaces sin los caídos", async () => {
+  // Visto fallar: se cerraba con el hotel un 30 % más caro y su enlace caído, y la guía enseñaba el precio de antes y
+  // el enlace muerto en «dónde se reserva».
+  const { mesa, v } = await viajeCerradoPorSuFlujo();
+  try {
+    const cerrado = leerVersion(v)!.viaje as Viaje;
+    const cierre = cerrado.cierre!;
+    assert.equal(cierre.precios[0].hoy?.total, 312);
+    const p = pedirGuia(v, { hoy: HOY });
+    assert.equal(p.manera, "best_value");
+    assert.deepEqual(await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), { hoy: () => HOY, sinFotos: true }), {
+      estado: "ready",
+    });
+    const c = JSON.parse(readFileSync(join(carpetaDeLaGuia(v, p.n), "guia.json"), "utf8"));
+    // El precio del hotel es el de ese día, dicho como tal; y el total, el de ese día.
+    assert.equal(c.duermes.precio.total, 312);
+    assert.equal(c.duermes.precio.segun, "closing");
+    assert.equal(c.duermes.precio.visto, cierre.precios[0].hoy!.visto);
+    assert.equal(c.llegas.precio.total, 120);
+    assert.deepEqual(c.total, { total: 432, moneda: "EUR", segun: "closing" });
+    // Los enlaces, con su clase y sin el que no respondió; el de otro vendedor, con su precio del día que se buscó.
+    const hotel = c.reservas.find((r: { que: string }) => r.que === "stay");
+    assert.equal(hotel.precio.total, 312);
+    assert.deepEqual(
+      hotel.enlaces.map((e: { clase: string; comprobado: string }) => [e.clase, e.comprobado]),
+      [
+        ["other_seller", "unchecked"],
+        ["own_site", "ok"],
+      ],
+    );
+    assert.deepEqual(hotel.enlaces[0].precio, {
+      total: 255,
+      moneda: "EUR",
+      visto: cerrado.alojamientos[0].otrasOfertas[0].visto,
+    });
+    assert.equal(hotel.caidos, 1);
+    const vuelo = c.reservas.find((r: { que: string }) => r.que === "transport");
+    assert.deepEqual(
+      vuelo.enlaces.map((e: { clase: string; url: string }) => [e.clase, e.url]),
+      [["search", ENLACES_DEL_CIERRE.vuelo]],
+    );
+    // Y así se pinta: el precio de ese día, el total, cada enlace por lo que es, y el caído fuera.
+    const html = documentoDeLaGuia(v) ?? "";
+    assert.ok(!html.includes(ENLACES_DEL_CIERRE.hotel), "pinta el enlace que no respondió");
+    assert.match(html, /312,00\s€, el precio al cerrar el viaje/);
+    assert.match(html, /En total/);
+    assert.match(html, /432,00\s€/);
+    assert.match(html, /Otro vendedor: Otra Inventada/);
+    assert.match(html, /255,00\s€, visto el .*, el día de la búsqueda/);
+    assert.match(html, /La web del propio alojamiento, que no es donde se vio el precio/);
+    assert.match(html, /Este enlace no se pudo comprobar al cerrar el viaje/);
+    assert.match(html, /Un enlace no respondió al cerrar el viaje, y no se pone/);
+    assert.ok(!/240,00\s€/.test(html), "enseña el precio de antes");
+
+    // Las trampas de la puerta 10 contra el viaje cerrado: el precio de antes, el total de antes, el enlace caído,
+    // un enlace que falta, uno que dice ser donde se vio el precio y un precio sin confirmar dado por de ese día.
+    const trampa = (cambia: (x: typeof c) => void, espera: RegExp): void => {
+      const roto = structuredClone(c);
+      cambia(roto);
+      const rojos = puertaCuaderno(roto, cerrado, c.version).rojos.map((r) => r.que);
+      assert.ok(
+        rojos.some((r) => espera.test(r)),
+        `${espera} en ${JSON.stringify(rojos)}`,
+      );
+    };
+    assert.deepEqual(puertaCuaderno(c, cerrado, c.version).rojos, []);
+    trampa((x) => (x.duermes.precio = { ...x.duermes.precio, total: 240 }), /no es el del viaje cerrado/);
+    trampa(
+      (x) => (x.reservas[0].precio = { ...x.reservas[0].precio, segun: "seen", total: 240 }),
+      /no es el del viaje cerrado/,
+    );
+    trampa((x) => (x.total = { ...x.total, total: 360 }), /total del viaje cerrado/);
+    trampa((x) => (x.total = null), /total del viaje cerrado/);
+    trampa(
+      (x) =>
+        x.reservas[0].enlaces.push({
+          clase: "where_priced",
+          url: ENLACES_DEL_CIERRE.hotel,
+          vendedor: "inventada",
+          precio: null,
+          comprobado: "ok",
+        }),
+      /no respondió al cerrar/,
+    );
+    trampa((x) => x.reservas[0].enlaces.pop(), /falta un enlace del viaje cerrado/);
+    trampa((x) => (x.reservas[0].enlaces[1].clase = "where_priced"), /no dice lo que dice el viaje cerrado/);
+    trampa((x) => (x.reservas[0].enlaces[0].comprobado = "ok"), /no dice lo que dice el viaje cerrado/);
+    trampa((x) => (x.reservas[0].enlaces[0].precio = null), /no dice lo que dice el viaje cerrado/);
+    trampa((x) => (x.reservas[0].caidos = 0), /cuántos enlaces no respondieron/);
+    trampa((x) => (x.reservas = x.reservas.slice(1)), /falta dónde se reserva/);
+    trampa((x) => (x.duermes.nombre = "Pensión Inventada"), /no es donde se duerme en el viaje cerrado/);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("si al cerrar el hotel ya no tenía precio, la guía enseña el que se vio, dicho como tal", async () => {
+  const { mesa, v } = await viajeCerradoPorSuFlujo({ hotelHoy: null });
+  try {
+    const cerrado = leerVersion(v)!.viaje as Viaje;
+    const p = pedirGuia(v, { hoy: HOY });
+    await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), { hoy: () => HOY, sinFotos: true });
+    const c = JSON.parse(readFileSync(join(carpetaDeLaGuia(v, p.n), "guia.json"), "utf8"));
+    assert.deepEqual(
+      [c.duermes.precio.total, c.duermes.precio.segun, c.duermes.precio.visto],
+      [240, "gone", cerrado.alojamientos[0].precio.visto],
+    );
+    assert.deepEqual(c.total, { total: 360, moneda: "EUR", segun: "unknown" });
+    assert.equal(c.preciosDel, cerrado.alojamientos[0].precio.visto.slice(0, 10));
+    const html = documentoDeLaGuia(v) ?? "";
+    assert.match(html, /240,00\s€, visto el .*\. Al cerrar el viaje, quien lo vende ya no lo tenía/);
+    assert.match(html, /Con los precios vistos: uno no se pudo confirmar al cerrar el viaje/);
+    // Trampa: el que se vio, dado por el de ese día.
+    const roto = structuredClone(c);
+    roto.duermes.precio.segun = "closing";
+    assert.ok(puertaCuaderno(roto, cerrado, c.version).rojos.some((r) => /no es el del viaje cerrado/.test(r.que)));
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
