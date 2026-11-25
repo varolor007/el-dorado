@@ -178,6 +178,8 @@ type Rotulos = {
   deA: (abre: string, cierra: string) => string;
   reservarEn: string;
   webDelSitio: string;
+  /** Su web cuando es la que dicen los datos abiertos, no una que se abrió: como la dice la web. */
+  webDeLosAbiertos: string;
   cerca: (metros: string, parada: string) => string;
   cuesta: (desde: string, hasta: string) => string;
   /** Lo que te conviene para moverte (14.6): la cuenta del código, la misma de «moverte allí» en las cuentas. */
@@ -428,6 +430,7 @@ export const ROTULOS: Record<string, Rotulos> = {
     deA: (abre, cierra) => `${abre} to ${cierra}`,
     reservarEn: "Where to book",
     webDelSitio: "Its website",
+    webDeLosAbiertos: "Its website, as open data gives it",
     cerca: (metros, parada) => `${metros} from ${parada}`,
     cuesta: (desde, hasta) => `Usually ${desde} to ${hasta}`,
   },
@@ -649,6 +652,7 @@ export const ROTULOS: Record<string, Rotulos> = {
     deA: (abre, cierra) => `${abre} a ${cierra}`,
     reservarEn: "Dónde se reserva",
     webDelSitio: "Su web",
+    webDeLosAbiertos: "Su web, según los datos abiertos",
     cerca: (metros, parada) => `A ${metros} de ${parada}`,
     cuesta: (desde, hasta) => `Suele costar de ${desde} a ${hasta}`,
   },

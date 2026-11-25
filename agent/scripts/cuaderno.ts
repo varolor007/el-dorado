@@ -89,6 +89,11 @@ export type EntradaDelCuaderno = {
   horario: Horario | null;
   reservar: EntradaDeUnSitio["reservar"];
   web: string | null;
+  /**
+   * Si su web es la que dicen los datos abiertos (que edita cualquiera) y no una que abrió el asiento: entonces se dice
+   * así, como en la web, y nunca como dónde reservar. Un cuaderno de antes no lo lleva, y se pinta como de los datos.
+   */
+  webDeLosAbiertos?: boolean;
 };
 
 /** Un sitio donde comer un día: la cosa del destino, tal cual, la parada que le queda más cerca y lo que se anda. */
@@ -578,6 +583,7 @@ export function entradaDelCuaderno(e: EntradaDeUnSitio | null, fecha: string): E
     horario: horarioDelDia(e.horarios, fecha),
     reservar: e.reservar,
     web: e.web,
+    webDeLosAbiertos: e.webDeLosAbiertos !== false,
   };
 }
 
@@ -976,7 +982,7 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
       filas.push(h("p", null, t("span", "marca ojo", r.cierraEseDia), " ", nota(`(${visto(e.horario.fuente)})`)));
     const enlaces = [
       e.reservar?.haceFalta === true && e.reservar.donde !== null ? enlace(e.reservar.donde, r.reservarEn) : "",
-      e.web === null ? "" : enlace(e.web, r.webDelSitio),
+      e.web === null ? "" : enlace(e.web, e.webDeLosAbiertos === false ? r.webDelSitio : r.webDeLosAbiertos),
     ].filter((x) => x !== "");
     if (e.reservar?.haceFalta === true && p.reservar !== true)
       filas.push(h("p", null, t("span", "marca ojo", r.reservar), " ", nota(`(${visto(e.reservar.fuente)})`)));

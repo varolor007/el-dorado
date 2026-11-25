@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (1.033 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (1.035 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -279,7 +279,9 @@ otros días, el que cambia de paradas toma el título de su parada más importan
 `agent/scripts/ritmo.ts`, que usa `conTusDias`), y la puerta 10 da rojo a un título así. «De donde llegas a donde
 duermes» enseña solo las maneras que van a tu zona, si se sabe, y si no cada una con la suya (`llegarDelCuaderno`).
 En la última hoja, las fuentes de allí van en su bloque y ya no se montan, y un aviso de las fechas sin nombre
-lleva su tema de rótulo, como en la web (`temaDeFechas`). Pruebas en `guia_dias_libres`.
+lleva su tema de rótulo, como en la web (`temaDeFechas`). Y la web de un sitio dice de dónde sale: la de los datos
+abiertos, como «Su web, según los datos abiertos», y la puerta 10 no deja darla por la oficial ni ponerla donde
+reservar. Pruebas en `guia_dias_libres`.
 
 **Las puertas de las capas y los enlaces, tras la revisión (3.5, 14.3, 14.4 y 14.5)** (25-nov, una sesión de
 arreglos). Un enlace de fuera vale solo escrito en su forma normal (`formaNormal` y `enlaceQueVale`, en
@@ -297,8 +299,7 @@ en «evitar» y en «lo práctico». El presupuesto entero, con más maneras de 
 solo de fuera y sin redirecciones, Wikidata dentro del tope (dos minutos en total), y un fallo entero no se guarda
 como respuesta. El horario: solo «24:00» vale como las 24, y lee «Su,PH off» y «10:00-12:00, 14:00-18:00». Sabido: la
 12 sigue pidiendo solo que lo visto no sea después de hoy, porque su contrato deja poner la fecha que da la página;
-la regla de los negocios puede dar algún rojo falso; y el cuaderno de la guía aún no distingue la web de los datos
-abiertos. Sin ver con IA.
+y la regla de los negocios puede dar algún rojo falso. Sin ver con IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
