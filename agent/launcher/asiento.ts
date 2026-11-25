@@ -10,8 +10,12 @@ import { leerSello, type Puesto } from "./puesto.ts";
 
 const ORDEN = resolve(import.meta.dirname, "..", "contracts", "common", "LAUNCH.md");
 
-/** Lo que gasta un asiento de la clave del viajero: sus turnos, lo que leyó y escribió la IA, y lo que cuesta. */
-export type Gasto = { turnos: number; entrada: number; salida: number; usd: number };
+/**
+ * Lo que gasta un asiento de la clave del viajero: sus turnos, lo que leyó y escribió la IA, y lo que cuesta. Si es
+ * de un asiento cortado (`cortado`), es lo que se contó hasta el corte: lo de la vuelta que estaba en marcha puede
+ * no estar dentro (14.7).
+ */
+export type Gasto = { turnos: number; entrada: number; salida: number; usd: number; cortado?: true };
 
 /**
  * Lo que hace trabajar al asiento: recibe la orden y vuelve cuando el asiento ha acabado, con lo que gastó si lo
@@ -20,7 +24,25 @@ export type Gasto = { turnos: number; entrada: number; salida: number; usd: numb
  */
 export type Lanzador = (orden: string, puesto: Puesto, corte?: AbortSignal) => Promise<Gasto | void>;
 
-export type Tope = { segundos: number };
+/**
+ * El tope de un asiento, y lo que se le deja, después de cortarlo, para acabar de cerrar y decir lo que gastó: unos
+ * segundos (`gracia`), y no más. Lo que diga después ya no se espera.
+ */
+export type Tope = { segundos: number; gracia?: number };
+
+/** Lo que se espera a un asiento cortado para que diga lo que gastó, si su tope no dice otra cosa (14.7). */
+export const GRACIA_AL_CORTAR = { segundos: 8 };
+
+/**
+ * El error con el que acaba un lanzador cortado (por tiempo, por el aviso de la casa o por pasar de su tope de
+ * internet): lleva lo gastado hasta el corte, marcado como de un asiento cortado, y, si se puede acotar, lo más que
+ * pudo quedar sin contar (`cota`, en dólares). Sin gasto que valga, es un error como cualquiera.
+ */
+export function errorDeUnCortado(mensaje: string, gasto: Gasto | null, cota: number | null): Error {
+  if (gasto === null || !gastoQueVale(gasto)) return new Error(mensaje);
+  const vale = typeof cota === "number" && Number.isFinite(cota) && cota >= 0;
+  return Object.assign(new Error(mensaje), { gasto: { ...gasto, cortado: true as const }, cota: vale ? cota : null });
+}
 
 export type Resultado = {
   puesto: Puesto;
@@ -29,6 +51,8 @@ export type Resultado = {
   error: string | null;
   /** Lo que gastó, si el lanzador lo dijo y son números que valen; si no, null: no se sabe. */
   gasto: Gasto | null;
+  /** De un asiento cortado: lo más que pudo quedar sin contar, en dólares, si el lanzador lo dijo; si no, null. */
+  cota: number | null;
   metodo: VeredictoDelMetodo;
 };
 
@@ -62,6 +86,22 @@ export function recogerAsiento(p: Puesto): VeredictoDelMetodo {
   return puertaMetodo(p.carpeta, leerSello(p), abiertas(consultado), intentadas(consultado));
 }
 
+/** El gasto que dice un lanzador, si vale: con su marca de cortado, si la lleva, y sin nada más. */
+function gastoDicho(g: unknown): Gasto | null {
+  if (!gastoQueVale(g)) return null;
+  const limpio: Gasto = { turnos: g.turnos, entrada: g.entrada, salida: g.salida, usd: g.usd };
+  return g.cortado === true ? { ...limpio, cortado: true } : limpio;
+}
+
+/** Lo que lleva colgado el error de un lanzador: su gasto y, si es de un cortado, su cota. */
+function deSuError(e: unknown): { gasto: Gasto | null; cota: number | null } {
+  const x = (typeof e === "object" && e !== null ? e : {}) as { gasto?: unknown; cota?: unknown };
+  const gasto = gastoDicho(x.gasto);
+  const cota = x.cota;
+  const vale = gasto?.cortado === true && typeof cota === "number" && Number.isFinite(cota) && cota >= 0;
+  return { gasto, cota: vale ? cota : null };
+}
+
 export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): Promise<Resultado> {
   const salida = join(p.carpeta, "out");
   if (!existsSync(salida) || readdirSync(salida).length > 0)
@@ -71,29 +111,51 @@ export async function lanzarAsiento(p: Puesto, lanzador: Lanzador, tope: Tope): 
   let error: string | null = null;
   let fueraDeTope = false;
   let gasto: Gasto | null = null;
+  let cota: number | null = null;
   let reloj: NodeJS.Timeout | undefined;
   const corte = new AbortController();
-  const limite = new Promise<void>((resuelve) => {
+  const limite = new Promise<"tope">((resuelve) => {
     reloj = setTimeout(() => {
       fueraDeTope = true;
       // Al asiento se le avisa de que se acabó su tiempo: lo que gaste después ya no lo espera nadie.
       corte.abort();
-      resuelve();
+      resuelve("tope");
     }, tope.segundos * 1000);
   });
+  // Lo que hace el lanzador, dicho siempre como un valor: así se le puede seguir esperando después del corte.
+  type Acabado = { bien: true; dicho: Gasto | void } | { bien: false; e: unknown };
+  const marcha: Promise<Acabado> = (async () => lanzador(ordenDeApertura(), p, corte.signal))().then(
+    (dicho) => ({ bien: true, dicho }),
+    (e: unknown) => ({ bien: false, e }),
+  );
   try {
-    const dicho = await Promise.race([lanzador(ordenDeApertura(), p, corte.signal), limite]);
-    if (gastoQueVale(dicho))
-      gasto = { turnos: dicho.turnos, entrada: dicho.entrada, salida: dicho.salida, usd: dicho.usd };
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-    // Un asiento que falla puede haber gastado antes de fallar: si el lanzador lo dice con su error, cuenta.
-    const hasta = (e as { gasto?: unknown } | null)?.gasto;
-    if (gastoQueVale(hasta))
-      gasto = { turnos: hasta.turnos, entrada: hasta.entrada, salida: hasta.salida, usd: hasta.usd };
+    let acabo = await Promise.race([marcha, limite]);
+    if (acabo === "tope") {
+      // Cortado: se le deja un poco para cerrar y decir lo que gastó hasta ahí (14.7), con su tope, y no más.
+      let espera: NodeJS.Timeout | undefined;
+      const gracia = new Promise<"tope">((resuelve) => {
+        espera = setTimeout(() => resuelve("tope"), (tope.gracia ?? GRACIA_AL_CORTAR.segundos) * 1000);
+      });
+      acabo = await Promise.race([marcha, gracia]);
+      clearTimeout(espera);
+    }
+    if (acabo !== "tope" && !fueraDeTope) {
+      if (acabo.bien) gasto = gastoDicho(acabo.dicho);
+      else {
+        const e = acabo.e;
+        error = e instanceof Error ? e.message : String(e);
+        // Un asiento que falla puede haber gastado antes de fallar: si el lanzador lo dice con su error, cuenta.
+        ({ gasto, cota } = deSuError(e));
+      }
+    } else if (acabo !== "tope" && !acabo.bien) {
+      // Tras el corte solo vale lo que el lanzador diga como gasto de un cortado: lo contado hasta el corte. Un
+      // lanzador que vuelve como si hubiera acabado no dice qué quedó fuera, y no se le cree.
+      const dicho = deSuError(acabo.e);
+      if (dicho.gasto?.cortado === true) ({ gasto, cota } = dicho);
+    }
   } finally {
     clearTimeout(reloj);
   }
   if (fueraDeTope) error = `no acabó en su tope de ${tope.segundos} segundos`;
-  return { puesto: p, tardoMs: Date.now() - empieza, fueraDeTope, error, gasto, metodo: recogerAsiento(p) };
+  return { puesto: p, tardoMs: Date.now() - empieza, fueraDeTope, error, gasto, cota, metodo: recogerAsiento(p) };
 }

@@ -15,13 +15,14 @@ export type Trabajo = {
   estado: EstadoDeUnTrabajo;
   desde: string | null;
   hasta: string | null;
-  /** Lo que gastó; null si no se sabe. */
+  /** Lo que gastó; null si no se sabe. Si lleva `cortado`, es lo contado hasta que se le cortó (14.7). */
   gasto: Gasto | null;
   /** Por qué no acabó bien, si no acabó bien. Es para quien lleva el run: no viaja a la web. */
   fallo: string | null;
   /**
-   * Lo más que pudo gastar, en dólares, si no se sabe lo que gastó y se puede acotar: solo una capa del destino que
-   * se cortó o falló sin decirlo (14.7). Cuenta para el techo del viajero, nunca como lo gastado.
+   * Solo de una capa del destino que se cortó (14.7): lo más que pudo gastar sin que se contara, en dólares. Si dijo
+   * lo gastado hasta el corte, es lo que pudo quedar fuera (la vuelta que estaba en marcha); si no dijo nada, lo más
+   * que pudo gastar entero. Cuenta para el techo del viajero, nunca como lo gastado.
    */
   cota?: number | null;
 };
@@ -65,13 +66,21 @@ export function acaboSinEntregar(run: string, puesto: string): boolean {
   return t !== undefined && (t.estado === "stopped" || t.estado === "failed");
 }
 
-/** Lo que lleva gastado un run; `sabido` es falso si de algún trabajo acabado no se sabe lo que gastó. */
-export function gastoDe(run: string): Gasto & { sabido: boolean } {
-  const total = { turnos: 0, entrada: 0, salida: 0, usd: 0, sabido: true };
+/**
+ * Lo que lleva gastado un run; `sabido` es falso si de algún trabajo acabado no se sabe lo que gastó, o si de uno
+ * cortado solo se sabe lo que gastó hasta el corte. `deCortados` es la parte de lo gastado que es de asientos cortados,
+ * que ya va dentro de `usd`.
+ */
+export function gastoDe(run: string): Gasto & { sabido: boolean; deCortados: number } {
+  const total = { turnos: 0, entrada: 0, salida: 0, usd: 0, sabido: true, deCortados: 0 };
   for (const t of trabajosDe(run)) {
     if (t.gasto === null) {
       if (t.estado !== "queued" && t.estado !== "working") total.sabido = false;
       continue;
+    }
+    if (t.gasto.cortado === true) {
+      total.sabido = false;
+      total.deCortados += t.gasto.usd;
     }
     total.turnos += t.gasto.turnos;
     total.entrada += t.gasto.entrada;
@@ -83,14 +92,20 @@ export function gastoDe(run: string): Gasto & { sabido: boolean } {
 
 /**
  * Lo que cuenta para el techo del viajero: lo que se sabe que gastó el run y, de lo que no se sabe pero tiene su cota
- * (una capa del destino cortada), lo más que pudo gastar. Así el techo nunca se pasa por contar de menos. Null si de
- * algún trabajo acabado no se sabe lo que gastó ni se puede acotar: entonces no se sigue a ciegas.
+ * (una capa del destino cortada), lo más que pudo gastar. De una capa cortada que dijo lo gastado hasta el corte, eso
+ * más lo que pudo quedar fuera. Así el techo nunca se pasa por contar de menos. Null si de algún trabajo acabado no se
+ * sabe lo que gastó ni se puede acotar, o si de uno cortado no se puede acotar lo que quedó fuera: entonces no se
+ * sigue a ciegas.
  */
 export function gastoParaElTecho(run: string): number | null {
   let usd = 0;
   for (const t of trabajosDe(run)) {
-    if (t.gasto !== null) usd += t.gasto.usd;
-    else if (t.estado === "queued" || t.estado === "working") continue;
+    if (t.gasto !== null) {
+      usd += t.gasto.usd;
+      if (t.gasto.cortado !== true) continue;
+      if (typeof t.cota !== "number") return null;
+      usd += t.cota;
+    } else if (t.estado === "queued" || t.estado === "working") continue;
     else if (typeof t.cota === "number") usd += t.cota;
     else return null;
   }
