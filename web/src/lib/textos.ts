@@ -929,6 +929,8 @@ const en = {
       lodging: "where you sleep",
       transport: "how you get there",
       day: "a day",
+      flight: "other tickets for the same days",
+      new_country: "a new country on the way",
     } as Record<string, string>,
     piezas: {
       lodging: "where you sleep",
@@ -1824,6 +1826,8 @@ const es: Textos = {
       lodging: "dónde duermes",
       transport: "cómo llegas",
       day: "un día",
+      flight: "otros billetes para los mismos días",
+      new_country: "un país nuevo en el camino",
     },
     piezas: {
       lodging: "dónde duermes",

@@ -26,6 +26,7 @@ import { COMPROBAR_ENLACES, ESPERA_A_LAS_FUENTES, VUELTAS_DEL_ORDEN } from "../d
 import { TOPE_DE_UN_ASIENTO } from "../data/pasos.ts";
 import { puertaCierre, type MaterialDelCierre } from "../gates/puerta_cierre.ts";
 import { puertaDelOrden } from "../gates/puerta_explica.ts";
+import { conTuTransporte } from "../scripts/otro_transporte.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import type { Cierre, ComprobacionDeEnlace, EnlaceDeReserva, MANERAS, Viaje } from "../output/viaje.ts";
 import {
@@ -94,6 +95,8 @@ type Elegido = {
   cuando: string;
   dias?: TusDias;
   ritmo?: string;
+  /** El transporte que elegiste, si es otro que el de la manera (8.3): de los que trae esa versión. */
+  transporte?: string;
 };
 type DeLosPrecios = {
   dados: Record<string, DeHoy>;
@@ -121,7 +124,7 @@ export function elegir(
   carpeta: string,
   manera: unknown,
   cuando: Date,
-  tuyos: { dias?: unknown; ritmo?: unknown } = {},
+  tuyos: { dias?: unknown; ritmo?: unknown; transporte?: unknown } = {},
 ): Elegido {
   const version = leerVersion(v);
   const viaje = version?.viaje as Viaje | undefined;
@@ -141,6 +144,16 @@ export function elegir(
     }
     elegido.dias = con.dias.map((d) => ({ fecha: d.fecha, paradas: d.paradas }));
     elegido.ritmo = con.ritmo;
+  }
+  // El transporte que elegiste (8.3): tiene que ser de esta versión y sumarse en la moneda de la manera.
+  if (tuyos.transporte !== undefined && tuyos.transporte !== null) {
+    const m = viaje.maneras.find((x) => x.id === manera)!;
+    try {
+      conTuTransporte(viaje, m, tuyos.transporte as string);
+    } catch {
+      throw new FalloAlCerrar("bad_transport");
+    }
+    if (tuyos.transporte !== m.transporte) elegido.transporte = tuyos.transporte as string;
   }
   guardarJson(join(carpeta, "elegido.json"), elegido);
   return elegido;
@@ -203,7 +216,15 @@ function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Via
   if (version === null) throw new Error("la versión que se cierra ya no está");
   const deLaVersion = version.viaje as Viaje;
   // Con los días que tenía delante el viajero, si los mandó: es su viaje el que se cierra.
-  const viaje = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
+  const conDias = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
+  // Con el transporte que elegiste, si es otro que el de su manera (8.3): su manera lo lleva, con su total.
+  const viaje =
+    e.transporte === undefined
+      ? conDias
+      : {
+          ...conDias,
+          maneras: conDias.maneras.map((m) => (m.id === e.manera ? conTuTransporte(conDias, m, e.transporte) : m)),
+        };
   return { e, viaje, entendido: version.entendido as Entendido };
 }
 

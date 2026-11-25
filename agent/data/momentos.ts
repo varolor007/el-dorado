@@ -69,6 +69,8 @@ export const CLASES_DE_CAMBIO = [
   "lodging",
   "transport",
   "day",
+  "flight",
+  "new_country",
 ] as const;
 export type ClaseDeCambio = (typeof CLASES_DE_CAMBIO)[number];
 
@@ -117,6 +119,11 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   transport: { pasos: ["search"], quizas: ["papers"] },
   // Un día con un mensaje tuyo: el del día a día otra vez; los sitios, si pides uno que no estaba.
   day: { pasos: ["pick"], quizas: ["sights"] },
+  // Otro vuelo en los mismos días (8.3): la tabla con él, y el que cruza otra vez; lo demás se queda. En otros días
+  // cambian las noches, y eso es un cambio de las fechas («dates»), con su búsqueda del alojamiento para las nuevas.
+  flight: { pasos: ["table"], quizas: ["papers"] },
+  // Un aeropuerto del transporte en un país que no estaba en la tabla de los papeles (8.3): la tabla, otra vez, con él.
+  new_country: { pasos: ["papers"], quizas: [] },
 };
 
 /** Las piezas del viaje que salen de cada paso: si el paso se rehace, se quedan por rehacer. */

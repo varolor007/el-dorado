@@ -30,6 +30,10 @@
 //   POST   /viajes/<id>/cerrar         «me quedo con este», con su manera y tus días ({ "way", "days", "pace" }); o
 //                                       que sigues aunque un
 //                                       precio haya subido mucho ({ "prices": "go_on" })
+//   GET    /viajes/<id>/transporte     el transporte de tu viaje, la última búsqueda y lo que cambió (8.3)
+//   POST   /viajes/<id>/transporte     buscarlo otra vez, movido a donde pides ({ "move" }): código, sin IA
+//   POST   /viajes/<id>/transporte/elegir  rehacer con una opción de esa búsqueda ({ "search", "option" }), tras el
+//                                      impacto y con tu adelante: el que cruza la mira, y deja una versión nueva
 //   GET    /viajes/<id>/cierre         por dónde va el último cierre, de qué versión es y, si espera tu sí, lo que
 //                                       ha cambiado
 
@@ -65,6 +69,16 @@ import { gastoDeLaCuenta, gastoPorAsiento } from "./gasto.ts";
 import { estadoDelViaje, guardarElecciones, leerElecciones, versionesDe } from "./momentos.ts";
 import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../data/momentos.ts";
 import { EleccionQueNoVale, paraElCierre } from "../scripts/elecciones.ts";
+import { conTuTransporte, PedidoQueNoVale } from "../scripts/otro_transporte.ts";
+import { BUSQUEDAS_DE_TRANSPORTE } from "../data/transporte.ts";
+import {
+  buscarElTransporte,
+  busquedaDeCara,
+  FalloDelTransporte,
+  loQuePideLaOpcion,
+  transporteDeCara,
+} from "./otro_transporte.ts";
+import { FalloAlRehacer, rehacer } from "./rehacer.ts";
 import { clasesDelCambio, impactoDe } from "../scripts/impacto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
@@ -298,6 +312,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   const marchas = new Map<string, Promise<void>>();
   /** Las guías que se están escribiendo ahora, por su viaje: una a la vez por viaje. */
   const guias = new Map<string, Promise<void>>();
+  /** Los viajes que están buscando otra vez su transporte ahora: una búsqueda a la vez por viaje (8.3). */
+  const buscandoTransporte = new Set<string>();
   const oyentes = new Map<string, number>();
   const oyentesDeCuenta = new Map<string, number>();
   const abiertos = new Set<ServerResponse>();
@@ -668,9 +684,22 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           throw new Fallo(400, "bad_days");
         }
       }
+      // El transporte, el que mandas o el que elegiste y quedó guardado (8.3); sin ninguno, el de la manera.
+      const transporte = pedido.transport === undefined ? tuyas.transport : pedido.transport;
+      if (transporte !== null && transporte !== undefined) {
+        try {
+          conTuTransporte(
+            viaje,
+            viaje.maneras.find((m) => m.id === manera)!,
+            transporte as string,
+          );
+        } catch {
+          throw new Fallo(400, "bad_transport");
+        }
+      }
       cierre = nuevoCierre(v, hoy());
       try {
-        elegir(v, cierre.carpeta, manera, hoy(), { dias, ritmo });
+        elegir(v, cierre.carpeta, manera, hoy(), { dias, ritmo, transporte });
       } catch (error) {
         if (error instanceof FalloAlCerrar) throw new Fallo(409, error.message);
         throw error;
@@ -819,6 +848,80 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   }
 
   /**
+   * El transporte, otra vez (8.3): buscarlo movido a donde pides. Código, sin IA y sin gastar; pregunta a la fuente,
+   * con su freno, y deja la búsqueda guardada. Solo su dueño, con el viaje en el mapa y sin nada en marcha.
+   */
+  async function buscarOtroTransporte(p: Peticion): Promise<Respuesta | null> {
+    const [raiz, , que, cual] = p.partes;
+    if (raiz !== "viajes" || que !== "transporte" || cual !== undefined || p.metodo !== "POST") return null;
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id) || buscandoTransporte.has(id)) throw new Fallo(409, "already_running");
+    if (v.ficha.estado !== "on_map") throw new Fallo(409, "not_now");
+    if (!objeto(p.cuerpo)) throw new Fallo(400, "bad_request");
+    if (apuntadoDesde(v, "transport_search", BUSQUEDAS_DE_TRANSPORTE.horas) >= BUSQUEDAS_DE_TRANSPORTE.deUnViaje)
+      throw new Fallo(429, "too_many_searches");
+    buscandoTransporte.add(id);
+    try {
+      const b = await buscarElTransporte(v, o.fuentes().transporte, p.cuerpo.move ?? {}, hoy());
+      return { estado: 200, cuerpo: { search: busquedaDeCara(b) } };
+    } catch (error) {
+      if (error instanceof PedidoQueNoVale) throw new Fallo(400, "bad_move", { field: error.message });
+      if (error instanceof FalloDelTransporte)
+        throw new Fallo(error.message === "no_source" ? 503 : 409, error.message);
+      // Lo que falla en la fuente lleva un trozo de lo que contestó: no se dice.
+      throw new Fallo(502, "source_failed");
+    } finally {
+      buscandoTransporte.delete(id);
+    }
+  }
+
+  /**
+   * Tu elección de una opción de la búsqueda (8.3), tras ver su impacto: rehace lo que deja de valer con ella (otro
+   * vuelo en los mismos días, la tabla y el que cruza; en otros, las fechas nuevas, con el alojamiento para sus
+   * noches), con tu adelante y tu techo, y la lleva la casa. La versión de antes no se pisa.
+   */
+  function elegirOtroTransporte(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id) || buscandoTransporte.has(id)) throw new Fallo(409, "already_running");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    let pide: ReturnType<typeof loQuePideLaOpcion>;
+    try {
+      pide = loQuePideLaOpcion(v, pedido.search, pedido.option);
+    } catch (error) {
+      if (error instanceof FalloDelTransporte)
+        throw new Fallo(["bad_search", "bad_option"].includes(error.message) ? 400 : 409, error.message);
+      throw error;
+    }
+    // El que cruza es un asiento: rehacer siempre piensa, con la cuenta de la casa o con tu clave.
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: ReturnType<typeof rehacer>;
+    try {
+      hecho = rehacer(v, { ...pide, cuando: hoy() });
+    } catch (error) {
+      if (error instanceof FalloAlRehacer) throw new Fallo(409, error.message);
+      throw error;
+    }
+    // El cierre que esperaba tu sí era del viaje de antes: queda abandonado.
+    abandonarElCierre(v);
+    if (hecho.impacto.spends) darElAdelante(hecho.run, techo, hoy());
+    apuntar(v, "button", { boton: "transport", busqueda: pedido.search, opcion: pedido.option, run: hecho.n }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, hecho.run, lanzador);
+    return { estado: 202, cuerpo: { run: hecho.n, changes: pide.clases } };
+  }
+
+  /**
    * Volver a una versión de antes: solo su dueño, con el viaje en el mapa o cerrado y sin nada en marcha. No borra
    * ninguna, y el viaje pasa a estar como esa versión: cerrado si es la de un cierre.
    */
@@ -911,6 +1014,16 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (que === "impacto" && cual === undefined) {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       return elImpacto(p);
+    }
+    if (que === "transporte" && cual === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      if (v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") throw new Fallo(409, "not_now");
+      return { estado: 200, cuerpo: { transport: transporteDeCara(v) } };
+    }
+    if (que === "transporte" && cual === "elegir") {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return elegirOtroTransporte(p);
     }
     if (que === "versiones" && cual === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
@@ -1061,7 +1174,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
           return escuchar(p, req, res);
         }
         p.cuerpo = await cuerpoDe(req);
-        const r = (await miCuenta(p, cuenta)) ?? atender(p);
+        const r = (await miCuenta(p, cuenta)) ?? (await buscarOtroTransporte(p)) ?? atender(p);
         responder(res, r.estado, r.cuerpo);
       } catch (e) {
         // Lo que falla por dentro no se cuenta fuera: a la web le llega una clave, y nada más.
