@@ -207,8 +207,13 @@ const en = {
     cogiendo: (lejos: string, min: number, maneras: string[]) =>
       `${lejos}: ${maneras.join(" or ")}, about ${min} min (rough estimate)`,
     // Lo mismo, con el coche medido por la fuente de rutas: sin tráfico.
-    enCoche: (lejos: string, min: number, maneras: string[]) =>
-      `${lejos}: ${maneras.join(" or ")}; by car, ${min} min without traffic`,
+    // Sin repetir el coche: si es la única manera, se dice una vez.
+    enCoche: (lejos: string, min: number, maneras: string[]) => {
+      const otras = maneras.filter((m) => m !== "by car");
+      return otras.length === 0
+        ? `${lejos} by car, ${min} min without traffic`
+        : `${lejos}: ${otras.join(" or ")}; by car, ${min} min without traffic`;
+    },
     maneraDeIr: { walk: "on foot", transit: "by public transport", car: "by car" } as Record<string, string>,
     // Parte del viaje no se anda: lo que se sabe del transporte de allí (14.6), o que todavía no se sabe.
     noSeAnda: (modos: string[] | null) =>
@@ -532,9 +537,14 @@ const en = {
     } as Record<string, string>,
     faltanParte: (n: number) => `${EN.cuenta(n, "thing", "things")} not known`,
     aparte: (lista: string) => `Plus ${lista} in another currency, not added.`,
-    comidas: (desde: string, hasta: string) => `Meals, apart: ${desde} to ${hasta} a day`,
-    comidasViaje: (desde: string, hasta: string, dias: number) =>
-      `${desde} to ${hasta} for ${EN.cuenta(dias, "day", "days")}`,
+    comidas: (desde: string, hasta: string) => `Meals, apart: ${desde} to ${hasta} a day per person`,
+    // Es una cuenta del código, no un precio de la página: tantas comidas al día, a lo que suele costar una allí.
+    comidasCuenta: (alDia: number, desde: string, hasta: string) =>
+      `Worked out: ${EN.cifra(alDia)} paid ${EN.plural(alDia, "meal", "meals")} a day, at what one usually costs there (${desde} to ${hasta}).`,
+    comidasViaje: (desde: string, hasta: string, dias: number, personas: number) =>
+      personas <= 1
+        ? `${desde} to ${hasta} for ${EN.cuenta(dias, "day", "days")}`
+        : `For the ${EN.cifra(personas)} of you, ${EN.cuenta(dias, "day", "days")}: ${desde} to ${hasta}`,
     comidasNota: "They depend on you, so they are not in the total.",
     comidasNo: "What meals cost there is not known yet.",
     comparan: "The ways are still compared by sleeping and getting there, which is what changes between them.",
@@ -1645,7 +1655,12 @@ const es: Textos = {
     andando: (lejos, min) => `${lejos} andando, unos ${min} min`,
     andandoMedido: (lejos, min) => `${lejos} andando, ${min} min`,
     cogiendo: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}, unos ${min} min (cálculo aproximado)`,
-    enCoche: (lejos, min, maneras) => `${lejos}: ${maneras.join(" o ")}; en coche, ${min} min sin tráfico`,
+    enCoche: (lejos, min, maneras) => {
+      const otras = maneras.filter((m) => m !== "en coche");
+      return otras.length === 0
+        ? `${lejos} en coche, ${min} min sin tráfico`
+        : `${lejos}: ${otras.join(" o ")}; en coche, ${min} min sin tráfico`;
+    },
     maneraDeIr: { walk: "a pie", transit: "en transporte", car: "en coche" },
     noSeAnda: (modos) =>
       modos === null
@@ -1944,8 +1959,13 @@ const es: Textos = {
     },
     faltanParte: (n) => `${ES.cuenta(n, "cosa", "cosas")} sin saber`,
     aparte: (lista) => `Y ${lista} en otra moneda, sin sumar.`,
-    comidas: (desde, hasta) => `Las comidas, aparte: de ${desde} a ${hasta} al día`,
-    comidasViaje: (desde, hasta, dias) => `De ${desde} a ${hasta} en ${ES.cuenta(dias, "día", "días")}`,
+    comidas: (desde, hasta) => `Las comidas, aparte: de ${desde} a ${hasta} al día por persona`,
+    comidasCuenta: (alDia, desde, hasta) =>
+      `Es una cuenta: ${ES.cifra(alDia)} ${ES.plural(alDia, "comida", "comidas")} de pago al día, a lo que suele costar una allí (de ${desde} a ${hasta}).`,
+    comidasViaje: (desde, hasta, dias, personas) =>
+      personas <= 1
+        ? `De ${desde} a ${hasta} en ${ES.cuenta(dias, "día", "días")}`
+        : `Para los ${ES.cifra(personas)}, en ${ES.cuenta(dias, "día", "días")}: de ${desde} a ${hasta}`,
     comidasNota: "Dependen de ti, así que no van en el total.",
     comidasNo: "Lo que cuesta comer allí todavía no se sabe.",
     comparan: "Las maneras se siguen comparando por dormir y llegar, que es lo que cambia de una a otra.",

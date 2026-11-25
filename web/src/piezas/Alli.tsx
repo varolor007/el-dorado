@@ -27,6 +27,7 @@ import { abreElDia, entradaDe } from "../../../agent/scripts/capas.ts";
 import {
   abreTusDias,
   billeteSuelto,
+  comidasQueSeEnsenan,
   grupoDelViaje,
   loQueTeConviene,
   paraLlegar,
@@ -622,7 +623,8 @@ export function ElPresupuesto({
   manera,
   deAntes = null,
   dias,
-}: Comun & { presupuesto?: Presupuesto; manera: string; deAntes?: DeAntes; dias: number }) {
+  personas = 1,
+}: Comun & { presupuesto?: Presupuesto; manera: string; deAntes?: DeAntes; dias: number; personas?: number }) {
   const falta = sinLaCapa(t, presupuesto);
   const suyo = presupuesto?.maneras.find((x) => x.manera === manera);
   if (falta !== null || presupuesto === undefined || suyo === undefined)
@@ -632,7 +634,7 @@ export function ElPresupuesto({
         <p className="suave">{falta ?? t.alli.todaviaNo}</p>
       </div>
     );
-  const c = presupuesto.comidas;
+  const c = comidasQueSeEnsenan(presupuesto.comidas, dias, personas);
   const dinero = (n: number, moneda: string): string => importe({ importe: n, moneda }, idioma);
   return (
     <div className="grupo presupuesto">
@@ -679,14 +681,22 @@ export function ElPresupuesto({
           <p className="suave">{t.alli.comidasNo}</p>
         ) : (
           <>
-            <b>{t.alli.comidas(dinero(c.desde, c.moneda), dinero(c.hasta, c.moneda))}</b>
-            {dias > 0 && (
+            <b>{t.alli.comidas(dinero(c.porPersona.desde, c.moneda), dinero(c.porPersona.hasta, c.moneda))}</b>
+            <span className="dato">
+              {t.alli.comidasCuenta(c.alDia, dinero(c.una.desde, c.moneda), dinero(c.una.hasta, c.moneda))}
+            </span>
+            <Fuentes t={t} idioma={idioma} fuentes={c.fuentes} />
+            {c.delViaje !== null && (
               <span className="dato">
-                {t.alli.comidasViaje(dinero(c.desde * dias, c.moneda), dinero(c.hasta * dias, c.moneda), dias)}
+                {t.alli.comidasViaje(
+                  dinero(c.delViaje.desde, c.moneda),
+                  dinero(c.delViaje.hasta, c.moneda),
+                  dias,
+                  personas,
+                )}
               </span>
             )}
             <span className="dato">{t.alli.comidasNota}</span>
-            <Fuentes t={t} idioma={idioma} fuentes={c.fuentes} />
           </>
         )}
       </div>

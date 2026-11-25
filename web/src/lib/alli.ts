@@ -13,6 +13,7 @@ import type {
   Presupuesto,
 } from "../../../agent/output/capas.ts";
 import type { Dia, Manera, Viaje } from "../../../agent/output/viaje.ts";
+import { COMIDAS_AL_DIA } from "../../../agent/data/presupuesto.ts";
 import { sueltoDelGrupo } from "../../../agent/scripts/capa_moverse.ts";
 import { abreElDia, diaDeLaSemana } from "../../../agent/scripts/capas.ts";
 import {
@@ -174,4 +175,37 @@ export function presupuestoQueSeEnsena(
  */
 export function loQueTeConviene(viaje: Viaje, manera: Manera | undefined, dias: Dia[]) {
   return cuentaDeMoverseDelViaje({ ...viaje, dias }, manera);
+}
+
+/** Una horquilla de dinero: de cuánto a cuánto. */
+export type Horquilla = { desde: number; hasta: number };
+
+/**
+ * Las comidas del presupuesto, como se enseñan: es una cuenta, por día y por persona (tantas comidas de pago al día, a
+ * lo que suele costar una allí, que es lo que dice la página); y, si sois más de uno o hay días, para el grupo en el
+ * viaje, dicho como tal. Null si no se sabe.
+ */
+export function comidasQueSeEnsenan(
+  c: Presupuesto["comidas"],
+  dias: number,
+  personas: number,
+): {
+  alDia: number;
+  una: Horquilla;
+  porPersona: Horquilla;
+  delViaje: Horquilla | null;
+  moneda: string;
+  fuentes: NonNullable<Presupuesto["comidas"]>["fuentes"];
+} | null {
+  if (c === null) return null;
+  const redondo = (n: number): number => Math.round(n * 100) / 100;
+  const veces = Math.max(0, dias) * Math.max(1, personas);
+  return {
+    alDia: COMIDAS_AL_DIA,
+    una: { desde: redondo(c.desde / COMIDAS_AL_DIA), hasta: redondo(c.hasta / COMIDAS_AL_DIA) },
+    porPersona: { desde: c.desde, hasta: c.hasta },
+    delViaje: veces === 0 ? null : { desde: redondo(c.desde * veces), hasta: redondo(c.hasta * veces) },
+    moneda: c.moneda,
+    fuentes: c.fuentes,
+  };
 }

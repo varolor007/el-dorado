@@ -18,7 +18,7 @@ import {
   PAGOS,
   POR_QUE_NO_SE_LLEGA,
 } from "../../agent/data/capa_moverse.ts";
-import { ORIGENES_DE_UNA_PARTE, PARTES_DEL_PRESUPUESTO } from "../../agent/data/presupuesto.ts";
+import { COMIDAS_AL_DIA, ORIGENES_DE_UNA_PARTE, PARTES_DEL_PRESUPUESTO } from "../../agent/data/presupuesto.ts";
 import { loQueHaPasado } from "../../agent/launcher/vivo.ts";
 import type { DeMoverse, Horario, PrecioDeCapa, Presupuesto } from "../../agent/output/capas.ts";
 import { comprobarSucesos, comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
@@ -29,6 +29,7 @@ import { caminosDe } from "../../agent/tools/caminos.ts";
 import {
   abreTusDias,
   billeteSuelto,
+  comidasQueSeEnsenan,
   grupoDelViaje,
   loQueTeConviene,
   paraLlegar,
@@ -38,7 +39,7 @@ import {
   sitioDe,
   zonasDeLlegar,
 } from "../../web/src/lib/alli.ts";
-import { irEntre } from "../../web/src/lib/formato.ts";
+import { fechaDicha, irEntre, refDeUnaDuda } from "../../web/src/lib/formato.ts";
 import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
 import { viajeParaLaGuia } from "../cases/inventado/guia.ts";
 
@@ -362,5 +363,50 @@ test("en vivo: cada capa que trae algo lo cuenta con su número; una que falta, 
     assert.deepEqual(comprobarSucesos([...dichos.map((s, i) => ({ ...s, t: i })), { clase: "done", t: 9 }]), []);
   } finally {
     rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("las comidas: por persona y por día, dichas como una cuenta; y para el grupo, como tal", () => {
+  const comidas = { desde: 16, hasta: 60, moneda: "EUR", fuentes: [F] };
+  const c = comidasQueSeEnsenan(comidas, 3, 4)!;
+  // La trampa: un grupo de cuatro no lee lo de uno como lo del grupo. Lo de uno es por persona y día; lo del viaje,
+  // para los cuatro en los tres días.
+  assert.deepEqual(c.porPersona, { desde: 16, hasta: 60 });
+  assert.deepEqual(c.delViaje, { desde: 16 * 3 * 4, hasta: 60 * 3 * 4 });
+  // Es una cuenta: tantas comidas al día, a lo que suele costar una, que es lo que dice la página.
+  assert.deepEqual([c.alDia, c.una], [COMIDAS_AL_DIA, { desde: 16 / COMIDAS_AL_DIA, hasta: 60 / COMIDAS_AL_DIA }]);
+  assert.deepEqual(comidasQueSeEnsenan(comidas, 3, 1)!.delViaje, { desde: 48, hasta: 180 });
+  assert.equal(comidasQueSeEnsenan(comidas, 0, 4)!.delViaje, null);
+  assert.equal(comidasQueSeEnsenan(null, 3, 4), null);
+  for (const idioma of IDIOMAS) {
+    const a = TEXTOS[idioma].alli;
+    assert.match(a.comidas("16 €", "60 €"), idioma === "es" ? /por persona/ : /per person/);
+    assert.match(a.comidasCuenta(2, "8 €", "30 €"), idioma === "es" ? /cuenta/ : /Worked out/);
+    assert.match(a.comidasViaje("192 €", "720 €", 3, 4), idioma === "es" ? /Para los 4/ : /For the 4 of you/);
+  }
+});
+
+test("los textos de la web: un día al cerrar, como las demás fechas; y el coche, sin repetirlo", () => {
+  for (const idioma of IDIOMAS) {
+    const t = TEXTOS[idioma];
+    // La trampa: la fecha en crudo. Sale como la dice la web, en el idioma del viajero.
+    const dicho = t.cerrar.duda.stop_closed(refDeUnaDuda("stop_closed", "2027-03-06", idioma, () => "nombre"));
+    assert.doesNotMatch(dicho, /2027-03-06/);
+    assert.ok(dicho.includes(fechaDicha("2027-03-06", idioma)), dicho);
+    assert.doesNotMatch(
+      t.cerrar.duda.day_does_not_fit(refDeUnaDuda("day_does_not_fit", "2027-03-06", idioma, String)),
+      /2027-/,
+    );
+    // Lo que no es un día sigue diciéndose por su nombre.
+    assert.equal(
+      refDeUnaDuda("price_gone", "a1", idioma, () => "El hotel"),
+      "El hotel",
+    );
+    // Un tramo cuya única manera es el coche lo dice una vez; con otra manera, las dos.
+    const coche = t.viaje.maneraDeIr.car;
+    const solo = t.viaje.enCoche("750 m", 7, [coche]);
+    assert.equal(solo.split(coche).length - 1, 1, solo);
+    const dos = t.viaje.enCoche("2 km", 7, [t.viaje.maneraDeIr.transit, coche]);
+    assert.ok(dos.includes(t.viaje.maneraDeIr.transit) && dos.split(coche).length - 1 === 1, dos);
   }
 });
