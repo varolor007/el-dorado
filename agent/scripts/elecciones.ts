@@ -11,6 +11,7 @@ import type { Manera, Ritmo, Viaje } from "../output/viaje.ts";
 import { RITMOS } from "../output/viaje.ts";
 import { conTusDias, type TusDias } from "./cierre.ts";
 import { PESOS_DE_GUSTO } from "./formas.ts";
+import { cierraEnElViaje } from "./capa_entradas.ts";
 import { fechasDe, repartir } from "./ritmo.ts";
 
 /** Lo que has elegido sobre una versión. Lo que no has tocado va en null o vacío: es lo propuesto. */
@@ -162,6 +163,7 @@ export function diasElegidos(v: Viaje, e: Elecciones): TusDias {
     base,
     { quitadas: e.removed, anadidas: e.added, fijadas: e.moved },
     v.caminos,
+    cierraEnElViaje(v),
   );
   return r.dias.map((d) => ({ fecha: d.fecha, paradas: [...d.paradas] }));
 }

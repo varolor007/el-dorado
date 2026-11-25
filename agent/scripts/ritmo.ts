@@ -130,7 +130,10 @@ export type Cambios = { quitadas?: string[]; anadidas?: string[]; fijadas?: Reco
  * el código cabe siempre: una parada que no entra en ningún día sin pasarse de un tope se queda fuera, y se dice por
  * qué, también si es imprescindible. Antes fuera y dicho que un día que no se puede hacer. Con la tabla de caminos
  * del viaje, lo que se tarda de verdad cuenta al ordenar y al medir cada día; sin ella, o donde no llega, la cuenta
- * de la casa.
+ * de la casa. Con los días que se sabe que cierra cada parada (`cierra`, por su id, de las entradas), el código no la
+ * pone un día que cierra: la pasa a otro, y si en ninguno de los que abre cabe, se queda fuera y dice que es porque
+ * cierra. Lo que no se sabe no mueve nada. Lo que el viajero movió o añadió va donde él dijo: eso se avisa, no se
+ * impide.
  */
 export function repartir(
   paradas: Parada[],
@@ -139,8 +142,10 @@ export function repartir(
   base: Punto,
   cambios: Cambios = {},
   tabla?: TablaDeCaminos | null,
+  cierra: Readonly<Record<string, readonly string[]>> = {},
 ): Reparto {
   const c = caminosDe(tabla);
+  const abre = (p: Parada, i: number): boolean => !(cierra[p.id] ?? []).includes(dias[i].fecha);
   const cabe = CABE[ritmo];
   const quitadas = [...new Set(cambios.quitadas ?? [])].filter((id) => paradas.some((p) => p.id === id));
   const anadidas = cambios.anadidas ?? [];
@@ -171,7 +176,7 @@ export function repartir(
     dias.flatMap((d, i) => (d.paradas.length === 0 ? [] : [{ i, centro: centroDe(puntosDe(d)) }]));
   const masCercano = (p: Parada): number => {
     const zonas = conParadas().sort((a, b) => enLineaRecta(a.centro, p.punto) - enLineaRecta(b.centro, p.punto));
-    return zonas[0]?.i ?? 0;
+    return (zonas.find((z) => abre(p, z.i)) ?? zonas[0])?.i ?? 0;
   };
 
   // 1. Lo que el viajero movió a un día va a ese día, quepa o no.
@@ -202,14 +207,24 @@ export function repartir(
       d.paradas.length < cabe.paradas && d.minutos + p.minutos <= cabe.minutos;
     const cabeEn = (d: (typeof dias)[number]): boolean =>
       hayHueco(d) && cabeElDia(enOrden([...d.paradas, p], base, c), c);
-    let destino = porCercania.find((x) => x.lejos <= SALTO && cabeEn(x.d))?.i ?? -1;
-    if (destino < 0) destino = porAbrir.shift() ?? -1;
-    if (destino < 0 && p.imprescindible) destino = porCercania.find((x) => cabeEn(x.d))?.i ?? -1;
+    // Lo mismo de siempre, pero solo entre los días que abre; y sin mirar si abre, para saber si es eso lo que falla.
+    const buscar = (siAbre: boolean): { destino: number; abrir: number } => {
+      const vale = (i: number): boolean => !siAbre || abre(p, i);
+      const abrir = porAbrir.findIndex(vale);
+      let destino = porCercania.find((x) => x.lejos <= SALTO && vale(x.i) && cabeEn(x.d))?.i ?? -1;
+      if (destino < 0) destino = abrir < 0 ? -1 : porAbrir[abrir];
+      if (destino < 0 && p.imprescindible) destino = porCercania.find((x) => vale(x.i) && cabeEn(x.d))?.i ?? -1;
+      return { destino, abrir: destino >= 0 && destino === porAbrir[abrir] ? abrir : -1 };
+    };
+    const { destino, abrir } = buscar(true);
     if (destino < 0) {
-      // Si en algún día había hueco, lo que falla es la distancia; si no, es que los días están llenos.
-      seQueda(p, porCercania.some((x) => hayHueco(x.d)) ? "far" : "full");
+      // Si cabría un día que cierra, es que cierra; si en algún día había hueco, lo que falla es la distancia; si no,
+      // es que los días están llenos.
+      const cierraLosQueCaben = (cierra[p.id] ?? []).length > 0 && buscar(false).destino >= 0;
+      seQueda(p, cierraLosQueCaben ? "closed" : porCercania.some((x) => hayHueco(x.d)) ? "far" : "full");
       continue;
     }
+    if (abrir >= 0) porAbrir.splice(abrir, 1);
     pon(destino, p);
   }
 

@@ -50,6 +50,7 @@ import type {
 } from "../scripts/formas.ts";
 import { pedirCaminos, sinFuenteDeRutas, type DeLosCaminos, type FuenteDeRutas } from "../scripts/caminos.ts";
 import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_viaje.ts";
+import { cierraEnElViaje } from "../scripts/capa_entradas.ts";
 import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
@@ -117,7 +118,8 @@ import type { FaltaDeUnaCapa } from "../data/capas.ts";
 import { capaDelRun, CONTRATOS, guardada, hayContrato, type CapaDeIA, type Material } from "./capas.ts";
 import { capaDelDestino } from "./capa_destino.ts";
 import {
-  capaDeLasEntradas,
+  capaDeLasEntradasDe,
+  cierraEnElRun,
   ENTRADAS,
   losDiasSinEntradas,
   traerLosAbiertos,
@@ -547,7 +549,9 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
   const paradas = paradasDe(entrega, sitios, fotos);
   const fechas = fechasDe(viaje.dates.check_in, viaje.dates.check_out);
   const caminos = caminosDelRun(run);
-  const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre, {}, caminos);
+  // Lo que se sabe que cierra cada sitio, de sus entradas (14.4): el ritmo no lo pone ese día, y la puerta 9 lo mira.
+  const cierra = cierraEnElRun(run, fechas);
+  const reparto = repartir(paradas, fechas, viaje.pace, viaje.destination.centre, {}, caminos, cierra);
   const dados = sitiosQueSeDan(run, viaje).map((s) => s.id);
   const puerta = puertaDias({
     paradas,
@@ -556,6 +560,7 @@ async function repartirLosDias(run: string, viaje: Entendido, entrega: EntregaDe
     porQue: reparto.porQue,
     sitios: dados,
     caminos,
+    cierra,
   });
   guardar(run, "dias.json", { entrega, paradas, reparto, puerta, avisos });
   return puerta.rojos;
@@ -698,6 +703,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     transporte: transporteDe(run),
     alLado: alLadoDe(run),
     caminos: caminosDelRun(run),
+    cierra: cierraEnElRun(run, fechasDe(viaje.dates.check_in, viaje.dates.check_out)),
     calendario: ((c) => (c === null ? null : { avisos: c.avisos, ventanas: c.ventanas, falta: c.falta }))(
       calendarioDelRun(run),
     ),
@@ -716,6 +722,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     porQue: hecho.porQueFuera,
     sitios: dados,
     caminos: hecho.caminos,
+    cierra: cierraEnElViaje(hecho),
   }).rojos;
   // La nota y el descarte de cada alojamiento son los de la tabla con la que cerró el que cruza: si no casan, lo
   // que se enseña no es lo que se decidió.
@@ -910,7 +917,7 @@ async function lasEntradas(run: string, viaje: Entendido, elegida: EntregaDeSiti
   const { sitios } = leer<DeLosSitios>(run, "sitios.json");
   const elegidos = elegida.go.flatMap((x) => sitios.find((s) => s.id === x.id) ?? []);
   const abiertos = await traerLosAbiertos(run, elegidos, f.abiertos);
-  return deUnaCapa(run, capaDeLasEntradas, materialDeLasCapas(run, viaje, elegidos, abiertos), f);
+  return deUnaCapa(run, capaDeLasEntradasDe(run), materialDeLasCapas(run, viaje, elegidos, abiertos), f);
 }
 
 /** Los avisos de las fechas del run, como los enseña la web: sin lo que entregó el asiento. */

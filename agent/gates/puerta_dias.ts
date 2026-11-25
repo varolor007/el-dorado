@@ -1,7 +1,8 @@
 // La puerta 9: ¿cada día cabe? Tiene dos mitades. La primera mira lo que entrega el asiento que elige los sitios:
 // que cada uno existe en los datos, que ninguno sale dos veces ni se queda sin veredicto, y que lo que escribe para
 // el viajero no promete. La segunda mira los días que reparte el código: que cada parada está en los datos, que lo
-// imprescindible está dentro o dice por qué no, que las horas de cada día caben y que ningún salto pasa del tope.
+// imprescindible está dentro o dice por qué no, que las horas de cada día caben, que ningún salto pasa del tope y que
+// lo que se sabe que cierra un día no está en ese día.
 // No mide si la elección es buena: eso lo ve el viajero, que quita, añade y mueve.
 
 import { DIA_ENTERO, IMPRESCINDIBLES_POR_NOCHE, MINUTOS_DE_VISITA, RESERVAR } from "../data/dias.ts";
@@ -124,6 +125,8 @@ export type Repartido = {
   sitios: string[];
   /** La tabla de caminos con la que se repartieron, si la hay: la puerta mide cada trayecto con ella. */
   caminos?: TablaDeCaminos | null;
+  /** Los días que se sabe que cierra cada parada, por su id, de sus entradas (14.4). Lo que no se sabe no está. */
+  cierra?: Readonly<Record<string, readonly string[]>>;
 };
 
 /** Por qué un día no cabe, por su clave: sus horas no caben en un día entero, o un salto no cabe en un día. */
@@ -159,7 +162,7 @@ export function cuentasDeUnDia(
 }
 
 /** Los porqués que valen para dejar fuera algo imprescindible: no los pone el viajero, los mide el código. */
-const NO_CABE = ["far", "full"];
+const NO_CABE = ["far", "full", "closed"];
 
 export function puertaDias(r: Repartido): Veredicto {
   const rojos: Rojo[] = [];
@@ -181,6 +184,7 @@ export function puertaDias(r: Repartido): Veredicto {
     for (const id of dia.paradas) {
       if (!porId.has(id)) rojo(donde, `lleva la parada ${id}, que no existe`);
       if (puestas.includes(id)) rojo(donde, `la parada ${id} ya está en otro día`);
+      if (r.cierra?.[id]?.includes(dia.fecha)) rojo(donde, `lleva la parada ${id}, que ese día cierra`);
       puestas.push(id);
     }
     // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger.
@@ -202,6 +206,9 @@ export function puertaDias(r: Repartido): Veredicto {
     // Lo imprescindible está dentro, o dice por qué no: queda lejos de todo lo demás o los días están llenos.
     if (p.imprescindible && !puestas.includes(p.id) && !NO_CABE.includes(r.porQue[p.id] ?? ""))
       rojo(`paradas.${p.id}`, "es imprescindible, no está en ningún día y no dice por qué");
+    // Lo que se queda fuera porque cierra, cierra de verdad algún día del viaje.
+    if (r.porQue[p.id] === "closed" && !puestas.includes(p.id) && (r.cierra?.[p.id] ?? []).length === 0)
+      rojo(`paradas.${p.id}`, "dice que se queda fuera porque cierra, y no se sabe que cierre ningún día");
   }
   return { verde: rojos.length === 0, rojos };
 }

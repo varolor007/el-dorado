@@ -46,8 +46,14 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   y, de mentira, `tests/cases/inventado/moverse.ts`.
 - **El que conoce el destino (14.3)**: `agent/data/capa_destino.ts`, `agent/scripts/capa_destino.ts`,
   `agent/launcher/capa_destino.ts` y, de mentira, `tests/cases/inventado/destino.ts`.
-- **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts`,
-  `agent/launcher/capa_entradas.ts` y, de mentira, `tests/cases/inventado/entradas.ts`.
+- **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts` (su entrega, cómo
+  pasa al viaje y lo que cierra cada día, `cierraEnElViaje`), `agent/launcher/capa_entradas.ts` (su material, su
+  puerta con lo que abrió cada puesto y `cierraEnElRun`), su contrato en `agent/contracts/tickets/`, su puerta 13 en
+  `agent/gates/puerta_entradas.ts`, los datos abiertos de verdad en `agent/tools/abiertos.ts` (el horario y si se
+  paga, de OpenStreetMap; la web, de Wikidata) y el horario de OpenStreetMap leído en lo corriente en
+  `agent/tools/horarios.ts`; lo que cierra cada día lo miran el ritmo (`agent/scripts/ritmo.ts`) y la puerta 9
+  (`agent/gates/puerta_dias.ts`). De mentira, `tests/cases/inventado/entradas.ts`; sus pruebas, en
+  `tests/code/entradas.test.ts`.
 - **El presupuesto entero (14.5)**: `agent/data/presupuesto.ts`, `agent/scripts/presupuesto.ts` (la cuenta) y
   `agent/launcher/presupuesto.ts` (cuando se monta el viaje).
 - **En la web (14.6)**: la pestaña «Allí» y los huecos de la parada y de las cuentas, en `web/src/piezas/Alli.tsx`.

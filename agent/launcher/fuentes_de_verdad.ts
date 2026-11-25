@@ -5,6 +5,7 @@
 
 import { join } from "node:path";
 import { ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN } from "../data/dias.ts";
+import { abiertosDe } from "../tools/abiertos.ts";
 import { aviasales } from "../tools/fuentes/aviasales.ts";
 import { encendida } from "../tools/fuentes/enchufes.ts";
 import { CASILLAS_DE_UNA_MATRIZ, claveDeGeoapify, matrizDeCaminos } from "../tools/fuentes/geoapify.ts";
@@ -50,6 +51,8 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     // Cuántos se resumen lo decide quien llama, según las noches del viaje.
     resumenes: (sitios) => resumenesDe(sitios),
     fotos: (archivos) => fotosDe(archivos),
+    // Lo que dicen los datos abiertos de los sitios elegidos, para el de las entradas (14.4).
+    abiertos: (sitios) => abiertosDe(sitios),
     desde: manana,
   };
   // Los aeropuertos de la fuente se guardan un día en la mesa, fuera del repositorio: son tres archivos grandes. La

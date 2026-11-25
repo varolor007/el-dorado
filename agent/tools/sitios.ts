@@ -312,7 +312,7 @@ export type Traer = (url: string) => Promise<Respuesta>;
 export type Salida = { traer?: Traer; dormir?: (ms: number) => Promise<void>; intentos?: number };
 
 /** Quiénes somos para las fuentes abiertas: un nombre de programa, sin datos de nadie. */
-const AGENTE = "ElDoradoTravelPlanner/0.1 (open data; non-commercial prototype)";
+export const AGENTE = "ElDoradoTravelPlanner/0.1 (open data; non-commercial prototype)";
 
 const deInternet: Traer = async (url) => {
   const r = await fetch(url, {

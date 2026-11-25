@@ -63,8 +63,9 @@ test("quién responde: cada asiento de la tabla tiene contrato, y cada contrato 
     ),
   );
   for (const a of nombrados) assert.ok(asientos.includes(a), `${a} no tiene contrato`);
-  // El conductor y el de la ruta no le hablan al viajero: el uno mira un run parado; el otro, lo que da el código.
-  for (const a of asientos.filter((x) => x !== "conductor" && x !== "route-planner"))
+  // El conductor y el de la ruta no le hablan al viajero: el uno mira un run parado; el otro, lo que da el código. El
+  // de las entradas (14.4) tampoco: da datos con su página, que enseña el código.
+  for (const a of asientos.filter((x) => x !== "conductor" && x !== "route-planner" && x !== "tickets"))
     assert.ok(nombrados.has(a), `${a} no responde en ningún sitio`);
   assert.equal(new Set(QUIEN_RESPONDE.map((x) => x.sitio)).size, QUIEN_RESPONDE.length);
   // Lo que dice la hoja: el día, el código y, con un mensaje, el del día a día; un cambio, la casa y luego cada dueño.
