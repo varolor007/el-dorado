@@ -407,6 +407,8 @@ type DeViaje = Comun & {
   tuyo?: string | null;
   /** La versión que se enseña de un viaje tuyo: solo se sigue el cierre que es de ella. */
   version?: number | null;
+  /** Abre el transporte de tu viaje (8.3). */
+  alTransporte?: () => void;
 };
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
@@ -752,6 +754,11 @@ function Cuentas(x: DeViaje) {
         </div>
         {marcada !== undefined && (
           <p className="dato">{t.cuentas.incluye(t.viaje.manera[marcada.id], comoSeLlega(viaje, marcada))}</p>
+        )}
+        {x.alTransporte !== undefined && (
+          <button type="button" className="enlace" onClick={x.alTransporte}>
+            {t.transporte.abrir}
+          </button>
         )}
       </div>
       {viaje.palancas.length > 0 && (

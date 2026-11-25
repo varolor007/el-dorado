@@ -20,6 +20,7 @@ import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
 import { ElImpacto, TusVersiones } from "../../../piezas/Momentos.tsx";
+import { ElTransporte } from "../../../piezas/ElTransporte.tsx";
 import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../../../../../agent/data/momentos.ts";
 import { impactoDe } from "../../../../../agent/scripts/impacto.ts";
 import { useTusElecciones, useVersiones } from "../../../lib/elecciones.ts";
@@ -179,6 +180,11 @@ export default function Planear() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manera, ritmoPedido, quitadas, anadidas, fijadas]);
+  // El transporte de tu viaje (8.3), en su hoja: se abre desde las cuentas, o suelto con ?at=transport.
+  const [enElTransporte, setEnElTransporte] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("at") === "transport") setEnElTransporte(true);
+  }, []);
   // Para mirar suelta la pieza del impacto: ?at=impact&change=dates, sobre el viaje que se enseña, sin gastar.
   const [impactoSuelto, setImpactoSuelto] = useState<ClaseDeCambio[] | null>(null);
   useEffect(() => {
@@ -543,7 +549,25 @@ export default function Planear() {
           <ElImpacto {...comun} impacto={impactoDe(impactoSuelto)} alAhoraNo={() => setImpactoSuelto(null)} />
         </Hoja>
       )}
-      {etapa === "viaje" && viaje !== null && abierta === null && impactoSuelto === null && (
+      {etapa === "viaje" && viaje !== null && enElTransporte && impactoSuelto === null && (
+        <Hoja
+          etiqueta={t.transporte.titulo}
+          pie={
+            <button type="button" className="enlace" onClick={() => setEnElTransporte(false)}>
+              {t.ficha.volver}
+            </button>
+          }
+        >
+          <ElTransporte
+            {...comun}
+            viaje={viaje}
+            manera={elegida?.id ?? manera}
+            id={pedido != null && enElMapa ? pedido : null}
+            cerrado={comoEsta === "closed"}
+          />
+        </Hoja>
+      )}
+      {etapa === "viaje" && viaje !== null && abierta === null && impactoSuelto === null && !enElTransporte && (
         <Hoja etiqueta={t.viaje.rotulo}>
           <TuViaje
             {...comun}
@@ -576,6 +600,7 @@ export default function Planear() {
             alMover={mueve}
             tuyo={pedido != null && comoEsta === "on_map" ? pedido : null}
             version={vivo.estado?.trip.version ?? null}
+            alTransporte={() => setEnElTransporte(true)}
           />
           {pedido != null && comoEsta === "closed" && (
             <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />

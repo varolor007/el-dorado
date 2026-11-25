@@ -2498,3 +2498,72 @@ select.toque {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* ---------- El transporte de tu viaje, a ratos (8.3): el que tienes, buscarlo otra vez y sus opciones */
+
+.transporte__tuyo,
+.transporte__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+  overflow-wrap: anywhere;
+}
+.transporte__opcion[data-elegida="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--oro);
+}
+.transporte__ruta {
+  font-family: var(--numeros);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.transporte__tramos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.transporte__tramo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.transporte__precio {
+  font-family: var(--numeros);
+  font-weight: 600;
+  color: var(--oro);
+}
+.transporte__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.transporte__pedido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: end;
+  gap: 10px;
+}
+.transporte__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.transporte__campo .toque {
+  width: 100%;
+}
+.transporte__directos {
+  justify-content: center;
+}
+.transporte__opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
