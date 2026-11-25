@@ -553,7 +553,7 @@ function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Vi
             ) : (
               <>
                 <b>{t.alli.conviene[c.conviene] ?? c.conviene}</b>
-                {c.compras.length > 0 && <span className="dato">{compras(c)}</span>}
+                {c.compras.length > 0 && c.conviene !== "singles" && <span className="dato">{compras(c)}</span>}
                 <span className="alli__precio">{dinero(c.total, c.moneda)}</span>
               </>
             )}
@@ -568,7 +568,9 @@ function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Vi
               {t.alli.frenteASueltos(dinero(sueltos, grupo.moneda), dinero(ahorra, grupo.moneda))}
             </span>
           )}
-          {sueltos !== null && ahorra === 0 && <span className="dato">{t.alli.igualQueSueltos}</span>}
+          {sueltos !== null && ahorra === 0 && personas.some((c) => c.conviene !== "singles") && (
+            <span className="dato">{t.alli.igualQueSueltos}</span>
+          )}
         </p>
       )}
       {grupo.total === null && grupo.faltan > 0 && (

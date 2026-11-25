@@ -214,11 +214,11 @@ const en = {
     noSeAnda: (modos: string[] | null) =>
       modos === null
         ? "Part of this trip is not walked. Times by car or public transport are approximate: what transport there is and what it costs is not known yet."
-        : `Part of this trip is not walked. Times by car or public transport are approximate.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in There.`,
+        : `Part of this trip is not walked. Times by car or public transport are approximate.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in the There tab.`,
     noSeAndaSinTrafico: (modos: string[] | null) =>
       modos === null
         ? "Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates: what transport there is and what it costs is not known yet."
-        : `Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in There.`,
+        : `Part of this trip is not walked. Times by car are without traffic, and times by public transport are rough estimates.${modos.length > 0 ? ` There is ${new Intl.ListFormat("en", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} What a ride costs and what suits you best for your days are in the There tab.`,
     enMapas: "Open in Google Maps",
     diaEnMapas: "The whole day in Google Maps",
     comoIr: "See how to get there, in Google Maps",
@@ -1622,11 +1622,11 @@ const es: Textos = {
     noSeAnda: (modos) =>
       modos === null
         ? "Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados: todavía no se sabe qué transporte hay ni lo que cuesta."
-        : `Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en Allí.`,
+        : `Parte de este viaje no se anda. Los tiempos en coche o en transporte son aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en la pestaña Allí.`,
     noSeAndaSinTrafico: (modos) =>
       modos === null
         ? "Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados: todavía no se sabe qué transporte hay ni lo que cuesta."
-        : `Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en Allí.`,
+        : `Parte de este viaje no se anda. En coche, los tiempos son sin tráfico, y en transporte, aproximados.${modos.length > 0 ? ` Hay ${new Intl.ListFormat("es", { type: "conjunction" }).format(modos.map((m) => m.toLowerCase()))}.` : ""} Lo que cuesta un trayecto y lo que te conviene para tus días están en la pestaña Allí.`,
     enMapas: "Abrir en Google Maps",
     diaEnMapas: "El día entero, en Google Maps",
     comoIr: "Ver cómo ir, en Google Maps",

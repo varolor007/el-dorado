@@ -148,6 +148,9 @@ test("las zonas de llegar, por su nombre si el viaje lo trae; si no, numeradas s
       ["z1", "El Centro"],
     ],
   );
+  // Con los nombres y una ruta de varias zonas, se nombra aunque todas vayan a la misma; con una zona, no hace falta.
+  assert.deepEqual([...(zonasDeLlegar([llegar("z1")], zonas) ?? [])], [["z1", "El Centro"]]);
+  assert.equal(zonasDeLlegar([llegar("z1")], zonas.slice(0, 1)), null);
   assert.equal(sitioDe("https://www.inventado.example/x?y=1"), "inventado.example");
 });
 

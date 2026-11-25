@@ -1156,7 +1156,17 @@ export function TuViaje(x: DeViaje) {
   const deParada = new Map(viaje.paradas.map((p) => [p.id, p]));
   const c = caminosDe(viaje.caminos);
   const trayectosAPie = reparto.dias.every((d) => seAndaElDia(d, deParada, c));
-  const todoAPie = trayectosAPie && viaje.alojamientos.every((a) => a.aPie !== false);
+  // Y de donde duermes a la primera parada y de la última a donde duermes, como los cuenta moverte allí (14.6).
+  const duermes = viaje.alojamientos.find(
+    (a) => a.id === conLoTuyo(x).maneras.find((m) => m.id === elegida?.id)?.alojamiento,
+  );
+  const seAndaDeYALaCama = reparto.dias.every((d) => {
+    const extremos = [d.paradas[0], d.paradas[d.paradas.length - 1]].flatMap((id) => deParada.get(id ?? "") ?? []);
+    return (
+      duermes === undefined || extremos.every((p) => irEntre(duermes.punto, p.punto, c, "en").cogiendo.length === 0)
+    );
+  });
+  const todoAPie = trayectosAPie && seAndaDeYALaCama && viaje.alojamientos.every((a) => a.aPie !== false);
   // Un viaje cerrado abre con lo que hay que reservar.
   const pestanas: Pestana[] = [...(viaje.cierre ? (["book"] as const) : []), "days", "stay", "money", "there", "notes"];
   // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega. Con el

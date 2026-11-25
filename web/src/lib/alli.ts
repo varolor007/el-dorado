@@ -85,15 +85,19 @@ export function billeteSuelto(m: DeMoverse | undefined, grupo: GrupoDelViaje): R
 }
 
 /**
- * Cómo se nombra la zona a la que llega cada manera de llegar: por su nombre, si el viaje trae las zonas de su ruta;
- * si no (un viaje de antes), y van a varias, por su número en el orden en que salen. Si van todas a la misma, null:
- * no hace falta nombrarla.
+ * Cómo se nombra la zona a la que llega cada manera de llegar: por su nombre, si el viaje trae las zonas de su ruta y
+ * la ruta tiene más de una; si no las trae (un viaje de antes) y van a varias, por su número en el orden en que salen.
+ * Si no hace falta nombrarla (una ruta de una zona, o todas van a la misma sin nombres), null.
  */
 export function zonasDeLlegar(
   llegar: ManeraDeLlegar[],
   zonas: Viaje["zonasDeLaRuta"] = undefined,
 ): Map<string, string | number> | null {
   const ids = [...new Set(llegar.map((x) => x.aZona))];
+  if (zonas !== undefined && zonas.length > 1) {
+    const conNombre = ids.flatMap((z) => zonas.filter((x) => x.id === z).map((x) => [z, x.nombre] as const));
+    if (conNombre.length === ids.length) return new Map(conNombre);
+  }
   if (ids.length <= 1) return null;
   return new Map(ids.map((z, i) => [z, zonas?.find((x) => x.id === z)?.nombre ?? i + 1]));
 }

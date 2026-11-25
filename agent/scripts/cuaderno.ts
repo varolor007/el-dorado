@@ -1126,13 +1126,17 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
           "lista datos",
           ...personas.map((x) => {
             const quien = x.edad === null ? r.cadaAdulto(adultos) : r.unNino(x.edad);
-            const compras = x.compras
-              .map((y) => {
-                const cuanto = r.deTantos(y.dias, y.viajes);
-                const billete = `${r.billete[y.clase] ?? y.clase}${cuanto === "" ? "" : ` (${cuanto})`}`;
-                return y.cuantos === 1 ? billete : `${y.cuantos} × ${billete}`;
-              })
-              .join(" + ");
+            // Con billetes sueltos, basta con decirlo; con un abono o una mezcla, lo que se compra.
+            const compras =
+              x.conviene === "singles"
+                ? ""
+                : x.compras
+                    .map((y) => {
+                      const cuanto = r.deTantos(y.dias, y.viajes);
+                      const billete = `${r.billete[y.clase] ?? y.clase}${cuanto === "" ? "" : ` (${cuanto})`}`;
+                      return y.cuantos === 1 ? billete : `${y.cuantos} × ${billete}`;
+                    })
+                    .join(" + ");
             return h(
               "li",
               null,
