@@ -147,26 +147,38 @@ export type ParaLaLlegada = {
   sale: string | null;
   /** Lo que dura la ida, en minutos, si la fuente lo dice. */
   minutosIda: number | null;
+  /** Cuándo llega, con la hora del destino y su desfase, si la fuente lo dice: entonces no se estima. */
+  llega?: string | null;
   /** El día de entrada al alojamiento. */
   entrada: string;
   /** Desde qué hora se entra (HH:MM), si la fuente lo dice. */
   entradaDesde: string | null;
-  /** La longitud del destino: de ella sale su hora, aproximada. */
+  /** La longitud del destino: de ella sale su hora, aproximada, si la fuente no da la de llegada. */
   lon: number;
 };
 
 const CON_HORA_Y_ZONA = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
 const HORA = /^(\d{2}):(\d{2})$/;
 
-/** Cuándo llega, en la hora aproximada del destino, con su margen: lo más pronto y lo más tarde, en milisegundos. */
-function llegadaEnElDestino(x: ParaLaLlegada): { pronto: number; tarde: number } | null {
+/**
+ * Cuándo llega, en la hora del destino: lo más pronto y lo más tarde, en milisegundos, contados como si la hora de
+ * allí fuera la de UTC. Con la hora de llegada de la fuente, con su desfase, es esa, sin margen; si no, la que sale
+ * de la longitud, con su margen. `cerca` dice si la estimada cae cerca de la línea de cambio de fecha.
+ */
+function llegadaEnElDestino(x: ParaLaLlegada): { pronto: number; tarde: number; cerca: boolean } | null {
+  if (typeof x.llega === "string" && CON_HORA_Y_ZONA.test(x.llega)) {
+    // La hora de allí es la que lleva escrita, con su desfase: se lee tal cual, sin pasarla a UTC.
+    const alli = Date.parse(`${x.llega.slice(0, 16)}:00Z`);
+    if (!Number.isNaN(alli)) return { pronto: alli, tarde: alli, cerca: false };
+  }
   if (x.sale === null || x.minutosIda === null || !CON_HORA_Y_ZONA.test(x.sale) || !(x.minutosIda > 0)) return null;
   const llega = Date.parse(x.sale) + x.minutosIda * 60_000;
   if (Number.isNaN(llega)) return null;
   const zona = Math.round(x.lon / 15) * 3_600_000;
   const margen = LA_HORA_DE_LLEGADA.margen * 3_600_000;
   // Se cuenta como si fuera la hora UTC de allí: así la fecha y la hora salen leyendo la de UTC.
-  return { pronto: llega + zona - margen, tarde: llega + zona + margen };
+  const cerca = Math.abs(x.lon) > LA_HORA_DE_LLEGADA.lineaDeFecha;
+  return { pronto: llega + zona - margen, tarde: llega + zona + margen, cerca };
 }
 
 /** Si la llegada cuadra con la entrada al alojamiento, como lo dice la hoja: lo que no se sabe no se da por bueno. */
@@ -174,6 +186,8 @@ export function llegadaDe(x: ParaLaLlegada): Llegada {
   if (!x.hayTransporte) return "no_transport";
   const r = llegadaEnElDestino(x);
   if (r === null) return "no_hours";
+  // Cerca de la línea de cambio de fecha, la longitud no dice ni de qué día es la hora de allí.
+  if (r.cerca) return "unsure";
   const dia = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
   const [pronto, tarde] = [dia(r.pronto), dia(r.tarde)];
   if (pronto > x.entrada) return "next_day";

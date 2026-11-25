@@ -12,6 +12,7 @@ import { puertaDelOrden } from "../../agent/gates/puerta_explica.ts";
 import { ENTREGA, PASOS } from "../../agent/gates/puerta_metodo.ts";
 import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import {
+  abandonarElCierre,
   cierreDeCara,
   comprobarEnlace,
   elegir,
@@ -22,12 +23,14 @@ import {
 } from "../../agent/launcher/cerrar.ts";
 import {
   abrirViaje,
+  guardarCierre,
   guardarVersion,
   leerVersion,
   leerViaje,
   nuevoCierre,
   nuevoRun,
   pasar,
+  volverA,
   type ViajeEnLaMesa,
 } from "../../agent/launcher/mesa.ts";
 import { comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
@@ -79,7 +82,8 @@ const LLEGADA: ParaLaLlegada = {
   sale: "2027-02-12T08:00:00+01:00",
   minutosIda: 180,
   entrada: "2027-02-12",
-  entradaDesde: "12:00",
+  // Llega hacia las 11:00 de allí, con tres horas de margen: desde las 8:00, que no es esperar a la habitación.
+  entradaDesde: "11:00",
   lon: 20,
 };
 
@@ -238,7 +242,7 @@ test("los enlaces (3.13): solo https y sin claves; cada parada y cada día, el s
 
 // La mesa, con el viaje inventado ya en el mapa.
 
-function enElMapa(viaje: Viaje = viajeParaCerrar(), entradaDesde = "12:00"): { mesa: string; v: ViajeEnLaMesa } {
+function enElMapa(viaje: Viaje = viajeParaCerrar(), entradaDesde = "11:00"): { mesa: string; v: ViajeEnLaMesa } {
   const mesa = mkdtempSync(join(tmpdir(), "el-dorado-cierre-"));
   const entendido = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: viaje.entrada, check_out: viaje.salida } };
   const v = abrirViaje({ dueno: "u-1", entendido, mesa, cuando: new Date(HACE(48)) });
@@ -263,7 +267,7 @@ function enElMapa(viaje: Viaje = viajeParaCerrar(), entradaDesde = "12:00"): { m
 /** Una fuente de alojamiento que da hoy el precio que se le diga, para las noches que se le piden. */
 function alojamientoHoy(
   total: number | null,
-  o: { cancelable?: boolean | null; falla?: boolean; habitacion?: string | null } = {},
+  o: { cancelable?: boolean | null; falla?: boolean; habitacion?: string | null; visto?: string } = {},
 ): FuenteAlojamiento {
   return {
     nombre: "inventada",
@@ -277,7 +281,7 @@ function alojamientoHoy(
       if (total === null) return [];
       const p: Precio = {
         fuente: "inventada",
-        visto: AHORA,
+        visto: o.visto ?? AHORA,
         id: ids[0],
         total,
         tasasAparte: 0,
@@ -388,7 +392,7 @@ test("el cierre entero: precios de hoy, enlaces, el orden con sus frases, la pue
   );
   assert.equal(cierre.total.hoy, 306);
   assert.equal(cierre.llegada, "ok");
-  assert.equal(cierre.entradaDesde, "12:00");
+  assert.equal(cierre.entradaDesde, "11:00");
   assert.ok(cierre.reservas.every((x) => typeof x.frase === "string"));
   assert.ok(cierre.enlaces.some((e) => e.comprobado === "ok"));
   // La versión de antes sigue ahí, sin tocar.
@@ -578,6 +582,7 @@ async function cerradoYSuMaterial(): Promise<{ viaje: Viaje; material: MaterialD
       dados: p.dados,
       comprobados: JSON.parse(readFileSync(join(c.carpeta, "enlaces.json"), "utf8")),
       llegada: p.llegada,
+      cuando: JSON.parse(readFileSync(join(c.carpeta, "elegido.json"), "utf8")).cuando,
     },
   };
 }
@@ -900,4 +905,382 @@ test("se cierra con los días que tiene delante el viajero, y con su manera, gua
     (leerVersion(v, 1)!.viaje as Viaje).dias.map((d) => d.paradas),
     [["p1", "p2"], ["p3"]],
   );
+});
+
+// Lo que dejó la revisión de la tanda 5: la versión que se cierra, el cierre abandonado o a medias, la edad de los
+// precios al cerrar de verdad, las trampas de la puerta 8 que faltaban y la hora de llegada.
+
+/** Otra investigación del viaje, ya en el mapa: una versión nueva, con sus sucesos. */
+function otraVersion(v: ViajeEnLaMesa, sucesos: unknown[]): number {
+  const run = nuevoRun(v, new Date(AHORA));
+  writeFileSync(join(run, "viaje.json"), JSON.stringify(viajeParaCerrar()));
+  writeFileSync(join(run, "sucesos.json"), JSON.stringify(sucesos));
+  return guardarVersion(v, v.ficha.runs.length, "again", new Date(AHORA)).n;
+}
+
+test("trampa: «sigo» no cierra una versión vieja encima de la nueva, ni mezcla las dos", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    const { c, r } = await cerrarCon(v, fuentes(alojamientoHoy(240)), null);
+    assert.equal(r.etapa, "yours");
+    // Mientras espera el sí, el viaje se investiga otra vez y sale la versión 2, con sus sucesos.
+    assert.equal(otraVersion(v, [{ marca: "de la versión 2" }]), 2);
+    // Con la casa, «sigo» ya no vale; y aunque se diga por debajo, el cierre se para y no cierra nada.
+    assert.throws(() => seguir(c.carpeta, new Date(AHORA), v), /not_now/);
+    seguir(c.carpeta, new Date(AHORA));
+    const otra = await llevarElCierre(v, c, {
+      fuentes: fuentes(alojamientoHoy(240)),
+      lanzador: null,
+      ahora: () => new Date(AHORA),
+    });
+    assert.equal(otra.etapa, "stopped");
+    assert.equal(cierreDeCara(v, c).why, "abandoned");
+    assert.equal(leerViaje(v.ficha.id, "u-1", mesa).ficha.estado, "on_map");
+    assert.equal(leerViaje(v.ficha.id, "u-1", mesa).ficha.version, 2);
+    // Y si el viaje ya estaba hecho, guardarlo no toma la versión que se enseña ahora.
+    writeFileSync(join(c.carpeta, "viaje.json"), JSON.stringify(viajeParaCerrar()));
+    assert.throws(() => guardarCierre(v, c.n, new Date(AHORA)), /ya no es la que se enseña/);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("se cierra la versión que dice el cierre: con sus sucesos, lo entendido y su run, no los de otra", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    const { c } = await cerrarCon(v, fuentes(alojamientoHoy(240)), null);
+    otraVersion(v, [{ marca: "de la versión 2" }]);
+    // El viajero vuelve a la versión 1, la de su cierre: entonces sí se sigue, y se cierra la 1.
+    volverA(v, 1, new Date(AHORA));
+    seguir(c.carpeta, new Date(AHORA), v);
+    const r = await llevarElCierre(v, c, {
+      fuentes: fuentes(alojamientoHoy(240)),
+      lanzador: null,
+      ahora: () => new Date(AHORA),
+    });
+    assert.equal(r.etapa, "done");
+    const ficha = leerViaje(v.ficha.id, "u-1", mesa).ficha;
+    const cerrada = ficha.versiones.find((x) => x.cierre === c.n)!;
+    assert.equal(cerrada.run, 1);
+    assert.deepEqual(leerVersion(v, cerrada.n)!.sucesos, []);
+    assert.equal((leerVersion(v, cerrada.n)!.viaje as Viaje).cierre!.version, 1);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("un cierre que esperaba el sí se da por abandonado al empezar otra investigación, y no se sigue", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    const { c } = await cerrarCon(v, fuentes(alojamientoHoy(240)), null);
+    abandonarElCierre(v);
+    assert.equal(etapaDe(c.carpeta), "stopped");
+    assert.equal(cierreDeCara(v, c).why, "abandoned");
+    assert.throws(() => seguir(c.carpeta, new Date(AHORA)), /not_now/);
+    // Uno que ya acabó no se toca.
+    const { v: otro, mesa: otraMesa } = enElMapa();
+    try {
+      const hecho = await cerrarCon(otro, fuentes(alojamientoHoy(186)), null);
+      abandonarElCierre(otro);
+      assert.equal(etapaDe(hecho.c.carpeta), "done");
+    } finally {
+      rmSync(otraMesa, { recursive: true, force: true });
+    }
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("trampa: un cierre a medias que nadie lleva no trabaja para siempre: cuenta como parado", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    // La casa se cayó con el cierre recién pulsado: no queda parado.json, y nadie lo retoma.
+    const c = nuevoCierre(v, new Date(AHORA));
+    elegir(v, c.carpeta, "cheapest", new Date(AHORA));
+    assert.equal(etapaDe(c.carpeta), "prices");
+    assert.equal(cierreDeCara(v, c, true).stage, "prices");
+    const cara = cierreDeCara(v, c, false);
+    assert.equal(cara.stage, "stopped");
+    assert.equal(cara.why, "interrupted");
+    assert.equal(cara.version, 1);
+    // Y se puede volver a cerrar: un cierre nuevo, que acaba.
+    const otro = await cerrarCon(v, fuentes(alojamientoHoy(186)), null);
+    assert.equal(otro.r.etapa, "done");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("trampa: la edad de un precio se mide al cerrar de verdad: si al seguir caducó, se vuelve a pedir", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    const { c, r } = await cerrarCon(v, fuentes(alojamientoHoy(240)), null);
+    assert.equal(r.etapa, "yours");
+    // El viajero dice que sigue tres días después: el precio del alojamiento, pedido entonces, ya pasa de su edad.
+    const luego = new Date(Date.parse(AHORA) + 72 * 3_600_000);
+    let pedidas = 0;
+    const deLuego = (total: number): FuentesDelCierre => {
+      const f = fuentes(alojamientoHoy(total, { visto: luego.toISOString() }));
+      const precios = f.alojamiento!.precios;
+      return { ...f, alojamiento: { ...f.alojamiento!, precios: async (...a) => (pedidas++, precios(...a)) } };
+    };
+    seguir(c.carpeta, luego, v);
+    // Lo de hoy vuelve a subir mucho: se le vuelve a preguntar, con lo de antes al lado.
+    const otra = await llevarElCierre(v, c, { fuentes: deLuego(240), lanzador: null, ahora: () => luego });
+    assert.equal(otra.etapa, "yours");
+    assert.equal(pedidas, 1);
+    assert.ok(existsSync(join(c.carpeta, "precios-1.json")));
+    assert.ok(existsSync(join(c.carpeta, "seguir-1.json")));
+    // Con su segundo sí, el mismo día, se cierra sin volver a pedir: la edad, la de cuando se cerró.
+    seguir(c.carpeta, luego, v);
+    const hecho = await llevarElCierre(v, c, { fuentes: deLuego(240), lanzador: null, ahora: () => luego });
+    assert.equal(hecho.etapa, "done", readFileSync(join(c.carpeta, "puerta8.json"), "utf8"));
+    assert.equal(pedidas, 1);
+    const cierre = (leerVersion(v)!.viaje as Viaje).cierre!;
+    assert.equal(cierre.cuando, luego.toISOString());
+    assert.equal(cierre.precios.find((p) => p.pieza === "lodging")!.edad, "now");
+    assert.ok(!cierre.sinConfirmar.some((s) => s.que === "price_stale"));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("si al seguir días después el precio de hoy no pide el sí, se cierra con él sin preguntar", async () => {
+  const { mesa, v } = enElMapa();
+  try {
+    const { c } = await cerrarCon(v, fuentes(alojamientoHoy(240)), null);
+    const luego = new Date(Date.parse(AHORA) + 72 * 3_600_000);
+    seguir(c.carpeta, luego, v);
+    const f = fuentes(alojamientoHoy(186, { visto: luego.toISOString() }));
+    const r = await llevarElCierre(v, c, { fuentes: f, lanzador: null, ahora: () => luego });
+    assert.equal(r.etapa, "done");
+    const cierre = (leerVersion(v)!.viaje as Viaje).cierre!;
+    assert.equal(cierre.precios[0].hoy!.total, 186);
+    assert.equal(cierre.precios[0].edad, "now");
+    // Sin volver a pedir, el precio de hace tres días habría salido «now»: es lo que no puede pasar.
+    const viejo = JSON.parse(readFileSync(join(c.carpeta, "precios-1.json"), "utf8"));
+    assert.equal(
+      precioDeHoy(piezasDe(viajeParaCerrar(), viajeParaCerrar().maneras[0])[0], viejo.dados.a2, cierre.cuando).edad,
+      "stale",
+    );
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("trampa: un cierre que dice que se cerró antes, para que sus precios parezcan jóvenes", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  viaje.cierre!.cuando = HACE(1);
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /hora a la que se cerró/);
+});
+
+test("trampa: un día fuera de las fechas del viaje, y más días que fechas", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  viaje.dias[0].fecha = "2030-01-01";
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /no es de las fechas del viaje/);
+  const otro = await cerradoYSuMaterial();
+  const de = otro.viaje.dias;
+  otro.viaje.dias = [...de, ...de.map((d) => ({ ...d, paradas: [], metros: [] }))];
+  assert.match(JSON.stringify(puertaCierre(otro.viaje, otro.material).rojos), /más días que fechas/);
+});
+
+test("trampa: los plazos de los papeles cambiados", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  viaje.cierre!.papeles = [
+    { casilla: 0, pais: "XX", pregunta: "visa", antesDe: "2027-02-01", tarde: false, frase: "Hazlo antes." },
+  ];
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /plazos no son los de la tabla/);
+});
+
+test("trampa: lo que queda sin confirmar, cambiado", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  assert.ok(viaje.cierre!.sinConfirmar.length > 0);
+  viaje.cierre!.sinConfirmar = viaje.cierre!.sinConfirmar.slice(1);
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /sin confirmar no es lo que sale/);
+});
+
+test("trampa: los enlaces de los mapas cambiados", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  viaje.cierre!.mapas.alojamiento = "https://www.google.com/maps/search/?api=1&query=0,0";
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /los enlaces de los mapas/);
+});
+
+test("trampa: una hora de entrada que no es la que dio la fuente", async () => {
+  const { viaje, material } = await cerradoYSuMaterial();
+  viaje.cierre!.entradaDesde = "09:00";
+  assert.match(JSON.stringify(puertaCierre(viaje, material).rojos), /hora de entrada no es la que dio la fuente/);
+});
+
+test("trampa: la llegada, donde la hora oficial se aparta del sol o cerca de la línea de cambio de fecha", () => {
+  // En el oeste de Europa en verano la hora oficial va unas tres horas por delante del sol: llega pasada la
+  // medianoche, y por la longitud parecía que llegaba la víspera, a buena hora.
+  const oeste: ParaLaLlegada = {
+    hayTransporte: true,
+    sale: "2027-07-10T23:00:00+02:00",
+    minutosIda: 90,
+    entrada: "2027-07-10",
+    entradaDesde: "15:00",
+    lon: -8.5,
+  };
+  assert.notEqual(llegadaDe(oeste), "ok");
+  assert.equal(llegadaDe(oeste), "unsure");
+  // Con la hora de llegada de la fuente, con su desfase, se sabe: llega el día siguiente.
+  assert.equal(llegadaDe({ ...oeste, llega: "2027-07-11T00:30:00+02:00" }), "next_day");
+  // Al otro lado de la línea de cambio de fecha: un vuelo que llega el mismo día no es «la víspera».
+  const isla: ParaLaLlegada = {
+    hayTransporte: true,
+    sale: "2027-02-12T08:00:00+13:00",
+    minutosIda: 240,
+    entrada: "2027-02-12",
+    entradaDesde: "11:00",
+    lon: -171.8,
+  };
+  assert.equal(llegadaDe(isla), "unsure");
+  assert.equal(llegadaDe({ ...isla, llega: "2027-02-12T12:00:00+13:00" }), "ok");
+  assert.equal(llegadaDe({ ...isla, lon: 175.2 }), "unsure");
+  // Una hora de la fuente sin desfase no vale: se estima como siempre.
+  assert.equal(llegadaDe({ ...oeste, llega: "2027-07-11T00:30:00" }), "unsure");
+});
+
+/** La casa con su puerta, para las pruebas que pasan por la web: con las fuentes que se le digan. */
+async function conLaPuerta(
+  o: { alojamiento: FuenteAlojamiento; casa?: Lanzador },
+  prueba: (x: {
+    pide: (metodo: string, ruta: string, cuerpo?: unknown) => Promise<{ estado: number; cuerpo: Record<string, any> }>;
+    id: string;
+    v: () => ViajeEnLaMesa;
+    esperar: () => Promise<void>;
+  }) => Promise<void>,
+): Promise<void> {
+  const { puertaALaWeb, CABECERA_DE_LA_SESION } = await import("../../agent/launcher/puerta_a_la_web.ts");
+  const { fuentesInventadas } = await import("../cases/inventado/asientos.ts");
+  const mesa = mkdtempSync(join(tmpdir(), "el-dorado-mesa-"));
+  const LLAVE = "una-llave-larga-e-inventada-para-la-web";
+  const CORREO = "ana@inventado.example";
+  const puerta = puertaALaWeb({
+    mesa,
+    llave: LLAVE,
+    secreto: Buffer.alloc(32, 7),
+    fuentes: () => ({ ...fuentesInventadas(), alojamiento: o.alojamiento, transporte: vueloHoy(60) }),
+    hoy: () => new Date(AHORA),
+    comprobarEnlace: async () => "ok",
+    ...(o.casa === undefined ? {} : { lanzadorDeLaCasa: o.casa, correosDeLaCasa: [CORREO] }),
+  });
+  await new Promise<void>((r) => puerta.servidor.listen(0, "127.0.0.1", r));
+  const url = `http://127.0.0.1:${(puerta.servidor.address() as { port: number }).port}`;
+  let sesion: string | null = null;
+  const pide = async (metodo: string, ruta: string, cuerpo?: unknown) => {
+    const r = await fetch(url + ruta, {
+      method: metodo,
+      headers: { authorization: `Bearer ${LLAVE}`, ...(sesion === null ? {} : { [CABECERA_DE_LA_SESION]: sesion }) },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+    return { estado: r.status, cuerpo: (await r.json().catch(() => ({}))) as Record<string, any> };
+  };
+  try {
+    sesion = (await pide("POST", "/cuentas", { email: CORREO, password: "una contraseña larga" })).cuerpo
+      .session as string;
+    const viaje = viajeParaCerrar();
+    const entendido = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: viaje.entrada, check_out: viaje.salida } };
+    const id = (await pide("POST", "/viajes", { understood: entendido })).cuerpo.trip.id as string;
+    const dueno = JSON.parse(readFileSync(join(mesa, "viajes", id, "ficha.json"), "utf8")).dueno as string;
+    const v = leerViaje(id, dueno, mesa);
+    pasar(v, "confirmed");
+    const run = nuevoRun(v);
+    writeFileSync(join(run, "viaje.json"), JSON.stringify(viaje));
+    writeFileSync(join(run, "sucesos.json"), "[]");
+    guardarVersion(v, 1, "first");
+    await prueba({ pide, id, v: () => leerViaje(id, dueno, mesa), esperar: () => puerta.esperar() });
+  } finally {
+    await puerta.esperar();
+    await puerta.cerrar();
+    rmSync(mesa, { recursive: true, force: true });
+  }
+}
+
+test("la puerta: «sigo» solo vale para un cierre de la versión que se enseña, y /cierre dice de cuál es", async () => {
+  await conLaPuerta({ alojamiento: alojamientoHoy(240) }, async ({ pide, id, v, esperar }) => {
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, { way: "cheapest" })).estado, 202);
+    await esperar();
+    const cara = (await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing;
+    assert.equal(cara.stage, "yours");
+    assert.equal(cara.version, 1);
+    // Sale otra versión mientras espera: «sigo» ya no es de lo que se enseña.
+    otraVersion(v(), []);
+    const sigo = await pide("POST", `/viajes/${id}/cerrar`, { prices: "go_on" });
+    assert.equal(sigo.estado, 409);
+    assert.equal(v().ficha.version, 2);
+    assert.equal(v().ficha.estado, "on_map");
+    assert.equal((await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing.version, 1);
+  });
+});
+
+test("la puerta: no se investiga con un cierre en marcha, y al investigar se abandona el que esperaba", async () => {
+  const { lanzadorDeMentira } = await import("../cases/inventado/asientos.ts");
+  let suelta: () => void = () => undefined;
+  const cerrojo = new Promise<void>((r) => (suelta = r));
+  const base = alojamientoHoy(240);
+  const lenta: FuenteAlojamiento = { ...base, precios: async (...a) => (await cerrojo, base.precios(...a)) };
+  await conLaPuerta({ alojamiento: lenta, casa: lanzadorDeMentira() }, async ({ pide, id, v, esperar }) => {
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, { way: "cheapest" })).estado, 202);
+    // Con el cierre pidiendo los precios, no se empieza otra investigación.
+    const antes = await pide("POST", `/viajes/${id}/empezar`, {});
+    assert.equal(antes.estado, 409);
+    assert.equal(antes.cuerpo.error, "already_running");
+    suelta();
+    await esperar();
+    assert.equal((await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing.stage, "yours");
+    // Se empieza otra: el cierre que esperaba queda abandonado, y ya no se sigue.
+    assert.equal((await pide("POST", `/viajes/${id}/empezar`, {})).estado, 202);
+    await esperar();
+    const cara = (await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing;
+    assert.equal(cara.stage, "stopped");
+    assert.equal(cara.why, "abandoned");
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, { prices: "go_on" })).estado, 409);
+    assert.ok(v().ficha.versiones.every((x) => x.cierre === undefined));
+  });
+});
+
+test("la puerta: un cierre a medias que nadie lleva sale parado, y se puede volver a cerrar", async () => {
+  await conLaPuerta({ alojamiento: alojamientoHoy(186) }, async ({ pide, id, v, esperar }) => {
+    // Lo que deja una casa que se cayó al empezar a cerrar: el cierre pulsado, y nada más.
+    const c = nuevoCierre(v(), new Date(AHORA));
+    elegir(v(), c.carpeta, "cheapest", new Date(AHORA));
+    const cara = (await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing;
+    assert.deepEqual([cara.stage, cara.why, cara.running], ["stopped", "interrupted", false]);
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, { way: "cheapest" })).estado, 202);
+    await esperar();
+    assert.equal((await pide("GET", `/viajes/${id}/cierre`)).cuerpo.closing.stage, "done");
+    assert.equal(v().ficha.estado, "closed");
+  });
+});
+
+test("la puerta: no se investiga mientras se escribe la guía del viaje", async () => {
+  let suelta: () => void = () => undefined;
+  const cerrojo = new Promise<void>((r) => (suelta = r));
+  let escribe = false;
+  // La cuenta de la casa: el que explica falla (se cierra sin frases) y el que escribe la guía tarda.
+  const casa: Lanzador = async (_orden, puesto) => {
+    if (puesto.asiento !== "guide-writer") throw new Error("sin IA en esta prueba");
+    escribe = true;
+    await cerrojo;
+    throw new Error("la guía no hace falta");
+  };
+  await conLaPuerta({ alojamiento: alojamientoHoy(186), casa }, async ({ pide, id, v, esperar }) => {
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, { way: "cheapest" })).estado, 202);
+    await esperar();
+    assert.equal(v().ficha.estado, "closed");
+    assert.equal((await pide("POST", `/viajes/${id}/guia`, { way: "cheapest" })).estado, 202);
+    for (let i = 0; i < 50 && !escribe; i++) await new Promise((r) => setTimeout(r, 10));
+    assert.ok(escribe, "la guía se está escribiendo");
+    try {
+      const r = await pide("POST", `/viajes/${id}/empezar`, {});
+      assert.equal(r.estado, 409);
+      assert.equal(r.cuerpo.error, "already_running");
+      assert.equal(v().ficha.estado, "closed");
+    } finally {
+      suelta();
+      await esperar();
+    }
+  });
 });

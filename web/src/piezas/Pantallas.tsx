@@ -405,6 +405,8 @@ type DeViaje = Comun & {
   alMover: (id: string, dia: number) => void;
   /** El identificador del viaje si es tuyo y está en el mapa: entonces se puede cerrar. */
   tuyo?: string | null;
+  /** La versión que se enseña de un viaje tuyo: solo se sigue el cierre que es de ella. */
+  version?: number | null;
 };
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
@@ -688,6 +690,7 @@ function Dormir(x: DeViaje) {
                         manera={m.id}
                         dias={x.reparto.dias}
                         ritmo={x.ritmo}
+                        version={x.version ?? null}
                       />
                     )}
                   </div>
@@ -984,15 +987,30 @@ export function TuViaje(x: DeViaje) {
   const todoAPie = trayectosAPie && viaje.alojamientos.every((a) => a.aPie !== false);
   // Un viaje cerrado abre con lo que hay que reservar.
   const pestanas: Pestana[] = [...(viaje.cierre ? (["book"] as const) : []), "days", "stay", "money", "notes"];
-  // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega.
-  const llega = comoSeLlega(viaje, elegida);
+  // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega. Con el
+  // viaje cerrado, es el de la manera con que se cerró, con los precios de ese día; si ese día no hubo total, el que
+  // se vio, y de qué día es.
+  const cierre = viaje.cierre;
+  const arriba = (cierre && viaje.maneras.find((m) => m.id === cierre.manera)) || elegida;
+  const llega = comoSeLlega(viaje, arriba);
+  const cifra = cierre ? (cierre.total.hoy ?? cierre.total.antes) : arriba?.total;
+  const moneda = cierre ? cierre.moneda : arriba?.moneda;
+  const visto = cierre?.precios.map((p) => p.antes.visto.slice(0, 10)).sort()[0];
+  const deCuando = !cierre
+    ? null
+    : cierre.total.hoy !== null
+      ? t.cifras.alCerrar(diaCorto(cierre.cuando.slice(0, 10), idioma))
+      : visto === undefined
+        ? null
+        : t.cifras.vistoEl(diaCorto(visto, idioma));
   return (
     <>
       <CabeceraDelViaje t={t} idioma={idioma} viaje={viaje} rotulo={t.viaje.rotulo} />
       <div className="cifras">
         <div className="oro">
-          <b>{elegida ? dinero(elegida.total, elegida.moneda, idioma) : "?"}</b>
+          <b>{cifra !== undefined && moneda !== undefined ? dinero(cifra, moneda, idioma) : "?"}</b>
           <span>{t.cifras.total(noches(viaje.entrada, viaje.salida), llega?.clase ?? null)}</span>
+          {deCuando !== null && <span>{deCuando}</span>}
         </div>
         <div>
           <b>{puestas}</b>

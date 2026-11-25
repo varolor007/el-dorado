@@ -13,10 +13,14 @@
 //   orden.json      lo que escribió el que explica, ya pasado por la puerta 7, o por qué no lo hay
 //   puerta8.json    lo que dijo la puerta 8
 //   viaje.json      el viaje cerrado, que pasa a ser una versión
-//   parado.json     si la puerta 8 lo paró, por qué; o si se rompió algo
+//   parado.json     si la puerta 8 lo paró, por qué; si se rompió algo; o si se dejó por otra investigación
+//
+// Si el viajero dice que sigue días después, los precios que se pidieron entonces pueden pasar ya de su edad: se
+// vuelven a pedir, y lo de antes se queda al lado (`precios-<k>.json` y, si hay que volver a preguntar,
+// `seguir-<k>.json`).
 
 import { lookup } from "node:dns/promises";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { COMPROBAR_ENLACES, ESPERA_A_LAS_FUENTES, VUELTAS_DEL_ORDEN } from "../data/cierre.ts";
 import { TOPE_DE_UN_ASIENTO } from "../data/pasos.ts";
@@ -53,7 +57,7 @@ import { lanzarAsiento, recogerAsiento, type Lanzador, type Tope } from "./asien
 import { direccionDeDentro, paginaDeFuera } from "./consultado.ts";
 import { sinPalabras } from "./escuchar.ts";
 import { estanciaDe } from "./investigar.ts";
-import { guardarCierre, guardarJson, leerVersion, type ViajeEnLaMesa } from "./mesa.ts";
+import { guardarCierre, guardarJson, leerVersion, ultimoCierre, type ViajeEnLaMesa } from "./mesa.ts";
 import { montarPuesto, puestosDe, type Pieza } from "./puesto.ts";
 import { apuntarTrabajo } from "./trabajos.ts";
 
@@ -97,6 +101,8 @@ type DeLosPrecios = {
   alojamiento: DelAlojamiento;
   /** Si lo que cambió pide el sí del viajero antes de seguir. */
   pide?: boolean;
+  /** Cuándo se pidieron a las fuentes. */
+  pedidos?: string;
 };
 type DelOrden = {
   entrega: {
@@ -140,10 +146,54 @@ export function elegir(
   return elegido;
 }
 
-/** El sí del viajero a seguir con los precios de hoy: solo cuando el cierre lo está esperando. */
-export function seguir(carpeta: string, cuando: Date): void {
+/** De qué versión es un cierre: la que se enseñaba cuando se pulsó. Null si aún no lo dice. */
+export function versionDelCierre(carpeta: string): number | null {
+  if (!hay(carpeta, "elegido.json")) return null;
+  const n = leer<Partial<Elegido>>(carpeta, "elegido.json").version;
+  return typeof n === "number" ? n : null;
+}
+
+/**
+ * El sí del viajero a seguir con los precios de hoy: solo cuando el cierre lo está esperando y es de la versión que
+ * se enseña. Si mientras esperaba salió otra versión, ese sí ya no es de lo que tiene delante.
+ */
+export function seguir(carpeta: string, cuando: Date, v?: ViajeEnLaMesa): void {
   if (etapaDe(carpeta) !== "yours") throw new FalloAlCerrar("not_now");
+  if (v !== undefined && (v.ficha.estado !== "on_map" || versionDelCierre(carpeta) !== v.ficha.version))
+    throw new FalloAlCerrar("not_now");
   guardarJson(join(carpeta, "seguir.json"), { cuando: cuando.toISOString() });
+}
+
+/** Deja parado un cierre, con su porqué, si no lo estaba ya. */
+function parar(carpeta: string, paso: string, motivo: PorQueParo, rojos: Rojo[] = []): void {
+  if (!hay(carpeta, "parado.json")) guardarJson(join(carpeta, "parado.json"), { paso, motivo, rojos });
+}
+
+/** Por qué se paró un cierre: la puerta 8, la casa, o porque se empezó otra investigación del viaje. */
+type PorQueParo = "check" | "house" | "abandoned";
+
+/**
+ * Al empezar otra investigación del viaje, el último cierre que no acabó (el que esperaba el sí del viajero, o uno
+ * que se quedó a medias) se da por abandonado: lo que dijera ya no es del viaje que va a salir, y no se puede seguir.
+ */
+export function abandonarElCierre(v: ViajeEnLaMesa): void {
+  const c = ultimoCierre(v);
+  if (c === null || ["done", "stopped"].includes(etapaDe(c.carpeta))) return;
+  parar(c.carpeta, "otra investigación", "abandoned");
+}
+
+/** Cuándo se cierra de verdad: cuando el viajero dijo que seguía, si tuvo que decirlo; si no, cuando pulsó. */
+function momentoDe(carpeta: string, e: Elegido): string {
+  return hay(carpeta, "seguir.json") ? leer<{ cuando: string }>(carpeta, "seguir.json").cuando : e.cuando;
+}
+
+/** El primer número libre para dejar al lado lo de antes de un cierre (`precios-<k>.json`). */
+function apartado(carpeta: string): number {
+  const ks = readdirSync(carpeta)
+    .map((x) => /^precios-([1-9]\d*)\.json$/.exec(x)?.[1])
+    .filter((x): x is string => x !== undefined)
+    .map(Number);
+  return Math.max(0, ...ks) + 1;
 }
 
 /** Lo que tiene el viaje de la versión que se cierra, y su manera. */
@@ -272,6 +322,7 @@ async function preciosDeHoy(
       hayTransporte: t !== undefined,
       sale: llega?.sale ?? t?.sale ?? null,
       minutosIda: llega?.minutosIda ?? null,
+      llega: llega?.llega ?? null,
       entrada: viaje.entrada,
       entradaDesde: alojamiento.entradaDesde,
       lon: viaje.destino.punto.lon,
@@ -286,17 +337,19 @@ function montar(
   p: DeLosPrecios,
   comprobados: Record<string, ComprobacionDeEnlace>,
   sigue: boolean,
+  cuando: string,
 ): { cierre: Cierre; piezas: PiezaElegida[] } {
   const m = viaje.maneras.find((x) => x.id === e.manera)!;
   const piezas = piezasDe(viaje, m);
-  const precios = piezas.map((x) => precioDeHoy(x, p.dados[x.ref] ?? "unknown", e.cuando));
+  // La edad de cada precio se mide cuando se cierra de verdad, no cuando se pulsó.
+  const precios = piezas.map((x) => precioDeHoy(x, p.dados[x.ref] ?? "unknown", cuando));
   const enlaces: EnlaceDeReserva[] = enlacesSinComprobar(viaje, m, precios, p.alojamiento).map((x) => ({
     ...x,
     comprobado: comprobados[x.url] ?? "unchecked",
   }));
   const llegada = llegadaDe(p.llegada);
   const cierre: Cierre = {
-    cuando: e.cuando,
+    cuando,
     version: e.version,
     manera: m.id,
     alojamiento: m.alojamiento,
@@ -330,15 +383,31 @@ export function etapaDe(carpeta: string): EtapaDelCierre {
   return "links";
 }
 
-/** Lo que la web ve de un cierre: su etapa y, cuando espera al viajero o ya está, lo que cambió de precio. */
-export function cierreDeCara(v: ViajeEnLaMesa, c: { carpeta: string; n: number }): Record<string, unknown> {
-  const etapa = etapaDe(c.carpeta);
-  const cara: Record<string, unknown> = { n: c.n, stage: etapa };
+/**
+ * Por dónde va un cierre, sabiendo si la casa lo lleva ahora: uno a medias que nadie lleva (la casa se cayó mientras
+ * cerraba) no está trabajando, está parado, y se puede volver a cerrar.
+ */
+export function etapaViva(carpeta: string, corre: boolean): EtapaDelCierre {
+  const etapa = etapaDe(carpeta);
+  return corre || ["yours", "done", "stopped"].includes(etapa) ? etapa : "stopped";
+}
+
+/**
+ * Lo que la web ve de un cierre: de qué versión es, su etapa y, cuando espera al viajero, lo que cambió de precio.
+ * `corre` dice si la casa lo está llevando ahora.
+ */
+export function cierreDeCara(
+  v: ViajeEnLaMesa,
+  c: { carpeta: string; n: number },
+  corre = false,
+): Record<string, unknown> {
+  const etapa = etapaViva(c.carpeta, corre);
+  const cara: Record<string, unknown> = { n: c.n, stage: etapa, version: versionDelCierre(c.carpeta) };
   if (hay(c.carpeta, "elegido.json")) cara.way = leer<Elegido>(c.carpeta, "elegido.json").manera;
   if (etapa === "yours") {
     const { e, viaje } = delElegido(v, c.carpeta);
     const p = leer<DeLosPrecios>(c.carpeta, "precios.json");
-    const { cierre } = montar(viaje, e, p, {}, false);
+    const { cierre } = montar(viaje, e, p, {}, false, momentoDe(c.carpeta, e));
     cara.prices = cierre.precios.map((x) => ({
       piece: x.pieza,
       ref: x.ref,
@@ -350,7 +419,10 @@ export function cierreDeCara(v: ViajeEnLaMesa, c: { carpeta: string; n: number }
     }));
     cara.total = cierre.total;
   }
-  if (etapa === "stopped") cara.why = "check";
+  if (etapa === "stopped") {
+    const parado = hay(c.carpeta, "parado.json") ? leer<{ motivo?: PorQueParo }>(c.carpeta, "parado.json") : null;
+    cara.why = parado === null ? "interrupted" : (parado.motivo ?? "check");
+  }
   return cara;
 }
 
@@ -447,20 +519,44 @@ export async function llevarElCierre(
   if (hay(carpeta, "parado.json")) return { etapa: "stopped", version: null };
   if (hay(carpeta, "viaje.json")) return { etapa: "done", version: guardarCierre(v, c.n, ahora()).n };
   const { e, viaje, entendido } = delElegido(v, carpeta);
+  // Solo se cierra la versión que se eligió, y mientras sea la que se enseña en el mapa.
+  if (v.ficha.estado !== "on_map" || v.ficha.version !== e.version) {
+    parar(carpeta, "otra versión", "abandoned");
+    return { etapa: "stopped", version: null };
+  }
+  const pedir = async (): Promise<void> => {
+    const p = await preciosDeHoy(v, e, viaje, entendido, o.fuentes);
+    const { cierre } = montar(viaje, e, p, {}, false, momentoDe(carpeta, e));
+    guardarJson(join(carpeta, "precios.json"), { ...p, pide: cierre.subida.pide, pedidos: ahora().toISOString() });
+  };
 
   // 2. Los precios de hoy, a su fuente. Si alguno sube mucho o falta, se pregunta antes de seguir.
-  if (!hay(carpeta, "precios.json")) {
-    const p = await preciosDeHoy(v, e, viaje, entendido, o.fuentes);
-    const { cierre } = montar(viaje, e, p, {}, false);
-    guardarJson(join(carpeta, "precios.json"), { ...p, pide: cierre.subida.pide });
-  }
+  if (!hay(carpeta, "precios.json")) await pedir();
   if (etapaDe(carpeta) === "yours") return { etapa: "yours", version: null };
+  // Si el viajero dijo que seguía cuando los precios pedidos ya pasaban de su edad, se vuelven a pedir antes de
+  // cerrar, una vez por cada sí; y si lo de ahora vuelve a pedir su sí, se le vuelve a preguntar.
+  if (hay(carpeta, "seguir.json") && !hay(carpeta, "enlaces.json")) {
+    const cuando = momentoDe(carpeta, e);
+    const antes = leer<DeLosPrecios>(carpeta, "precios.json");
+    const { cierre } = montar(viaje, e, antes, {}, true, cuando);
+    const pedidosAntes = antes.pedidos === undefined || antes.pedidos < cuando;
+    if (pedidosAntes && cierre.precios.some((x) => x.edad === "stale")) {
+      const k = apartado(carpeta);
+      renameSync(join(carpeta, "precios.json"), join(carpeta, `precios-${k}.json`));
+      await pedir();
+      if (leer<DeLosPrecios>(carpeta, "precios.json").pide === true) {
+        renameSync(join(carpeta, "seguir.json"), join(carpeta, `seguir-${k}.json`));
+        return { etapa: "yours", version: null };
+      }
+    }
+  }
   const p = leer<DeLosPrecios>(carpeta, "precios.json");
   const sigue = hay(carpeta, "seguir.json");
+  const cuando = momentoDe(carpeta, e);
 
   // 5. Los enlaces: cada uno, comprobado una vez.
   if (!hay(carpeta, "enlaces.json")) {
-    const { cierre } = montar(viaje, e, p, {}, sigue);
+    const { cierre } = montar(viaje, e, p, {}, sigue, cuando);
     guardarJson(
       join(carpeta, "enlaces.json"),
       await comprobarLosEnlaces(
@@ -470,7 +566,7 @@ export async function llevarElCierre(
     );
   }
   const comprobados = leer<Record<string, ComprobacionDeEnlace>>(carpeta, "enlaces.json");
-  const { cierre, piezas } = montar(viaje, e, p, comprobados, sigue);
+  const { cierre, piezas } = montar(viaje, e, p, comprobados, sigue, cuando);
 
   // 3. El que explica deja el orden: el del código, con una frase de cada cosa que pasa la puerta 7.
   if (!hay(carpeta, "orden.json"))
@@ -478,11 +574,11 @@ export async function llevarElCierre(
   const cerrado: Viaje = { ...viaje, cierre: conSusFrases(cierre, leer<DelOrden>(carpeta, "orden.json")) };
 
   // 4. La puerta 8, con lo que dio cada fuente y lo que respondió cada enlace.
-  const material: MaterialDelCierre = { piezas, dados: p.dados, comprobados, llegada: p.llegada };
+  const material: MaterialDelCierre = { piezas, dados: p.dados, comprobados, llegada: p.llegada, cuando };
   const veredicto = puertaCierre(cerrado, material);
   guardarJson(join(carpeta, "puerta8.json"), veredicto);
   if (!veredicto.verde) {
-    guardarJson(join(carpeta, "parado.json"), { paso: "la puerta 8", rojos: veredicto.rojos });
+    parar(carpeta, "la puerta 8", "check", veredicto.rojos);
     return { etapa: "stopped", version: null };
   }
   // 6. Sale el viaje cerrado: una versión más, y el viaje, cerrado.
