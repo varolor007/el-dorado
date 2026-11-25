@@ -125,6 +125,13 @@ los finalistas. Mirado en la web con el viaje del ensayo, sin dar el adelante: e
 ya contestadas y, al añadir una cosa a lo que buscas, lo que cambiaría (rehace la ruta, la búsqueda y las miradas:
 unos cinco dólares de equivalente, por lo que gastó ese viaje). Sin ver con IA de verdad.
 
+**El que conoce el destino (14.3), junto** (25-nov). Contrato en `agent/contracts/local-knowledge/` (RL1 a RL8); puerta 12
+en `agent/gates/puerta_destino.ts` (`puertaDestino`, con las zonas y hoy), llamada desde `puertaDelDestino`. La entrega
+lleva `figures` (números u horas HH:MM), que no pasa al viaje: cada número de una frase tiene que estar ahí o en
+`costs`. `meal_cost` es una comida para una persona, siempre con su horquilla. Lo de comer: la puerta mira palabras de
+restaurante y de opinión (inglés, español y comunes); un nombre propio a secas queda al contrato. La prueba de quién
+responde deja fuera a las capas hasta que la pestaña «Allí» tenga su fila en la hoja. Sin ver con IA.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee
