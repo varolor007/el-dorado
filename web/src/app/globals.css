@@ -1336,13 +1336,57 @@ img {
 
 /* ---------- El viaje, por pestañas */
 
+/* Si no caben (seis, con el viaje cerrado, en un móvil estrecho), la fila se desliza, y su borde se desvanece mientras
+   quede algo por ver: se mide con lo que se ha deslizado, así que si caben, o al llegar al final, no se desvanece. */
+@property --pestanas-siguen {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 .pestanas {
   display: flex;
   gap: 22px;
-  border-bottom: 1px solid var(--raya);
+  box-shadow: inset 0 -1px var(--raya);
   margin-bottom: -4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.pestanas::-webkit-scrollbar {
+  display: none;
+}
+@supports (animation-timeline: scroll()) {
+  .pestanas {
+    mask-image: linear-gradient(to left, transparent, #000 var(--pestanas-siguen));
+    animation: pestanas-siguen linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+@keyframes pestanas-siguen {
+  from {
+    --pestanas-siguen: 44px;
+  }
+  92% {
+    --pestanas-siguen: 44px;
+  }
+  to {
+    --pestanas-siguen: 0px;
+  }
+}
+@media (max-width: 860px) {
+  .pestanas {
+    gap: 16px;
+  }
+}
+@media (max-width: 420px) {
+  .pestanas {
+    gap: 12px;
+  }
 }
 .pestanas button {
+  flex: 0 0 auto;
+  white-space: nowrap;
   position: relative;
   border: 0;
   background: none;
@@ -1363,7 +1407,7 @@ img {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   height: 2px;
   border-radius: 2px;
   background: var(--oro);

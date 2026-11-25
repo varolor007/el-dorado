@@ -253,7 +253,9 @@ billetes), que lee `elQueSeCoge`. Llegar a donde duermes solo cuenta las maneras
 la dice. `loQueCuestaLlegar` es la cuenta de cada manera de llegar, por coche o por persona, y la usan el presupuesto
 y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona y como cuenta
 (`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
-(`refDeUnaDuda`, en `web/src/lib/formato.ts`). El caso inventado trae llegar a cada zona de la ruta. Sabido: un
+(`refDeUnaDuda`, en `web/src/lib/formato.ts`). Las pestañas del viaje caben a 390 de ancho, también las seis del
+viaje cerrado; en uno más estrecho la fila se desliza y su borde se desvanece mientras quede algo por ver. El caso
+inventado trae llegar a cada zona de la ruta. Sabido: un
 tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
 
 **La casa y la guía, tras la revisión del bloque 14** (25-nov, una sesión de arreglos). La guía de un viaje con días
