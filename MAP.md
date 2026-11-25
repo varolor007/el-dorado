@@ -42,8 +42,10 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   (`agent/output/capas.ts`, que `viaje.ts` vuelve a exportar), la forma común de sus entregas y las cuentas que
   comparten, como si un sitio abre un día (`agent/scripts/capas.ts`), y cómo las lleva la casa (`agent/launcher/capas.ts`,
   y `deUnaCapa` en `investigar.ts`). En el caso inventado, `tests/cases/inventado/capas.ts`.
-- **El de moverse (14.2)**: `agent/data/capa_moverse.ts`, `agent/scripts/capa_moverse.ts`, `agent/launcher/capa_moverse.ts`
-  y, de mentira, `tests/cases/inventado/moverse.ts`.
+- **El de moverse (14.2)**: `agent/data/capa_moverse.ts`, `agent/scripts/capa_moverse.ts` (con la cuenta de sueltos o
+  abono, `cuentaDeMoverse` y `cuentaDelGrupo`), `agent/launcher/capa_moverse.ts`, su contrato en
+  `agent/contracts/getting-around/`, su puerta 11 en `agent/gates/puerta_moverse.ts`, sus pruebas en
+  `tests/code/moverse.test.ts` y, de mentira, `tests/cases/inventado/moverse.ts`.
 - **El que conoce el destino (14.3)**: `agent/data/capa_destino.ts`, `agent/scripts/capa_destino.ts`,
   `agent/launcher/capa_destino.ts` y, de mentira, `tests/cases/inventado/destino.ts`.
 - **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts`,

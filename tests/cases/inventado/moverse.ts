@@ -1,5 +1,5 @@
-// El de moverse de mentira (14.2): lo que entregaría con lo que tiene en su puesto. Lo afina la sesión de 14.2, para
-// que pase su puerta 11 de verdad. Sin internet y sin gastar.
+// El de moverse de mentira (14.2): lo que entregaría con lo que tiene en su puesto, para que pase su puerta 11 de
+// verdad. Sin internet y sin gastar.
 
 import type { EntregaDeMoverse } from "../../../agent/scripts/capa_moverse.ts";
 
@@ -9,18 +9,22 @@ type Objeto = Record<string, any>;
 export const PAGINA_DE_MOVERSE = "https://transporte.inventado.example/tarifas";
 
 /**
- * Lo que entregaría: sin internet (la llamada directa de mentira no abre páginas), que no encontró cómo llegar. El que
- * trabaja en su puesto abre la página del transporte: un autobús del aeropuerto a la primera zona, un billete suelto y
- * un abono de un día.
+ * Lo que entregaría. Sin internet (la llamada directa de mentira no abre páginas): que no encontró cómo llegar, y lo
+ * dice. El que trabaja en su puesto abre la página del transporte: un autobús del aeropuerto que le dice la casa a la
+ * primera zona, el autobús en todas las zonas, un billete suelto, un abono de un día y uno de tres días, con lo que
+ * paga un adulto y lo que paga un niño, y que se paga sin contacto.
  */
 export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conPagina: boolean): EntregaDeMoverse {
   const visto = String(viaje?.today ?? "2026-11-20");
-  const zona = ruta?.zones?.[0]?.id;
-  const precio = (amount: number) => ({
-    for: "adult" as const,
-    ages: null,
+  const zonas: string[] = (ruta?.zones ?? []).map((z: Objeto) => String(z.id));
+  const zona = zonas[0];
+  const moneda = String(viaje?.currency ?? "EUR");
+  const aeropuerto = viaje?.arrival?.airport;
+  const precio = (amount: number, nino = false) => ({
+    for: nino ? ("child" as const) : ("adult" as const),
+    ages: nino ? { from: 4, to: 12 } : null,
     amount,
-    currency: String(viaje?.currency ?? "EUR"),
+    currency: moneda,
     source: PAGINA_DE_MOVERSE,
     seen: visto,
   });
@@ -33,13 +37,18 @@ export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conP
       tickets: [],
       payment: [],
       car_needed: "unknown",
-      unknowns: [],
+      between_bases: [],
+      unknowns: ["No page of a transport operator could be opened, so nothing is known about getting around."],
     };
   return {
     seat: "getting-around",
     arrivals: [
       {
-        from: { kind: "airport", code: "unknown", name: "unknown" },
+        from: {
+          kind: "airport",
+          code: typeof aeropuerto === "string" && /^[A-Z]{3}$/.test(aeropuerto) ? aeropuerto : "unknown",
+          name: "unknown",
+        },
         to_zone: zona,
         mode: "bus",
         minutes: 40,
@@ -50,14 +59,14 @@ export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conP
       },
     ],
     no_arrival: null,
-    transport: [{ mode: "bus", zones: [zona], until: "23:30", source: PAGINA_DE_MOVERSE, seen: visto }],
+    transport: [{ mode: "bus", zones: zonas, until: "23:30", source: PAGINA_DE_MOVERSE, seen: visto }],
     tickets: [
       {
         kind: "single",
         days: null,
         rides: 1,
         modes: ["bus"],
-        prices: [precio(2)],
+        prices: [precio(2), precio(1, true)],
         source: PAGINA_DE_MOVERSE,
         seen: visto,
       },
@@ -70,9 +79,19 @@ export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conP
         source: PAGINA_DE_MOVERSE,
         seen: visto,
       },
+      {
+        kind: "multi_day_pass",
+        days: 3,
+        rides: null,
+        modes: ["bus"],
+        prices: [precio(12)],
+        source: PAGINA_DE_MOVERSE,
+        seen: visto,
+      },
     ],
     payment: [{ kind: "contactless", source: PAGINA_DE_MOVERSE, seen: visto }],
     car_needed: "unknown",
-    unknowns: [],
+    between_bases: [],
+    unknowns: ["The page of the operator does not say what a child pays for a pass."],
   };
 }
