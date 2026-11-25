@@ -18,6 +18,10 @@ export type IdDePaso =
   | "cross"
   | "explain"
   | "calendar"
+  | "getting_around"
+  | "local_knowledge"
+  | "tickets"
+  | "budget"
   | "trip";
 
 /**
@@ -33,15 +37,38 @@ export const LEE: Record<IdDePaso, IdDePaso[]> = {
   calendar: [],
   look: ["search"],
   pick: ["sights", "route"],
+  // Las capas del destino (bloque 14). El de moverse y el que conoce el destino leen la ruta y sus zonas; el de las
+  // entradas, los sitios elegidos. El presupuesto, lo que suma: el viaje montado y las tres capas.
+  getting_around: ["route"],
+  local_knowledge: ["route"],
+  tickets: ["sights", "pick"],
+  budget: ["search", "table", "cross", "days", "getting_around", "local_knowledge", "tickets"],
   // Los días se reparten desde el centro del destino, con lo que eligió el del día a día. La tabla de caminos se pidió
   // también desde los alojamientos de la búsqueda: si cambian, lo que no está en ella se mide con la cuenta de la
-  // casa, como siempre. Así, un viajero más no toca los días («qué no: los días y los avisos», dice la hoja).
-  days: ["sights", "pick"],
+  // casa, como siempre. Así, un viajero más no toca los días («qué no: los días y los avisos», dice la hoja). Y
+  // esperan a las entradas, para no poner un sitio el día que cierra.
+  days: ["sights", "pick", "tickets"],
   // La tabla lee las paradas que eligió el del día a día (las mide desde cada alojamiento), no cómo caen en los días.
   table: ["route", "search", "look", "pick"],
   cross: ["route", "table"],
   explain: ["route", "look", "table", "cross", "calendar"],
-  trip: ["sights", "route", "search", "papers", "look", "pick", "days", "table", "cross", "explain", "calendar"],
+  trip: [
+    "sights",
+    "route",
+    "search",
+    "papers",
+    "look",
+    "pick",
+    "days",
+    "table",
+    "cross",
+    "explain",
+    "calendar",
+    "getting_around",
+    "local_knowledge",
+    "tickets",
+    "budget",
+  ],
 };
 
 /**
@@ -84,6 +111,11 @@ export const PIEZAS_DEL_VIAJE = [
   "papers",
   "ways",
   "guide",
+  // Las capas del destino (bloque 14): cómo moverse allí, lo que conviene saber, las entradas y el presupuesto entero.
+  "getting_around",
+  "local_knowledge",
+  "tickets",
+  "budget",
 ] as const;
 export type PiezaDelViaje = (typeof PIEZAS_DEL_VIAJE)[number];
 
@@ -93,28 +125,40 @@ export type PiezaDelViaje = (typeof PIEZAS_DEL_VIAJE)[number];
  * La hoja da los ejemplos: unas fechas nuevas tiran todos los precios y pueden tirar los avisos; un viajero más
  * cambia la habitación y el precio; un gusto nuevo, solo el alojamiento. La ruta y los sitios reciben las fechas
  * con su día de la semana: unas fechas nuevas los rehacen («unas fechas nuevas rehacen casi todo», dice la hoja).
+ *
+ * Las capas del destino (bloque 14), con lo más prudente: otro destino, otras fechas u otra ruta lo rehacen todo (por
+ * la ruta, que leen las tres); otras fechas, además, los horarios y los precios de las entradas, por los sitios
+ * elegidos. Un viajero más, solo la cuenta del presupuesto, que es código: las entradas ya traen el precio por edad
+ * (la hoja: «con un viajero más no hace falta»). Lo que busca el viajero y su idioma tocan al que conoce el destino,
+ * que lo lee y escribe en él. Lo demás les llega por `LEE`.
  */
 export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePaso[] }> = {
-  destination: { pasos: ["sights", "route", "search", "papers", "calendar", "pick"], quizas: [] },
+  destination: {
+    pasos: ["sights", "route", "search", "papers", "calendar", "pick", "getting_around", "local_knowledge", "tickets"],
+    quizas: [],
+  },
   origin: { pasos: ["search", "papers", "calendar"], quizas: [] },
-  dates: { pasos: ["sights", "route", "search", "papers", "calendar", "pick"], quizas: [] },
+  dates: { pasos: ["sights", "route", "search", "papers", "calendar", "pick", "tickets"], quizas: [] },
   // Un viajero más, o uno menos: la habitación y el precio («un viajero más cambia la habitación y el precio», dice
   // la hoja). Los papeles solo si cambian sus filas, que es la clase «passports» (`clasesDelCambio`).
-  travellers: { pasos: ["search"], quizas: [] },
-  rooms: { pasos: ["search"], quizas: [] },
+  travellers: { pasos: ["search", "budget"], quizas: [] },
+  rooms: { pasos: ["search", "budget"], quizas: [] },
   passports: { pasos: ["search", "papers"], quizas: [] },
   budget: { pasos: ["table"], quizas: [] },
   currency: { pasos: ["search"], quizas: [] },
-  language: { pasos: ["explain"], quizas: [] },
+  language: { pasos: ["explain", "local_knowledge"], quizas: [] },
   pace: { pasos: ["days"], quizas: [] },
   // Un gusto de una cosa del alojamiento (`agent/data/gustos.ts`) solo cambia cómo se cruza la ficha de cada uno.
   lodging_taste: { pasos: ["table"], quizas: [] },
   taste: { pasos: ["route", "pick"], quizas: [] },
-  looking_for: { pasos: ["route", "pick"], quizas: [] },
+  looking_for: { pasos: ["route", "pick", "local_knowledge"], quizas: [] },
   limits: { pasos: ["route", "pick", "table"], quizas: [] },
   booked: { pasos: ["route", "pick", "search", "table"], quizas: [] },
   // Lo que no se sabe leer se rehace entero: es lo más prudente.
-  other: { pasos: ["sights", "route", "search", "papers", "calendar", "pick"], quizas: [] },
+  other: {
+    pasos: ["sights", "route", "search", "papers", "calendar", "pick", "getting_around", "local_knowledge", "tickets"],
+    quizas: [],
+  },
   // Otro alojamiento: la búsqueda otra vez, y mirar al candidato nuevo.
   lodging: { pasos: ["search", "look"], quizas: [] },
   // Otro transporte: la búsqueda otra vez; los papeles, si hay otra escala.
@@ -142,6 +186,10 @@ export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {
   table: ["lodging", "ways"],
   cross: ["ways"],
   explain: ["ways"],
+  getting_around: ["getting_around", "budget"],
+  local_knowledge: ["local_knowledge"],
+  tickets: ["tickets", "budget"],
+  budget: ["budget"],
   trip: ["guide"],
 };
 
@@ -153,8 +201,8 @@ export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {
  * llegas ni los demás precios. Las clases que no están aquí tiran las piezas de sus pasos.
  */
 export const PIEZAS_DE_UNA_CLASE: Partial<Record<ClaseDeCambio, PiezaDelViaje[]>> = {
-  flight: ["transport", "ways", "guide"],
-  lodging: ["lodging", "ways", "guide"],
+  flight: ["transport", "ways", "guide", "budget"],
+  lodging: ["lodging", "ways", "guide", "budget"],
 };
 
 /**
@@ -175,6 +223,10 @@ export const LO_QUE_DEJA: Record<IdDePaso, string[]> = {
   table: ["tabla-1.json", "tabla-2.json", "movidos.json"],
   cross: ["cruce-1.json", "cruce-2.json"],
   explain: ["explica.json"],
+  getting_around: ["moverse.json"],
+  local_knowledge: ["saber.json"],
+  tickets: ["entradas.json", "abiertos.json"],
+  budget: ["presupuesto.json"],
   trip: ["viaje.json", "sucesos.json"],
 };
 

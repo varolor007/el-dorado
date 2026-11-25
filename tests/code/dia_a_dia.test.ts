@@ -148,15 +148,17 @@ test("un mensaje vale si es un texto de una línea, ni vacío ni largo", () => {
 });
 
 test("el impacto de un mensaje: el del día a día seguro; el que cruza y el que explica, solo si hace falta", () => {
+  // Con los sitios que se eligen otra vez, las entradas también (14.1: hasta que 14.7 mire solo los nuevos).
   const estimado = {
     "sights-picker": { usd: 0.1, de: 2 },
+    tickets: { usd: 0, de: 0 },
     "trip-crosser": { usd: 0.05, de: 2 },
     "trip-explainer": { usd: 0.2, de: 2 },
   };
   const i = impactoDeUnDia(estimado);
   assert.deepEqual(
     i.redo.map((x) => x.step),
-    ["pick", "days", "table", "trip"],
+    ["pick", "tickets", "days", "table", "budget", "trip"],
   );
   assert.deepEqual(
     i.maybe.map((x) => x.step),
@@ -166,7 +168,7 @@ test("el impacto de un mensaje: el del día a día seguro; el que cruza y el que
   assert.equal(i.spends, true);
   // La trampa: el que cruza y el que explica pueden lanzarse. Lo más que puede costar los cuenta, y se dice.
   assert.deepEqual(i.most, { usd: 0.35, unknown: [] });
-  const sinSaber = impactoDeUnDia({ "sights-picker": { usd: 0.1, de: 2 } });
+  const sinSaber = impactoDeUnDia({ "sights-picker": { usd: 0.1, de: 2 }, tickets: { usd: 0, de: 0 } });
   assert.equal(sinSaber.cost.usd, 0.1);
   assert.deepEqual(sinSaber.most, { usd: null, unknown: ["trip-crosser", "trip-explainer"] });
   // Si pides algo que no estaba, los sitios se buscan seguro: es código, y no cuesta.
@@ -406,7 +408,7 @@ test("si la tabla decide otra cosa, el que cruza vuelve; el que explica, si aque
     const otra = { ...tabla, rows: tabla.rows.map((x) => ({ ...x, score: "unknown" })) };
     writeFileSync(join(base, "tabla-1.json"), JSON.stringify(otra));
     const r = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo");
-    assert.deepEqual(r.asientos, ["sights-picker", "trip-crosser"]);
+    assert.deepEqual(r.asientos, ["sights-picker", "tickets", "trip-crosser"]);
     assert.equal(r.v.ficha.version, 2);
     // Si además lo que cruzó entonces no es lo que cruza ahora, el que explica también vuelve.
     const dos = join(v.carpeta, "runs", "2");
@@ -414,7 +416,7 @@ test("si la tabla decide otra cosa, el que cruza vuelve; el que explica, si aque
     const cruce = leerJson(join(dos, "cruce-1.json"));
     writeFileSync(join(dos, "cruce-1.json"), JSON.stringify({ ...cruce, entrega: { ...cruce.entrega, tell: [] } }));
     const s = await mandarYLlevar(mesa, v.ficha.id, "algo más tranquilo todavía");
-    assert.deepEqual(s.asientos, ["sights-picker", "trip-crosser", "trip-explainer"]);
+    assert.deepEqual(s.asientos, ["sights-picker", "tickets", "trip-crosser", "trip-explainer"]);
     assert.equal(s.v.ficha.version, 3);
   } finally {
     rmSync(mesa, { recursive: true, force: true });
@@ -494,7 +496,7 @@ test("la puerta: lo que costaría sin cambiar nada; con tu botón, sale; y cómo
     assert.deepEqual(previsto.cuerpo.look_for, ["beach"]);
     assert.deepEqual(
       previsto.cuerpo.impact.redo.map((x: { step: string }) => x.step),
-      ["sights", "pick", "days", "table", "trip"],
+      ["sights", "pick", "tickets", "days", "table", "budget", "trip"],
     );
     assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);
     // Lo que no vale se dice por su clave; y de otro, no hay tal viaje.

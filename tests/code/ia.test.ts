@@ -209,14 +209,18 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     assert.deepEqual(r.parado, null);
     assert.equal(r.hecho, true);
     assert.deepEqual(comprobarViaje(leerJson(join(run, "viaje.json")) as Viaje), []);
-    // Once llamadas, una por asiento: el del calendario, la ruta, los cinco que miran, el que elige, el que cruza,
-    // el que explica y el de los papeles.
+    // Catorce llamadas, una por asiento: el del calendario, la ruta, los cinco que miran, el que elige, el que cruza,
+    // el que explica, el de los papeles y las tres capas del destino (el de moverse, el que conoce el destino y el
+    // de las entradas).
     assert.deepEqual(pensar.llamadas.map((l) => l.asiento).sort(), [
       "calendar",
+      "getting-around",
+      "local-knowledge",
       ...Array(5).fill("lodging-viewer"),
       "papers",
       "route-planner",
       "sights-picker",
+      "tickets",
       "trip-crosser",
       "trip-explainer",
     ]);
@@ -228,9 +232,9 @@ test("la investigación inventada, entera, con una llamada directa por asiento",
     }
     // Cada trabajo, con lo que gastó; y lo que contestó cada asiento, guardado en el run y fuera de su puesto.
     const trabajos = trabajosDe(run);
-    assert.equal(trabajos.length, 11);
+    assert.equal(trabajos.length, 14);
     assert.ok(trabajos.every((t) => t.estado === "done" && t.gasto?.usd === 0.108 && t.gasto.turnos === 1));
-    assert.ok(Math.abs(r.gasto.usd - 11 * 0.108) < 1e-9);
+    assert.ok(Math.abs(r.gasto.usd - 14 * 0.108) < 1e-9);
     assert.deepEqual(readdirSync(join(run, "respuestas")).sort(), trabajos.map((t) => `${t.puesto}.txt`).sort());
     assert.ok(readFileSync(join(run, "respuestas", "ruta-v1.txt"), "utf8").startsWith("=== 1-acknowledgement.md ==="));
     assert.deepEqual(readdirSync(join(run, "puestos", "ruta-v1", "out")).sort(), [...PASOS, ENTREGA].sort());

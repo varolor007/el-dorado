@@ -26,11 +26,31 @@ carpetas, en inglés; lo de dentro, en español. Cada carpeta nueva entra aquí:
 | `agent/arranque/` | El arranque de la casa en el servidor, en Docker: la imagen (`Dockerfile`, con Claude Code fijado, y lo que entra en ella, `Dockerfile.dockerignore`), los servicios (`compose.yaml`, con el túnel de ngrok como perfil, y `compose.puerta.yaml`, la puerta con candado, con Caddy y su `Caddyfile`), el `.env` de ejemplo, lo que arranca la casa con sus llaves (`entrada.sh`) y el túnel (`tunel.sh`), la orden del servidor para instalar, ponerse al día y mirar (`casa.sh`) y la guía paso a paso para el PM (`guia.md`) | Con el punto 2.9, sin probar en el servidor |
 | `agent/output/` | La salida: la forma del viaje para la web (`viaje.ts`), que es el contrato entre la casa y la web, con lo que el código comprueba de él | La forma, con el punto 1.5 |
 | `tests/cases/inventado/` | El caso inventado: una ciudad, unos alojamientos y unos sitios que no existen, lo que pidió un viajero inventado y lo que entregaría cada asiento, para probar toda la cadena sin internet y sin gastar | La investigación inventada, con la tanda 3 |
+| `tests/cases/inventado/contratos/getting-around/`, `tests/cases/inventado/contratos/local-knowledge/` y `tests/cases/inventado/contratos/tickets/` | Los contratos de prueba de las tres capas del destino (bloque 14), mínimos y solo para las pruebas: con ellos la investigación inventada lleva sus capas mientras no estén sus contratos de verdad. Cuando uno está, las pruebas usan el de verdad (`contratosDePrueba`, en `tests/cases/inventado/capas.ts`) | Con el punto 14.1 |
 | `tests/code/` | Las pruebas del código, con el caso inventado, y la prueba del repositorio | Las bases, del 23-nov |
 | `web/` | La web de El Dorado, con su propio paquete y sus dependencias: la identidad (`src/app/globals.css`); la portada (`src/app/page.tsx`); el panel (`src/app/(panel)/`), con el mapa (`plan/`), tus viajes (`trips/`), tu clave (`key/`) y tu cuenta (`account/`); el lado de la web de la puerta de la casa (`src/app/api/house/`, con lo que admite en `src/lib/casa.ts`) tu cuenta vista desde el navegador (`src/lib/cuenta.ts`) y un viaje tuyo en vivo (`src/lib/viajeVivo.ts`), y el primer vistazo de un viaje nuevo (`src/lib/vistazo.ts`, y su pieza, `src/piezas/PrimerVistazo.tsx`); las piezas (`src/piezas/`: el mapa, el carril, el buscador, la hoja, las pantallas, las preguntas de empezar, la investigación en vivo, la de carga y la de cerrar el viaje, `Cerrar.tsx`), y lo que le pide a la casa (`src/app/api/`), con el freno del buscador de lugares (`src/lib/freno.ts`). Sus textos, en inglés y en español, en `src/lib/textos.ts`. Tu guía, en `src/app/(panel)/guide/` (con `src/lib/guia.ts` y el paso desde tu viaje, `src/piezas/TuGuia.tsx`). Lo común del viaje a ratos: tus elecciones guardadas en la casa y tus versiones (`src/lib/elecciones.ts`), y la pieza que enseña tus versiones y el impacto de un cambio (`src/piezas/Momentos.tsx`). Lo que haces desde la ficha de un alojamiento tuyo (8.2): dormir aquí, tus gustos, buscar otra vez y preguntar (`src/piezas/Alojamiento.tsx`). Tu mensaje para tus días (8.6), al pie de ellos (`src/piezas/DiaADia.tsx`). El transporte de tu viaje, a ratos (8.3): el que tienes, buscarlo otra vez y lo que cambia cada opción (`src/piezas/ElTransporte.tsx`). Cambiar lo que pediste (8.5), con tus respuestas de empezar y lo que se queda atrás (`src/piezas/Cambios.tsx`). | En seco, con el viaje grabado |
 | `docs/` | La memoria, el registro de decisiones, el encargo, el mapa de los datos, las fuentes y sus condiciones | Al día |
 | `docs/paginas/` | Las dos biblias: los datos de la hoja y del plan (`hoja.datos.mjs` y `plan.datos.mjs`), el formato de las hojas de Cortex, el pintor (`pinta.mjs`) y las páginas que salen de ahí y se publican | La hoja y el plan, versión 2, firmados el 23-nov |
 | `docs/revisiones/` | El informe de los tres adversarios al cerrar cada tanda: cada hallazgo, con lo que se hizo | La de la tanda 3, del 23-nov; la de la tanda 4, del 24-nov; y las de las tandas 5 y 6, del 25-nov |
+
+## Las capas del destino, archivo a archivo
+
+El suelo (14.1) deja lo que comparten las tres capas y el presupuesto entero; cada una rellena lo suyo, en sus
+archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga solo la suya.
+
+- **Lo común**: sus datos (`agent/data/capas.ts`), su forma en el viaje con lo que se comprueba de ella
+  (`agent/output/capas.ts`, que `viaje.ts` vuelve a exportar), la forma común de sus entregas y las cuentas que
+  comparten, como si un sitio abre un día (`agent/scripts/capas.ts`), y cómo las lleva la casa (`agent/launcher/capas.ts`,
+  y `deUnaCapa` en `investigar.ts`). En el caso inventado, `tests/cases/inventado/capas.ts`.
+- **El de moverse (14.2)**: `agent/data/capa_moverse.ts`, `agent/scripts/capa_moverse.ts`, `agent/launcher/capa_moverse.ts`
+  y, de mentira, `tests/cases/inventado/moverse.ts`.
+- **El que conoce el destino (14.3)**: `agent/data/capa_destino.ts`, `agent/scripts/capa_destino.ts`,
+  `agent/launcher/capa_destino.ts` y, de mentira, `tests/cases/inventado/destino.ts`.
+- **El de las entradas (14.4)**: `agent/data/capa_entradas.ts`, `agent/scripts/capa_entradas.ts`,
+  `agent/launcher/capa_entradas.ts` y, de mentira, `tests/cases/inventado/entradas.ts`.
+- **El presupuesto entero (14.5)**: `agent/data/presupuesto.ts`, `agent/scripts/presupuesto.ts` (la cuenta) y
+  `agent/launcher/presupuesto.ts` (cuando se monta el viaje).
+- **En la web (14.6)**: la pestaña «Allí» y los huecos de la parada y de las cuentas, en `web/src/piezas/Alli.tsx`.
 
 ## Lo que aún no existe
 

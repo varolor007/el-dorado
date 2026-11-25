@@ -214,14 +214,25 @@ test("el botón confirma, da el adelante con su techo y lleva la investigación 
     assert.equal(cuerpo.research.ceiling, 5);
     assert.ok(cuerpo.research.steps.every((p: Objeto) => p.state === "done" && p.waiting === 0));
     // De cada trabajo de la IA se dice el paso, cómo está y lo que gastó: nunca el asiento ni su puesto.
-    assert.equal(cuerpo.research.jobs.length, 11);
+    assert.equal(cuerpo.research.jobs.length, 14);
     assert.deepEqual(Object.keys(cuerpo.research.jobs[0]).sort(), ["state", "step", "usd"]);
     assert.deepEqual(
       [...new Set(cuerpo.research.jobs.map((t: Objeto) => t.step))],
-      ["calendar", "papers", "route", "look", "pick", "cross", "explain"],
+      [
+        "calendar",
+        "papers",
+        "route",
+        "getting_around",
+        "local_knowledge",
+        "look",
+        "pick",
+        "tickets",
+        "cross",
+        "explain",
+      ],
     );
-    assert.ok(Math.abs(cuerpo.research.spent.usd - 0.55) < 1e-9);
-    assert.deepEqual([cuerpo.research.spent.turns, cuerpo.research.spent.known], [33, true]);
+    assert.ok(Math.abs(cuerpo.research.spent.usd - 0.7) < 1e-9);
+    assert.deepEqual([cuerpo.research.spent.turns, cuerpo.research.spent.known], [42, true]);
 
     // El viaje que se enseña pasa lo que se comprueba de un viaje antes de enseñarlo.
     const version = await casa.pide("GET", `/viajes/${id}/version`);
@@ -875,12 +886,12 @@ test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el sigui
       "researches",
       "usd",
     ]);
-    assert.deepEqual([viaje.id, viaje.calls, viaje.known, viaje.researches], [id, 11, true, 1]);
-    assert.ok(Math.abs(viaje.usd - 0.55) < 1e-9);
+    assert.deepEqual([viaje.id, viaje.calls, viaje.known, viaje.researches], [id, 14, true, 1]);
+    assert.ok(Math.abs(viaje.usd - 0.7) < 1e-9);
     assert.equal(typeof viaje.last, "string");
-    assert.deepEqual([cuerpo.spend.total.calls, cuerpo.spend.total.known], [11, true]);
+    assert.deepEqual([cuerpo.spend.total.calls, cuerpo.spend.total.known], [14, true]);
     assert.deepEqual(cuerpo.spend.next.from, 1);
-    assert.ok(Math.abs(cuerpo.spend.next.usd - 0.55) < 1e-9);
+    assert.ok(Math.abs(cuerpo.spend.next.usd - 0.7) < 1e-9);
     // Ni la mesa, ni el puesto, ni el asiento.
     const dicho = JSON.stringify(cuerpo);
     for (const callado of [casa.mesa, "route-planner", "trabajos"]) assert.ok(!dicho.includes(callado), callado);

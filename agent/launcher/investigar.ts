@@ -30,7 +30,7 @@ import { puertaCruce } from "../gates/puerta_cruce.ts";
 import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
 import { puertaRuta } from "../gates/puerta_ruta.ts";
-import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
+import { comprobarSucesos, comprobarViaje, type DeLasEntradas, type Foto, type Parada } from "../output/viaje.ts";
 import { imprescindiblesDeLaFuente } from "../scripts/alojamiento.ts";
 import { anadirOfertas, buscarDondeHaya, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
 import { cuantosSitios, paradasDe } from "../scripts/dias.ts";
@@ -112,7 +112,19 @@ import {
 } from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { loPedidoDe, rehechoDe } from "./rehacer.ts";
-import { acaboSinEntregar } from "./trabajos.ts";
+import { acaboSinEntregar, trabajosDe } from "./trabajos.ts";
+import type { FaltaDeUnaCapa } from "../data/capas.ts";
+import { capaDelRun, CONTRATOS, guardada, hayContrato, type CapaDeIA, type Material } from "./capas.ts";
+import { capaDelDestino } from "./capa_destino.ts";
+import {
+  capaDeLasEntradas,
+  ENTRADAS,
+  losDiasSinEntradas,
+  traerLosAbiertos,
+  type TraerAbiertos,
+} from "./capa_entradas.ts";
+import { capaDeMoverse } from "./capa_moverse.ts";
+import { conLasCapas } from "./presupuesto.ts";
 import { contar } from "./vivo.ts";
 import {
   ampliarLosSitios,
@@ -143,6 +155,13 @@ export type Fuentes = {
    * con la cuenta de la casa, y se dice.
    */
   rutas?: FuenteDeRutas;
+  /** Lo que dicen los datos abiertos de cada sitio elegido (14.4). Sin ello, el de las entradas lo busca en su web. */
+  abiertos?: TraerAbiertos;
+  /**
+   * Dónde están los contratos de las capas del destino: sin decirlo, los del repositorio. Una capa cuyo asiento no
+   * tiene contrato no se lanza, y queda en falta. Las pruebas dan los suyos, para decir qué capas tienen contrato.
+   */
+  contratos?: string;
 };
 
 /** Cuántas veces vuelve un trabajo en rojo a su asiento antes de pararse: dos, como dice la hoja. */
@@ -212,8 +231,8 @@ function puestoDe(run: string, base: string): Puesto | null {
   return suyos.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })).pop() ?? null;
 }
 
-function montar(run: string, base: string, asiento: string, piezas: Pieza[], vuelta = 1): Puesto {
-  const puesto = montarPuesto(run, `${base}-v${vuelta}`, asiento, piezas);
+function montar(run: string, base: string, asiento: string, piezas: Pieza[], vuelta = 1, contratos?: string): Puesto {
+  const puesto = montarPuesto(run, `${base}-v${vuelta}`, asiento, piezas, contratos === undefined ? {} : { contratos });
   mkdirSync(join(run, "ordenes"), { recursive: true });
   writeFileSync(join(run, "ordenes", `${puesto.id}.txt`), ordenDeApertura());
   return puesto;
@@ -242,9 +261,10 @@ function recoger<T>(
   asiento: string,
   piezas: Pieza[],
   puerta: (e: unknown) => Rojo[],
+  contratos?: string,
 ): DelAsiento<T> {
   const puesto = puestoDe(run, base);
-  if (puesto === null) return { espera: montar(run, base, asiento, piezas).id };
+  if (puesto === null) return { espera: montar(run, base, asiento, piezas, 1, contratos).id };
   if (!entregado(puesto)) {
     // Si la casa se cortó entre sellar el puesto y dejar su orden, la orden se deja ahora.
     const orden = join(run, "ordenes", `${puesto.id}.txt`);
@@ -264,7 +284,7 @@ function recoger<T>(
     ruta: "returned.json",
     contenido: json({ what_was_wrong: conSuLinea(puesto, rojos), delivery: metodo.entrega }),
   };
-  return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1).id };
+  return { espera: montar(run, base, asiento, [...piezas, devuelto], vuelta + 1, contratos).id };
 }
 
 /** Lo más que se le enseña de una línea suya a un asiento al que se le devuelve la entrega. */
@@ -665,7 +685,7 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
   const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const { paradas } = leer<DeLosDias>(run, "dias.json");
   const { tabla, cruce } = cruceCerrado(run);
-  const hecho = montarViajeHecho({
+  const montado = montarViajeHecho({
     id: `viaje-${viaje.destination.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${viaje.dates.check_in}`,
     viaje,
     busqueda,
@@ -683,6 +703,8 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
     ),
     papeles: paraElViajero(run),
   });
+  // Las capas del destino que haya en el run, y el presupuesto entero, que es código (14.5).
+  const hecho = conLasCapas(run, montado);
   const sucesos = sucesosDe(busqueda, hecho);
   // Los días que se entregan salen del alojamiento donde se duerme, no del centro del destino: pasan la puerta 9
   // otra vez, porque los que la pasaron al repartir no son estos.
@@ -813,6 +835,82 @@ function recontarLosViajeros(run: string, base: Entendido): void {
     cuantos: f.count,
   }));
   if (JSON.stringify(viajeros) !== JSON.stringify(p.viajeros)) guardar(run, PAPELES, { ...p, viajeros });
+}
+
+/**
+ * Una capa del destino (bloque 14), como al del calendario: si su asiento no tiene contrato, queda en falta y no se
+ * lanza; si no, se le monta un puesto por tanda y se recoge en cuanto entregan. Devuelve los puestos que esperan. Una
+ * tanda que falla, que tarda más que su tope o que no pasa su puerta tras sus vueltas se queda sin lo suyo; si son
+ * todas, la capa falta entera, con su porqué. El viaje se hace igual.
+ */
+function deUnaCapa<E, F extends { falta: FaltaDeUnaCapa | null }>(
+  run: string,
+  c: CapaDeIA<E, F>,
+  m: Material,
+  f: Fuentes,
+): string[] {
+  const contratos = f.contratos ?? CONTRATOS;
+  const conContrato = hayContrato(c.asiento, contratos);
+  // Lo que se guardó sin contrato se vuelve a mirar si ya lo tiene.
+  if (hay(run, c.archivo) && !(conContrato && capaDelRun<F>(run, c.archivo)?.falta === "no_contract")) return [];
+  if (!conContrato) {
+    guardar(run, c.archivo, guardada<E, F>(c.sinElla("no_contract"), []));
+    return [];
+  }
+  const tandas = c.tandas(m);
+  const esperan: string[] = [];
+  const entregas: (E | null)[] = [];
+  const faltas: FaltaDeUnaCapa[] = [];
+  tandas.forEach((piezas, i) => {
+    const base = tandas.length === 1 ? c.base : `${c.base}-${i + 1}`;
+    const puesto = puestoDe(run, base);
+    if (puesto !== null && !entregado(puesto) && acaboSinEntregar(run, puesto.id)) {
+      const cortado = trabajosDe(run).find((t) => t.puesto === puesto.id)?.estado === "stopped";
+      faltas.push(cortado ? "late" : "failed");
+      entregas.push(null);
+      return;
+    }
+    const r = recoger<E>(run, base, c.asiento, piezas, (e) => c.puerta(e, m, i), contratos);
+    if ("espera" in r) esperan.push(r.espera);
+    else if ("parado" in r) {
+      faltas.push("rejected");
+      entregas.push(null);
+    } else entregas.push(r.entrega);
+  });
+  if (esperan.length > 0) return esperan;
+  const ninguna = tandas.length > 0 && entregas.every((e) => e === null);
+  guardar(run, c.archivo, guardada<E, F>(ninguna ? c.sinElla(faltas[0]) : c.ensenar(entregas, m), entregas));
+  return [];
+}
+
+/** Lo que la casa da a las capas: lo entendido sin palabras, hoy, la ruta y, al de las entradas, sus sitios. */
+function materialDeLasCapas(
+  run: string,
+  viaje: Entendido,
+  elegidos: Sitio[] = [],
+  abiertos: Material["abiertos"] = [],
+) {
+  const { entrega, zonas } = leer<DeLaRuta>(run, "ruta.json");
+  const ruta = {
+    shape: entrega.shape,
+    bases: entrega.bases.map((b) => ({ id: b.id, name: b.name, nights: b.nights })),
+  };
+  return { viaje: sinPalabras(viaje), hoy: hoyEnLaCasa(), ruta, zonas, elegidos, abiertos } satisfies Material;
+}
+
+/** El de moverse y el que conoce el destino, por detrás desde que hay ruta (14.2 y 14.3). Devuelve los que esperan. */
+function capasDeDetras(run: string, viaje: Entendido, f: Fuentes): string[] {
+  const m = materialDeLasCapas(run, viaje);
+  return [...deUnaCapa(run, capaDeMoverse, m, f), ...deUnaCapa(run, capaDelDestino, m, f)];
+}
+
+/** El de las entradas, en cuanto se saben los sitios elegidos (14.4), con lo que dicen de ellos los datos abiertos. */
+async function lasEntradas(run: string, viaje: Entendido, elegida: EntregaDeSitios, f: Fuentes): Promise<string[]> {
+  if (hay(run, ENTRADAS) && capaDelRun<{ falta: unknown }>(run, ENTRADAS)?.falta !== "no_contract") return [];
+  const { sitios } = leer<DeLosSitios>(run, "sitios.json");
+  const elegidos = elegida.go.flatMap((x) => sitios.find((s) => s.id === x.id) ?? []);
+  const abiertos = await traerLosAbiertos(run, elegidos, f.abiertos);
+  return deUnaCapa(run, capaDeLasEntradas, materialDeLasCapas(run, viaje, elegidos, abiertos), f);
 }
 
 /** Los avisos de las fechas del run, como los enseña la web: sin lo que entregó el asiento. */
@@ -966,6 +1064,10 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       },
     ]);
 
+  // Las capas del destino que corren por detrás desde que hay ruta: no frenan nada hasta que se monta el viaje.
+  const deAlli = capasDeDetras(run, viaje, f);
+  porDetras.push(...deAlli);
+
   // 3. La búsqueda de alojamiento en las zonas de la ruta, y su puerta.
   if (!hay(run, "busqueda.json")) {
     const rojos = await buscar(run, viaje, f);
@@ -1021,12 +1123,15 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     );
     if ("parado" in r) return para("pick", "los sitios (puerta 9)", r.parado);
     if ("espera" in r) pendientes.push(r.espera);
+    // Con los sitios elegidos, el de las entradas: repartir los días lo espera, hasta su tope (14.4).
+    else pendientes.push(...(await lasEntradas(run, viaje, r.entrega, f)));
     if (pendientes.length > 0 || !("entrega" in r)) return espera(...pendientes);
     // Lo que no pasó sus puertas al mirar no para el viaje: ese alojamiento queda sin mirar, y se dice.
     const mirado = recogerMirar(run);
     for (const a of mirado.alojamientos)
       if (!a.pasadas.some((p) => p.metodo.verde && p.comoEs.verde)) avisos.push(`${a.nombre}: se queda sin mirar`);
     if (!hay(run, "caminos.json")) avisos.push(...(await pedirLaTablaDeCaminos(run, viaje, r.entrega, f)));
+    avisos.push(...losDiasSinEntradas(capaDelRun<DeLasEntradas>(run, ENTRADAS)));
     const rojos = await repartirLosDias(run, viaje, r.entrega, f);
     if (rojos.length > 0) return para("days", "los días (puerta 9)", rojos);
   }
@@ -1090,6 +1195,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
   // el que explica, y van en el viaje. Si el del calendario aún trabaja, ahora sí se le espera.
   if (!hay(run, "viaje.json") && hay(run, "explica.json")) {
     if (calendario !== null) return espera(calendario);
+    if (deAlli.length > 0) return espera(...deAlli);
     // Lo que explicó y ya pasó su puerta no se vuelve a juzgar: se lee, y con ello se monta el viaje.
     const pegas = montarElViaje(run, viaje, leer<Guardado<EntregaDeExplicar>>(run, "explica.json").entrega);
     if (pegas.length > 0) return para("trip", "el viaje para la web", pegas);
@@ -1098,6 +1204,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     // Los avisos de las fechas se le cuentan al viajero con lo que escribe el que explica: si el del calendario aún
     // trabaja, se le espera antes de lanzarlo.
     if (calendario !== null) return espera(calendario);
+    if (deAlli.length > 0) return espera(...deAlli);
     const dado = loQueSeExplica(run, viaje);
     const piezas: Pieza[] = [
       { ruta: "trip.json", contenido: json(viaje) },

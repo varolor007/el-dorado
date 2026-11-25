@@ -47,6 +47,7 @@ import { clasesDelCambio, impactoDe, pasosQueSeRehacen } from "../../agent/scrip
 import { fechasDe, repartir } from "../../agent/scripts/ritmo.ts";
 import { conTusDias } from "../../agent/scripts/cierre.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson, trabaja } from "../cases/inventado/asientos.ts";
+import { contratosDePrueba } from "../cases/inventado/capas.ts";
 import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
 
 const CONTRATOS = resolve(import.meta.dirname, "..", "..", "agent", "contracts");
@@ -93,7 +94,7 @@ test("el impacto, como en la hoja: fechas nuevas rehacen casi todo; un viajero m
   const uno = impactoDe(["travellers"]);
   assert.deepEqual(
     uno.redo.map((x) => x.step),
-    ["search", "look", "table", "cross", "explain", "trip"],
+    ["search", "look", "table", "cross", "explain", "budget", "trip"],
   );
   assert.ok(uno.pieces.includes("lodging") && uno.pieces.includes("prices"));
   // Los papeles, solo si cambian sus filas (8.5): otro pasaporte, u otra edad.
@@ -103,9 +104,9 @@ test("el impacto, como en la hoja: fechas nuevas rehacen casi todo; un viajero m
   const gusto = impactoDe(["lodging_taste"]);
   assert.deepEqual(
     gusto.redo.map((x) => x.step),
-    ["table", "cross", "explain", "trip"],
+    ["table", "cross", "explain", "budget", "trip"],
   );
-  assert.deepEqual(gusto.pieces, ["lodging", "ways", "guide"]);
+  assert.deepEqual(gusto.pieces, ["lodging", "ways", "guide", "budget"]);
   // Quién hace cada paso: el código o su asiento. Y el que escucha no se rehace nunca por un cambio.
   assert.deepEqual(gusto.redo[0], { step: "table", who: CODIGO });
   assert.deepEqual(gusto.redo[1], { step: "cross", who: "trip-crosser" });
@@ -240,8 +241,11 @@ test("otro alojamiento: se busca, se mira y se cruza otra vez; la ruta, los siti
       "route",
       "papers",
       "pick",
+      "tickets",
       "days",
       "calendar",
+      "getting_around",
+      "local_knowledge",
     ]);
     assert.ok(leerDiario(r.v).some((a) => a.que === "redo"));
   } finally {
@@ -255,7 +259,7 @@ test("un día con un mensaje tuyo: el del día a día otra vez; no se busca ni s
     const uno = join(v.carpeta, "runs", "1");
     const r = await rehacerYLlevar(mesa, v.ficha.id, ["day"]);
     // Con lo que eligió, la tabla decide lo mismo: el que cruza y el que explica se quedan con lo suyo (8.6).
-    assert.deepEqual(r.asientos, ["sights-picker"]);
+    assert.deepEqual(r.asientos, ["sights-picker", "tickets"]);
     for (const nombre of ["busqueda.json", "mirar.json", "como_es.json", "ruta.json"])
       assert.equal(readFileSync(join(r.run, nombre), "utf8"), readFileSync(join(uno, nombre), "utf8"), nombre);
     // Los que miraron cada alojamiento siguen ahí, con lo que entregaron: no se les vuelve a lanzar.
@@ -333,7 +337,7 @@ test("rehacer pide un viaje en el mapa y algo que rehacer; mientras no acaba, su
     assert.equal(existsSync(join(run, REHECHO)), true);
     const w = leerViaje(v.ficha.id, "ana", mesa);
     // El run nuevo no ha acabado: lo que deja sin valer está por rehacer, en la versión que se enseña.
-    assert.deepEqual(porRehacer(w), ["lodging", "ways", "guide"]);
+    assert.deepEqual(porRehacer(w), ["lodging", "ways", "guide", "budget"]);
     assert.equal(Object.values(estadoDelViaje(w, ahora())!.lodging)[0], "redo");
     assert.throws(() => rehacer(w, { clases: ["lodging"] }), /not_on_map/);
   } finally {
@@ -348,7 +352,8 @@ test("lo que gastó cada asiento en una cuenta: con ello se estima lo que cuesta
     // Cada asiento de mentira dice 0,05 dólares; los que miran son cinco en el run.
     assert.equal(g["trip-crosser"].usd, 0.05);
     assert.equal(Math.round(g["lodging-viewer"].usd * 100) / 100, 0.25);
-    assert.deepEqual(gastoPorAsiento("otro", mesa), {});
+    // De una cuenta sin nada no se sabe nada (con todas las capas con su contrato, como en las pruebas).
+    assert.deepEqual(gastoPorAsiento("otro", mesa, contratosDePrueba()), {});
     assert.equal(impactoDe(["lodging"], g).cost.usd, 0.35);
   } finally {
     rmSync(mesa, { recursive: true, force: true });
@@ -537,7 +542,7 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     const porClase = (await pide("POST", `/viajes/${id}/impacto`, ana, { changes: ["lodging"] })).cuerpo.impact;
     assert.deepEqual(
       porClase.redo.map((x: { step: string }) => x.step),
-      ["search", "look", "table", "cross", "explain", "trip"],
+      ["search", "look", "table", "cross", "explain", "budget", "trip"],
     );
     assert.equal(porClase.cost.usd, 0.35);
     const tres = { ...ENTENDIDO, travellers: { ...ENTENDIDO.travellers, adults: 3, passports: ["YY", "YY", "YY"] } };
@@ -634,10 +639,10 @@ test("lo que deja de valer sale también de la clase del cambio: otro vuelo no t
   const vuelo = impactoDe(["flight"]);
   assert.ok(vuelo.pieces.includes("transport"));
   assert.ok(!vuelo.pieces.includes("lodging"));
-  assert.deepEqual(vuelo.pieces, ["transport", "ways", "guide"]);
+  assert.deepEqual(vuelo.pieces, ["transport", "ways", "guide", "budget"]);
   // Otro alojamiento: dónde duermes, y lo que sale de ello; ni cómo llegas ni los demás precios.
   const cama = impactoDe(["lodging"]);
-  assert.deepEqual(cama.pieces, ["lodging", "ways", "guide"]);
+  assert.deepEqual(cama.pieces, ["lodging", "ways", "guide", "budget"]);
   // Con otra clase a la vez, cada una dice lo suyo: unas fechas nuevas lo tiran todo igual.
   for (const p of ["lodging", "transport", "prices"] as const)
     assert.ok(impactoDe(["flight", "dates"]).pieces.includes(p));

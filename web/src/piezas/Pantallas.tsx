@@ -29,6 +29,7 @@ import { masCercaDeCadaDia, noCabenTusDias } from "../../../agent/scripts/dia_a_
 import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
 import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
+import { Alli, ElPresupuesto, EntradaDeLaParada } from "./Alli.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -386,7 +387,7 @@ export function EnVivo({ t, idioma, viaje, r }: Comun & { viaje: Viaje; r: Repro
   );
 }
 
-export type Pestana = "days" | "stay" | "money" | "notes" | "book";
+export type Pestana = "days" | "stay" | "money" | "there" | "notes" | "book";
 
 type DeViaje = Comun & {
   viaje: Viaje;
@@ -611,6 +612,7 @@ function Dias(x: DeViaje) {
                           <span className="pastilla">{t.parada.hora[p.mejorHora]}</span>
                         )}
                         {p.reservar === true && <span className="pastilla">{t.parada.reservar}</span>}
+                        <EntradaDeLaParada t={t} entradas={x.viaje.entradas} parada={p.id} />
                         {x.anadidas.includes(p.id) && <span className="pastilla">{t.acciones.tuya}</span>}
                         {!x.anadidas.includes(p.id) && x.fijadas?.[p.id] !== undefined && (
                           <span className="pastilla">{t.diaADia.movida}</span>
@@ -833,6 +835,7 @@ function Cuentas(x: DeViaje) {
           </button>
         )}
       </div>
+      <ElPresupuesto t={t} idioma={idioma} presupuesto={viaje.presupuesto} manera={marcada?.id ?? ""} />
       {viaje.palancas.length > 0 && (
         <div className="grupo">
           <h2 className="titulo">{t.viaje.palancas}</h2>
@@ -1065,7 +1068,7 @@ export function TuViaje(x: DeViaje) {
   const trayectosAPie = reparto.dias.every((d) => seAndaElDia(d, deParada, c));
   const todoAPie = trayectosAPie && viaje.alojamientos.every((a) => a.aPie !== false);
   // Un viaje cerrado abre con lo que hay que reservar.
-  const pestanas: Pestana[] = [...(viaje.cierre ? (["book"] as const) : []), "days", "stay", "money", "notes"];
+  const pestanas: Pestana[] = [...(viaje.cierre ? (["book"] as const) : []), "days", "stay", "money", "there", "notes"];
   // El total de arriba es el de la manera elegida: dice si es de las noches solas o también de cómo se llega. Con el
   // viaje cerrado, es el de la manera con que se cerró, con los precios de ese día; si ese día no hubo total, el que
   // se vio, y de qué día es.
@@ -1120,6 +1123,7 @@ export function TuViaje(x: DeViaje) {
         {x.pestana === "days" && <Dias {...x} />}
         {x.pestana === "stay" && <Dormir {...x} viaje={conLoTuyo(x)} />}
         {x.pestana === "money" && <Cuentas {...x} viaje={conLoTuyo(x)} />}
+        {x.pestana === "there" && <Alli t={t} idioma={idioma} viaje={viaje} />}
         {x.pestana === "notes" && <Avisos {...x} />}
       </div>
     </>

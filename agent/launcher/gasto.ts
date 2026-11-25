@@ -9,6 +9,9 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { CAPAS_DE_IA } from "../data/capas.ts";
+import { PASOS } from "../data/pasos.ts";
+import { hayContrato } from "./capas.ts";
 import { REHECHO } from "../data/momentos.ts";
 import { viajesDe, type ViajeEnLaMesa } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
@@ -143,9 +146,13 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
  * Lo que gastó de media cada asiento en una investigación de esa cuenta: por cada run que acabó en el mapa (también
  * los que rehicieron otro) y del que se sabe todo lo que gastó, la suma de los trabajos de ese asiento. Es con lo que
  * se estima lo que cuesta rehacer un paso (`agent/scripts/impacto.ts`). Un asiento que no ha trabajado nunca en esa
- * cuenta no sale: de él no se sabe.
+ * cuenta no sale: de él no se sabe. Uno de las capas del destino que aún no tiene contrato no se lanza: no cuesta.
  */
-export function gastoPorAsiento(dueno: string, mesa: string): Record<string, { usd: number; de: number }> {
+export function gastoPorAsiento(
+  dueno: string,
+  mesa: string,
+  contratos?: string,
+): Record<string, { usd: number; de: number }> {
   const sumas = new Map<string, number[]>();
   for (const ficha of viajesDe(dueno, mesa)) {
     const v: ViajeEnLaMesa = { carpeta: join(resolve(mesa), "viajes", ficha.id), ficha };
@@ -161,10 +168,16 @@ export function gastoPorAsiento(dueno: string, mesa: string): Record<string, { u
       for (const [asiento, usd] of porAsiento) sumas.set(asiento, [...(sumas.get(asiento) ?? []), usd]);
     }
   }
-  return Object.fromEntries(
+  const estimado: Record<string, { usd: number; de: number }> = Object.fromEntries(
     [...sumas].map(([asiento, usds]) => [
       asiento,
       { usd: usds.reduce((s, x) => s + x, 0) / usds.length, de: usds.length },
     ]),
   );
+  for (const paso of CAPAS_DE_IA) {
+    const asiento = PASOS.find((p) => p.id === paso)?.quien;
+    if (asiento !== undefined && estimado[asiento] === undefined && !hayContrato(asiento, contratos))
+      estimado[asiento] = { usd: 0, de: 0 };
+  }
+  return estimado;
 }
