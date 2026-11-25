@@ -5,6 +5,7 @@
 // viaje: es un viaje nuevo, y este se queda como está. Es código, sin IA y sin nada de Node: lo usa también la web.
 
 import { COSAS } from "../data/gustos.ts";
+import { pegasDelTexto } from "../gates/textos.ts";
 import type { ClaseDeCambio } from "../data/momentos.ts";
 import { FRASE_DEL_VIAJERO } from "../data/viaje.ts";
 import { entendidoDe, type Respuestas } from "./empezar.ts";
@@ -25,6 +26,11 @@ const igual = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) ===
 /** Las cosas del alojamiento, en el orden de `COSAS`: lo que se puede tocar como gusto en un cambio. */
 export const COSAS_QUE_SE_TOCAN = Object.keys(COSAS);
 
+/** Lo más que mide la cita de un gusto nuevo: su toque, que se suma a lo que escribiste. */
+export const LARGO_DE_UNA_CITA = 80;
+/** Cómo se suma cada cita a lo que escribiste. */
+const JUNTA = ". ";
+
 /**
  * Tus gustos de después: los que no son de una cosa del alojamiento, como estaban; los de una cosa, con el peso que
  * les des. Uno nuevo lleva como cita su toque, que se suma a lo que escribiste para que la cita esté ahí, letra a
@@ -42,10 +48,10 @@ function gustosDe(antes: Entendido, tocados: GustoTocado[] | null): { tastes: Gu
       continue;
     }
     if (t.weight === "indifferent") continue;
-    const cita = t.etiqueta.trim().slice(0, 80);
+    const cita = t.etiqueta.trim().slice(0, LARGO_DE_UNA_CITA);
     if (cita === "") continue;
     if (said !== undefined && !said.wants.includes(cita))
-      said = { ...said, wants: [said.wants, cita].filter((x) => x.trim() !== "").join(". ") };
+      said = { ...said, wants: [said.wants, cita].filter((x) => x.trim() !== "").join(JUNTA) };
     tastes.push({ thing: t.thing, weight: t.weight, quote: cita });
   }
   if (said !== undefined && said.wants.length > FRASE_DEL_VIAJERO) said = antes.said;
@@ -94,6 +100,43 @@ export function conElCambio(
   if (nuevo.moving === undefined) delete despues.moving;
   else if (igual(nuevo.moving, antes.moving)) despues.moving = antes.moving;
   return { entendido: despues, falta: [] };
+}
+
+/**
+ * Lo que la casa no se cree de un cambio que le llega de fuera, por el campo que falla; null si vale. Lo de después
+ * tiene que poder salir de las preguntas de un cambio (`conElCambio`): el mismo idioma (otro idioma no se ofrece: el
+ * porqué de cada parada y lo que dice el que mira también van en él, y rehacer solo al que explica no basta), ningún
+ * campo que lo de antes no tenga, y tus palabras (`said`) iguales, salvo las citas que suman a lo que querías los
+ * gustos nuevos de una cosa del alojamiento: cada una, la de su gusto, corta y limpia por la puerta de palabras.
+ */
+export function cambioQueNoVale(antes: Entendido, despues: Entendido): string | null {
+  if (despues.language !== antes.language) return "language";
+  const deMas = Object.keys(despues).find((k) => !Object.hasOwn(antes, k));
+  if (deMas !== undefined) return deMas;
+  const a = antes.said;
+  const d = despues.said;
+  if (a === undefined) return d === undefined ? null : "said";
+  if (d === undefined || d === null || typeof d !== "object") return "said";
+  const { wants: _a, ...restoDeAntes } = a;
+  const { wants: _d, ...restoDeDespues } = d;
+  if (!igual(restoDeAntes, restoDeDespues) || typeof d.wants !== "string") return "said";
+  if (d.wants === a.wants) return null;
+  const desde = a.wants.trim() === "" ? "" : a.wants + JUNTA;
+  if (!d.wants.startsWith(desde)) return "said";
+  // Las citas que se pueden sumar: las de los gustos nuevos de una cosa del alojamiento.
+  const nuevas = new Set(
+    despues.tastes
+      .filter((g) => Object.hasOwn(COSAS, g.thing) && !antes.tastes.some((x) => x.thing === g.thing))
+      .map((g) => g.quote),
+  );
+  const citas = d.wants.slice(desde.length).split(JUNTA);
+  const vistas = new Set<string>();
+  for (const cita of citas) {
+    if (cita.trim() === "" || cita.length > LARGO_DE_UNA_CITA || !nuevas.has(cita) || vistas.has(cita)) return "said";
+    if (pegasDelTexto(cita).length > 0) return "said";
+    vistas.add(cita);
+  }
+  return null;
 }
 
 /** Qué trae un cambio: sus clases y, si cambia el destino, que es un viaje nuevo y no un cambio de este. */

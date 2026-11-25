@@ -146,6 +146,18 @@ export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {
 };
 
 /**
+ * Las piezas que deja de valer una clase de cambio cuando son menos que las que salen de sus pasos: los pasos que
+ * rehace sirven a más de una pieza (la búsqueda da dónde duermes, cómo llegas y todos los precios; la tabla, dónde
+ * duermes y las maneras), pero el cambio solo toca una. Otro vuelo en los mismos días cambia cómo llegas, y con ello
+ * las maneras y la guía; no dónde duermes. Otro alojamiento cambia dónde duermes, las maneras y la guía; no cómo
+ * llegas ni los demás precios. Las clases que no están aquí tiran las piezas de sus pasos.
+ */
+export const PIEZAS_DE_UNA_CLASE: Partial<Record<ClaseDeCambio, PiezaDelViaje[]>> = {
+  flight: ["transport", "ways", "guide"],
+  lodging: ["lodging", "ways", "guide"],
+};
+
+/**
  * Lo que deja cada paso en su run, además de los puestos de su asiento (los que llevan su contrato en el sello). Es
  * lo que se copia al run nuevo cuando el paso sigue valiendo. Una carpeta acaba en `/`.
  */

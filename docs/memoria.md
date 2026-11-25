@@ -90,6 +90,29 @@ por claves y sin IA; rehacer solo lo que dejó de valer, en una investigación q
 versiones, con volver a la de antes. Después, sobre él y a la vez: el alojamiento (8.2), el transporte (8.3), el día
 a día (8.6) y los cambios (8.5). Vigilar el precio (8.7) es del PM.
 
+**Los arreglos del cimiento y de los cambios, tras la revisión de la tanda 6** (25-nov; 8.1 y 8.5). **Un cambio
+que se para ya no atasca el viaje**: `quedarseComoSuVersion` (`agent/launcher/mesa.ts`) lo devuelve a `on_map` o
+`closed`, y `soltarElCambio` (`agent/launcher/rehacer.ts`) lo hace cuando el último run rehace la versión que se
+enseña y está parado; a uno a medias sin nadie que lo lleve, primero lo para (salvo que espere tu turno de los
+papeles, que sigue escondiendo el viaje: sin arreglar). La puerta lo mira al primer acceso (`alDia`, en `suViaje`,
+al listar y en el oyente en vivo), sin barrido al arrancar, y `marchar` lo suelta al acabar. El estado del viaje
+lleva `research.change` (`from`, `run`, `changes`), la web lo pinta encima del viaje (`TuCambioParado`, en
+`web/src/piezas/Momentos.tsx`), y `reintentar` vale con el viaje en el mapa o cerrado solo para ese run
+(`cambioParado`). «Dejarlo» solo lo quita de la vista en ese navegador. **Lo entendido del viaje es siempre el de la
+versión que se enseña** (`entendidoDeLaVersion`): rehacer lo escribe solo en su run. **Tus elecciones pasan siempre a
+la versión nueva** (`heredadas`, en `agent/launcher/momentos.ts`, parte de la versión de la que sale; si el momento
+pasa `choices`, mandan esas). **Lo pedido dura por la cadena**: `Rehecho.heredado` y `loPedidoDe(run, pieza)`, con
+las piezas `transport` y `lodging`; lo leen `transporteDe`, los países de más de los papeles,
+`pedidoDeAlojamientoDe` y `vueloDe`. Otra búsqueda de alojamiento pisa entera a la heredada; el vuelo heredado se
+cae si no es de las fechas o de la moneda, y con él sus países; el tope del alojamiento se cae con otras fechas,
+otro grupo u otra moneda; los gustos marcados, con un gusto nuevo; la zona y los mínimos duran. El pedido del día a
+día no se hereda. Su prueba, la cadena de ocho versiones, en `tests/code/lo_pedido.test.ts`. **Guardar elecciones
+lleva su versión** (`PUT`, con `version`: 409 `not_shown` si no es la que se enseña; opcional, porque
+`ElTransporte.tsx` aún no la manda). **`cambiar`** rechaza otro idioma (409 `language_change`), los campos de más y
+tus palabras tocadas fuera de las citas (400 `bad_change`; `cambioQueNoVale`, en `agent/scripts/cambios.ts`), y
+empezar otra vez mira el tope de investigaciones. `Object.hasOwn` en lo que llega de fuera. Y las piezas que dejan
+de valer salen también de la clase del cambio (`PIEZAS_DE_UNA_CLASE`, en `agent/data/momentos.ts`).
+
 **La casa por momentos (8.1), junta** (25-nov). Es el suelo de los otros cuatro puntos: quien toque uno, que la lea.
 - **Elecciones**: lo que el viajero escoge entre lo que ya trae la versión que ve (la manera, un alojamiento o un
   transporte de los suyos, el ritmo, lo que quita, añade o mueve, y sus gustos, marcados sin aplicar). En

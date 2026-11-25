@@ -3,7 +3,7 @@
 // costaría, estimado de lo que gastó cada asiento en las investigaciones de esa cuenta. Todo por claves, para que la
 // web lo diga antes de rehacer nada. Sin nada de Node: la web lo puede usar igual.
 
-import { CAMBIOS, CLASES_DE_CAMBIO, LEE, PIEZAS_DE_UN_PASO } from "../data/momentos.ts";
+import { CAMBIOS, CLASES_DE_CAMBIO, LEE, PIEZAS_DE_UN_PASO, PIEZAS_DE_UNA_CLASE } from "../data/momentos.ts";
 import type { ClaseDeCambio, IdDePaso, PiezaDelViaje } from "../data/momentos.ts";
 import { COSAS } from "../data/gustos.ts";
 import { CODIGO, PASOS } from "../data/pasos.ts";
@@ -50,7 +50,7 @@ export function clasesDelCambio(antes: Entendido, despues: Entendido): ClaseDeCa
   if (antes.currency !== despues.currency) hay.add("currency");
   if (antes.language !== despues.language) hay.add("language");
   if (antes.pace !== despues.pace) hay.add("pace");
-  const deAlojamiento = (g: Gusto): boolean => g.thing in COSAS;
+  const deAlojamiento = (g: Gusto): boolean => Object.hasOwn(COSAS, g.thing);
   if (!igual(ordenado(antes.tastes.filter(deAlojamiento)), ordenado(despues.tastes.filter(deAlojamiento))))
     hay.add("lodging_taste");
   const otros = (g: Gusto): boolean => !deAlojamiento(g);
@@ -175,7 +175,10 @@ export function impactoDe(clases: readonly ClaseDeCambio[], estimado: EstimadoPo
   const keep = ORDEN.filter((id) => !rehacen.includes(id));
   const posibles = new Set(clases.flatMap((c) => CAMBIOS[c].quizas).filter((id) => !rehacen.includes(id)));
   const maybe = enOrden(posibles).map((step) => ({ step, who: quienDa(step) }));
-  const piezas = new Set<PiezaDelViaje>(rehacen.flatMap((id) => PIEZAS_DE_UN_PASO[id]));
+  // Cada clase dice lo suyo: las piezas de sus pasos o, si toca menos, las suyas (`PIEZAS_DE_UNA_CLASE`).
+  const piezas = new Set<PiezaDelViaje>(
+    clases.flatMap((c) => PIEZAS_DE_UNA_CLASE[c] ?? pasosQueSeRehacen([c]).flatMap((id) => PIEZAS_DE_UN_PASO[id])),
+  );
   const pieces = (
     ["lodging", "transport", "days", "prices", "date_warnings", "papers", "ways", "guide"] as const
   ).filter((p) => piezas.has(p));

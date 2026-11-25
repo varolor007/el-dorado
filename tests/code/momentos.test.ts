@@ -9,6 +9,7 @@ import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { CAMBIOS, CLASES_DE_CAMBIO, DEL_RUN, LEE, LO_QUE_DEJA, REHECHO } from "../../agent/data/momentos.ts";
 import { CODIGO, PASOS } from "../../agent/data/pasos.ts";
+import { imprescindiblesDeLaRuta } from "../../agent/gates/puerta_ruta.ts";
 import { LA_CASA, QUIEN_RESPONDE, quienResponde } from "../../agent/data/responde.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import { gastoPorAsiento } from "../../agent/launcher/gasto.ts";
@@ -449,10 +450,13 @@ test("tus elecciones viven en la casa, por versión: se guardan encima, y solo c
     assert.deepEqual(leidas.removed, []);
     assert.equal(v.ficha.versiones.length, 1);
     assert.throws(() => guardarElecciones(v, { way: "no" }), EleccionQueNoVale);
-    // Una versión nueva empieza sin elegir; al volver a la de antes, vuelven sus elecciones.
+    // Una versión nueva trae lo que elegiste en la de la que sale (lo que quitas no vuelve solo), y se guarda aparte:
+    // lo que eliges en ella no toca las de la de antes.
     await rehacerYLlevar(mesa, v.ficha.id, ["lodging_taste"]);
     const w = leerViaje(v.ficha.id, "ana", mesa);
-    assert.deepEqual(leerElecciones(w), SIN_ELEGIR);
+    assert.equal(leerElecciones(w).way, "different");
+    assert.equal(leerElecciones(w).pace, "calm");
+    guardarElecciones(w, { way: "cheapest" }, ahora());
     volverA(w, 1, ahora());
     assert.equal(leerElecciones(w).way, "different");
     pasar(w, "researching", ahora());
@@ -512,7 +516,13 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     assert.deepEqual([malo.estado, malo.cuerpo.error, malo.cuerpo.field], [400, "bad_choice", "way"]);
     assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, otro, { choices: {} })).estado, 404);
     const tuyas = { way: "cheapest", pace: "full", removed: [p1], moved: { [p2]: 0 } };
-    assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { choices: tuyas })).estado, 200);
+    // Lo que se guarda dice de qué versión es: si no es la que se enseña, no se guarda encima de otra.
+    const deOtra = await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: 2, choices: tuyas });
+    assert.deepEqual([deOtra.estado, deOtra.cuerpo.error], [409, "not_shown"]);
+    const sinNumero = await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: "1", choices: tuyas });
+    assert.deepEqual([sinNumero.estado, sinNumero.cuerpo.error], [400, "bad_request"]);
+    assert.deepEqual((await pide("GET", `/viajes/${id}/elecciones`, ana)).cuerpo.choices, SIN_ELEGIR);
+    assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { version: 1, choices: tuyas })).estado, 200);
     // Al volver, siguen ahí.
     const leidas = (await pide("GET", `/viajes/${id}/elecciones`, ana)).cuerpo;
     assert.equal(leidas.choices.way, "cheapest");
@@ -566,4 +576,71 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     await puerta.cerrar();
     rmSync(mesa, { recursive: true, force: true });
   }
+});
+
+// ---------- lo que deja la revisión de la tanda 6
+
+test("lo entendido del viaje es siempre el de la versión que se enseña: al rehacer, al salir y al volver", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const delViaje = (): Entendido => leerJson(join(v.carpeta, "entendido.json")) as unknown as Entendido;
+    const nuevas = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: "2027-03-12", check_out: "2027-03-15" } };
+    const { run } = rehacer(leerViaje(v.ficha.id, "ana", mesa), {
+      clases: ["dates"],
+      entendido: nuevas,
+      cuando: ahora(),
+    });
+    // Mientras se rehace, el del viaje es el de la versión que se enseña; el nuevo va en su run.
+    assert.equal(delViaje().dates.check_in, ENTENDIDO.dates.check_in);
+    assert.equal(leerJson(join(run, "entendido.json")).dates.check_in, "2027-03-12");
+    darElAdelante(run, null, ahora());
+    await llevar(run, fuentesInventadas(), lanzadorDeMentira());
+    await esperarLoDeDetras(run);
+    assert.equal(delViaje().dates.check_in, "2027-03-12");
+    const w = leerViaje(v.ficha.id, "ana", mesa);
+    volverA(w, 1, ahora());
+    assert.equal(delViaje().dates.check_in, ENTENDIDO.dates.check_in);
+    volverA(w, 2, ahora());
+    assert.equal(delViaje().dates.check_in, "2027-03-12");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo que no es suyo no se cuela por el prototipo: elecciones, gustos y pedidos de transporte", async () => {
+  const { comprobarPedido, PedidoQueNoVale } = await import("../../agent/scripts/otro_transporte.ts");
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const viaje = leerVersion(v)?.viaje as Viaje;
+    for (const raro of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      const crudo = JSON.parse(`{"${raro}": 1}`);
+      assert.throws(() => comprobarElecciones(viaje, crudo), EleccionQueNoVale, raro);
+      assert.throws(() => comprobarElecciones(viaje, { tastes: [{ thing: raro, weight: "like" }] }), EleccionQueNoVale);
+      assert.throws(() => comprobarPedido(crudo), PedidoQueNoVale, raro);
+      // Un gusto que se llama así no es de una cosa del alojamiento.
+      const conEl = { ...ENTENDIDO, tastes: [...ENTENDIDO.tastes, { thing: raro, weight: "like", quote: "" }] };
+      assert.deepEqual(clasesDelCambio(ENTENDIDO, conEl as Entendido), ["taste"]);
+      // Y uno imprescindible que se llama así es de la ruta: la puerta de la ruta lo pide.
+      const imprescindible = { ...ENTENDIDO, tastes: [{ thing: raro, weight: "must", quote: "" }] } as Entendido;
+      assert.deepEqual(imprescindiblesDeLaRuta(imprescindible), [raro]);
+    }
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("lo que deja de valer sale también de la clase del cambio: otro vuelo no toca dónde duermes", () => {
+  // Otro vuelo en los mismos días: cómo llegas, y lo que sale de ello; no dónde duermes.
+  const vuelo = impactoDe(["flight"]);
+  assert.ok(vuelo.pieces.includes("transport"));
+  assert.ok(!vuelo.pieces.includes("lodging"));
+  assert.deepEqual(vuelo.pieces, ["transport", "ways", "guide"]);
+  // Otro alojamiento: dónde duermes, y lo que sale de ello; ni cómo llegas ni los demás precios.
+  const cama = impactoDe(["lodging"]);
+  assert.deepEqual(cama.pieces, ["lodging", "ways", "guide"]);
+  // Con otra clase a la vez, cada una dice lo suyo: unas fechas nuevas lo tiran todo igual.
+  for (const p of ["lodging", "transport", "prices"] as const)
+    assert.ok(impactoDe(["flight", "dates"]).pieces.includes(p));
+  assert.ok(impactoDe(["lodging", "budget"]).pieces.includes("lodging"));
+  assert.ok(!impactoDe(["lodging", "budget"]).pieces.includes("transport"));
 });

@@ -32,7 +32,7 @@ const entero = (v: unknown): v is number => typeof v === "number" && Number.isIn
 
 /** Los imprescindibles que son de la ruta: los que no son una cosa del alojamiento. */
 export function imprescindiblesDeLaRuta(viaje: Entendido): string[] {
-  return viaje.tastes.filter((g) => g.weight === "must" && !(g.thing in COSAS)).map((g) => g.thing);
+  return viaje.tastes.filter((g) => g.weight === "must" && !Object.hasOwn(COSAS, g.thing)).map((g) => g.thing);
 }
 
 export function puertaRuta(entrega: unknown, m: MaterialDeRuta): Veredicto {

@@ -962,6 +962,20 @@ const en = {
       calendar: "the date warnings",
       trip: "your trip on the map",
     } as Record<string, string>,
+    // Un cambio que se paró sin dar su versión: tu viaje sigue como estaba.
+    parado: {
+      titulo: "Your last change stopped",
+      texto: (cambios: string) =>
+        cambios === ""
+          ? "We could not finish it. Nothing has changed: this is still the trip you had."
+          : `We could not finish redoing it with ${cambios}. Nothing has changed: this is still the trip you had.`,
+      otraVez: "Try again",
+      gasta: "It repeats only the step that stopped. It uses AI, so it may cost a little.",
+      otraVezNo: "It cannot be tried again as it is. You can change it again, or leave it.",
+      dejar: "Leave it",
+      mandando: "Trying again",
+      fallo: "We could not try again now. Try again in a moment.",
+    },
   },
   // El alojamiento, a ratos (8.2): desde la ficha de un alojamiento tuyo, tus gustos, dormir aquí, buscar otra vez y
   // preguntar por él.
@@ -1159,6 +1173,8 @@ const en = {
         unclear: "Something of what you changed is not clear. Check your dates and who is going.",
         new_trip: "Another destination is a new trip: search it at the top.",
         nothing_changed: "Nothing has changed yet.",
+        language_change: "The language of a trip cannot be changed yet.",
+        bad_change: "Something of what you changed cannot be changed from here.",
       })[clave] ?? "Something went wrong. Try again in a moment.",
   },
   // Tu guía (12.2): el cuaderno de un viaje cerrado, que se pide, se ve y se descarga.
@@ -2117,6 +2133,20 @@ const es: Textos = {
       calendar: "los avisos de las fechas",
       trip: "tu viaje en el mapa",
     },
+    parado: {
+      titulo: "Tu último cambio se paró",
+      texto: (cambios) =>
+        cambios === ""
+          ? "No hemos podido acabarlo. No ha cambiado nada: este sigue siendo el viaje que tenías."
+          : `No hemos podido acabar de rehacerlo con ${cambios}. ` +
+            "No ha cambiado nada: este sigue siendo el viaje que tenías.",
+      otraVez: "Volver a intentarlo",
+      gasta: "Repite solo el paso que se paró. Usa IA, así que puede costar un poco.",
+      otraVezNo: "Así no se puede volver a intentar. Puedes cambiarlo otra vez, o dejarlo.",
+      dejar: "Dejarlo",
+      mandando: "Volviendo a intentarlo",
+      fallo: "Ahora no hemos podido volver a intentarlo. Prueba otra vez en un momento.",
+    },
   },
   // El alojamiento, a ratos (8.2).
   alojamiento: {
@@ -2308,6 +2338,8 @@ const es: Textos = {
         unclear: "Algo de lo que has cambiado no está claro. Mira tus fechas y quién va.",
         new_trip: "Otro destino es un viaje nuevo: búscalo arriba.",
         nothing_changed: "Todavía no has cambiado nada.",
+        language_change: "El idioma de un viaje aún no se puede cambiar.",
+        bad_change: "Algo de lo que has cambiado no se puede cambiar desde aquí.",
       })[clave] ?? "Algo ha fallado. Prueba otra vez en un momento.",
   },
   guia: {

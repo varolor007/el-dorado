@@ -112,7 +112,7 @@ import {
   type DeLosPapelesGuardado,
 } from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
-import { rehechoDe } from "./rehacer.ts";
+import { loPedidoDe, rehechoDe } from "./rehacer.ts";
 import { acaboSinEntregar } from "./trabajos.ts";
 import { contar } from "./vivo.ts";
 import {
@@ -426,7 +426,7 @@ function transporteDe(run: string): Vuelo | null {
   const e = busqueda.estancia;
   // Si este run lo rehace el transporte (8.3), su vuelo es el que eligió el viajero, si es de las fechas del viaje y
   // de su moneda: un precio de otros días no se suma a estas noches.
-  const elegido = pedidoDelTransporte(rehechoDe(run)?.pedido)?.flight ?? null;
+  const elegido = pedidoDelTransporte(loPedidoDe(run, "transport"))?.flight ?? null;
   if (elegido !== null && elTransporte([elegido], e.moneda, e.entrada, e.salida) !== null) return elegido;
   return elTransporte(vuelos, e.moneda, e.entrada, e.salida);
 }
@@ -769,8 +769,8 @@ function deLosPapeles(run: string, base: Entendido): string | null {
   const viaje = sinPalabras(base);
   const hoy = hoyEnLaCasa();
   // Sin nada que preguntar (todos viajan por el país de su pasaporte), la tabla queda vacía y no se lanza a nadie.
-  // Los países de más que trae el transporte elegido (8.3), si este run lo rehace por él.
-  const deMas = pedidoDelTransporte(rehechoDe(run)?.pedido)?.countries ?? [];
+  // Los países de más que trae el transporte elegido (8.3), mientras dure su vuelo.
+  const deMas = pedidoDelTransporte(loPedidoDe(run, "transport"))?.countries ?? [];
   if (celdasDe(viaje, deMas).length === 0) {
     guardar(run, PAPELES, {
       ...paraEnsenarPapeles({ seat: "papers", cells: [], unknowns: [] }, viaje, hoy, deMas),

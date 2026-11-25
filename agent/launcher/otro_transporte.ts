@@ -19,6 +19,7 @@ import {
   conLasFechasDelVuelo,
   type AntesYAhora,
   type Comparado,
+  pedidoDelTransporte,
   type OtraBusqueda,
   type PedidoDelTransporte,
 } from "../scripts/otro_transporte.ts";
@@ -26,6 +27,7 @@ import type { Parrilla } from "../scripts/transporte.ts";
 import type { FuenteTransporte, Vuelo } from "../tools/fuentes/tipos.ts";
 import { apuntar, guardarJson, leerVersion, type ViajeEnLaMesa } from "./mesa.ts";
 import { leerElecciones } from "./momentos.ts";
+import { loPedidoDe } from "./rehacer.ts";
 
 export const BUSQUEDAS_DEL_TRANSPORTE = "transporte";
 
@@ -156,7 +158,8 @@ type DeLaBusqueda = { vuelos?: Vuelo[]; transporte?: Parrilla | null };
 
 /** El vuelo de un run que es el transporte del viaje: el que eligió el viajero, o el de su búsqueda. */
 function vueloDe(run: string, t: Transporte): Vuelo | null {
-  const pedido = leer<{ pedido?: { flight?: Vuelo } }>(join(run, "rehecho.json"))?.pedido?.flight;
+  // El vuelo que elegiste en este run o en una versión de antes, si sigue valiendo (`loPedidoDe`).
+  const pedido = pedidoDelTransporte(loPedidoDe(run, "transport"))?.flight;
   const b = leer<DeLaBusqueda>(join(run, "busqueda.json"));
   const todos = [...(pedido === undefined ? [] : [pedido]), ...(b?.vuelos ?? []), ...(b?.transporte?.opciones ?? [])];
   return (

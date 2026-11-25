@@ -5,7 +5,7 @@
 // gasta. Lo usan los momentos que cambian algo (el alojamiento, el transporte, el día a día y los cambios). Todo por
 // claves y números: ninguna frase de un asiento, ni su nombre.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Impacto } from "../../../agent/scripts/impacto.ts";
 import { pideALaCasa } from "../lib/cuenta.ts";
 import type { VersionDeTuViaje } from "../lib/elecciones.ts";
@@ -62,6 +62,67 @@ export function TusVersiones({ t, idioma, id, versiones }: Comun & { id: string;
         ))}
       </ol>
       {fallo && <p className="aviso">{m.noVuelve}</p>}
+    </div>
+  );
+}
+
+/**
+ * Tu último cambio se paró sin dar su versión: tu viaje sigue como estaba, y se dice. Volver a intentarlo repite
+ * solo el paso que se paró, y gasta: se dice antes. Dejarlo lo quita de la vista en este navegador; el cambio parado
+ * se queda en la casa, y otro cambio parte de la versión que ves.
+ */
+export function TuCambioParado({
+  t,
+  id,
+  cambio,
+  sePuede,
+}: Comun & { id: string; cambio: { run: number; changes: string[] }; sePuede: boolean }) {
+  const clave = `eldorado:cambio-parado:${id}:${cambio.run}`;
+  const [dejado, setDejado] = useState(true);
+  const [mandando, setMandando] = useState(false);
+  const [fallo, setFallo] = useState(false);
+  useEffect(() => {
+    try {
+      setDejado(window.localStorage.getItem(clave) === "1");
+    } catch {
+      setDejado(false);
+    }
+  }, [clave]);
+  if (dejado) return null;
+  const m = t.momentos;
+  const deja = (): void => {
+    setDejado(true);
+    try {
+      window.localStorage.setItem(clave, "1");
+    } catch {
+      // Sin almacén, se deja solo mientras dure la página.
+    }
+  };
+  const otraVez = async (): Promise<void> => {
+    setMandando(true);
+    setFallo(false);
+    const r = await pideALaCasa("POST", `viajes/${id}/reintentar`);
+    // Con el reintento en marcha, el viaje vuelve a investigar: se recarga, y la página lo sigue en vivo.
+    if (r.estado === 202) return window.location.reload();
+    setMandando(false);
+    setFallo(true);
+  };
+  return (
+    <div className="grupo cambio-parado" role="status">
+      <h2 className="titulo">{m.parado.titulo}</h2>
+      <p className="suave">{m.parado.texto(cambio.changes.map((c) => m.cambios[c] ?? c).join(", "))}</p>
+      <p className="dato">{sePuede ? m.parado.gasta : m.parado.otraVezNo}</p>
+      <div className="pie-columna">
+        {sePuede && (
+          <button type="button" className="boton boton--ancho" disabled={mandando} onClick={() => void otraVez()}>
+            {mandando ? m.parado.mandando : m.parado.otraVez}
+          </button>
+        )}
+        <button type="button" className="enlace" disabled={mandando} onClick={deja}>
+          {m.parado.dejar}
+        </button>
+      </div>
+      {fallo && <p className="aviso">{m.parado.fallo}</p>}
     </div>
   );
 }

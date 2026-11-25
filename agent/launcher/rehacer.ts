@@ -10,12 +10,15 @@ import { cpSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { LO_QUE_DEJA, REHECHO, SE_VUELVE_A_CONTAR, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import type { ClaseDeCambio, IdDePaso } from "../data/momentos.ts";
-import { CODIGO, PASOS } from "../data/pasos.ts";
+import { CODIGO, PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { impactoDe, type Impacto } from "../scripts/impacto.ts";
+import { pedidoDelTransporte } from "../scripts/otro_transporte.ts";
 import { ESCUCHADO, type Escuchado } from "./escuchar.ts";
-import { apuntar, guardarJson, nuevoRun, type ViajeEnLaMesa } from "./mesa.ts";
+import { apuntar, guardarJson, nuevoRun, quedarseComoSuVersion, ultimoRun, type ViajeEnLaMesa } from "./mesa.ts";
+import { turnoDeLosPapeles } from "./papeles.ts";
+import { porDondeVa } from "./pasos.ts";
 import { puestosDe } from "./puesto.ts";
 
 /** Lo que queda en un run que rehace otro: de cuál viene, con qué cambio, y qué conservó y qué rehace. */
@@ -28,8 +31,81 @@ export type Rehecho = {
   rehace: IdDePaso[];
   /** Lo que pide el momento que lo lanza, para el paso que lo lea (otra zona, otro candidato); null si nada. */
   pedido: unknown;
+  /**
+   * Lo pedido en las versiones de antes que sigue valiendo: lo de la investigación de la que parte (lo suyo o lo que
+   * heredó), menos lo que este cambio pisa o deja sin valer. Por pieza (`PIEZAS_PEDIDAS`). Lo lee `loPedidoDe`.
+   */
+  heredado?: Partial<Record<PiezaPedida, unknown>>;
   cuando: string;
 };
+
+/**
+ * Las piezas de lo que se pide en un momento que duran por la cadena de versiones: el transporte (el vuelo elegido y
+ * los países de más de los papeles, 8.3) y el alojamiento (la zona, los mínimos, el tope y los gustos marcados, 8.2).
+ */
+export const PIEZAS_PEDIDAS = ["transport", "lodging"] as const;
+export type PiezaPedida = (typeof PIEZAS_PEDIDAS)[number];
+
+/** Lo de una pieza en el pedido de un momento, como lo deja cada uno; null si no lo trae. */
+function deLaPieza(pedido: unknown, pieza: PiezaPedida): unknown {
+  if (typeof pedido !== "object" || pedido === null) return null;
+  const p = pedido as Record<string, unknown>;
+  // El transporte deja su pedido entero, con su momento; el alojamiento, bajo su clave («lodging»).
+  if (pieza === "transport") return p.moment === "transport" ? p : null;
+  const suyo = Object.hasOwn(p, "lodging") ? p.lodging : null;
+  return typeof suyo === "object" && suyo !== null ? suyo : null;
+}
+
+/**
+ * Lo pedido de una pieza en un run: lo de este run o, si no lo trae, lo heredado de las versiones de antes. Null si
+ * ni lo uno ni lo otro, o si el run no rehace otro. Es lo único que leen los pasos que usan lo pedido.
+ */
+export function loPedidoDe(run: string, pieza: PiezaPedida): unknown {
+  const r = rehechoDe(run);
+  if (r === null) return null;
+  return deLaPieza(r.pedido, pieza) ?? r.heredado?.[pieza] ?? null;
+}
+
+/** Las clases de cambio con que el tope del alojamiento deja de valer: es del alojamiento entero, en su moneda. */
+const TOPE_QUE_NO_SIGUE: ClaseDeCambio[] = ["dates", "travellers", "rooms", "currency"];
+
+/**
+ * Lo que hereda un run que rehace de la investigación de la que parte: lo pedido allí (lo suyo o lo heredado), menos
+ * lo que el cambio nuevo pisa (otro transporte pisa el vuelo; otra búsqueda de alojamiento, la de antes) y lo que deja
+ * de valer: un vuelo que no es de las fechas y la moneda de lo entendido nuevo (y con él, sus países de más), el tope
+ * del alojamiento si cambian las noches, quién viaja o la moneda, y los gustos marcados si el cambio es de ellos.
+ */
+function heredar(
+  desde: string,
+  clases: ClaseDeCambio[],
+  entendido: Entendido,
+  pedido: unknown,
+): Partial<Record<PiezaPedida, unknown>> {
+  const heredado: Partial<Record<PiezaPedida, unknown>> = {};
+  for (const pieza of PIEZAS_PEDIDAS) {
+    if (deLaPieza(pedido, pieza) !== null) continue;
+    const antes = loPedidoDe(desde, pieza);
+    if (antes === null) continue;
+    if (pieza === "transport") {
+      const vuelo = pedidoDelTransporte(antes)?.flight;
+      const dia = (x: string | null | undefined): string => (x ?? "").slice(0, 10);
+      if (
+        vuelo === undefined ||
+        vuelo.moneda !== entendido.currency ||
+        dia(vuelo.sale) !== entendido.dates.check_in ||
+        dia(vuelo.vuelve) !== entendido.dates.check_out
+      )
+        continue;
+      heredado.transport = antes;
+      continue;
+    }
+    const a = { ...(antes as Record<string, unknown>) };
+    if (clases.some((c) => TOPE_QUE_NO_SIGUE.includes(c))) a.max_price = null;
+    if (clases.includes("lodging_taste")) a.tastes = null;
+    if (Object.values(a).some((x) => x !== null && x !== undefined)) heredado.lodging = a;
+  }
+  return heredado;
+}
 
 /** Por qué no se rehace, por su clave: no está en el mapa, no hay nada que rehacer, o ya hay demasiadas versiones. */
 export class FalloAlRehacer extends Error {}
@@ -100,11 +176,12 @@ export function rehacer(v: ViajeEnLaMesa, o: AlRehacer): { run: string; n: numbe
   if (!existsSync(join(desde, "viaje.json"))) throw new FalloAlRehacer("not_on_map");
   const rehace = impacto.redo.map((x) => x.step);
   const conserva = impacto.keep;
-  // Lo entendido del viaje es el de la versión de la que se parte, o el nuevo si el cambio es suyo.
+  // Lo entendido del run es el de la versión de la que se parte, o el nuevo si el cambio es suyo. El del viaje se
+  // queda como el de la versión que se enseña: pasa a ser el nuevo cuando salga su versión.
   const entendido: Entendido =
     o.entendido ?? (JSON.parse(readFileSync(join(desde, "entendido.json"), "utf8")) as Entendido);
-  guardarJson(join(v.carpeta, "entendido.json"), entendido);
   const run = nuevoRun(v, cuando, (aparte) => {
+    guardarJson(join(aparte, "entendido.json"), entendido);
     for (const id of conserva) copiarElPaso(desde, aparte, id, rehace);
     // Lo que escuchó el que escucha sigue valiendo, con lo entendido de ahora: no se le pregunta otra vez.
     if (existsSync(join(aparte, ESCUCHADO))) {
@@ -118,6 +195,7 @@ export function rehacer(v: ViajeEnLaMesa, o: AlRehacer): { run: string; n: numbe
       conserva,
       rehace,
       pedido: o.pedido ?? null,
+      heredado: heredar(desde, o.clases, entendido, o.pedido ?? null),
       cuando: cuando.toISOString(),
     };
     guardarJson(join(aparte, REHECHO), rehecho);
@@ -134,4 +212,43 @@ export function rehechoDe(run: string): Rehecho | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * El cambio que se paró sin dar su versión: el último run, si rehace la versión que se enseña, está parado y aún
+ * no ha dejado la suya. Es el que se puede volver a intentar con el viaje como su versión. Null si no hay tal.
+ */
+export function cambioParado(v: ViajeEnLaMesa): { run: string; n: number; rehecho: Rehecho } | null {
+  const run = ultimoRun(v);
+  if (run === null || !existsSync(join(run, PARADO))) return null;
+  const rehecho = rehechoDe(run);
+  const n = v.ficha.runs.length;
+  if (rehecho === null || rehecho.version !== v.ficha.version) return null;
+  if (v.ficha.versiones.some((x) => x.run === n && x.cierre === undefined)) return null;
+  return { run, n, rehecho };
+}
+
+/**
+ * Si un cambio del viaje se paró, o se quedó a medias sin nadie que lo lleve (`sinNadie`: la casa se cortó, y al
+ * volver no lo lleva nadie), el viaje vuelve a estar como la versión que se enseña: en el mapa o cerrado, con lo
+ * entendido de ella. El run se queda, parado, para volver a intentarlo; el que estaba a medias, parado por la casa.
+ * No toca un run que espera tu turno (los papeles). Devuelve verdadero si lo soltó.
+ */
+export function soltarElCambio(v: ViajeEnLaMesa, cuando = new Date(), sinNadie = false): boolean {
+  if (v.ficha.estado !== "researching") return false;
+  const run = ultimoRun(v);
+  if (run === null || existsSync(join(run, "viaje.json"))) return false;
+  const rehecho = rehechoDe(run);
+  if (rehecho === null || rehecho.version !== v.ficha.version) return false;
+  if (!existsSync(join(run, PARADO))) {
+    if (!sinNadie || turnoDeLosPapeles(run)) return false;
+    guardarJson(join(run, PARADO), {
+      en: porDondeVa(run).find((x) => x.estado !== "done")?.id ?? "trip",
+      paso: "la casa",
+      rojos: [{ donde: "house", que: "la casa se cortó mientras rehacía, y nadie la llevaba" }],
+    });
+  }
+  quedarseComoSuVersion(v, cuando);
+  apuntar(v, "change_stopped", { run: v.ficha.runs.length, version: rehecho.version }, cuando);
+  return true;
 }

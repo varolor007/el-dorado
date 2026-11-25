@@ -27,6 +27,8 @@ export type Investigacion = {
     resumes?: boolean;
   } | null;
   told: number;
+  /** Si la investigación rehace una versión por un cambio: de cuál parte, su run y las clases del cambio. */
+  change?: { from: number; run: number; changes: string[] } | null;
   /** Es tu turno: confirmar lo que he entendido, o contestar lo que te pregunto. */
   waiting_for_you?: boolean;
   heard?: LoEscuchado | null;

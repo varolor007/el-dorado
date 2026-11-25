@@ -87,7 +87,7 @@ import {
   loQuePideLaOpcion,
   transporteDeCara,
 } from "./otro_transporte.ts";
-import { FalloAlRehacer, rehacer } from "./rehacer.ts";
+import { cambioParado, FalloAlRehacer, rehacer, rehechoDe, soltarElCambio } from "./rehacer.ts";
 import { clasesDelCambio, impactoDe } from "../scripts/impacto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
@@ -120,6 +120,7 @@ import {
   pasar,
   ultimoCierre,
   ultimoRun,
+  viajeDelRun,
   viajesDe,
   volverA,
   type ViajeEnLaMesa,
@@ -145,8 +146,8 @@ import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from ".
 import { porDondeVa } from "./pasos.ts";
 import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
-import { TOPE_DE_CAMBIOS } from "../data/momentos.ts";
-import { queTrae } from "../scripts/cambios.ts";
+import { TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
+import { cambioQueNoVale, queTrae } from "../scripts/cambios.ts";
 import { guardarJson } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
@@ -298,6 +299,8 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       // Si se paró: dónde, qué clase de parada es y qué puede hacer el viajero, por claves (y la frase del conductor,
       // solo si pasó su puerta de palabras).
       stopped: existsSync(join(run, PARADO)) ? paradaDeCara(run) : null,
+      // Si es un cambio, de qué versión parte: con el viaje como su versión, es tu cambio el que se paró.
+      change: cambioDeCara(v, run),
       told: leerVivo(run).length,
       // Su turno: lo que he entendido, para que lo confirme; o los papeles, si algo bloquea. Solo lo lee su dueño.
       waiting_for_you: turnoDelViajero(run) || turnoDeLosPapeles(run),
@@ -305,6 +308,12 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       papers: paraElViajero(run),
     },
   };
+}
+
+/** De qué versión parte el último run si rehace una por un cambio, y su número; null si no la rehace. */
+function cambioDeCara(v: ViajeEnLaMesa, run: string): { from: number; run: number; changes: string[] } | null {
+  const r = rehechoDe(run);
+  return r === null ? null : { from: r.version, run: v.ficha.runs.length, changes: [...r.cambio] };
 }
 
 /** Lo que ha gastado una cuenta, dicho para la web: números y fechas, y de cada viaje, a dónde va. */
@@ -554,12 +563,23 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
 
   // Un viaje que no es del dueño, o que no existe, es lo mismo para quien pregunta: no hay tal viaje.
   const suViaje = (p: Peticion): ViajeEnLaMesa => {
+    let v: ViajeEnLaMesa;
     try {
-      return leerViaje(p.partes[1] ?? "", p.dueno, o.mesa);
+      v = leerViaje(p.partes[1] ?? "", p.dueno, o.mesa);
     } catch {
       throw NO_HAY();
     }
+    return alDia(v);
   };
+
+  /**
+   * Un cambio que se paró, o que se quedó a medias sin nadie que lo lleve porque la casa se cortó, deja el viaje
+   * como su versión (`soltarElCambio`): se ve, se elige, se cierra y se vuelve como siempre, y se dice que se paró.
+   */
+  function alDia(v: ViajeEnLaMesa): ViajeEnLaMesa {
+    if (v.ficha.estado === "researching") soltarElCambio(v, hoy(), !marchas.has(v.ficha.id));
+    return v;
+  }
 
   function empezar(p: Peticion): Respuesta {
     const v = suViaje(p);
@@ -648,6 +668,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const v = suViaje(p);
     const id = v.ficha.id;
     if (marchas.has(id)) throw new Fallo(409, "already_running");
+    // Con el viaje como su versión, solo se reintenta el cambio que se paró: el último run, de la versión que se
+    // enseña, y sin nada más en marcha.
+    const enSuVersion = v.ficha.estado === "on_map" || v.ficha.estado === "closed";
+    if (enSuVersion && (guias.has(id) || buscandoTransporte.has(id) || preguntas.has(id)))
+      throw new Fallo(409, "already_running");
+    if (enSuVersion && cambioParado(v) === null) throw new Fallo(409, "not_now");
     const run = ultimoRun(v);
     if (run === null) throw new Fallo(409, "not_now");
     const conQue = conQuePiensa(p.cuenta);
@@ -660,6 +686,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     } catch (error) {
       if (error instanceof FalloAlReintentar) throw new Fallo(409, error.message);
       throw error;
+    }
+    if (enSuVersion) {
+      // El cambio vuelve a investigar; el cierre que esperaba tu sí era de la versión de antes, y se abandona.
+      abandonarElCierre(v);
+      pasar(v, "researching", hoy());
     }
     apuntar(v, "button", { boton: "retry", n: hecho.n, paso: hecho.en }, hoy());
     const lanzador =
@@ -784,7 +815,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (!existsSync(join(run, PARADO)))
           pararRun(run, donde, "la casa", [{ donde: "house", que: "la casa se rompió mientras investigaba" }]);
       })
-      .finally(() => marchas.delete(id));
+      .finally(() => {
+        marchas.delete(id);
+        // Si era un cambio y se paró, el viaje vuelve a estar como su versión.
+        const suyo = viajeDelRun(run);
+        if (suyo !== null) soltarElCambio(suyo.viaje, hoy());
+      });
     marchas.set(id, marcha);
   }
 
@@ -842,6 +878,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   /**
    * Tus elecciones sobre la versión que se enseña: leerlas y guardarlas, solo su dueño y solo con el viaje en el mapa.
    * Se guardan encima, sin versión nueva, y no gastan. Lo que no es del viaje se dice por su campo, y no se guarda.
+   * Al guardar se dice de qué versión son (`version`): si no es la que se enseña, 409 y no se guarda.
    */
   function tusElecciones(p: Peticion): Respuesta {
     const v = suViaje(p);
@@ -850,6 +887,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (p.metodo !== "PUT") throw new Fallo(405, "method");
     if (marchas.has(v.ficha.id)) throw new Fallo(409, "already_running");
     if (!objeto(p.cuerpo) || !objeto(p.cuerpo.choices)) throw new Fallo(400, "bad_request");
+    // Lo que se guarda dice de qué versión es: si mientras tanto se enseña otra, no se guarda encima de ella.
+    const de = p.cuerpo.version;
+    if (de !== undefined && (typeof de !== "number" || !Number.isInteger(de))) throw new Fallo(400, "bad_request");
+    if (de !== undefined && de !== v.ficha.version) throw new Fallo(409, "not_shown");
     try {
       const choices = guardarElecciones(v, p.cuerpo.choices, hoy());
       return { estado: 200, cuerpo: { version: v.ficha.version, choices } };
@@ -1242,6 +1283,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const claro = puertaEntendido(pedido.understood, { hoy: hoy().toISOString().slice(0, 10) });
     if (!claro.verde) throw new Fallo(422, "unclear", { fields: [...new Set(claro.rojos.map((r) => r.donde))] });
     const despues = pedido.understood as Entendido;
+    // Lo de después tiene que poder salir de las preguntas de un cambio: lo demás no se cree.
+    const noVale = cambioQueNoVale(como.antes, despues);
+    if (noVale === "language") throw new Fallo(409, "language_change");
+    if (noVale !== null) throw new Fallo(400, "bad_change", { field: noVale });
     const { clases, viajeNuevo } = queTrae(como.antes, despues);
     if (viajeNuevo) throw new Fallo(409, "new_trip");
     if (clases.length === 0) throw new Fallo(409, "nothing_changed");
@@ -1270,6 +1315,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         abandonarElCierre(v);
         ({ run, n } = rehacer(v, { clases, entendido: despues, cuando: hoy() }));
       } else {
+        // Empezar otra vez es una investigación más del viaje: con el mismo tope que rehacer.
+        if (v.ficha.runs.length >= TOPES_DE_UN_VIAJE.runs) throw new FalloAlRehacer("too_many_versions");
         abandonarElCierre(v);
         guardarJson(join(v.carpeta, "entendido.json"), despues);
         run = nuevoRun(v, hoy());
@@ -1429,7 +1476,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   function listar(dueno: string): unknown[] {
     return viajesDe(dueno, o.mesa).flatMap((ficha) => {
       try {
-        return [resumen(leerViaje(ficha.id, dueno, o.mesa))];
+        return [resumen(alDia(leerViaje(ficha.id, dueno, o.mesa)))];
       } catch {
         return [];
       }
@@ -1462,7 +1509,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const mira = (): void => {
       let ahora: ViajeEnLaMesa;
       try {
-        ahora = leerViaje(id, p.dueno, o.mesa);
+        ahora = alDia(leerViaje(id, p.dueno, o.mesa));
       } catch {
         return;
       }
