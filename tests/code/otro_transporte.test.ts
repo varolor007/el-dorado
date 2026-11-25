@@ -9,10 +9,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { CAMBIOS, CLASES_DE_CAMBIO } from "../../agent/data/momentos.ts";
-import { HORARIOS } from "../../agent/data/transporte.ts";
+import { ELECCIONES_DE_TRANSPORTE, HORARIOS } from "../../agent/data/transporte.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
   abrirViaje,
+  apuntar,
   leerDiario,
   leerVersion,
   leerViaje,
@@ -434,6 +435,13 @@ test("la puerta: abrir el transporte, buscarlo otra vez y elegir, solo su dueño
     for (let i = 0; i < 13; i++)
       ultimo = (await pide("POST", `/viajes/${otroViaje}/transporte`, ana, { move: {} })).estado;
     assert.equal(ultimo, 429);
+    // Y elegir otro transporte, el suyo: tantas veces por viaje en sus horas, contadas del diario.
+    for (let i = 0; i < ELECCIONES_DE_TRANSPORTE.deUnViaje; i++) apuntar(w, "transport_choice", {}, ahora());
+    const frenada = await pide("POST", `/viajes/${otroViaje}/transporte/elegir`, ana, { search: 1, option: "o1" });
+    assert.deepEqual([frenada.estado, frenada.cuerpo.error], [429, "too_many_choices"]);
+    assert.equal(leerViaje(otroViaje, dueno, mesa).ficha.runs.length, 1, "no rehace nada");
+    for (const idioma of ["en", "es"] as const)
+      assert.notEqual(TEXTOS[idioma].transporte.fallo("too_many_choices"), TEXTOS[idioma].transporte.fallo("otra"));
   } finally {
     await puerta.esperar();
     await puerta.cerrar();

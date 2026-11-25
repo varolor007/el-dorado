@@ -78,7 +78,7 @@ import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../data/momentos.ts";
 import { EleccionQueNoVale, paraElCierre } from "../scripts/elecciones.ts";
 // Dos momentos llaman igual a su pedido que no vale: el del transporte entra aquí con su apellido.
 import { conTuTransporte, PedidoQueNoVale as PedidoDeTransporteQueNoVale } from "../scripts/otro_transporte.ts";
-import { BUSQUEDAS_DE_TRANSPORTE } from "../data/transporte.ts";
+import { BUSQUEDAS_DE_TRANSPORTE, ELECCIONES_DE_TRANSPORTE } from "../data/transporte.ts";
 import {
   buscarElTransporte,
   busquedaDeCara,
@@ -935,6 +935,9 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const v = suViaje(p);
     const id = v.ficha.id;
     if (marchas.has(id) || guias.has(id) || buscandoTransporte.has(id)) throw new Fallo(409, "already_running");
+    // Cada elección rehace y puede gastar: tiene su freno, contado del diario.
+    if (apuntadoDesde(v, "transport_choice", ELECCIONES_DE_TRANSPORTE.horas) >= ELECCIONES_DE_TRANSPORTE.deUnViaje)
+      throw new Fallo(429, "too_many_choices");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
     const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
     if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
@@ -962,6 +965,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     // El cierre que esperaba tu sí era del viaje de antes: queda abandonado.
     abandonarElCierre(v);
     if (hecho.impacto.spends) darElAdelante(hecho.run, techo, hoy());
+    apuntar(v, "transport_choice", { busqueda: pedido.search, opcion: pedido.option, run: hecho.n }, hoy());
     apuntar(v, "button", { boton: "transport", busqueda: pedido.search, opcion: pedido.option, run: hecho.n }, hoy());
     const lanzador =
       conQue === "house"

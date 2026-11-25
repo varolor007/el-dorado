@@ -1105,6 +1105,7 @@ const en = {
     fallo: (clave: string) => {
       const frases: Record<string, string> = {
         too_many_searches: "You have looked many times today. Try again tomorrow.",
+        too_many_choices: "You have changed how you get there many times today. Try again tomorrow.",
         source_failed: "The source did not answer. Try again in a moment.",
         no_source: "Transport prices are not connected right now.",
         no_origin: "Without where you leave from, there is no transport to look for.",
@@ -2245,6 +2246,7 @@ const es: Textos = {
     fallo: (clave) => {
       const frases: Record<string, string> = {
         too_many_searches: "Hoy has buscado muchas veces. Vuelve a probar mañana.",
+        too_many_choices: "Hoy has cambiado muchas veces cómo llegas. Vuelve a probar mañana.",
         source_failed: "La fuente no ha contestado. Prueba otra vez en un momento.",
         no_source: "Los precios del transporte no están conectados ahora.",
         no_origin: "Sin saber de dónde sales, no hay transporte que buscar.",
