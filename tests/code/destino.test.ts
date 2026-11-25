@@ -244,6 +244,50 @@ test("puerta 12: lo de comer, sin el nombre de un restaurante ni opiniones, en l
   pasa(conCosa(I.mercado, { name: "Mercado de Abastos" }));
 });
 
+test("puerta 12: en ninguna clase un canal ni una dirección dicha; en evitar y en lo práctico, ningún negocio", () => {
+  // Un canal, en cualquier clase.
+  for (const [i, says] of [
+    [I.practico, "Message on WhatsApp before you arrive."],
+    [I.barrio, "Locals use Telegram groups to sell tickets."],
+    [I.horas, "Call ahead: many places close at lunch."],
+    [I.practico, "Escribe a la oficina antes de ir."],
+    [I.practico, "Llama al ayuntamiento para saberlo."],
+    [I.practico, "For emergencies, dial 112."],
+  ] as const)
+    noPasa(conCosa(i, { says, figures: [112] }), new RegExp(`items\\[${i}\\]\\.says: manda a hablar con alguien`));
+  // Una dirección escrita con palabras, en cualquier clase.
+  for (const says of [
+    "See tinyurl com slash abc for the timetable.",
+    "Check islandferries dot com for the timetable.",
+    "Mira islaferries punto es antes de ir.",
+    "Los billetes, en la web con la arroba de la oficina.",
+  ])
+    noPasa(conCosa(I.horas, { says }), /items\[1\]\.says: escribe una dirección con palabras/);
+  // Un negocio con nombre, en lo que conviene evitar y en lo práctico.
+  const evitar = (says: string) => conCosa(I.practico, { kind: "avoid", says });
+  for (const says of [
+    "Book with Juan's Taxis at the port.",
+    "Avoid Sol Tours on the main square.",
+    "Taxis García overcharge at night.",
+    "No reserves con Marta en la plaza.",
+    "Avoid the restaurant Casa Pepe by the port.",
+  ]) {
+    noPasa(evitar(says), /items\[3\]\.says: nombra un negocio/);
+    noPasa(conCosa(I.practico, { says }), /items\[3\]\.says: nombra un negocio/);
+  }
+  noPasa(conCosa(I.practico, { name: "Juan's Taxis" }), /items\[3\]\.name: nombra un negocio/);
+  // Lo de siempre sigue pasando: el móvil, los taxis en general, las urgencias como un número, un plato llamado así.
+  for (const says of [
+    "Taxis wait at the port; agree the fare first.",
+    "Mobile data is cheap: a local SIM works everywhere.",
+    "The emergency number is 112.",
+    "Shops close for lunch; the old town is quiet then.",
+  ])
+    pasa(conCosa(I.practico, { says, figures: [112] }));
+  pasa(conCosa(I.plato, { says: "Un plato llamado así por el puerto." }));
+  pasa(evitar("Avoid the main square at noon: it is crowded."));
+});
+
 // ---------- lo que ve
 
 test("lo que ve el que conoce el destino: el destino, la ruta, las fechas y lo que busca; nunca quién viaja", () => {

@@ -22,7 +22,12 @@ import {
   CLASES_CON_ZONA,
   CLASES_DE_COMER,
   CLASES_DEL_DESTINO,
+  CLASES_SIN_NEGOCIOS,
+  CON_ALGUIEN,
+  DE_UN_CANAL,
+  DE_UN_NEGOCIO,
   DE_UN_RESTAURANTE,
+  DE_UNA_DIRECCION_DICHA,
   DE_UNA_OPINION,
   LETRAS_DE_UNA_COSA,
   LO_MAS_DE_COSAS,
@@ -66,6 +71,28 @@ const TRAS_UN_RESTAURANTE = new RegExp(
 );
 const nombraUnRestaurante = (frase: string): boolean =>
   [...frase.matchAll(TRAS_UN_RESTAURANTE)].some((m) => m[1] !== m[1].toLowerCase());
+const UN_CANAL = palabras(DE_UN_CANAL);
+const UNA_DIRECCION_DICHA = palabras(DE_UNA_DIRECCION_DICHA);
+const esMayuscula = (letra: string | undefined): boolean =>
+  letra !== undefined && letra !== letra.toLowerCase() && letra === letra.toUpperCase();
+/** Lo que empieza en el principio de una palabra; si acaba en una palabra entera, también en su final. */
+const entre = (fuente: string): RegExp => new RegExp(`(?<![\\p{L}\\p{N}])${fuente}`, "giu");
+/** «Juan's Taxis»: un nombre propio con su posesivo, y detrás una palabra de negocio. */
+const DE_ALGUIEN = entre(`(\\p{L})\\p{L}*['’]s\\s+(?:${DE_UN_NEGOCIO})(?![\\p{L}\\p{N}])`);
+/** «Sol Tours», «Taxis García»: una palabra de negocio junto a un nombre propio, las dos con mayúscula. */
+const NOMBRE_Y_NEGOCIO = entre(`(\\p{L})\\p{L}*\\s+(${DE_UN_NEGOCIO})(?![\\p{L}\\p{N}])`);
+const NEGOCIO_Y_NOMBRE = entre(`(${DE_UN_NEGOCIO})(?![\\p{L}\\p{N}])\\s+[«"“'‘]?(\\p{L})`);
+/** «Book with Marta», «reserva con Sol»: hacerlo con alguien, por su nombre. */
+const CON_UN_NOMBRE = entre(`(?:${CON_ALGUIEN})\\s+[«"“'‘]?(\\p{L})`);
+/**
+ * Si una frase nombra un negocio: lo que se puede ver de él, un nombre propio pegado a una palabra de negocio o
+ * reservar con alguien por su nombre. Lo que no se puede ver (un nombre propio a secas) queda a su contrato.
+ */
+const nombraUnNegocio = (frase: string): boolean =>
+  [...frase.matchAll(DE_ALGUIEN)].some((m) => esMayuscula(m[1])) ||
+  [...frase.matchAll(NOMBRE_Y_NEGOCIO)].some((m) => esMayuscula(m[1]) && esMayuscula(m[2][0])) ||
+  [...frase.matchAll(NEGOCIO_Y_NOMBRE)].some((m) => esMayuscula(m[1][0]) && esMayuscula(m[2])) ||
+  [...frase.matchAll(CON_UN_NOMBRE)].some((m) => esMayuscula(m[1]));
 /** Una nota: «4.5/5», «9/10», «4,7 de 5». */
 const UNA_NOTA = /\d(?:[.,]\d)?\s*(?:\/|de|out of|sur|su|von)\s*(?:5|10|100)(?!\d)/iu;
 /** Un precio escrito en la frase: un número pegado a un símbolo de moneda o a un código de tres letras. */
@@ -170,6 +197,18 @@ export function puertaDestino(v: unknown, p: ParaElDestino): Veredicto {
     if (typeof frase !== "string" || frase.trim() === "" || frase.length > LETRAS_DE_UNA_COSA)
       return rojo(`${donde}.says`, `no es una frase de ${LETRAS_DE_UNA_COSA} letras como mucho`);
     for (const pega of pegasDelTexto(frase, { sinNumerosLargos: true })) rojo(`${donde}.says`, `la frase ${pega}`);
+    // En cualquier clase: ni manda a hablar con nadie, ni escribe una dirección con palabras.
+    for (const [campo, texto] of [
+      ["says", frase],
+      ["name", typeof x.name === "string" ? x.name : ""],
+    ] as const) {
+      if (UN_CANAL.test(texto))
+        rojo(`${donde}.${campo}`, "manda a hablar con alguien (llamar, escribir, una mensajería): no es de su clase");
+      if (UNA_DIRECCION_DICHA.test(texto)) rojo(`${donde}.${campo}`, "escribe una dirección con palabras");
+      // En lo que conviene evitar y en lo práctico, ningún negocio con nombre: ni para bien ni para mal.
+      if (CLASES_SIN_NEGOCIOS.includes(clase) && (nombraUnNegocio(texto) || nombraUnRestaurante(texto)))
+        rojo(`${donde}.${campo}`, "nombra un negocio: en lo que conviene evitar y en lo práctico, ninguno con nombre");
+    }
     const clave = `${clase}|${frase.trim().toLowerCase()}`;
     if (vistas.has(clave)) rojo(`${donde}.says`, "la misma cosa sale dos veces");
     vistas.add(clave);
