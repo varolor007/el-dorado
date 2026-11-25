@@ -189,13 +189,13 @@ test("el cuaderno junta el viaje y lo escrito; su puerta caza una foto sin autor
     assert.equal(c.preciosDel, "2026-11-23");
     assert.equal(c.antes[1].plazo, "2027-02-09");
     // De qué va cada cosa que hay que llevar hecha lo dicen los datos del viaje, no la frase del que escribe; y un
-    // aviso de las fechas sin nombre propio se queda sin rótulo.
+    // aviso de las fechas sin nombre propio lleva de rótulo su tema.
     assert.deepEqual(
       c.antes.map((a) => a.de),
       [
         { clase: "book_ahead", nombre: "Mercado Inventado" },
         { clase: "paper", pregunta: "arrival_card", pais: "ZZ", estado: "to_do" },
-        null,
+        { clase: "dates", nombre: null, tema: "weather" },
       ],
     );
     const pintado = pintarCuaderno(c);

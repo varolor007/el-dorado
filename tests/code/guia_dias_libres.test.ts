@@ -14,6 +14,8 @@ import {
   materialDeLaGuia,
   pedirGuia,
 } from "../../agent/launcher/guia.ts";
+import { TEMAS_DEL_CALENDARIO } from "../../agent/data/calendario.ts";
+import { ROTULOS } from "../../agent/data/guia.ts";
 import { comprobarViaje } from "../../agent/output/viaje.ts";
 import { conTusDias } from "../../agent/scripts/cierre.ts";
 import { tituloDelDia } from "../../agent/scripts/ritmo.ts";
@@ -26,6 +28,7 @@ import {
   lanzadorDeLaGuia,
   viajeCerradoEnLaMesa,
   viajeConDiasLibres,
+  viajeParaLaGuia,
 } from "../cases/inventado/guia.ts";
 
 const CONTRATO = resolve(import.meta.dirname, "..", "..", "agent", "contracts", "guide-writer");
@@ -234,4 +237,28 @@ test("de donde llegas: sin saber tu zona, cada manera dice a cuál va, por su no
     "Desde Aeropuerto Inventado, a la zona 1 de tu ruta",
     "Desde Aeropuerto Inventado, a la zona 2 de tu ruta",
   ]);
+});
+
+// ---------- la última hoja
+
+test("lo que hay que llevar hecho: un aviso de las fechas sin nombre dice de qué va, por su tema", async () => {
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje: viajeParaLaGuia({ capas: true }) });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    const html = documentoDeLaGuia(v) ?? "";
+    // El del caso inventado es del tiempo, sin nombre propio.
+    assert.match(html, /<b>El tiempo de esas semanas<\/b>/);
+    // Las fuentes de allí, en su propio bloque con su rótulo, y no con un título suelto tras la lista de encima.
+    assert.match(html, new RegExp(`<p class="lomo">${ROTULOS.es.deAlli}</p>`));
+    assert.ok(!html.includes(`<h3>${ROTULOS.es.deAlli}</h3>`));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+  for (const [idioma, r] of Object.entries(ROTULOS))
+    for (const tema of TEMAS_DEL_CALENDARIO) assert.ok(r.temaDeFechas[tema] !== undefined, `${idioma}: ${tema}`);
 });

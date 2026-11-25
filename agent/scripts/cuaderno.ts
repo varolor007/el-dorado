@@ -192,7 +192,7 @@ export type DiaDelCuaderno = {
 export type DeQueVa =
   | { clase: "book_ahead"; nombre: string }
   | { clase: "paper"; pregunta: string; pais: string; estado: string }
-  | { clase: "dates"; nombre: string };
+  | { clase: "dates"; nombre: string | null; tema?: string };
 
 /**
  * De dónde sale un precio del cuaderno: del cierre, el que dio la fuente ese día (`closing`); el que se vio, porque al
@@ -479,9 +479,12 @@ export function montarCuaderno(
   const deQue = new Map<number, DeQueVa>();
   const casillas = (v.papeles?.casillas ?? []).filter((c) => c.estado !== "in_order");
   for (const cosa of dado.todo) {
-    // Un aviso de las fechas sin nombre propio no lleva rótulo: lo cuenta la frase del que escribe.
+    // Un aviso de las fechas sin nombre propio lleva de rótulo su tema («El tiempo de esas semanas»): la frase del
+    // que escribe puede no decir de qué va.
     if (cosa.kind === "paper")
       deQue.set(cosa.item, { clase: "paper", pregunta: cosa.question, pais: cosa.country, estado: cosa.state });
+    else if (cosa.kind === "dates")
+      deQue.set(cosa.item, { clase: "dates", nombre: cosa.name === SIN_SABER ? null : cosa.name, tema: cosa.topic });
     else if (cosa.name !== SIN_SABER) deQue.set(cosa.item, { clase: cosa.kind, nombre: cosa.name });
     if (cosa.kind === "paper") {
       const c = casillas.find(
@@ -1454,7 +1457,7 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   // Un papel se dice con su país por su nombre y con cómo está: «no está claro» no es lo mismo que «hay que hacerlo».
   const deQueVa = (d: DeQueVa): string => {
     if (d.clase === "book_ahead") return `${d.nombre}. ${r.reservar}`;
-    if (d.clase === "dates") return d.nombre;
+    if (d.clase === "dates") return d.nombre ?? r.temaDeFechas[d.tema ?? ""] ?? r.deTusFechas;
     const pregunta = (r.pregunta as Record<string, string>)[d.pregunta] ?? d.pregunta;
     const estado = (r.estado as Record<string, string>)[d.estado];
     return `${pregunta}, ${pais(d.pais)}${estado === undefined ? "" : `. ${estado}`}`;
@@ -1544,20 +1547,25 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   const fuentesDeAlliHtml =
     deAlli.length === 0
       ? ""
-      : t("h3", null, r.deAlli) +
-        h(
-          "ul",
-          "lista",
-          ...deAlli.map((f) =>
-            h(
-              "li",
-              null,
-              h("span", "mota"),
-              h("p", null, enlace(f.url, new URL(f.url).host), " ", nota(`(${visto(f)})`)),
+      : h(
+          "div",
+          null,
+          t("p", "lomo", r.deAlli),
+          h(
+            "ul",
+            "lista",
+            ...deAlli.map((f) =>
+              h(
+                "li",
+                null,
+                h("span", "mota"),
+                h("p", null, enlace(f.url, new URL(f.url).host), " ", nota(`(${visto(f)})`)),
+              ),
             ),
           ),
         );
-  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos), fuentesDeAlliHtml);
+  // Las fuentes de allí, en su propio bloque: un título suelto tras la lista de encima se le montaba al imprimir.
+  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos)) + fuentesDeAlliHtml;
   hojas.push(h("section", "doble cierre", h("div", "pagina", noSeSabe + fuentes), h("div", "pagina", avisos)));
 
   const aviso = o.atras === true ? `<p class="atras" role="status">${esc(r.atras)}</p>` : "";

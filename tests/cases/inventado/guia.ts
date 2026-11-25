@@ -499,7 +499,9 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
       says:
         c.kind === "paper" && c.before !== "unknown"
           ? `Rellena el formulario antes del ${Number(c.before.slice(8, 10))} de febrero.`
-          : "Llévalo hecho antes de salir.",
+          : c.kind === "dates"
+            ? "Mira cómo vienen esos días antes de salir."
+            : "Llévalo hecho antes de salir.",
     })),
     unknowns: ["De algunas paradas no sabemos más que su nombre, y algunos tiempos son aproximados."],
   };
