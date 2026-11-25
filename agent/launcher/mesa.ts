@@ -314,6 +314,7 @@ export function guardarVersion(v: ViajeEnLaMesa, run: number, motivo: string, cu
   v.ficha.versiones.push(version);
   v.ficha.version = n;
   v.ficha.estado = "on_map";
+  entendidoDeLaVersion(v);
   escribirFicha(v, cuando);
   apuntar(v, "version", { version: n, run, motivo, ...deUnCambio(desde) }, cuando);
   return version;
@@ -385,14 +386,25 @@ export function guardarCierre(v: ViajeEnLaMesa, cierre: number, cuando = new Dat
   v.ficha.versiones.push(version);
   v.ficha.version = n;
   v.ficha.estado = "closed";
+  entendidoDeLaVersion(v);
   escribirFicha(v, cuando);
   apuntar(v, "version", { version: n, run: de.run, motivo: "closed", cierre }, cuando);
   return version;
 }
 
 /**
+ * Lo entendido del viaje es el de la versión que se enseña: se escribe cada vez que pasa a enseñarse otra. Sin
+ * versión, se queda el que haya (el de las preguntas, o el de una primera investigación).
+ */
+function entendidoDeLaVersion(v: ViajeEnLaMesa): void {
+  if (v.ficha.version === null) return;
+  const suyo = join(v.carpeta, "versiones", String(v.ficha.version), "entendido.json");
+  if (existsSync(suyo)) guardarJson(join(v.carpeta, "entendido.json"), JSON.parse(readFileSync(suyo, "utf8")));
+}
+
+/**
  * Vuelve a enseñar una versión de antes. No borra ninguna. Con el viaje en el mapa o cerrado, pasa a estar como esa
- * versión: cerrado si es la de un cierre, y en el mapa si no.
+ * versión: cerrado si es la de un cierre, y en el mapa si no. Lo entendido del viaje pasa a ser el suyo.
  */
 export function volverA(v: ViajeEnLaMesa, n: number, cuando = new Date()): void {
   const version = v.ficha.versiones.find((x) => x.n === n);
@@ -400,8 +412,23 @@ export function volverA(v: ViajeEnLaMesa, n: number, cuando = new Date()): void 
   if (v.ficha.estado === "on_map" || v.ficha.estado === "closed")
     v.ficha.estado = version.cierre === undefined ? "on_map" : "closed";
   v.ficha.version = n;
+  entendidoDeLaVersion(v);
   escribirFicha(v, cuando);
   apuntar(v, "back_to", { version: n }, cuando);
+}
+
+/**
+ * Deja un viaje que investigaba como está la versión que se enseña: en el mapa, o cerrado si es la de un cierre, con
+ * lo entendido de ella. Es lo que pasa cuando un cambio se para sin dar su versión: no ha cambiado nada, y el run
+ * parado se queda en su carpeta. Lanza si el viaje no investiga o no tiene versión.
+ */
+export function quedarseComoSuVersion(v: ViajeEnLaMesa, cuando = new Date()): void {
+  const version = v.ficha.versiones.find((x) => x.n === v.ficha.version);
+  if (v.ficha.estado !== "researching" || version === undefined) throw new Error("este viaje no espera su versión");
+  v.ficha.estado = version.cierre === undefined ? "on_map" : "closed";
+  entendidoDeLaVersion(v);
+  escribirFicha(v, cuando);
+  apuntar(v, "state", { de: "researching", a: v.ficha.estado, version: version.n }, cuando);
 }
 
 /** Lo que guarda una versión del viaje: el viaje para la web, sus sucesos y lo entendido con que se hizo. */

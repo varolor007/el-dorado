@@ -86,7 +86,7 @@ import {
   loQuePideLaOpcion,
   transporteDeCara,
 } from "./otro_transporte.ts";
-import { FalloAlRehacer, rehacer } from "./rehacer.ts";
+import { cambioParado, FalloAlRehacer, rehacer, rehechoDe, soltarElCambio } from "./rehacer.ts";
 import { clasesDelCambio, impactoDe } from "../scripts/impacto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
@@ -119,6 +119,7 @@ import {
   pasar,
   ultimoCierre,
   ultimoRun,
+  viajeDelRun,
   viajesDe,
   volverA,
   type ViajeEnLaMesa,
@@ -297,6 +298,8 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       // Si se paró: dónde, qué clase de parada es y qué puede hacer el viajero, por claves (y la frase del conductor,
       // solo si pasó su puerta de palabras).
       stopped: existsSync(join(run, PARADO)) ? paradaDeCara(run) : null,
+      // Si es un cambio, de qué versión parte: con el viaje como su versión, es tu cambio el que se paró.
+      change: cambioDeCara(v, run),
       told: leerVivo(run).length,
       // Su turno: lo que he entendido, para que lo confirme; o los papeles, si algo bloquea. Solo lo lee su dueño.
       waiting_for_you: turnoDelViajero(run) || turnoDeLosPapeles(run),
@@ -304,6 +307,12 @@ function estadoDe(v: ViajeEnLaMesa, enMarcha: boolean): Record<string, unknown> 
       papers: paraElViajero(run),
     },
   };
+}
+
+/** De qué versión parte el último run si rehace una por un cambio, y su número; null si no la rehace. */
+function cambioDeCara(v: ViajeEnLaMesa, run: string): { from: number; run: number } | null {
+  const r = rehechoDe(run);
+  return r === null ? null : { from: r.version, run: v.ficha.runs.length };
 }
 
 /** Lo que ha gastado una cuenta, dicho para la web: números y fechas, y de cada viaje, a dónde va. */
@@ -553,12 +562,23 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
 
   // Un viaje que no es del dueño, o que no existe, es lo mismo para quien pregunta: no hay tal viaje.
   const suViaje = (p: Peticion): ViajeEnLaMesa => {
+    let v: ViajeEnLaMesa;
     try {
-      return leerViaje(p.partes[1] ?? "", p.dueno, o.mesa);
+      v = leerViaje(p.partes[1] ?? "", p.dueno, o.mesa);
     } catch {
       throw NO_HAY();
     }
+    return alDia(v);
   };
+
+  /**
+   * Un cambio que se paró, o que se quedó a medias sin nadie que lo lleve porque la casa se cortó, deja el viaje
+   * como su versión (`soltarElCambio`): se ve, se elige, se cierra y se vuelve como siempre, y se dice que se paró.
+   */
+  function alDia(v: ViajeEnLaMesa): ViajeEnLaMesa {
+    if (v.ficha.estado === "researching") soltarElCambio(v, hoy(), !marchas.has(v.ficha.id));
+    return v;
+  }
 
   function empezar(p: Peticion): Respuesta {
     const v = suViaje(p);
@@ -647,6 +667,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const v = suViaje(p);
     const id = v.ficha.id;
     if (marchas.has(id)) throw new Fallo(409, "already_running");
+    // Con el viaje como su versión, solo se reintenta el cambio que se paró: el último run, de la versión que se
+    // enseña, y sin nada más en marcha.
+    const enSuVersion = v.ficha.estado === "on_map" || v.ficha.estado === "closed";
+    if (enSuVersion && (guias.has(id) || buscandoTransporte.has(id) || preguntas.has(id)))
+      throw new Fallo(409, "already_running");
+    if (enSuVersion && cambioParado(v) === null) throw new Fallo(409, "not_now");
     const run = ultimoRun(v);
     if (run === null) throw new Fallo(409, "not_now");
     const conQue = conQuePiensa(p.cuenta);
@@ -659,6 +685,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     } catch (error) {
       if (error instanceof FalloAlReintentar) throw new Fallo(409, error.message);
       throw error;
+    }
+    if (enSuVersion) {
+      // El cambio vuelve a investigar; el cierre que esperaba tu sí era de la versión de antes, y se abandona.
+      abandonarElCierre(v);
+      pasar(v, "researching", hoy());
     }
     apuntar(v, "button", { boton: "retry", n: hecho.n, paso: hecho.en }, hoy());
     const lanzador =
@@ -783,7 +814,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (!existsSync(join(run, PARADO)))
           pararRun(run, donde, "la casa", [{ donde: "house", que: "la casa se rompió mientras investigaba" }]);
       })
-      .finally(() => marchas.delete(id));
+      .finally(() => {
+        marchas.delete(id);
+        // Si era un cambio y se paró, el viaje vuelve a estar como su versión.
+        const suyo = viajeDelRun(run);
+        if (suyo !== null) soltarElCambio(suyo.viaje, hoy());
+      });
     marchas.set(id, marcha);
   }
 
@@ -1425,7 +1461,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   function listar(dueno: string): unknown[] {
     return viajesDe(dueno, o.mesa).flatMap((ficha) => {
       try {
-        return [resumen(leerViaje(ficha.id, dueno, o.mesa))];
+        return [resumen(alDia(leerViaje(ficha.id, dueno, o.mesa)))];
       } catch {
         return [];
       }
@@ -1458,7 +1494,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const mira = (): void => {
       let ahora: ViajeEnLaMesa;
       try {
-        ahora = leerViaje(id, p.dueno, o.mesa);
+        ahora = alDia(leerViaje(id, p.dueno, o.mesa));
       } catch {
         return;
       }

@@ -10,12 +10,14 @@ import { cpSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { LO_QUE_DEJA, REHECHO, SE_VUELVE_A_CONTAR, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import type { ClaseDeCambio, IdDePaso } from "../data/momentos.ts";
-import { CODIGO, PASOS } from "../data/pasos.ts";
+import { CODIGO, PARADO, PASOS } from "../data/pasos.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { impactoDe, type Impacto } from "../scripts/impacto.ts";
 import { ESCUCHADO, type Escuchado } from "./escuchar.ts";
-import { apuntar, guardarJson, nuevoRun, type ViajeEnLaMesa } from "./mesa.ts";
+import { apuntar, guardarJson, nuevoRun, quedarseComoSuVersion, ultimoRun, type ViajeEnLaMesa } from "./mesa.ts";
+import { turnoDeLosPapeles } from "./papeles.ts";
+import { porDondeVa } from "./pasos.ts";
 import { puestosDe } from "./puesto.ts";
 
 /** Lo que queda en un run que rehace otro: de cuál viene, con qué cambio, y qué conservó y qué rehace. */
@@ -100,11 +102,12 @@ export function rehacer(v: ViajeEnLaMesa, o: AlRehacer): { run: string; n: numbe
   if (!existsSync(join(desde, "viaje.json"))) throw new FalloAlRehacer("not_on_map");
   const rehace = impacto.redo.map((x) => x.step);
   const conserva = impacto.keep;
-  // Lo entendido del viaje es el de la versión de la que se parte, o el nuevo si el cambio es suyo.
+  // Lo entendido del run es el de la versión de la que se parte, o el nuevo si el cambio es suyo. El del viaje se
+  // queda como el de la versión que se enseña: pasa a ser el nuevo cuando salga su versión.
   const entendido: Entendido =
     o.entendido ?? (JSON.parse(readFileSync(join(desde, "entendido.json"), "utf8")) as Entendido);
-  guardarJson(join(v.carpeta, "entendido.json"), entendido);
   const run = nuevoRun(v, cuando, (aparte) => {
+    guardarJson(join(aparte, "entendido.json"), entendido);
     for (const id of conserva) copiarElPaso(desde, aparte, id, rehace);
     // Lo que escuchó el que escucha sigue valiendo, con lo entendido de ahora: no se le pregunta otra vez.
     if (existsSync(join(aparte, ESCUCHADO))) {
@@ -134,4 +137,43 @@ export function rehechoDe(run: string): Rehecho | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * El cambio que se paró sin dar su versión: el último run, si rehace la versión que se enseña, está parado y aún
+ * no ha dejado la suya. Es el que se puede volver a intentar con el viaje como su versión. Null si no hay tal.
+ */
+export function cambioParado(v: ViajeEnLaMesa): { run: string; n: number; rehecho: Rehecho } | null {
+  const run = ultimoRun(v);
+  if (run === null || !existsSync(join(run, PARADO))) return null;
+  const rehecho = rehechoDe(run);
+  const n = v.ficha.runs.length;
+  if (rehecho === null || rehecho.version !== v.ficha.version) return null;
+  if (v.ficha.versiones.some((x) => x.run === n && x.cierre === undefined)) return null;
+  return { run, n, rehecho };
+}
+
+/**
+ * Si un cambio del viaje se paró, o se quedó a medias sin nadie que lo lleve (`sinNadie`: la casa se cortó, y al
+ * volver no lo lleva nadie), el viaje vuelve a estar como la versión que se enseña: en el mapa o cerrado, con lo
+ * entendido de ella. El run se queda, parado, para volver a intentarlo; el que estaba a medias, parado por la casa.
+ * No toca un run que espera tu turno (los papeles). Devuelve verdadero si lo soltó.
+ */
+export function soltarElCambio(v: ViajeEnLaMesa, cuando = new Date(), sinNadie = false): boolean {
+  if (v.ficha.estado !== "researching") return false;
+  const run = ultimoRun(v);
+  if (run === null || existsSync(join(run, "viaje.json"))) return false;
+  const rehecho = rehechoDe(run);
+  if (rehecho === null || rehecho.version !== v.ficha.version) return false;
+  if (!existsSync(join(run, PARADO))) {
+    if (!sinNadie || turnoDeLosPapeles(run)) return false;
+    guardarJson(join(run, PARADO), {
+      en: porDondeVa(run).find((x) => x.estado !== "done")?.id ?? "trip",
+      paso: "la casa",
+      rojos: [{ donde: "house", que: "la casa se cortó mientras rehacía, y nadie la llevaba" }],
+    });
+  }
+  quedarseComoSuVersion(v, cuando);
+  apuntar(v, "change_stopped", { run: v.ficha.runs.length, version: rehecho.version }, cuando);
+  return true;
 }

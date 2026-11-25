@@ -567,3 +567,32 @@ test("la puerta: tus elecciones, tus piezas, el impacto, tus versiones y volver,
     rmSync(mesa, { recursive: true, force: true });
   }
 });
+
+// ---------- lo que deja la revisión de la tanda 6
+
+test("lo entendido del viaje es siempre el de la versión que se enseña: al rehacer, al acabar y al volver", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const delViaje = (): Entendido => leerJson(join(v.carpeta, "entendido.json")) as unknown as Entendido;
+    const nuevas = { ...ENTENDIDO, dates: { ...ENTENDIDO.dates, check_in: "2027-03-12", check_out: "2027-03-15" } };
+    const { run } = rehacer(leerViaje(v.ficha.id, "ana", mesa), {
+      clases: ["dates"],
+      entendido: nuevas,
+      cuando: ahora(),
+    });
+    // Mientras se rehace, el del viaje es el de la versión que se enseña; el nuevo va en su run.
+    assert.equal(delViaje().dates.check_in, ENTENDIDO.dates.check_in);
+    assert.equal(leerJson(join(run, "entendido.json")).dates.check_in, "2027-03-12");
+    darElAdelante(run, null, ahora());
+    await llevar(run, fuentesInventadas(), lanzadorDeMentira());
+    await esperarLoDeDetras(run);
+    assert.equal(delViaje().dates.check_in, "2027-03-12");
+    const w = leerViaje(v.ficha.id, "ana", mesa);
+    volverA(w, 1, ahora());
+    assert.equal(delViaje().dates.check_in, ENTENDIDO.dates.check_in);
+    volverA(w, 2, ahora());
+    assert.equal(delViaje().dates.check_in, "2027-03-12");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});

@@ -7,6 +7,7 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PiezaDelViaje } from "../data/momentos.ts";
+import { PARADO } from "../data/pasos.ts";
 import type { Viaje } from "../output/viaje.ts";
 import { comprobarElecciones, SIN_ELEGIR, type Elecciones } from "../scripts/elecciones.ts";
 import { estadoDe, type EstadoDelViaje } from "../scripts/estado.ts";
@@ -124,11 +125,12 @@ export function versionesDe(v: ViajeEnLaMesa): VersionDeCara[] {
 
 /**
  * Lo que está por rehacer: las piezas que dejó sin valer un cambio de la versión que se enseña que aún no ha dado su
- * versión (porque corre, espera el adelante o se paró). Sale del último run; si no rehace nada, no hay nada.
+ * versión (porque corre o espera el adelante). Sale del último run; si no rehace nada, no hay nada. Un cambio que se
+ * paró no ha cambiado nada: la versión sigue valiendo entera, y se dice aparte que se paró.
  */
 export function porRehacer(v: ViajeEnLaMesa): PiezaDelViaje[] {
   const run = ultimoRun(v);
-  if (run === null) return [];
+  if (run === null || existsSync(join(run, PARADO))) return [];
   const r = rehechoDe(run);
   if (r === null || r.version !== v.ficha.version) return [];
   if (v.ficha.versiones.some((x) => x.run === v.ficha.runs.length)) return [];
