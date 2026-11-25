@@ -31,7 +31,7 @@ import {
 import type { Entendido } from "../scripts/formas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { capaDelRun, guardarEnElRun, pieza, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
-import { abiertas, leerConsultado } from "./consultado.ts";
+import { abiertas, direccionComparable, leerConsultadoEnSusVueltas } from "./consultado.ts";
 import { puestosDe, type Pieza } from "./puesto.ts";
 
 export const ENTRADAS = "entradas.json";
@@ -54,7 +54,9 @@ export function tandasDeSitios(elegidos: Sitio[]): Sitio[][] {
 
 /**
  * Lo que dicen los datos abiertos de los sitios elegidos, una vez por run. Sin la fuente, o si falla, no se sabe nada
- * de ninguno, y se dice: el asiento lo busca igual en su web.
+ * de ninguno, y se dice: el asiento lo busca igual en su web. Un fallo entero (no contesta ninguna) se guarda con sus
+ * avisos, pero no como la respuesta: se vuelven a pedir la próxima vez, mientras su asiento no haya salido con ellos.
+ * Una vez que salió, su material no cambia: su puerta lo mira con lo mismo que se le dio.
  */
 export async function traerLosAbiertos(
   run: string,
@@ -62,8 +64,12 @@ export async function traerLosAbiertos(
   traer?: TraerAbiertos,
 ): Promise<DatosAbiertos[]> {
   const ruta = join(run, ABIERTOS);
-  if (existsSync(ruta)) return (JSON.parse(readFileSync(ruta, "utf8")) as { abiertos: DatosAbiertos[] }).abiertos;
+  if (existsSync(ruta)) {
+    const guardado = JSON.parse(readFileSync(ruta, "utf8")) as { abiertos: DatosAbiertos[]; fallo?: boolean };
+    if (guardado.fallo !== true || puestosDe(run).some((p) => p.asiento === ASIENTO)) return guardado.abiertos;
+  }
   let abiertos: DatosAbiertos[] = [];
+  let fallo = false;
   const avisos: string[] = [];
   if (traer === undefined) avisos.push("sin datos abiertos de los sitios: no hay fuente");
   else
@@ -75,8 +81,9 @@ export async function traerLosAbiertos(
       );
     } catch (error) {
       avisos.push(`sin datos abiertos de los sitios: ${error instanceof Error ? error.message : String(error)}`);
+      fallo = true;
     }
-  guardarEnElRun(run, ABIERTOS, { abiertos, avisos });
+  guardarEnElRun(run, ABIERTOS, fallo ? { abiertos, avisos, fallo } : { abiertos, avisos });
   return abiertos;
 }
 
@@ -112,6 +119,16 @@ function abiertosParaElAsiento(a: DatosAbiertos): Record<string, unknown> {
   };
 }
 
+/** Si una página la abrió de verdad alguna tanda del de las entradas, en cualquiera de sus vueltas. */
+function abiertasDelRun(run: string, tandas: number): (url: string) => boolean {
+  const todas = new Set<string>();
+  for (let i = 0; i < tandas; i++) {
+    const puesto = puestoDeLaTanda(run, tandas === 1 ? "entradas" : `entradas-${i + 1}`);
+    if (puesto !== null) for (const d of abiertas(leerConsultadoEnSusVueltas(puesto))) todas.add(d);
+  }
+  return (url) => todas.has(direccionComparable(url) ?? "");
+}
+
 /** El puesto de una tanda, el último de sus vueltas: el que acaba de entregar. */
 function puestoDeLaTanda(run: string, base: string) {
   const suyos = puestosDe(run).filter((p) => new RegExp(`^${base}-v\\d+$`).test(p.id));
@@ -133,8 +150,10 @@ export function puertaDeLasEntradas(e: unknown, m: Material, tanda: number, run:
     entrada: m.viaje.dates.check_in,
     salida: m.viaje.dates.check_out,
     hoy: m.hoy,
-    abiertas: puesto === null ? null : abiertas(leerConsultado(puesto)),
+    // Lo que abrió en esta vuelta y en las de antes, como la puerta de todos: corregir no obliga a abrirlo otra vez.
+    abiertas: puesto === null ? null : abiertas(leerConsultadoEnSusVueltas(puesto)),
     deLosAbiertos: m.abiertos.flatMap((a) => a.fuentes.map((f) => f.url)),
+    websDeLosAbiertos: Object.fromEntries(m.abiertos.map((a) => [a.sitio, a.web])),
   });
   if (!v.verde) return v.rojos;
   return pegasDeLasEntradas(paraEnsenarEntradas([e as EntregaDeLasEntradas], [], m.abiertos), suyos);
@@ -153,12 +172,14 @@ export function capaDeLasEntradasDe(run: string | null): CapaDeIA<EntregaDeLasEn
     tandas: (m) => tandasDeSitios(m.elegidos).map((sitios) => piezasDeLasEntradas(m, sitios)),
     puerta: (e, m, tanda) => puertaDeLasEntradas(e, m, tanda, run),
     // Lo que no se miró va con lo que dicen los datos abiertos, y con su porqué: pasó del tope o su tanda falló.
+    // Con el run, lo que abrió de verdad cada tanda, en todas sus vueltas: dónde reservar y su web, solo si las abrió.
     ensenar: (entregas, m) =>
       paraEnsenarEntradas(
         entregas,
         m.elegidos.map((s) => s.id),
         m.abiertos,
         porQueSinMirar(m.elegidos, entregas),
+        run === null ? undefined : abiertasDelRun(run, tandasDeSitios(m.elegidos).length),
       ),
     sinElla: sinEntradas,
   };

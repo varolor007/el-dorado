@@ -3,7 +3,7 @@
 // con lo que cierra cada día, y la investigación inventada entera con su contrato de verdad. Sin gastar.
 
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { puertaDias } from "../../agent/gates/puerta_dias.ts";
@@ -36,7 +36,11 @@ import {
   leerOverpass,
   leerWikidata,
   OVERPASS_POR_DEFECTO,
+  TOPE_DE_OVERPASS,
+  TOPE_DE_WIKIDATA,
+  traerDeFuera,
 } from "../../agent/tools/abiertos.ts";
+import { montarPuesto } from "../../agent/launcher/puesto.ts";
 import { leerHorarioDeOsm } from "../../agent/tools/horarios.ts";
 import type { Respuesta, Sitio } from "../../agent/tools/sitios.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson, runNuevo, trabaja } from "../cases/inventado/asientos.ts";
@@ -65,6 +69,20 @@ test("el horario de OpenStreetMap: lo corriente se lee, y un día que no sale es
   assert.deepEqual(leerHorarioDeOsm("Mo,We,Fr 10:00-12:00")?.[0].dias, ["mon", "wed", "fri"]);
   // Los festivos no se pueden poner en el calendario: se dejan, y lo demás se lee.
   assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-18:00; PH off")?.[0].dias, todos.slice(0, 5));
+  // Un festivo junto a unos días: se lee lo de esos días, y el festivo se deja.
+  for (const h of ["Mo-Sa 10:00-18:00; Su,PH off", "Mo-Sa 10:00-18:00; PH,Su off", "Mo-Sa 10:00-18:00; Su, PH off"])
+    assert.deepEqual(leerHorarioDeOsm(h), [{ dias: todos.slice(0, 6), abre: "10:00", cierra: "18:00" }], h);
+  assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-18:00; Sa,PH 10:00-14:00"), [
+    { dias: ["sat"], abre: "10:00", cierra: "14:00" },
+    { dias: todos.slice(0, 5), abre: "10:00", cierra: "18:00" },
+  ]);
+  // Dos tramos de horas con un espacio tras la coma, y unos días sueltos con su espacio.
+  assert.deepEqual(leerHorarioDeOsm("Mo-Fr 10:00-12:00, 14:00-18:00"), [
+    { dias: todos.slice(0, 5), abre: "10:00", cierra: "12:00" },
+    { dias: todos.slice(0, 5), abre: "14:00", cierra: "18:00" },
+  ]);
+  assert.deepEqual(leerHorarioDeOsm("Mo, We 10:00-12:00")?.[0].dias, ["mon", "wed"]);
+  assert.deepEqual(leerHorarioDeOsm("Mo-Su 00:00-24:00")?.[0], { dias: todos, abre: "00:00", cierra: "24:00" });
 });
 
 test("el horario de OpenStreetMap: lo que no se entiende no se adivina, y no se sabe", () => {
@@ -74,6 +92,13 @@ test("el horario de OpenStreetMap: lo que no se entiende no se adivina, y no se 
     "Mo-Fr",
     "PH off",
     "Mo 22:00-02:00",
+    // Una hora que no existe: solo «24:00» vale como las doce de la noche.
+    "Mo-Fr 10:00-24:30",
+    "Mo-Fr 10:00-24:01",
+    "Mo-Fr 10:00-24:59",
+    // Un festivo con algo que no se entiende sigue sin saberse.
+    "Su,PH 10:00-12:00 open",
+    "Su,PH,SH off",
     'Mo-Fr 10:00-18:00 "by appointment"',
     "Mo[1] 10:00-12:00",
     "Mo-Su 10:00-18:00+",
@@ -362,6 +387,73 @@ test("los datos abiertos: si ninguna instancia contesta, se dice, y la web de Wi
   assert.match(ninguna.avisos.join(" "), /ninguna dirección de Overpass/);
 });
 
+test("los datos abiertos: nada que lleve a la propia máquina o a una red de dentro, y sin redirecciones", async () => {
+  for (const deDentro of [
+    "https://localhost/api/interpreter",
+    "https://127.0.0.1/api/interpreter",
+    "https://10.0.0.7/api/interpreter",
+    "https://[::1]/api/interpreter",
+    "https://overpass.internal/api/interpreter",
+    "https://overpass.svc/api/interpreter",
+    "https://overpass/api/interpreter",
+    "https://overpass.inventado.example:8443/api/interpreter",
+  ])
+    assert.deepEqual(instanciasDeOverpass(deDentro), { instancias: [], malas: 1 }, deDentro);
+  // Al pedir: un nombre de fuera que lleva dentro no se llama; y nunca se sigue una redirección.
+  const llamadas: { url: string; redirect: unknown }[] = [];
+  const pedir = (async (url: string, init: RequestInit) => {
+    llamadas.push({ url, redirect: init.redirect });
+    return new Response("", { status: 302, headers: { location: "https://169.254.169.254/" } });
+  }) as unknown as typeof fetch;
+  await assert.rejects(
+    traerDeFuera(PRIMERA, 1000, async () => ["93.184.216.34", "10.1.2.3"], pedir),
+    /dentro de la red/,
+  );
+  await assert.rejects(
+    traerDeFuera("https://127.0.0.1/x", 1000, async () => [], pedir),
+    /de fuera/,
+  );
+  assert.equal(llamadas.length, 0);
+  const r = await traerDeFuera(PRIMERA, 1000, async () => ["93.184.216.34"], pedir);
+  assert.equal(r.estado, 302);
+  assert.deepEqual(llamadas, [{ url: PRIMERA, redirect: "manual" }]);
+  // Si no se puede saber a dónde lleva (sale por un intermediario), se sigue, como en el cierre.
+  await traerDeFuera(PRIMERA, 1000, async () => Promise.reject(new Error("sin DNS")), pedir);
+  assert.equal(llamadas.length, 2);
+  // Una redirección no es una respuesta: Wikidata falla y Overpass pasa a la siguiente.
+  const salta = fuentesAbiertas({ wikidataFalla: true, uno: "bien" });
+  const traer = salta.traer;
+  salta.traer = async (url: string) =>
+    url.startsWith(PRIMERA) || url.startsWith("https://query.wikidata.org/")
+      ? { estado: 302, cuerpo: "", esperar: null }
+      : traer(url);
+  const con = await abiertosDe([sitio("Q3", "Iglesia")], { ...salta, intentos: 1 });
+  assert.equal(con[0].horario, "Mo-Fr 09:00-17:00");
+});
+
+test("los datos abiertos: Wikidata, con sus intentos y sus esperas, dentro de su tope", async () => {
+  let reloj = 0;
+  const pedidos: string[] = [];
+  const o = {
+    ahora: () => reloj,
+    dormir: async (ms: number) => void (reloj += ms),
+    overpass: [PRIMERA],
+    avisar: () => {},
+    traer: async (url: string) => {
+      pedidos.push(url);
+      reloj += 20_000;
+      // Wikidata siempre dice que se espere un minuto; Overpass, que está caída.
+      return url.startsWith("https://query.wikidata.org/")
+        ? { estado: 503, cuerpo: "", esperar: 60 }
+        : { estado: 504, cuerpo: "", esperar: null };
+    },
+  };
+  await assert.rejects(abiertosDe([sitio("Q3", "Iglesia")], o));
+  // Antes, tres intentos y dos esperas de un minuto: unos cinco minutos. Ahora, todo cabe en los dos topes.
+  assert.ok(reloj <= TOPE_DE_WIKIDATA + TOPE_DE_OVERPASS, String(reloj));
+  assert.equal(pedidos.filter((u) => u.startsWith("https://query.wikidata.org/")).length, 1);
+});
+
 test("los datos abiertos: si una fuente falla, se sigue con las otras; si fallan todas, se dice", async () => {
   const sinWikidata = fuentesAbiertas({ wikidataFalla: true });
   const con = await abiertosDe([sitio("Q3", "Iglesia")], sinWikidata);
@@ -426,7 +518,9 @@ test("la puerta 13: cada trampa, su rojo", () => {
     ["un precio de cero", (e) => (e.sights[0].prices[0].amount = 0), /importe/],
     ["gratis con moneda", (e) => (e.sights[1].prices[0].currency = "EUR"), /gratis/],
     ["sin el día en que se vio", (e) => (e.sights[0].prices[0].seen = "unknown"), /día en que se vio/],
-    ["visto después de hoy", (e) => (e.sights[0].hours[0].seen = "2031-03-01"), /después de hoy/],
+    ["visto después de hoy", (e) => (e.sights[0].hours[0].seen = "2031-03-01"), /no es hoy/],
+    ["visto hace años", (e) => (e.sights[0].prices[0].seen = "2015-06-01"), /no es hoy/],
+    ["visto hace una semana", (e) => (e.sights[0].booking.seen = "2031-02-13"), /no es hoy/],
     ["para quién, fuera de la lista", (e) => (e.sights[0].prices[0].for = "pensioner"), /para quién/],
     ["unas edades al revés", (e) => (e.sights[0].prices[1].ages = { from: 12, to: 3 }), /al revés/],
     // Ningún sitio que no esté entre los elegidos, y lo que no se sabe, dicho.
@@ -488,6 +582,73 @@ test("la puerta 13: cada trampa, su rojo", () => {
   assert.deepEqual(rojosDe(null), ["delivery: no es un objeto"]);
 });
 
+/** Textos que un navegador abre como una página https, y que no están escritos en su forma normal. */
+const RAROS = (pagina: string): string[] => {
+  const resto = pagina.slice("https://".length);
+  return [
+    `https:${resto}`,
+    `https:/${resto}`,
+    `https:\\\\${resto.replaceAll("/", "\\")}`,
+    `h\nttps://${resto}`,
+    ` ${pagina}`,
+    `HTTPS://${resto}`,
+    `https://user@${resto}`,
+    `https://127.0.0.1/x`,
+  ];
+};
+
+test("la puerta 13: dónde reservar y su web, una página que abrió o la que dicen los datos abiertos", () => {
+  const WEB = "https://q1.inventado.example/";
+  const para = { ...PARA, websDeLosAbiertos: { Q1: WEB, Q2: null } };
+  const con = (cambia: (e: any) => void): string[] => {
+    const e = structuredClone(buena()) as any;
+    cambia(e);
+    return rojosDe(e, para);
+  };
+  // La que abrió y la que dicen los datos abiertos de ese sitio, valen.
+  assert.deepEqual(
+    con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS)),
+    [],
+  );
+  assert.deepEqual(
+    con((e) => (e.sights[0].official_site = WEB)),
+    [],
+  );
+  assert.deepEqual(
+    con((e) => (e.sights[0].booking.where = WEB)),
+    [],
+  );
+  // Una que solo le salió en el buscador, no; ni la web de los datos abiertos de otro sitio.
+  const noAbrio = /no es una página que abriera de verdad, ni la web que dicen de este sitio los datos abiertos/;
+  for (const [donde, cambia] of [
+    ["sights[0].official_site", (e: any) => (e.sights[0].official_site = "https://reventa.inventado.example/q1")],
+    ["sights[0].booking.where", (e: any) => (e.sights[0].booking.where = "https://reventa.inventado.example/q1")],
+    ["sights[1].official_site", (e: any) => (e.sights[1].official_site = WEB)],
+  ] as const) {
+    const rojos = con(cambia);
+    assert.ok(
+      rojos.some((r) => r.startsWith(`${donde}: `) && noAbrio.test(r)),
+      `${donde}: ${rojos.join(" | ")}`,
+    );
+  }
+  // Ninguna escrita de otra forma, aunque sea la que abrió.
+  for (const raro of RAROS(PAGINA_DE_LAS_ENTRADAS)) {
+    for (const campo of ["official_site", "where", "source"] as const) {
+      const rojos = con((e) => {
+        if (campo === "official_site") e.sights[0].official_site = raro;
+        else if (campo === "where") e.sights[0].booking.where = raro;
+        else e.sights[0].prices[0].source = raro;
+      });
+      assert.ok(
+        rojos.some((r) => /forma normal/.test(r)),
+        `${campo} ${JSON.stringify(raro)}: ${rojos.join(" | ")}`,
+      );
+    }
+  }
+  // Sin la memoria de lo consultado, solo su forma.
+  assert.deepEqual(rojosDe(structuredClone(buena()), { ...para, abiertas: null }), []);
+});
+
 // ---------- lo que pasa al viaje
 
 const ABIERTOS: DatosAbiertos[] = [
@@ -533,13 +694,44 @@ test("al viaje: manda lo que leyó el asiento; lo que no sabe, lo que dicen los 
     horarios: null,
     reservar: null,
     web: null,
+    webDeLosAbiertos: true,
     mirado: false,
     sinMirar: "over_limit",
   });
   const q1Abierto = entradaAbierta("Q1", ABIERTOS[0]);
   assert.equal(q1Abierto.mirado, false);
+  assert.equal(q1Abierto.webDeLosAbiertos, true);
   assert.equal(abreElDia(q1Abierto.horarios, "2031-03-09"), false);
   assert.equal(q1Abierto.precios, null);
+});
+
+test("al viaje: la web de los datos abiertos se dice como tal, y dónde reservar es solo una página que abrió", () => {
+  const WEB = ABIERTOS[0].web!;
+  const con = (cambia: (e: any) => void, abrio?: (url: string) => boolean) => {
+    const e = structuredClone(buena()) as any;
+    cambia(e);
+    return paraEnsenarEntradas([e], [], ABIERTOS, {}, abrio).sitios[0];
+  };
+  // La que dice el asiento y abrió: su web, y dónde se reserva.
+  const suya = con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS));
+  assert.equal(suya.web, PAGINA_DE_LAS_ENTRADAS);
+  assert.equal(suya.webDeLosAbiertos, false);
+  assert.equal(suya.reservar?.donde, PAGINA_DE_LAS_ENTRADAS);
+  // La que no sabe, o la que copia de los datos abiertos sin abrirla: la de los datos abiertos, dicha como tal.
+  for (const cambia of [
+    (e: any) => (e.sights[0].official_site = "unknown"),
+    (e: any) => (e.sights[0].official_site = WEB),
+  ])
+    assert.deepEqual([con(cambia).web, con(cambia).webDeLosAbiertos], [WEB, true]);
+  // Trampa: dónde reservar, la web de los datos abiertos sin abrirla, no llega como «reservar aquí».
+  assert.equal(con((e) => (e.sights[0].booking.where = WEB)).reservar?.donde, null);
+  // Con lo consultado del run: si la abrió, vale; si no, ni la que no es de los datos abiertos.
+  const abrioLaWeb = (url: string) => url === WEB;
+  assert.equal(con((e) => (e.sights[0].official_site = WEB), abrioLaWeb).webDeLosAbiertos, false);
+  assert.equal(con((e) => (e.sights[0].booking.where = WEB), abrioLaWeb).reservar?.donde, WEB);
+  const nada = () => false;
+  assert.equal(con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS), nada).webDeLosAbiertos, true);
+  assert.equal(con(() => {}, nada).reservar?.donde, null);
 });
 
 // ---------- el ritmo y la puerta 9
@@ -675,6 +867,9 @@ test("la investigación inventada: el sitio que cierra no va ese día, y la web 
     ]);
     assert.deepEqual(Object.keys(viajeDado.travellers).sort(), ["adults", "children"]);
     assert.ok(existsSync(join(run, "abiertos.json")));
+    // Dónde se reserva, la página que abrió en el run: llega al viaje.
+    const conReserva = v.entradas!.sitios.filter((s) => s.mirado && s.reservar?.haceFalta);
+    assert.ok(conReserva.length > 0 && conReserva.every((s) => s.reservar!.donde === PAGINA_DE_LAS_ENTRADAS));
   } finally {
     rmSync(run, { recursive: true, force: true });
   }
@@ -703,6 +898,37 @@ test("la puerta 13 en la casa: un precio de una página que no abrió vuelve al 
       JSON.stringify(puertas.rojos),
     );
     assert.ok(estado.esperan.includes("entradas-v2"));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("la puerta 13 en la casa: una vuelta que corrige puede citar la página que abrió en la de antes", async () => {
+  const run = runNuevo();
+  try {
+    const f = fuentesInventadas();
+    let estado = await sigue(run, f);
+    for (let i = 0; i < 20 && !estado.esperan.some((id) => id.startsWith("entradas-")); i++) {
+      for (const id of [...estado.esperan, ...(estado.porDetras ?? [])])
+        if (existsSync(join(run, "puestos", id))) trabaja(run, id);
+      estado = await sigue(run, f);
+    }
+    // La primera vuelta abre su página, pero escribe mal una moneda.
+    trabaja(run, "entradas-v1", (_asiento, e) => {
+      e.sights[0].prices[0].currency = "eur";
+    });
+    estado = await sigue(run, f);
+    assert.ok(estado.esperan.includes("entradas-v2"));
+    // La segunda la corrige sin abrir nada: la página de antes sigue valiendo, en la 13 como en la de todos.
+    trabaja(run, "entradas-v2");
+    writeFileSync(
+      join(run, "consultado", "entradas-v2.json"),
+      JSON.stringify({ busquedas: [], paginas: [], fallidas: [] }),
+    );
+    estado = await sigue(run, f);
+    const puertas = leerJson(join(run, "entradas-v2.puertas.json"));
+    assert.deepEqual(puertas.rojos, []);
+    assert.ok(!estado.esperan.includes("entradas-v3"));
   } finally {
     rmSync(run, { recursive: true, force: true });
   }
@@ -763,6 +989,34 @@ test("si hay más sitios que el tope: imprescindibles y con puerta primero, siem
   ]);
   assert.deepEqual(losDiasSinEntradas(paraEnsenarEntradas([], ids.slice(0, 24), [])), []);
   assert.equal(tandasDeSitios(ordenParaMirar(go, sitios, abiertos)).flat().length, 24);
+});
+
+test("un fallo entero de los datos abiertos no se guarda como su respuesta: se vuelven a pedir", async () => {
+  const run = runNuevo();
+  try {
+    const sitio = { id: "Q1", nombre: "Faro Inventado", punto: { lat: 10, lon: 20 } } as Sitio;
+    let veces = 0;
+    const traer = async (sitios: Sitio[]) => {
+      if (++veces === 1) throw new Error("los datos abiertos contestan 503");
+      return sitios.map((s) => ({ sitio: s.id, horario: "24/7", dePago: null, web: null, fuentes: [] }));
+    };
+    assert.deepEqual(await traerLosAbiertos(run, [sitio], traer), []);
+    assert.match(leerJson(join(run, ARCHIVO_DE_LOS_ABIERTOS)).avisos.join(" "), /contestan 503/);
+    // La siguiente vez se piden otra vez, y lo que contestan sí se guarda: ya no se vuelven a pedir.
+    assert.equal((await traerLosAbiertos(run, [sitio], traer))[0].horario, "24/7");
+    assert.equal((await traerLosAbiertos(run, [sitio], traer))[0].horario, "24/7");
+    assert.equal(veces, 2);
+    // Si su asiento ya salió con la lista vacía, no se cambia lo que se le dio.
+    const otro = runNuevo();
+    veces = 0;
+    await traerLosAbiertos(otro, [sitio], traer);
+    montarPuesto(otro, "entradas-v1", "tickets", []);
+    assert.deepEqual(await traerLosAbiertos(otro, [sitio], traer), []);
+    assert.equal(veces, 1);
+    rmSync(otro, { recursive: true, force: true });
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
 });
 
 test("lo que avisan los datos abiertos queda con los avisos del run, no solo en la consola", async () => {

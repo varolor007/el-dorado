@@ -669,6 +669,32 @@ test("la puerta 6: el que cruza no vende el total de una manera como el presupue
     [],
   );
   assert.deepEqual(puertaCruce(conFrase(`This way costs ${TOTAL_DE_LA_TABLA} EUR.`), material).rojos, []);
+  // Las otras maneras corrientes de decir el viaje entero, en los dos idiomas, también son el presupuesto entero.
+  for (const frase of [
+    `All told, the trip costs you ${TOTAL_DE_LA_TABLA} EUR.`,
+    `Your overall trip spend is ${TOTAL_DE_LA_TABLA} EUR.`,
+    `The cost of your trip is ${TOTAL_DE_LA_TABLA} EUR.`,
+    `The trip comes to ${TOTAL_DE_LA_TABLA} EUR.`,
+    `El viaje te sale por ${TOTAL_DE_LA_TABLA} euros.`,
+    `Tu viaje cuesta ${TOTAL_DE_LA_TABLA} euros.`,
+    `El coste del viaje es de ${TOTAL_DE_LA_TABLA} euros.`,
+  ])
+    assert.match(
+      puertaCruce(conFrase(frase), material)
+        .rojos.map((r) => r.que)
+        .join(" | "),
+      /presupuesto entero/,
+      frase,
+    );
+  // Y las que dicen el total de una manera (dormir y llegar), o una excursión, siguen como siempre.
+  for (const frase of [
+    `Sleeping and getting there come to ${TOTAL_DE_LA_TABLA} EUR in total.`,
+    `The flight and the nights add up to ${TOTAL_DE_LA_TABLA} EUR.`,
+    `Dormir y llegar te salen por ${TOTAL_DE_LA_TABLA} euros.`,
+    `Las noches y el vuelo suman ${TOTAL_DE_LA_TABLA} euros en total.`,
+    `The round trip price is part of the ${TOTAL_DE_LA_TABLA} EUR of this way.`,
+  ])
+    assert.deepEqual(puertaCruce(conFrase(frase), material).rojos, [], frase);
 });
 
 test("la puerta 7: el que explica, y al cerrar, tampoco; la cifra del presupuesto es la de la cuenta", () => {

@@ -24,6 +24,7 @@ import type {
 } from "../../../agent/output/viaje.ts";
 import type { ReactNode } from "react";
 import { abreElDia, entradaDe } from "../../../agent/scripts/capas.ts";
+import { formaNormal } from "../../../agent/tools/enlaces.ts";
 import {
   abreTusDias,
   billeteSuelto,
@@ -69,7 +70,7 @@ const vistoEl = (visto: string, idioma: string): string =>
 /** El enlace a la página de un dato, con su web y el día en que se vio. */
 function Fuente({ t, idioma, f }: Comun & { f: FuenteDeUnDato }) {
   return (
-    <a className="enlace" href={f.url} target="_blank" rel="noopener noreferrer nofollow">
+    <a className="enlace" href={formaNormal(f.url) ?? undefined} target="_blank" rel="noopener noreferrer nofollow">
       {t.alli.fuente(sitioDe(f.url), vistoEl(f.visto, idioma))}
     </a>
   );
@@ -282,6 +283,9 @@ function Saber({ t, idioma, s }: Comun & { s: DelDestino | undefined }) {
     );
   const deClase = (clase: string): CosaDelDestino[] => s.cosas.filter((c) => c.clase === clase);
   const comer = DE_COMER.some((c) => deClase(c).length > 0);
+  // Si el idioma del viajero todavía no tiene las palabras de la puerta 12, sus frases no llegan: se dice.
+  const sinFrases = (clases: readonly string[]) =>
+    clases.some((c) => deClase(c).some((x) => x.sinFrase === true)) && <p className="suave">{t.alli.sinFrases}</p>;
   const bloque = (clases: readonly string[]) =>
     clases
       .filter((c) => deClase(c).length > 0)
@@ -299,10 +303,12 @@ function Saber({ t, idioma, s }: Comun & { s: DelDestino | undefined }) {
     <>
       <div className="grupo alli">
         <h2 className="titulo">{t.alli.saber}</h2>
+        {sinFrases(DE_SABER)}
         {DE_SABER.some((c) => deClase(c).length > 0) ? bloque(DE_SABER) : <p className="suave">{t.alli.nadaDe}</p>}
       </div>
       <div className="grupo alli">
         <h2 className="titulo">{t.alli.comer}</h2>
+        {sinFrases(DE_COMER)}
         {comer ? bloque(DE_COMER) : <p className="suave">{t.alli.nadaDe}</p>}
         <p className="credito">{t.alli.comerNota}</p>
       </div>
@@ -315,7 +321,7 @@ function Cosa({ t, idioma, x }: Comun & { x: CosaDelDestino }) {
   return (
     <li className="fecha alli__cosa">
       {x.nombre !== null && <b>{x.nombre}</b>}
-      <span className="fecha__frase">{x.frase}</span>
+      {x.sinFrase !== true && <span className="fecha__frase">{x.frase}</span>}
       {x.cuesta !== null && (
         <span className="alli__precio">
           {t.alli.cuesta(
@@ -483,7 +489,12 @@ export function FichaDeLaEntrada({
         <div className="entrada__parte">
           <span className="dato">{t.alli.reservar(e.reservar.haceFalta)}</span>
           {e.reservar.donde !== null && (
-            <a className="enlace" href={e.reservar.donde} target="_blank" rel="noopener noreferrer nofollow">
+            <a
+              className="enlace"
+              href={formaNormal(e.reservar.donde) ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+            >
               {t.alli.reservarAqui}
             </a>
           )}
@@ -491,8 +502,8 @@ export function FichaDeLaEntrada({
         </div>
       )}
       {e.web !== null && (
-        <a className="enlace" href={e.web} target="_blank" rel="noopener noreferrer nofollow">
-          {t.alli.web}
+        <a className="enlace" href={formaNormal(e.web) ?? undefined} target="_blank" rel="noopener noreferrer nofollow">
+          {e.webDeLosAbiertos === false ? t.alli.web : t.alli.webDeLosAbiertos}
         </a>
       )}
       {!e.mirado && <SinMirar t={t} porQue={e.sinMirar ?? null} />}

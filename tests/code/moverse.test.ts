@@ -14,6 +14,7 @@ import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import type { Material } from "../../agent/launcher/capas.ts";
 import { paraLaPuerta, piezasDeMoverse, puertaDeMoverse } from "../../agent/launcher/capa_moverse.ts";
 import { puertaMoverse } from "../../agent/gates/puerta_moverse.ts";
+import { paginasEn } from "../../agent/launcher/consultado.ts";
 import type { Billete, DeMoverse, PrecioDeCapa } from "../../agent/output/capas.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
 import {
@@ -77,6 +78,21 @@ function buena(m: Material = material()): EntregaDeMoverse {
 const rojosDe = (e: unknown, m: Material = material()): string[] =>
   puertaMoverse(e, paraLaPuerta(m)).rojos.map((r) => `${r.donde}: ${r.que}`);
 
+/** Textos que un navegador abre como una página https, y que no están escritos en su forma normal. */
+const RAROS = (pagina: string): string[] => {
+  const resto = pagina.slice("https://".length);
+  return [
+    `https:${resto}`,
+    `https:/${resto}`,
+    `https:\\\\${resto.replaceAll("/", "\\")}`,
+    `h\nttps://${resto}`,
+    ` ${pagina}`,
+    `HTTPS://${resto}`,
+    `https://user@${resto}`,
+    `https://127.0.0.1/x`,
+  ];
+};
+
 // ---------- el contrato y lo que ve
 
 test("su contrato sale a internet, y dice lo que busca", () => {
@@ -106,6 +122,8 @@ test("lo que ve: el destino, sus fechas, sus zonas, por dónde se llega y cuánt
   const todo = JSON.stringify(visto);
   for (const callado of ["passports", "Origen Inventado", "gimnasio", "tastes", "budget", "said", "looking_for"])
     assert.ok(!todo.includes(callado), callado);
+  // Ninguna página: así, la puerta de todos solo le deja citar las que abrió de verdad, en cualquiera de sus vueltas.
+  assert.deepEqual(paginasEn(todo), []);
   // Sin aeropuerto sabido, dice que no se sabe.
   assert.deepEqual(vistoPor(material({ aeropuerto: null }))["trip.json"].arrival, { airport: "unknown" });
   const { busquedas, paginas } = topesDeInternet("getting-around");
@@ -113,6 +131,25 @@ test("lo que ve: el destino, sus fechas, sus zonas, por dónde se llega y cuánt
 });
 
 // ---------- la puerta 11
+
+test("puerta 11: una página que el navegador abriría, pero no escrita en su forma normal, no vale", () => {
+  for (const raro of RAROS(PAGINA_DE_MOVERSE)) {
+    const e = structuredClone(buena()) as unknown as Objeto;
+    e.arrivals[0].source = raro;
+    assert.ok(
+      rojosDe(e).some((r) => r.startsWith("arrivals[0].source: ") && /forma normal/.test(r)),
+      JSON.stringify(raro),
+    );
+  }
+  // La misma página sin la barra de un sitio sin camino sí vale, y se guarda con ella.
+  const e = structuredClone(buena()) as unknown as Objeto;
+  e.arrivals[0].source = "https://transporte.inventado.example";
+  assert.deepEqual(rojosDe(e), []);
+  assert.equal(
+    paraEnsenarMoverse(e as unknown as EntregaDeMoverse).llegar[0].fuente.url,
+    "https://transporte.inventado.example/",
+  );
+});
 
 test("la entrega buena pasa la puerta 11, con página y sin ella, y se enseña sin frases suyas", () => {
   assert.deepEqual(rojosDe(buena()), []);

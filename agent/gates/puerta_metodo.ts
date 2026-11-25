@@ -7,7 +7,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { direccionComparable, direccionesEn, esDireccion } from "../launcher/consultado.ts";
+import { direccionComparable, direccionesEn, esDireccion, paginasEn } from "../launcher/consultado.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 
 /** Los archivos que deja cada paso, en su orden. Son los mismos que nombra el contrato común. */
@@ -320,6 +320,23 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[], fallidas
       const queMirar = propias.at(-1) === null && delFinal !== null ? [...propias, delFinal] : propias;
       for (const final of queMirar) if (final !== null) mirarFuentes(donde, final);
     });
+    // Y cualquier página que nombre una nota fuera de su fuente, en cualquier renglón: una que se abrió, que se
+    // intentó abrir o que venía en su material. Así no se cuela una dirección escrita de otra forma, ni en mitad.
+    const yaDichas = new Set(rojos.map((r) => r.que));
+    const delMaterial = direccionesDelMaterial(puesto, sello);
+    readFileSync(notas, "utf8")
+      .split("\n")
+      .forEach((renglon, i) => {
+        for (const d of direccionesEn(renglon)) {
+          const comparable = direccionComparable(d) ?? "";
+          if (delMaterial.has(comparable) || (conInternet && (abiertas.has(comparable) || sinExito.has(comparable))))
+            continue;
+          const que = `la nota nombra la página ${d}, que ni se abrió ni se intentó abrir ni venía en su material`;
+          if ([...yaDichas].some((x) => x.includes(`la página ${d},`))) continue;
+          yaDichas.add(que);
+          rojos.push({ donde: `out/${PASOS[2]}:${i + 1}`, que });
+        }
+      });
     if (cuantas === 0 && readFileSync(notas, "utf8").trim() !== "")
       rojos.push({ donde: `out/${PASOS[2]}`, que: "no hay ninguna nota con la forma del método" });
   }
@@ -339,7 +356,7 @@ function mirarElMetodo(puesto: string, sello: Sello, paginas: string[], fallidas
         // 8. Un dato que cita una página: una que se abrió, o una que venía en su material.
         const delMaterial = direccionesDelMaterial(puesto, sello);
         for (const { donde, texto } of textosDe(entrega, `out/${ENTREGA}`))
-          for (const d of direccionesEn(texto)) {
+          for (const d of paginasEn(texto)) {
             const comparable = direccionComparable(d);
             if (comparable !== null && delMaterial.has(comparable)) continue;
             if (conInternet && abiertas.has(comparable ?? "")) continue;

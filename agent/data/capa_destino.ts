@@ -69,3 +69,51 @@ export const DE_UN_RESTAURANTE =
 export const DE_UNA_OPINION =
   "rated|rating|ratings|reviews?|reviewed|stars?|michelin|tripadvisor|yelp|top[- ]rated|award[- ]winning|" +
   "reseñas?|opiniones|valorad[oa]s?|valoraci[oó]n|puntuaci[oó]n|estrellas?|premiad[oa]s?";
+
+/**
+ * Los idiomas que tienen sus listas de palabras en las puertas 11 y 12 (lo de un restaurante, lo de una opinión, lo
+ * de decir qué es lo mejor, los canales): inglés y español. Con un viajero de otro idioma, ninguna frase de esas capas
+ * llega a la pantalla ni a la guía, porque no ha pasado una puerta de palabras: llegan sus datos, y la web dice que esa
+ * explicación todavía no está en su idioma (como la guía: el PM, 25-nov).
+ */
+export const IDIOMAS_CON_SUS_LISTAS = ["en", "es"] as const;
+export const tieneSusListas = (idioma: string): boolean =>
+  (IDIOMAS_CON_SUS_LISTAS as readonly string[]).includes(idioma);
+
+/**
+ * Las palabras de un canal, en cualquier clase: por dónde se habla con alguien (la mensajería, llamar o escribir a
+ * alguien), en inglés, en español y los nombres de las aplicaciones. Una cosa del destino no manda al viajero a hablar
+ * con nadie: el número de urgencias se dice como un número, sin «llama». El móvil y sus tarifas sí se pueden decir.
+ */
+export const DE_UN_CANAL =
+  "whats ?app|telegram|wechat|viber|signal app|messenger|imessage|direct messages?|dms?|" +
+  "(?:text|message|call|ring|phone|e-?mail|contact|reach|dm) (?:them|him|her|us|ahead)|message (?:on|via)|" +
+  "(?:call|dial|text|ring) \\+?\\d+|write to|get in touch|" +
+  "mensajer[ií]a|manda\\p{L}* (?:un )?(?:mensaje|whats ?app)|escr[ií]b\\p{L}* (?:a|al)|" +
+  "llam(?:a|e|en|ar|ad|ando) (?:a|al|por)|contact[aá]\\p{L}*|ponte en contacto";
+
+/**
+ * Las maneras de escribir una dirección con palabras: «sitio dot com», «punto es», «slash», «arroba», un acortador
+ * de direcciones. En cualquier clase: es una dirección aunque no lleve sus puntos.
+ */
+export const DE_UNA_DIRECCION_DICHA =
+  "dot (?:com|net|org|info|io|co|es|eu|de|fr|it|uk)|punto (?:com|net|org|es|eu|info)|slash|backslash|" +
+  "barra (?:inclinada|diagonal)|arroba|at sign|tinyurl|bit ?ly|goo ?gl|is ?gd|ow ?ly|cutt ?ly|rebrand ?ly|" +
+  "(?:com|net|org) (?:slash|barra)|w ?w ?w";
+
+/**
+ * Lo de un negocio con nombre, en lo que conviene evitar y en lo práctico: una palabra de negocio pegada a un nombre
+ * propio («Juan's Taxis», «Taxis Juan», «Tours García»), o reservar con alguien por su nombre («book with Marta»). Lo
+ * más prudente: en esas dos clases no se nombra a nadie que venda algo, ni para bien ni para mal.
+ */
+export const DE_UN_NEGOCIO =
+  "taxis?|cabs?|tours?|travel|transfers?|shuttles?|rentals?|hire|agency|agencies|shops?|stores?|company|companies|" +
+  "co|ltd|inc|llc|hostels?|hotels?|guesthouses?|apartments?|excursions?|excursiones|viajes|alquiler(?:es)?|" +
+  "traslados?|agencias?|tiendas?|empresas?|s\\.?l\\.?|s\\.?a\\.?";
+/** Reservar, comprar o contratar con alguien, por su nombre. */
+export const CON_ALGUIEN =
+  "book(?:ing)? (?:with|through|via|from)|buy (?:from|at)|ask for|reserv\\p{L}* (?:con|en|a trav[eé]s de)|" +
+  "compr\\p{L}* (?:en|a)|pregunt\\p{L}* por|contrat\\p{L}* (?:con|a)";
+
+/** Las clases donde no se nombra ningún negocio: lo que conviene evitar y lo práctico. */
+export const CLASES_SIN_NEGOCIOS: readonly ClaseDelDestino[] = ["avoid", "practical"];

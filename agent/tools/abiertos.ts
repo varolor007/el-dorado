@@ -13,6 +13,8 @@
 // `ELDORADO_OVERPASS`, con un tope de tiempo y pocos intentos. Si ninguna contesta, el horario y si se paga no se
 // saben, se dice, y la web de Wikidata llega igual.
 
+import { lookup } from "node:dns/promises";
+import { direccionDeDentro, paginaDeFuera } from "../launcher/consultado.ts";
 import type { DatosAbiertos } from "../scripts/capa_entradas.ts";
 import type { FuenteDeUnDato } from "../output/capas.ts";
 import { enlaceSinClaves } from "./enlaces.ts";
@@ -26,6 +28,11 @@ export const OVERPASS_POR_DEFECTO = ["https://overpass-api.de/api/interpreter"];
 const INSTANCIAS_COMO_MUCHO = 4;
 /** El tope de tiempo de Overpass en total, en milisegundos: muy por debajo de la espera de las entradas. */
 export const TOPE_DE_OVERPASS = 90_000;
+/**
+ * El de Wikidata, que va antes, con sus intentos y sus esperas dentro, en milisegundos. Los dos juntos, dos minutos
+ * como mucho: también muy por debajo de la espera de las entradas.
+ */
+export const TOPE_DE_WIKIDATA = 30_000;
 /** Lo que se le da a una instancia para contestar, en milisegundos, y lo que se le pide que tarde como mucho. */
 const TOPE_DE_UNA_INSTANCIA = 40_000;
 const TOPE_EN_EL_SERVIDOR = 30;
@@ -42,6 +49,8 @@ type Objeto = { tipo: Tipo; id: number; etiquetas: Record<string, string> };
 
 /** Pedir a una instancia de Overpass, con lo que se le da para contestar. */
 export type TraerConTope = (url: string, ms: number) => Promise<Respuesta>;
+/** A qué direcciones lleva el nombre de una máquina. */
+export type Resolver = (nombre: string) => Promise<string[]>;
 
 /**
  * Cómo sale a internet: la de siempre (`traer`, `dormir`, `intentos`) y, para Overpass, sus instancias (si no se dan,
@@ -70,14 +79,38 @@ const esPunto = (p: unknown): p is { lat: number; lon: number } => {
   );
 };
 
-const deInternet: TraerConTope = async (url, ms) => {
-  const r = await fetch(url, {
+const porSuNombre: Resolver = async (nombre) => (await lookup(nombre, { all: true })).map((x) => x.address);
+
+/**
+ * Pide a una de fuera, como la comprobación de enlaces del cierre: solo una página de fuera (https, con nombre, sin
+ * puerto y que no sea de dentro de la red de la casa), mirando antes a dónde lleva su nombre, y sin seguir ninguna
+ * redirección, que podría mandar a la casa a su red. Si no se puede saber a dónde lleva (la máquina sale por un
+ * intermediario que resuelve él), se sigue: quien llama entonces no es la casa.
+ */
+export async function traerDeFuera(
+  url: string,
+  ms: number,
+  resolver: Resolver = porSuNombre,
+  pedir: typeof fetch = fetch,
+): Promise<Respuesta> {
+  if (!paginaDeFuera(url)) throw new Error("no es una dirección https de fuera");
+  let lleva: string[] = [];
+  try {
+    lleva = await resolver(new URL(url).hostname);
+  } catch {
+    lleva = [];
+  }
+  if (lleva.some(direccionDeDentro)) throw new Error("su nombre lleva dentro de la red de la casa");
+  const r = await pedir(url, {
     headers: { "User-Agent": AGENTE, Accept: "application/json" },
+    redirect: "manual",
     signal: AbortSignal.timeout(ms),
   });
   const espera = Number(r.headers.get("retry-after"));
   return { estado: r.status, cuerpo: await r.text(), esperar: Number.isFinite(espera) && espera > 0 ? espera : null };
-};
+}
+
+const deInternet: TraerConTope = (url, ms) => traerDeFuera(url, ms);
 
 const dormirDe = (o: SalidaDeLosAbiertos) => o.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
 
@@ -94,13 +127,19 @@ async function conTope<T>(promesa: Promise<T>, ms: number): Promise<T> {
   }
 }
 
-/** Pide a Wikidata y devuelve su JSON; si dice que se espere, espera y lo vuelve a pedir, unas pocas veces. */
-async function pedir(url: string, o: SalidaDeLosAbiertos): Promise<unknown> {
+/**
+ * Pide a Wikidata y devuelve su JSON; si dice que se espere, espera y lo vuelve a pedir, unas pocas veces. Todo,
+ * intentos y esperas, antes de `hasta`: lo que no cabe no se intenta.
+ */
+async function pedir(url: string, o: SalidaDeLosAbiertos, hasta: number): Promise<unknown> {
   const traer = o.traer ?? deInternet;
   const dormir = dormirDe(o);
+  const ahora = o.ahora ?? Date.now;
   const intentos = o.intentos ?? 3;
   for (let intento = 1; ; intento++) {
-    const r: Respuesta = await traer(url, 60_000);
+    const queda = hasta - ahora();
+    if (queda < 1000) throw new Error("los datos abiertos no contestan a tiempo");
+    const r: Respuesta = await conTope(traer(url, queda), queda);
     if (r.estado === 200) {
       try {
         return JSON.parse(r.cuerpo);
@@ -110,7 +149,9 @@ async function pedir(url: string, o: SalidaDeLosAbiertos): Promise<unknown> {
     }
     const reintentable = r.estado === 429 || r.estado === 503;
     if (!reintentable || intento >= intentos) throw new Error(`los datos abiertos contestan ${r.estado}`);
-    await dormir(Math.min(60, r.esperar ?? 5 * intento) * 1000);
+    const espera = Math.min(60, r.esperar ?? 5 * intento) * 1000;
+    if (ahora() + espera + 1000 >= hasta) throw new Error(`los datos abiertos contestan ${r.estado}, y no da tiempo`);
+    await dormir(espera);
   }
 }
 
@@ -213,12 +254,15 @@ export function datosDe(id: string, wd: DeWikidata | undefined, o: Objeto | null
 
 // ---------- Overpass
 
-/** Una dirección de Overpass que vale: https, sin usuario ni clave, sin nada tras ella (ni `?` ni `#`). */
+/**
+ * Una dirección de Overpass que vale: una página de fuera (https, con nombre y no de una red de dentro ni de la propia
+ * máquina, sin puerto, usuario ni clave), sin nada tras ella (ni `?` ni `#`).
+ */
 export function esInstancia(texto: string): boolean {
-  if (texto.length > 200 || /\s/.test(texto)) return false;
+  if (texto.length > 200 || /\s/.test(texto) || !paginaDeFuera(texto)) return false;
   try {
     const u = new URL(texto);
-    return u.protocol === "https:" && u.hostname !== "" && !u.username && !u.password && !u.search && !u.hash;
+    return !u.search && !u.hash;
   } catch {
     return false;
   }
@@ -336,7 +380,6 @@ export async function abiertosDe(
 ): Promise<DatosAbiertos[]> {
   const visto = hoy.toISOString().slice(0, 10);
   const ahora = o.ahora ?? Date.now;
-  const hasta = ahora() + (o.tope ?? TOPE_DE_OVERPASS);
   const avisar = o.avisar ?? ((texto: string) => console.warn(`datos abiertos: ${texto}`));
   const validos = sitios.filter((s) => esId(s.id));
   if (validos.length === 0) return [];
@@ -344,13 +387,14 @@ export async function abiertosDe(
   let wikidata = new Map<string, DeWikidata>();
   try {
     const url = `${WIKIDATA}?format=json&query=${encodeURIComponent(consultaDeLosAbiertos(validos.map((s) => s.id)))}`;
-    wikidata = leerWikidata(await pedir(url, o));
+    wikidata = leerWikidata(await pedir(url, o, ahora() + TOPE_DE_WIKIDATA));
   } catch (error) {
     fallos.push(error instanceof Error ? error.message : String(error));
   }
 
   // Overpass, en una consulta por cada tanda de sitios: los objetos que dice Wikidata y, de cada sitio, el que lleve
-  // su identificador cerca de su punto (por si Wikidata no lo sabe, o el que dice es de otro).
+  // su identificador cerca de su punto (por si Wikidata no lo sabe, o el que dice es de otro). Con su tope, desde aquí.
+  const hasta = ahora() + (o.tope ?? TOPE_DE_OVERPASS);
   let instancias = o.overpass;
   if (instancias === undefined) {
     const delEntorno = instanciasDeOverpass(process.env.ELDORADO_OVERPASS);

@@ -4,6 +4,7 @@
 
 import type { SinMirar } from "../data/capas.ts";
 import type { DeLasEntradas, EntradaDeUnSitio, FuenteDeUnDato, Horario, PrecioDeCapa } from "../output/capas.ts";
+import { formaNormal } from "../tools/enlaces.ts";
 import { leerHorarioDeOsm } from "../tools/horarios.ts";
 import { diasQueCierra, fuenteDe, horarioDe, preciosDe, type HorarioEntregado, type PrecioEntregado } from "./capas.ts";
 import { SIN_SABER } from "./formas.ts";
@@ -82,16 +83,48 @@ export function entradaAbierta(
     horarios: horariosAbiertos(a),
     reservar: null,
     web: a?.web ?? null,
+    webDeLosAbiertos: true,
     mirado: false,
     sinMirar: porQue,
   };
 }
 
+/** Si dos direcciones son la misma página, sin mirar el fragmento, la barra del final ni las mayúsculas del sitio. */
+function mismaPagina(a: string, b: string): boolean {
+  const comparable = (x: string): string | null => {
+    try {
+      const u = new URL(x);
+      return `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}${u.search}`;
+    } catch {
+      return null;
+    }
+  };
+  return comparable(a) !== null && comparable(a) === comparable(b);
+}
+
+/**
+ * Si el asiento abrió una página. Sin saberlo por lo consultado, la puerta de todos ya dejó solo las que abrió o las
+ * de su material, y la 13, para dónde reservar y su web, solo esas o la web de los datos abiertos: lo que no es esa
+ * web lo abrió. Esa, sin saberlo, se toma por no abierta, que es lo prudente.
+ */
+export type Abrio = (url: string) => boolean;
+const abrioPorDefecto =
+  (a: DatosAbiertos | undefined): Abrio =>
+  (url) =>
+    a?.web == null || !mismaPagina(url, a.web);
+
 /**
  * Un sitio que miró su asiento, en la forma del viaje. Manda lo que dijo, que leyó en la web del sitio; lo que dijo
  * que no sabe se queda con lo que dicen los datos abiertos, con su página, y si tampoco lo dicen, no se sabe.
  */
-export function entradaMirada(s: SitioEntregado, a: DatosAbiertos | undefined): EntradaDeUnSitio {
+export function entradaMirada(
+  s: SitioEntregado,
+  a: DatosAbiertos | undefined,
+  abrio: Abrio = abrioPorDefecto(a),
+): EntradaDeUnSitio {
+  const donde = s.booking === SIN_SABER || s.booking.where === SIN_SABER ? null : formaNormal(s.booking.where);
+  const suya = s.official_site === SIN_SABER ? null : formaNormal(s.official_site);
+  const web = suya ?? a?.web ?? null;
   return {
     parada: s.id,
     precios: s.prices === SIN_SABER ? preciosAbiertos(a) : preciosDe(s.prices),
@@ -101,10 +134,12 @@ export function entradaMirada(s: SitioEntregado, a: DatosAbiertos | undefined): 
         ? null
         : {
             haceFalta: s.booking.needed,
-            donde: s.booking.where === SIN_SABER ? null : s.booking.where,
+            // Dónde se reserva, solo si es una página que abrió: la web de los datos abiertos va aparte, como tal.
+            donde: donde !== null && abrio(donde) ? donde : null,
             fuente: fuenteDe(s.booking),
           },
-    web: s.official_site === SIN_SABER ? (a?.web ?? null) : s.official_site,
+    web,
+    webDeLosAbiertos: web !== null && !(suya !== null && abrio(suya)),
     mirado: true,
   };
 }
@@ -118,12 +153,13 @@ export function paraEnsenarEntradas(
   sinMirar: string[],
   abiertos: DatosAbiertos[],
   porQue: Readonly<Record<string, SinMirar>> = {},
+  abrio?: Abrio,
 ): DeLasEntradas {
   const deUno = (id: string): DatosAbiertos | undefined => abiertos.find((x) => x.sitio === id);
   const sitios: EntradaDeUnSitio[] = [];
   for (const e of entregas)
     for (const s of e?.sights ?? [])
-      if (!sitios.some((x) => x.parada === s.id)) sitios.push(entradaMirada(s, deUno(s.id)));
+      if (!sitios.some((x) => x.parada === s.id)) sitios.push(entradaMirada(s, deUno(s.id), abrio));
   for (const id of sinMirar)
     if (!sitios.some((s) => s.parada === id)) sitios.push(entradaAbierta(id, deUno(id), porQue[id]));
   return { sitios, falta: null };

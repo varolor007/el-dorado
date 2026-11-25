@@ -6,6 +6,7 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { enlaceSinClaves } from "../tools/enlaces.ts";
 import { runDe, type Puesto } from "./puesto.ts";
 
 /** Una búsqueda: lo que se preguntó y lo que devolvió el buscador, que no es haber abierto nada. */
@@ -22,7 +23,13 @@ export type Consultado = {
 
 export const NADA_CONSULTADO: Consultado = { busquedas: [], paginas: [], fallidas: [] };
 
-const DIRECCION = /\b(?:https?:\/\/|www\.)[^\s"'<>()[\]{}|\\^`]+/gi;
+/**
+ * Lo que un navegador lee como una dirección dentro de un texto: con su esquema, lleve las barras que lleve, hacia un
+ * lado o hacia el otro, o ninguna («https:sitio/x», «https:\\sitio\x»); o sin él, empezando por «www.».
+ */
+const DIRECCION = /(?<![\p{L}\p{N}_])(?:https?:[\\/]*|www\.)[\p{L}\p{N}][^\s"'<>()[\]{}|^`]*/giu;
+/** Una máquina que no existe, para saber si un texto puesto en un enlace llevaría a otro sitio. */
+const DE_NINGUN_SITIO = "https://ningun-sitio.invalid/";
 
 /**
  * Una dirección escrita de forma que dos maneras de escribir la misma página digan lo mismo: sin el fragmento, sin
@@ -37,7 +44,10 @@ export function direccionComparable(texto: string): string | null {
   try {
     u = new URL(t);
   } catch {
-    return null;
+    // «//sitio/x», puesto en un enlace, también lleva a otro sitio.
+    const lleva = aDondeLleva(t);
+    if (lleva === null) return null;
+    u = new URL(lleva);
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") return null;
   const sitio = u.hostname.toLowerCase().replace(/\.$/, "");
@@ -55,7 +65,8 @@ const DE_DENTRO = /(^|\.)(localhost|local|internal|lan|home|corp|svc|consul)$/;
  * sin puerto ni claves, y no de una máquina de dentro de la red donde corre la casa. Una página puede pedirle a un
  * asiento que abra lo que sea: lo de dentro no se abre.
  */
-export function paginaDeFuera(url: string): boolean {
+export function paginaDeFuera(url: unknown): url is string {
+  if (typeof url !== "string") return false;
   let u: URL;
   try {
     u = new URL(url);
@@ -90,13 +101,45 @@ export function direccionDeDentro(ip: string): boolean {
   return /^(fe[89ab]|f[cd]|ff)/.test(limpia);
 }
 
+/**
+ * Un enlace de fuera que puede ver el viajero: una página de fuera, escrita en su forma normal y sin claves dentro. Es
+ * lo que piden las puertas de las capas a cada dirección que entregan.
+ */
+export const enlaceDeFuera = (texto: unknown): texto is string => enlaceSinClaves(texto) && paginaDeFuera(texto);
+
 /** Si un texto es, él entero, una dirección de la web: así se distingue una cita de una página de una de un archivo. */
 export const esDireccion = (texto: string): boolean =>
-  /^(https?:\/\/|www\.)/i.test(texto.trim()) && direccionComparable(texto) !== null;
+  /^(https?:|www\.)/i.test(texto.trim()) && direccionComparable(texto) !== null;
 
 /** Las direcciones que hay dentro de un texto, como vienen, sin la puntuación que las cierra. */
 export function direccionesEn(texto: string): string[] {
   return (texto.match(DIRECCION) ?? []).map((d) => d.replace(/[.,;:!?'"]+$/, ""));
+}
+
+/**
+ * A dónde llevaría un texto, él entero, puesto en un enlace: a otro sitio, lo que abriría el navegador; si no lleva a
+ * ninguna parte (no es una dirección, o es un camino de la propia web), null. Un navegador quita los saltos de línea
+ * de dentro y los espacios de los lados, y lee «//sitio/x» o «\\sitio\x» como otro sitio: lo que no busca
+ * `direccionesEn`, porque en una frase no se abre, se mira así en el texto entero.
+ */
+export function aDondeLleva(texto: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(texto, DE_NINGUN_SITIO);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+  return u.origin === new URL(DE_NINGUN_SITIO).origin ? null : u.href;
+}
+
+/** Lo que en un texto lleva a una página: las direcciones de dentro y, si el texto entero lleva a otra, esa. */
+export function paginasEn(texto: string): string[] {
+  const dentro = direccionesEn(texto);
+  const entero = aDondeLleva(texto);
+  if (entero === null) return dentro;
+  const comparable = direccionComparable(entero);
+  return dentro.some((d) => direccionComparable(d) === comparable) ? dentro : [...dentro, texto];
 }
 
 /** Las páginas abiertas, escritas para compararlas: la que se pidió y, si se llegó a otra, también esa. */

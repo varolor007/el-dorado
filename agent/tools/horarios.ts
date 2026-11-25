@@ -15,8 +15,11 @@ export const LETRAS_DE_UN_HORARIO = 255;
 const DIA = "(?:Mo|Tu|We|Th|Fr|Sa|Su)";
 const TRAMO_DE_DIAS = `${DIA}(?:-${DIA})?`;
 const DIAS = new RegExp(`^${TRAMO_DE_DIAS}(?:,${TRAMO_DE_DIAS})*$`);
-const HORA = "(?:[01]\\d|2[0-4]):[0-5]\\d";
+// Las 24 solo como «24:00», el final del día: «24:30» no es ninguna hora.
+const HORA = "(?:[01]\\d|2[0-3]):[0-5]\\d|24:00";
 const TRAMO_DE_HORAS = new RegExp(`^(${HORA})-(${HORA})$`);
+/** Los festivos: no se pueden poner en el calendario. */
+const FESTIVO = "PH";
 const CERRADO = /^(?:off|closed)$/i;
 
 /** Una hora HH:MM en minutos desde las doce de la noche. */
@@ -56,9 +59,11 @@ function horasDe(texto: string): [string, string][] | null {
  * «24/7»; reglas separadas por «;» (o por «,» tras unas horas) con sus días («Mo-Fr», «Mo,We», «Sa-Mo») y sus horas
  * («10:00-18:00», «10:00-14:00,16:00-20:00»), o «off» para un día que cierra; una regla sin días vale para todos; y
  * una de después manda sobre la de antes en sus días. Los festivos («PH») no se pueden poner en el calendario: una
- * regla solo de festivos se deja, y el horario de los demás días se lee igual. Lo demás (meses, semanas, temporadas,
- * amaneceres, comentarios, «+», «||», un día con número) no se entiende: null, que no se sabe. Y un horario que
- * cierra todos los días tampoco se toma por sabido: un sitio no se quita del viaje solo por los datos abiertos.
+ * regla solo de festivos se deja, en una con más días («Su,PH off») vale para esos días, y el horario de los demás
+ * días se lee igual. Un espacio tras una coma, entre dos tramos de horas o entre dos días, no cambia nada. Lo demás
+ * (meses, semanas, temporadas, amaneceres, comentarios, «+», «||», un día con número, otros festivos) no se entiende:
+ * null, que no se sabe. Y un horario que cierra todos los días tampoco se toma por sabido: un sitio no se quita del
+ * viaje solo por los datos abiertos.
  */
 export function leerHorarioDeOsm(texto: unknown): Franja[] | null {
   if (typeof texto !== "string") return null;
@@ -68,7 +73,10 @@ export function leerHorarioDeOsm(texto: unknown): Franja[] | null {
   if (/["|+]/.test(limpio)) return null;
   // «Mo-Fr 10:00-18:00, Sa 10:00-14:00»: la coma tras unas horas y antes de unos días separa dos reglas.
   const reglas = limpio
-    .replace(new RegExp(`(\\d{2}:\\d{2})\\s*,\\s*(?=(?:${DIA}|PH)\\b)`, "g"), "$1;")
+    .replace(new RegExp(`(\\d{2}:\\d{2})\\s*,\\s*(?=(?:${DIA}|${FESTIVO})\\b)`, "g"), "$1;")
+    // «10:00-12:00, 14:00-18:00» son dos tramos de la misma regla; «Mo, We», dos días del mismo selector.
+    .replace(/(\d{2}:\d{2})\s*,\s*(?=\d{2}:\d{2})/g, "$1,")
+    .replace(new RegExp(`\\b(${DIA}|${FESTIVO})\\s*,\\s*(?=(?:${DIA}|${FESTIVO})\\b)`, "g"), "$1,")
     .split(";")
     .map((r) => r.trim())
     .filter((r) => r !== "");
@@ -80,9 +88,14 @@ export function leerHorarioDeOsm(texto: unknown): Franja[] | null {
     const partes = regla.split(" ");
     if (partes.length > 2) return null;
     const [selector, resto] = partes.length === 2 ? partes : [null, partes[0]];
-    // Solo de festivos: no cambia los días de la semana. Con más días («PH,Su off») no se entiende.
-    if (selector === "PH") continue;
-    const dias = selector === null ? [0, 1, 2, 3, 4, 5, 6] : diasDe(selector);
+    // Solo de festivos: no cambia los días de la semana. Con más días («Su,PH off»), vale para ellos.
+    const sinFestivos =
+      selector
+        ?.split(",")
+        .filter((x) => x !== FESTIVO)
+        .join(",") ?? null;
+    if (sinFestivos === "") continue;
+    const dias = sinFestivos === null ? [0, 1, 2, 3, 4, 5, 6] : diasDe(sinFestivos);
     if (dias === null) return null;
     const horas = CERRADO.test(resto) ? [] : horasDe(resto);
     if (horas === null) return null;

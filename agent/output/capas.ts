@@ -39,6 +39,7 @@ import {
   type ParteDelPresupuesto as ClaseDeParte,
 } from "../data/presupuesto.ts";
 import { pegasDelTexto } from "../gates/textos.ts";
+import { enlaceQueVale } from "../tools/enlaces.ts";
 
 export { FALTAS_DE_UNA_CAPA, PARA_QUIEN, DIAS_DE_LA_SEMANA };
 export type { FaltaDeUnaCapa, ParaQuien, DiaDeLaSemana };
@@ -142,6 +143,11 @@ export type CosaDelDestino = {
   nombre: string | null;
   punto: { lat: number; lon: number } | null;
   frase: string;
+  /**
+   * Si su frase no llega a la pantalla porque el idioma del viajero todavía no tiene sus listas de palabras: entonces
+   * `frase` va vacía, y llegan sus datos. Un viaje de antes no lo lleva.
+   */
+  sinFrase?: boolean;
   /** Lo que suele costar, de tanto a tanto: solo en las clases de comer. */
   cuesta: { desde: number; hasta: number; moneda: string } | null;
   fuente: FuenteDeUnDato;
@@ -154,7 +160,10 @@ export type DelDestino = { cosas: CosaDelDestino[]; falta: FaltaDeUnaCapa | null
 /**
  * La entrada de un sitio elegido, por el id de su parada: lo que cuesta (null, no se sabe), sus horarios (null, no se
  * sabe), si hay que reservar y dónde, y su web oficial. `mirado` es falso si solo se sabe lo que dicen los datos
- * abiertos, y `sinMirar` dice por qué (14.7); un viaje de antes no lo lleva.
+ * abiertos, y `sinMirar` dice por qué (14.7); un viaje de antes no lo lleva. Dónde se reserva es siempre una página
+ * que el asiento abrió. `webDeLosAbiertos` es falso solo si su web es una página que abrió el asiento: si no, es la
+ * que dicen los datos abiertos, que edita cualquiera, y no se enseña como la oficial ni se da al cerrar. Un viaje de
+ * antes no lo lleva, y entonces tampoco.
  */
 export type EntradaDeUnSitio = {
   parada: string;
@@ -162,6 +171,7 @@ export type EntradaDeUnSitio = {
   horarios: Horario[] | null;
   reservar: { haceFalta: boolean; donde: string | null; fuente: FuenteDeUnDato } | null;
   web: string | null;
+  webDeLosAbiertos?: boolean;
   mirado: boolean;
   sinMirar?: SinMirar | null;
 };
@@ -218,23 +228,15 @@ type Pega = { donde: string; que: string };
 
 const esFecha = (v: unknown): boolean =>
   typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
-const esHora = (v: unknown): boolean => typeof v === "string" && /^([01]\d|2[0-4]):[0-5]\d$/.test(v);
+const esHora = (v: unknown): boolean => typeof v === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
 const esMoneda = (v: unknown): boolean => typeof v === "string" && /^[A-Z]{3}$/.test(v);
 const esLista = (v: unknown): v is unknown[] => Array.isArray(v) && v.length <= LO_MAS_DE_UNA_LISTA;
 const esNombre = (v: unknown): boolean =>
   v === null || (typeof v === "string" && v.trim() !== "" && v.length <= LETRAS_DE_UN_NOMBRE && !/[\n\r]/.test(v));
 const esNumero = (v: unknown, minimo = 0): boolean => typeof v === "number" && Number.isFinite(v) && v >= minimo;
 
-/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro. */
-export function enlaceDeCapa(v: unknown): boolean {
-  if (typeof v !== "string") return false;
-  try {
-    const u = new URL(v);
-    return u.protocol === "https:" && u.username === "" && u.password === "";
-  } catch {
-    return false;
-  }
-}
+/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro, escrita en su forma normal. */
+export const enlaceDeCapa = (v: unknown): boolean => enlaceQueVale(v);
 
 function pegasDeLaFuente(f: unknown, donde: string, pegas: Pega[]): void {
   const x = f as FuenteDeUnDato | null;
@@ -373,7 +375,11 @@ export function pegasDelDestino(d: DelDestino, zonas: readonly string[] | null =
       !(esNumero(Math.abs(x.punto?.lat)) && Math.abs(x.punto.lat) <= 90 && Math.abs(x.punto.lon) <= 180)
     )
       pegas.push({ donde, que: "su sitio no está en el mapa" });
-    if (typeof x.frase !== "string" || x.frase.trim() === "" || x.frase.length > LETRAS_DE_UNA_COSA)
+    if (x.sinFrase !== undefined && typeof x.sinFrase !== "boolean")
+      pegas.push({ donde, que: "no dice si su frase llega" });
+    if (x.sinFrase === true) {
+      if (x.frase !== "") pegas.push({ donde, que: "su frase no llega en este idioma, y aun así la lleva" });
+    } else if (typeof x.frase !== "string" || x.frase.trim() === "" || x.frase.length > LETRAS_DE_UNA_COSA)
       pegas.push({ donde, que: `no es una frase de hasta ${LETRAS_DE_UNA_COSA} letras` });
     else
       for (const p of pegasDelTexto(x.frase, { sinNumerosLargos: true })) pegas.push({ donde, que: `su frase ${p}` });
@@ -417,6 +423,8 @@ export function pegasDeLasEntradas(e: DeLasEntradas, paradas: readonly string[])
       pegasDeLaFuente(x.reservar?.fuente, `${donde}.reservar`, pegas);
     }
     if (x.web !== null && !enlaceDeCapa(x.web)) pegas.push({ donde, que: "su web no es una dirección https" });
+    if (x.webDeLosAbiertos !== undefined && typeof x.webDeLosAbiertos !== "boolean")
+      pegas.push({ donde, que: "no dice si su web es la de los datos abiertos" });
     if (typeof x.mirado !== "boolean") pegas.push({ donde, que: "no dice si se miró" });
     if (x.sinMirar != null && (x.mirado || !SIN_MIRAR.includes(x.sinMirar)))
       pegas.push({ donde, que: "su porqué de no mirarse no es de la lista, o sí se miró" });
