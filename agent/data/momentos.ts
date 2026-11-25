@@ -176,6 +176,14 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   tickets: { pasos: ["tickets"], quizas: [] },
 };
 
+/**
+ * Los pasos que pueden decir en sus frases cifras del presupuesto entero (14.7): el que cruza y el que explica. No lo
+ * leen para decidir (no está en su `LEE`), pero lo tienen delante y su puerta mira esas cifras con él. Si un cambio
+ * rehace el presupuesto y los conserva, lo que dijeron se vuelve a pasar por su puerta con la cuenta nueva, y el que
+ * no pasa se rehace: por eso el impacto los pone entre los que quizá se rehacen (`maybe`), y cuenta lo que costarían.
+ */
+export const DICEN_EL_PRESUPUESTO: readonly IdDePaso[] = ["cross", "explain"];
+
 /** Las piezas del viaje que salen de cada paso: si el paso se rehace, se quedan por rehacer. */
 export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {
   understood: [],

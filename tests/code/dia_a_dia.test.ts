@@ -188,7 +188,8 @@ test("lo más que puede costar vale para cualquier impacto con algo que quizá h
   assert.equal(transporte.cost.usd, 0.3);
   assert.deepEqual(transporte.most, { usd: 0.6, unknown: [] });
   // Sin nada de IA en lo que quizá haya que rehacer, no hay un segundo coste que decir.
-  assert.equal(impactoDe(["pace"]).most, undefined);
+  // Otro ritmo rehace el presupuesto y conserva al que cruza y al que explica: quizá se rehacen (14.7), y se cuenta.
+  assert.deepEqual(impactoDe(["pace"], estimado).most, { usd: 0.2, unknown: [] });
   assert.equal(impactoDe(["lodging"]).most, undefined);
 });
 
