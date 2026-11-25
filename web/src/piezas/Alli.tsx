@@ -29,6 +29,7 @@ import {
   billeteSuelto,
   grupoDelViaje,
   loQueTeConviene,
+  paraLlegar,
   paraTuGrupo,
   porPersona,
   sitioDe,
@@ -95,12 +96,33 @@ export function dichoDelGrupo(t: Textos, idioma: string, g: ParaTuGrupo | null):
 }
 
 /** Lo que cuesta, para el grupo y, si sois más de uno, por adulto. */
-function dichoDelPrecio(t: Textos, idioma: string, precios: PrecioDeCapa[] | null, grupo: Grupo): string {
-  const g = paraTuGrupo(precios, grupo);
+function dichoDelPrecio(
+  t: Textos,
+  idioma: string,
+  precios: PrecioDeCapa[] | null,
+  grupo: Grupo,
+  g: ParaTuGrupo | null = paraTuGrupo(precios, grupo),
+): string {
   const uno = porPersona(precios, grupo.moneda);
   const dicho = dichoDelGrupo(t, idioma, g);
   if (g === null || g.cuantos === 1 || uno === null || uno.cuanto === "free" || uno.para !== "adult") return dicho;
   return `${dicho} (${t.alli.porAdulto(importe(uno.cuanto, idioma))})`;
+}
+
+/**
+ * Lo que cuesta una manera de llegar, con la cuenta del presupuesto: un taxi, por coche, diciendo que es por coche y
+ * cuántos hacen falta; lo demás, por persona, para el grupo.
+ */
+function dichoDeLlegar(t: Textos, idioma: string, x: Parameters<typeof paraLlegar>[0], grupo: Grupo): string {
+  const c = paraLlegar(x, grupo);
+  if (c.se === "por_persona") return dichoDelPrecio(t, idioma, x.precios, grupo, c.grupo);
+  if (c.precio === null || c.grupo === null) return t.alli.sinPrecio;
+  if (c.precio.cuanto === "free") return t.alli.gratis;
+  const cuantos = grupo.adultos + grupo.ninos.length;
+  const uno = importe(c.precio.cuanto, idioma);
+  return c.coches === 1 || c.grupo.importes.length !== 1
+    ? t.alli.porCoche(uno, cuantos)
+    : t.alli.enCoches(importe(c.grupo.importes[0], idioma), c.coches, uno, cuantos);
 }
 
 /** Cada precio de la página, para quién es y cuánto. */
@@ -185,7 +207,7 @@ function Moverse({
                 </span>
                 <b>{modo(x.modo)}</b>
                 {datos.length > 0 && <span className="dato">{datos.join(", ")}</span>}
-                <span className="alli__precio">{dichoDelPrecio(t, idioma, x.precios, grupo)}</span>
+                <span className="alli__precio">{dichoDeLlegar(t, idioma, x, grupo)}</span>
                 <Fuente t={t} idioma={idioma} f={x.fuente} />
               </li>
             );

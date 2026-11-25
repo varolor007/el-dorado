@@ -20,7 +20,9 @@ import {
   conOtrosDias,
   cuentaDeMoverseDelViaje,
   elDeUnAdulto,
+  loQueCuestaLlegar,
   presupuestoDe,
+  type LoQueCuestaLlegar,
 } from "../../../agent/scripts/presupuesto.ts";
 
 /** Quiénes viajan y en qué moneda va el viaje: con ella se elige el precio que conviene, como en el presupuesto. */
@@ -53,6 +55,15 @@ export function paraTuGrupo(precios: PrecioDeCapa[] | null, grupo: GrupoDelViaje
 /** Lo que cuesta para una persona adulta, si la página lo dice: el mismo precio que le pone el presupuesto. */
 export function porPersona(precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null {
   return elDeUnAdulto(precios, moneda);
+}
+
+/**
+ * Lo que cuesta una manera de llegar de donde aterrizas, para tu grupo: la cuenta del presupuesto
+ * (`loQueCuestaLlegar`), que paga un taxi por coche y lo demás por persona. Lo que dice la lista de llegar de «Allí»
+ * es lo que suma «de donde aterrizas a donde duermes» en las cuentas, por cada vez.
+ */
+export function paraLlegar(x: Pick<ManeraDeLlegar, "modo" | "precios">, grupo: GrupoDelViaje): LoQueCuestaLlegar {
+  return loQueCuestaLlegar(x, { adultos: grupo.adultos, ninos: grupo.ninos }, grupo.moneda);
 }
 
 /** Un día del viaje y lo que se sabe de si abre: sí, con sus horas; no; o no se sabe. */

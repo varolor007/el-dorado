@@ -425,6 +425,11 @@ const en = {
     gratis: "Free",
     gratisGrupo: (cuantos: number) => (cuantos === 1 ? "Free" : `Free for the ${EN.cifra(cuantos)} of you`),
     porAdulto: (dinero: string) => `${dinero} per adult`,
+    // Un taxi se paga por coche: cuatro caben en uno (la cuenta del presupuesto).
+    porCoche: (dinero: string, cuantos: number) =>
+      cuantos <= 1 ? `${dinero} per car` : `${dinero} per car, one car for the ${EN.cifra(cuantos)} of you`,
+    enCoches: (total: string, coches: number, uno: string, cuantos: number) =>
+      `${total} for the ${EN.cifra(cuantos)} of you: ${EN.cifra(coches)} cars at ${uno} per car`,
     faltanDeVosotros: (n: number, cuantos: number) =>
       cuantos === 1 ? "Not known for you" : `not known for ${EN.cifra(n)} of you`,
     sinPrecio: "Price not known",
@@ -1840,6 +1845,10 @@ const es: Textos = {
     gratis: "Gratis",
     gratisGrupo: (cuantos) => (cuantos === 1 ? "Gratis" : `Gratis para los ${ES.cifra(cuantos)}`),
     porAdulto: (dinero) => `${dinero} por adulto`,
+    porCoche: (dinero, cuantos) =>
+      cuantos <= 1 ? `${dinero} por coche` : `${dinero} por coche, un coche para los ${ES.cifra(cuantos)}`,
+    enCoches: (total, coches, uno, cuantos) =>
+      `${total} para los ${ES.cifra(cuantos)}: ${ES.cifra(coches)} coches a ${uno} por coche`,
     faltanDeVosotros: (n, cuantos) =>
       cuantos === 1 ? "No se sabe para ti" : `sin saber para ${ES.cifra(n)} de vosotros`,
     sinPrecio: "Precio sin saber",

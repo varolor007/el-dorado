@@ -31,6 +31,7 @@ import {
   billeteSuelto,
   grupoDelViaje,
   loQueTeConviene,
+  paraLlegar,
   paraTuGrupo,
   porPersona,
   presupuestoQueSeEnsena,
@@ -226,6 +227,41 @@ test("una sola cuenta: la tarjeta, la ficha y las cuentas dicen lo mismo de las 
     assert.equal(tickets.total, suma);
     assert.equal(tickets.faltan, faltan);
   }
+});
+
+test("una sola cuenta de llegar: un taxi, por coche en «Allí» y en las cuentas; lo demás, por persona", () => {
+  const v = viajeConCapas();
+  const bus = v.moverse!.llegar[0];
+  const taxi = {
+    ...bus,
+    modo: "taxi" as const,
+    precios: [{ ...bus.precios![0], para: "any" as const, cuanto: { importe: 50, moneda: "EUR" } }],
+  };
+  for (const [adultos, ninos, coches] of [
+    [4, [], 1],
+    [2, [8, 10], 1],
+    [4, [6], 2],
+  ] as const) {
+    const w: Viaje = { ...v, adultos, ninos: [...ninos], moverse: { ...v.moverse!, llegar: [taxi] } };
+    const c = paraLlegar(taxi, grupoDelViaje(w));
+    // La trampa: un taxi de 50 para cuatro no son 200. Es por coche, en la web y en la cuenta.
+    assert.equal(c.se, "por_coche");
+    assert.deepEqual(c.se === "por_coche" ? [c.coches, c.grupo?.importes] : null, [
+      coches,
+      [{ importe: 50 * coches, moneda: "EUR" }],
+    ]);
+    const p = presupuestoDe(w, { moverse: w.moverse, entradas: w.entradas }, { zonas: w.zonasDeLaRuta });
+    const veces = w.transportes[0].vuelve === null ? 1 : 2;
+    for (const m of p.maneras) assert.equal(m.partes.find((x) => x.parte === "arrival")!.total, 50 * coches * veces);
+  }
+  // Se dice que es por coche, y cuántos hacen falta.
+  for (const idioma of IDIOMAS) {
+    assert.match(TEXTOS[idioma].alli.porCoche("50 €", 4), idioma === "es" ? /por coche/ : /per car/);
+    assert.match(TEXTOS[idioma].alli.enCoches("100 €", 2, "50 €", 5), /100 €.*2|two|dos/);
+  }
+  // El autobús, por persona: lo de cada uno, sumado, como en la cuenta.
+  const g = paraLlegar(bus, grupoDelViaje({ ...v, adultos: 4 }));
+  assert.deepEqual(g.se === "por_persona" ? g.grupo?.importes : null, [{ importe: 12, moneda: "EUR" }]);
 });
 
 test("una sola cuenta de los tramos: los que la web dice que no se andan son los que paga moverte allí", () => {
