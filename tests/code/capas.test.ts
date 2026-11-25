@@ -66,9 +66,9 @@ test("la investigación inventada, entera, con las tres capas de mentira: cada u
 
     const v = leerJson(join(run, "viaje.json")) as Viaje;
     assert.deepEqual(comprobarViaje(v), []);
-    // Cómo moverse: una manera de llegar a una zona de la ruta, un billete suelto y dos abonos, con su página.
+    // Cómo moverse: una manera de llegar a cada zona de la ruta, un billete suelto y dos abonos, con su página.
     assert.equal(v.moverse?.falta, null);
-    assert.equal(v.moverse?.llegar.length, 1);
+    assert.equal(v.moverse?.llegar.length, v.zonasDeLaRuta?.length);
     assert.deepEqual(
       v.moverse?.billetes.map((b) => [b.clase, b.dias]),
       [

@@ -51,7 +51,7 @@ test("sin investigaciones no hay gasto, y lo siguiente no se dice con una cifra"
   conMesa((mesa) => {
     assert.deepEqual(gastoDeLaCuenta("ana", mesa), {
       viajes: [],
-      total: { usd: 0, llamadas: 0, sabido: true },
+      total: { usd: 0, llamadas: 0, sabido: true, deCortados: 0 },
       siguiente: null,
     });
     // Un viaje abierto que aún no se ha investigado no ha gastado: no sale.

@@ -34,6 +34,14 @@ export const PLAZAS_DE_UN_COCHE = 4;
 export const PRECIOS_QUE_NO_SE_PONEN = ["student", "family", "group", "senior"] as const;
 
 /**
+ * Qué precio se coge si a una persona le valen varios, de partida (es del PM, y está apuntado): en las entradas y en
+ * llegar a donde se duerme, el más barato (lo gratis, antes); en los billetes de moverse allí, el más caro (con tarjeta
+ * o en papel), para que la cuenta no se quede corta. Lo leen las dos cuentas (`elQueSeCoge`): cambiarlo es esta línea.
+ */
+export const SI_VALEN_VARIOS = { entradas: "cheapest", llegar: "cheapest", billetes: "dearest" } as const;
+export type CualSeCoge = (typeof SI_VALEN_VARIOS)[keyof typeof SI_VALEN_VARIOS];
+
+/**
  * Las palabras con que un texto habla del presupuesto entero, en los idiomas en que se escribe hoy. Una frase del que
  * cruza o del que explica que las dice no puede traer una cifra de dinero que no sea la de la cuenta (las puertas 6 y
  * 7): el total de una manera es dormir y llegar, no el viaje entero.

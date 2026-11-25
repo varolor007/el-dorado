@@ -13,6 +13,7 @@ import type {
   Presupuesto,
 } from "../../../agent/output/capas.ts";
 import type { Dia, Manera, Viaje } from "../../../agent/output/viaje.ts";
+import { COMIDAS_AL_DIA } from "../../../agent/data/presupuesto.ts";
 import { sueltoDelGrupo } from "../../../agent/scripts/capa_moverse.ts";
 import { abreElDia, diaDeLaSemana } from "../../../agent/scripts/capas.ts";
 import {
@@ -20,7 +21,9 @@ import {
   conOtrosDias,
   cuentaDeMoverseDelViaje,
   elDeUnAdulto,
+  loQueCuestaLlegar,
   presupuestoDe,
+  type LoQueCuestaLlegar,
 } from "../../../agent/scripts/presupuesto.ts";
 
 /** Quiénes viajan y en qué moneda va el viaje: con ella se elige el precio que conviene, como en el presupuesto. */
@@ -53,6 +56,15 @@ export function paraTuGrupo(precios: PrecioDeCapa[] | null, grupo: GrupoDelViaje
 /** Lo que cuesta para una persona adulta, si la página lo dice: el mismo precio que le pone el presupuesto. */
 export function porPersona(precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null {
   return elDeUnAdulto(precios, moneda);
+}
+
+/**
+ * Lo que cuesta una manera de llegar de donde aterrizas, para tu grupo: la cuenta del presupuesto
+ * (`loQueCuestaLlegar`), que paga un taxi por coche y lo demás por persona. Lo que dice la lista de llegar de «Allí»
+ * es lo que suma «de donde aterrizas a donde duermes» en las cuentas, por cada vez.
+ */
+export function paraLlegar(x: Pick<ManeraDeLlegar, "modo" | "precios">, grupo: GrupoDelViaje): LoQueCuestaLlegar {
+  return loQueCuestaLlegar(x, { adultos: grupo.adultos, ninos: grupo.ninos }, grupo.moneda);
 }
 
 /** Un día del viaje y lo que se sabe de si abre: sí, con sus horas; no; o no se sabe. */
@@ -163,4 +175,37 @@ export function presupuestoQueSeEnsena(
  */
 export function loQueTeConviene(viaje: Viaje, manera: Manera | undefined, dias: Dia[]) {
   return cuentaDeMoverseDelViaje({ ...viaje, dias }, manera);
+}
+
+/** Una horquilla de dinero: de cuánto a cuánto. */
+export type Horquilla = { desde: number; hasta: number };
+
+/**
+ * Las comidas del presupuesto, como se enseñan: es una cuenta, por día y por persona (tantas comidas de pago al día, a
+ * lo que suele costar una allí, que es lo que dice la página); y, si sois más de uno o hay días, para el grupo en el
+ * viaje, dicho como tal. Null si no se sabe.
+ */
+export function comidasQueSeEnsenan(
+  c: Presupuesto["comidas"],
+  dias: number,
+  personas: number,
+): {
+  alDia: number;
+  una: Horquilla;
+  porPersona: Horquilla;
+  delViaje: Horquilla | null;
+  moneda: string;
+  fuentes: NonNullable<Presupuesto["comidas"]>["fuentes"];
+} | null {
+  if (c === null) return null;
+  const redondo = (n: number): number => Math.round(n * 100) / 100;
+  const veces = Math.max(0, dias) * Math.max(1, personas);
+  return {
+    alDia: COMIDAS_AL_DIA,
+    una: { desde: redondo(c.desde / COMIDAS_AL_DIA), hasta: redondo(c.hasta / COMIDAS_AL_DIA) },
+    porPersona: { desde: c.desde, hasta: c.hasta },
+    delViaje: veces === 0 ? null : { desde: redondo(c.desde * veces), hasta: redondo(c.hasta * veces) },
+    moneda: c.moneda,
+    fuentes: c.fuentes,
+  };
 }

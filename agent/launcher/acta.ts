@@ -50,6 +50,8 @@ export type TrabajoDelActa = {
   /** Lo que gastó, en dólares; null si no se sabe. */
   usd: number | null;
   turnos: number | null;
+  /** Si lo gastado es de un asiento cortado: lo contado hasta el corte (14.7). */
+  cortado: boolean;
   /** Por qué no acabó bien, si no acabó bien. Es para quien lleva el run. */
   fallo: string | null;
   /** Cómo le fue en sus puertas: null si no hay veredicto (no entregó, o aún no se ha recogido). */
@@ -118,8 +120,10 @@ export type Acta = {
     usd: number;
     turnos: number;
     trabajos: number;
-    /** Falso si de algún trabajo acabado no se sabe lo que gastó. */
+    /** Falso si de algún trabajo acabado no se sabe lo que gastó, o de uno cortado solo hasta el corte. */
     sabido: boolean;
+    /** Lo que, de `usd`, es de asientos cortados: lo contado hasta el corte (14.7). */
+    de_cortados: number;
   };
   /** Lo que se fue en vueltas repetidas: los trabajos de la segunda vuelta en adelante. */
   repetido: { ms: number; usd: number; trabajos: number };
@@ -272,6 +276,7 @@ export function actaDe(run: string): Acta {
       ms: ms(t.desde, t.hasta),
       usd: t.gasto?.usd ?? null,
       turnos: t.gasto?.turnos ?? null,
+      cortado: t.gasto?.cortado === true,
       fallo: t.fallo,
       puertas: v === null ? null : v.verde ? "green" : "red",
     };
@@ -312,6 +317,7 @@ export function actaDe(run: string): Acta {
       turnos: gasto.turnos,
       trabajos: trabajos.length,
       sabido: gasto.sabido,
+      de_cortados: gasto.deCortados,
     },
     repetido: suma(deLosDemas.filter((t) => t.vuelta > 1)),
     del_conductor: suma(delConductorSolo),
@@ -334,7 +340,7 @@ export function escribirActa(run: string): Acta {
  */
 export type ActaDeCara = {
   pasos: Acta["pasos"];
-  trabajos: Pick<TrabajoDelActa, "paso" | "vuelta" | "estado" | "ms" | "usd" | "turnos" | "puertas">[];
+  trabajos: Pick<TrabajoDelActa, "paso" | "vuelta" | "estado" | "ms" | "usd" | "turnos" | "cortado" | "puertas">[];
   vueltas_en_rojo: { paso: string; vuelta: number; rojos: number }[];
   parada: { en: string | null; clase: ClaseDeParada } | null;
   conductor: Pick<DelConductor, "estado" | "decision" | "kind" | "options"> | null;
@@ -358,6 +364,7 @@ export function actaDeCara(acta: Acta): ActaDeCara {
       ms: t.ms,
       usd: t.usd,
       turnos: t.turnos,
+      cortado: t.cortado,
       puertas: t.puertas,
     })),
     vueltas_en_rojo: acta.vueltas_en_rojo.map((v) => ({ paso: v.paso, vuelta: v.vuelta, rojos: v.rojos.length })),

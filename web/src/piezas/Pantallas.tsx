@@ -934,6 +934,7 @@ function Cuentas(x: DeViaje) {
         idioma={idioma}
         manera={marcada?.id ?? ""}
         dias={x.reparto.dias.length}
+        personas={viaje.adultos + viaje.ninos.length}
         {...presupuestoQueSeEnsena(viaje, x.reparto.dias, tusCambios(x, viaje, marcada))}
       />
       {viaje.palancas.length > 0 && (
