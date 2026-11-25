@@ -15,6 +15,7 @@ import {
   carpetaDeLaPregunta,
   conTusGustos,
   gastoDeUnaMirada,
+  clasesDelPedido,
   impactoDelAlojamiento,
   llevarLaPregunta,
   pedirPregunta,
@@ -40,8 +41,10 @@ import {
   comprobarPedido,
   conTuAlojamiento,
   gustosConLosTuyos,
+  imprescindiblesDeLaFuente,
   MARCADO,
   PedidoQueNoVale,
+  pideBuscarConLosGustos,
   type PedidoDeAlojamiento,
 } from "../../agent/scripts/alojamiento.ts";
 import type { Busqueda } from "../../agent/scripts/busqueda_alojamiento.ts";
@@ -299,6 +302,34 @@ test("lo que cuesta, antes: una mirada por cada nuevo que cabe, no una investiga
   assert.equal(gustos.looks.at_most, 0);
 });
 
+test("un imprescindible que la fuente declara, puesto o quitado, busca otra vez; un gusto de la tabla, no", () => {
+  const estimado = {
+    "lodging-viewer": { usd: 0.75, de: 1 },
+    "trip-crosser": { usd: 0.05, de: 1 },
+    "trip-explainer": { usd: 0.1, de: 1 },
+  };
+  const dePartida = [{ thing: "views", weight: "like" as const }];
+  // La trampa de la revisión: «piscina, imprescindible» solo rehacía la tabla, y la búsqueda la lee.
+  const conPiscina = { ...NADA, tastes: [{ thing: "pool", weight: "must" as const }] };
+  assert.deepEqual(imprescindiblesDeLaFuente(conPiscina.tastes), ["pool"]);
+  assert.equal(pideBuscarConLosGustos(conPiscina, dePartida), true);
+  assert.deepEqual(clasesDelPedido(conPiscina, dePartida), ["lodging"]);
+  const impacto = impactoDelAlojamiento(conPiscina, estimado, 0.15, dePartida);
+  assert.ok(impacto.impact.redo.some((x) => x.step === "search"));
+  assert.ok(impacto.impact.redo.some((x) => x.step === "look"));
+  assert.deepEqual(impacto.looks, { at_most: NUEVOS_QUE_SE_MIRAN, each_usd: 0.15 });
+  assert.ok((impacto.impact.cost.usd ?? 0) > 0, "dice antes lo que cuesta");
+  // Quitarla también busca: los que no la tienen no habían entrado.
+  const sinPiscina = { ...NADA, tastes: [{ thing: "pool", weight: "like" as const }] };
+  assert.equal(pideBuscarConLosGustos(sinPiscina, [{ thing: "pool", weight: "must" }]), true);
+  // La misma piscina imprescindible, o un gusto que la fuente no declara: solo la tabla.
+  assert.equal(pideBuscarConLosGustos(conPiscina, [{ thing: "pool", weight: "must" }]), false);
+  const vistas = { ...NADA, tastes: [{ thing: "views", weight: "must" as const }] };
+  assert.equal(pideBuscarConLosGustos(vistas, dePartida), false);
+  assert.deepEqual(clasesDelPedido(vistas, dePartida), ["lodging_taste"]);
+  assert.equal(impactoDelAlojamiento(vistas, estimado, 0.15, dePartida).looks.at_most, 0);
+});
+
 // ---------- tu elección, hasta el cierre
 
 test("tu elección: otro alojamiento de los que hay, guardado sin versión nueva; el cierre cierra con él", async () => {
@@ -511,6 +542,13 @@ test("la puerta: tus gustos, lo que costaría, otra búsqueda y una pregunta, so
     assert.equal(imp.estado, 200);
     assert.equal(imp.cuerpo.looks.at_most, NUEVOS_QUE_SE_MIRAN);
     assert.equal(imp.cuerpo.impact.spends, true);
+    // Quitar el gimnasio imprescindible cambia lo que se le pide a la fuente: busca otra vez, y lo dice antes.
+    const sinGym = { search: { tastes: [{ thing: "gym", weight: "like" }] } };
+    const otraBusqueda = await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, sinGym);
+    assert.equal(otraBusqueda.cuerpo.looks.at_most, NUEVOS_QUE_SE_MIRAN);
+    assert.ok(otraBusqueda.cuerpo.impact.redo.some((x: { step: string }) => x.step === "search"));
+    const soloVistas = { search: { tastes: [{ thing: "views", weight: "must" }] } };
+    assert.equal((await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, soloVistas)).cuerpo.looks.at_most, 0);
     const mal = await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, { search: { zone: { lat: 0 } } });
     assert.deepEqual([mal.estado, mal.cuerpo.error, mal.cuerpo.field], [400, "bad_search", "zone"]);
     assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);

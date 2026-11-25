@@ -30,7 +30,12 @@ import { quienResponde } from "../data/responde.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { pegasDeLaPregunta, puertaRespuesta, type EntregaDeLaRespuesta } from "../gates/puerta_respuesta.ts";
 import type { Viaje } from "../output/viaje.ts";
-import { gustosConLosTuyos, pideBuscar, type GustoMarcado, type PedidoDeAlojamiento } from "../scripts/alojamiento.ts";
+import {
+  gustosConLosTuyos,
+  pideBuscarConLosGustos,
+  type GustoMarcado,
+  type PedidoDeAlojamiento,
+} from "../scripts/alojamiento.ts";
 import type { Busqueda, ZonaDeBusqueda } from "../scripts/busqueda_alojamiento.ts";
 import { cribar, imprescindiblesSinSaber, type Descarte } from "../scripts/cribas.ts";
 import type { Entendido, EntregaDeMirar } from "../scripts/formas.ts";
@@ -241,16 +246,26 @@ export function gastoDeUnaMirada(dueno: string, mesa: string): number | null {
 export type ImpactoDelAlojamiento = { impact: Impacto; looks: { at_most: number; each_usd: number | null } };
 
 /**
+ * Las clases de cambio de lo pedido desde la ficha: buscar otra vez (`lodging`) si pide otra zona, otros mínimos u
+ * otro tope, o si sus gustos cambian un imprescindible que la búsqueda le pide a la fuente; si no, solo la tabla.
+ * `dePartida` son tus gustos de la versión de la que se parte.
+ */
+export const clasesDelPedido = (p: PedidoDeAlojamiento, dePartida: GustoMarcado[]): ClaseDeCambio[] =>
+  pideBuscarConLosGustos(p, dePartida) ? ["lodging"] : ["lodging_taste"];
+
+/**
  * Lo que dejaría de valer y lo que costaría lo pedido: buscar otra vez (la búsqueda, mirar a los nuevos, el que cruza
- * y el que explica) o, si solo cambian tus gustos, cruzar y explicar otra vez. Lo que costaría mirar no es lo de una
- * investigación entera: es lo de una mirada por cada candidato nuevo, como mucho los que caben.
+ * y el que explica) o, si solo cambian tus gustos y no lo que se busca, cruzar y explicar otra vez. Lo que costaría
+ * mirar no es lo de una investigación entera: es lo de una mirada por cada candidato nuevo, como mucho los que caben.
  */
 export function impactoDelAlojamiento(
   p: PedidoDeAlojamiento,
   estimado: EstimadoPorAsiento,
   porMirada: number | null,
+  dePartida: GustoMarcado[] = [],
 ): ImpactoDelAlojamiento {
-  const clases: ClaseDeCambio[] = pideBuscar(p) ? ["lodging"] : ["lodging_taste"];
+  const clases = clasesDelPedido(p, dePartida);
+  const busca = clases.includes("lodging");
   const conMiradas: EstimadoPorAsiento = { ...estimado };
   delete conMiradas[ASIENTO];
   if (porMirada !== null)
@@ -260,7 +275,7 @@ export function impactoDelAlojamiento(
     };
   return {
     impact: impactoDe(clases, conMiradas),
-    looks: { at_most: pideBuscar(p) ? NUEVOS_QUE_SE_MIRAN : 0, each_usd: porMirada },
+    looks: { at_most: busca ? NUEVOS_QUE_SE_MIRAN : 0, each_usd: porMirada },
   };
 }
 

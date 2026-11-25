@@ -125,8 +125,9 @@ import {
 } from "./mesa.ts";
 import type { Viaje } from "../output/viaje.ts";
 import { CAMBIOS_DE_ALOJAMIENTO, PREGUNTA } from "../data/alojamiento.ts";
-import { comprobarGustos, comprobarPedido, pideBuscar, PedidoQueNoVale } from "../scripts/alojamiento.ts";
+import { comprobarGustos, comprobarPedido, PedidoQueNoVale } from "../scripts/alojamiento.ts";
 import {
+  clasesDelPedido,
   conTusGustos,
   DEL_ALOJAMIENTO,
   FalloDeLaPregunta,
@@ -1007,7 +1008,12 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       const v = suViaje(p);
       const { pedido } = elPedidoDelAlojamiento(v, p.cuerpo);
-      const hecho = impactoDelAlojamiento(pedido, gastoPorAsiento(p.dueno, o.mesa), gastoDeUnaMirada(p.dueno, o.mesa));
+      const hecho = impactoDelAlojamiento(
+        pedido,
+        gastoPorAsiento(p.dueno, o.mesa),
+        gastoDeUnaMirada(p.dueno, o.mesa),
+        tusGustosDePartida(v),
+      );
       return { estado: 200, cuerpo: hecho };
     }
     if (cual === "pregunta") {
@@ -1060,10 +1066,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
     if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    const clases = clasesDelPedido(pedido, tusGustosDePartida(v));
     let hecho: ReturnType<typeof rehacer>;
     try {
       hecho = rehacer(v, {
-        clases: pideBuscar(pedido) ? ["lodging"] : ["lodging_taste"],
+        clases,
         pedido: { [DEL_ALOJAMIENTO]: pedido },
         cuando: hoy(),
       });
@@ -1075,7 +1082,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     // El cierre que esperaba tu sí era de la versión de antes: queda abandonado, y ya no se sigue.
     abandonarElCierre(v);
     darElAdelante(hecho.run, techo, hoy());
-    apuntar(v, "lodging_change", { run: hecho.n, busca: pideBuscar(pedido) }, hoy());
+    apuntar(v, "lodging_change", { run: hecho.n, busca: clases.includes("lodging") }, hoy());
     apuntar(v, "button", { boton: "lodging", run: hecho.n, techo }, hoy());
     const lanzador =
       conQue === "house"

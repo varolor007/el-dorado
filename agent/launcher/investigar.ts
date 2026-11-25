@@ -22,8 +22,6 @@ import {
 } from "../data/cribas.ts";
 import { DEMASIADO_LEJOS } from "../data/dias.ts";
 import { PARADO } from "../data/pasos.ts";
-import { COSAS } from "../data/gustos.ts";
-import { INSTALACIONES } from "../data/niveles.ts";
 import { DIAS_QUE_SE_MUEVEN, NOCHES_QUE_SE_MUEVEN, PALANCAS, RONDAS } from "../data/palancas.ts";
 import { puertaBusqueda, type Rojo } from "../gates/puerta_busqueda.ts";
 import { puertaCalendario } from "../gates/puerta_calendario.ts";
@@ -33,6 +31,7 @@ import { puertaDias, puertaSitios } from "../gates/puerta_dias.ts";
 import { puertaExplica } from "../gates/puerta_explica.ts";
 import { puertaRuta } from "../gates/puerta_ruta.ts";
 import { comprobarSucesos, comprobarViaje, type Foto, type Parada } from "../output/viaje.ts";
+import { imprescindiblesDeLaFuente } from "../scripts/alojamiento.ts";
 import { anadirOfertas, buscarDondeHaya, type Busqueda } from "../scripts/busqueda_alojamiento.ts";
 import { cuantosSitios, paradasDe } from "../scripts/dias.ts";
 import { fechasParaExplicar, paraExplicar } from "../scripts/explica.ts";
@@ -344,9 +343,7 @@ async function buscar(run: string, viaje: Entendido, f: Fuentes): Promise<Rojo[]
     radio: z.radius_m,
   }));
   // Lo que el viajero marcó como imprescindible y la fuente puede declarar: el gimnasio, la piscina.
-  const imprescindibles = viaje.tastes
-    .filter((g) => g.weight === "must" && COSAS[g.thing] !== undefined && COSAS[g.thing].campo in INSTALACIONES)
-    .map((g) => COSAS[g.thing].campo);
+  const imprescindibles = imprescindiblesDeLaFuente(viaje.tastes);
   const comoBuscar = {
     minimos: ESCALERA_DE_MINIMOS,
     bastan: CANDIDATOS_QUE_BASTAN,
