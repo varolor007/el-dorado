@@ -784,6 +784,35 @@ const en = {
   },
   foto: (autor: string, licencia: string) => `Photo: ${autor}, ${licencia}`,
   ia: "Made with AI: it can be wrong. Prices are indicative and carry the date they were seen.",
+  // Tu guía (12.2): el cuaderno de un viaje cerrado, que se pide, se ve y se descarga.
+  guia: {
+    titulo: "Your guide",
+    sub: "Your trip in a notebook to carry: each day with its sketch and its stops, where you sleep, your papers and where to book.",
+    abrir: "Your guide",
+    abrirTexto: "Your trip, in a notebook to carry",
+    noCerrado: "Your guide opens once your trip is closed.",
+    volver: "Back to your trip",
+    manera: "Which way you are doing it",
+    pedir: "Get my guide",
+    otraVez: "Make it again",
+    gasta: "It is written by AI, with your account: one call.",
+    escribiendo: "Writing your guide. It takes a few minutes; you can leave and come back.",
+    parada: "Your guide could not be made. You can ask for it again.",
+    atras: "Your trip has changed since this guide was made: make it again to have it up to date.",
+    hecha: (fecha: string, version: number) => `Made on ${fecha}, from version ${version} of your trip.`,
+    imprimir: "Print or save as PDF",
+    descargar: "Download",
+    marco: "Your guide, as it is printed",
+    entra: "Sign in to see your guide.",
+    fallo: (clave: string): string =>
+      ({
+        not_closed: "Your guide opens once your trip is closed.",
+        which_way: "Choose which way you are doing it.",
+        already_running: "Your guide is already being written.",
+        no_key: "Put your AI key first.",
+        no_ai: "There is no AI to write it right now.",
+      })[clave] ?? "Something went wrong. Try again in a moment.",
+  },
 };
 
 type Textos = typeof en;
@@ -1480,6 +1509,34 @@ const es: Textos = {
   },
   foto: (autor, licencia) => `Foto: ${autor}, ${licencia}`,
   ia: "Hecho con IA: puede tener errores. Los precios son orientativos y llevan la fecha en que se vieron.",
+  guia: {
+    titulo: "Tu guía",
+    sub: "Tu viaje en un cuaderno para llevar: cada día con su croquis y sus paradas, dónde duermes, tus papeles y dónde se reserva.",
+    abrir: "Tu guía",
+    abrirTexto: "Tu viaje, en un cuaderno para llevar",
+    noCerrado: "Tu guía se abre cuando tu viaje está cerrado.",
+    volver: "Volver a tu viaje",
+    manera: "De qué manera lo haces",
+    pedir: "Quiero mi guía",
+    otraVez: "Hacerla otra vez",
+    gasta: "La escribe la IA, con tu cuenta: una llamada.",
+    escribiendo: "Escribiendo tu guía. Tarda unos minutos; puedes irte y volver.",
+    parada: "Tu guía no se ha podido hacer. Puedes pedirla otra vez.",
+    atras: "Tu viaje ha cambiado desde que se hizo esta guía: hazla otra vez para tenerla al día.",
+    hecha: (fecha, version) => `Hecha el ${fecha}, con la versión ${version} de tu viaje.`,
+    imprimir: "Imprimir o guardar como PDF",
+    descargar: "Descargar",
+    marco: "Tu guía, como se imprime",
+    entra: "Entra para ver tu guía.",
+    fallo: (clave) =>
+      ({
+        not_closed: "Tu guía se abre cuando tu viaje está cerrado.",
+        which_way: "Elige de qué manera lo haces.",
+        already_running: "Tu guía ya se está escribiendo.",
+        no_key: "Pon antes tu clave de IA.",
+        no_ai: "Ahora no hay IA que la escriba.",
+      })[clave] ?? "Algo ha fallado. Prueba otra vez en un momento.",
+  },
 };
 
 export const TEXTOS: Record<Idioma, Textos> = { en, es };

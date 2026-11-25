@@ -60,6 +60,8 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}/eventos$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/acta$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/version(/[1-9][0-9]{0,5})?$`), ["GET"]],
+  [new RegExp(`^viajes/${ID}/guia$`), ["GET", "POST"]],
+  [new RegExp(`^viajes/${ID}/guia/documento$`), ["GET"]],
 ];
 
 /** Si la web le pasa esa petición a la casa: "ok", o por qué no. */
