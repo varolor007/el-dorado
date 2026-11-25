@@ -20,7 +20,6 @@ import type { Viaje } from "../../agent/output/viaje.ts";
 import {
   cuentaDeMoverse,
   cuentaDelGrupo,
-  manerasDeLlegar,
   paraEnsenarMoverse,
   precioPara,
   viajesDeLosDias,
@@ -498,22 +497,29 @@ test("la cuenta con un bono de varios viajes, y con lo que paga un niño", () =>
       ["multi_ride", 1, 10],
     ],
   );
-  // Un niño de ocho paga su suelto; los abonos no dicen lo que paga un niño, y no se le ponen.
+  // Un niño de ocho paga su suelto; los abonos no dicen lo que paga un niño, y paga el de adulto, como en el
+  // presupuesto: cuatro sueltos de niño el primer día (4) y el abono de tres días (12).
   const nino = cuentaDeMoverse(dias(4, 4, 4, 4), CIUDAD, 8);
-  assert.deepEqual([nino.conviene, nino.total, nino.sinPrecio], ["singles", 16, 2]);
+  assert.deepEqual([nino.conviene, nino.total, nino.sinPrecio], ["mix", 16, 0]);
   // Uno de dos años va gratis.
   assert.deepEqual(
     [cuentaDeMoverse(dias(4), CIUDAD, 2).total, cuentaDeMoverse(dias(4), CIUDAD, 2).conviene],
     [0, "singles"],
   );
-  // Uno de quince: nada dice lo que paga. No se sabe, y no se le pone el de un adulto.
+  // Uno de quince, fuera de las edades del de niño: paga el de adulto.
   const quince = cuentaDeMoverse(dias(2), CIUDAD, 15);
-  assert.deepEqual([quince.conviene, quince.total, quince.porQue], ["unknown", null, "no_price"]);
-  // El grupo: dos adultos y un niño de ocho; con uno de quince, el total no se sabe y se cuenta.
+  assert.deepEqual([quince.conviene, quince.total, quince.porQue], ["singles", 4, null]);
+  // Con un precio de niño sin edades no se sabe si es el suyo: no se sabe, y se dice.
+  const sinEdades = capa([billete("single", [adulto(2), { ...deNino(1, 0, 0), edades: null }])]);
+  assert.deepEqual(
+    [cuentaDeMoverse(dias(2), sinEdades, 8).total, cuentaDeMoverse(dias(2), sinEdades, 8).porQue],
+    [null, "no_price"],
+  );
+  // El grupo: dos adultos y un niño de ocho; con ese niño y el precio sin edades, el total no se sabe y se cuenta.
   const grupo = cuentaDelGrupo(dias(1, 1), CIUDAD, 2, [8]);
   assert.deepEqual([grupo.total, grupo.moneda, grupo.faltan], [10, "EUR", 0]);
-  const conQuince = cuentaDelGrupo(dias(1, 1), CIUDAD, 2, [15]);
-  assert.deepEqual([conQuince.total, conQuince.faltan], [null, 1]);
+  const sinSaber = cuentaDelGrupo(dias(1, 1), sinEdades, 2, [8]);
+  assert.deepEqual([sinSaber.total, sinSaber.faltan], [null, 1]);
 });
 
 test("la cuenta no inventa: sin la capa, sin billetes del transporte, sin precio o en otra moneda", () => {
@@ -560,34 +566,4 @@ test("los trayectos que no se andan de cada día, con la cuenta de caminos de la
     { fecha: "2031-03-10", viajes: 2 },
     { fecha: "2031-03-11", viajes: 3 },
   ]);
-});
-
-test("llegar de donde se aterriza: cada manera con lo que paga una persona, de la más barata a la que no", () => {
-  const manera = (modo: "bus" | "train" | "taxi", precios: PrecioDeCapa[] | null, aZona = "z1") => ({
-    desde: { clase: "airport" as const, codigo: "VVV", nombre: null },
-    aZona,
-    modo,
-    minutos: 30,
-    precios,
-    hastaLas: null,
-    fuente: FUENTE,
-  });
-  const m = capa([], {
-    llegar: [
-      manera("taxi", null),
-      manera("train", [adulto(9)]),
-      manera("bus", [adulto(3)]),
-      manera("bus", [adulto(1)], "z2"),
-    ],
-    sinLlegar: null,
-  });
-  assert.deepEqual(
-    manerasDeLlegar(m, "z1", null, "EUR").map((x) => [x.modo, x.precio]),
-    [
-      ["bus", 3],
-      ["train", 9],
-      ["taxi", null],
-    ],
-  );
-  assert.deepEqual(manerasDeLlegar(undefined, "z1", null, "EUR"), []);
 });

@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (972 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (1.012 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -143,8 +143,8 @@ responde deja fuera a las capas hasta que la pestaña «Allí» tenga su fila en
 **El de moverse (14.2), junto** (25-nov). Contrato en `agent/contracts/getting-around/` (RM1 a RM9); puerta 11 en
 `agent/gates/puerta_moverse.ts` (`seen` es hoy, con un día de holgura; sin aproximar; lo que no se sabe, en
 `unknowns`; ninguna palabra de lo mejor; los números de una frase, de sus datos); lo que ve, en `piezasDeMoverse`; la
-cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`, `viajesDeLosDias`,
-`manerasDeLlegar`), sin Node, para el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
+cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`, `viajesDeLosDias`), sin Node, para
+el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
 viaje, y por dónde se llega sale de lo entendido, no del vuelo elegido. Sin ver con IA.
 
 **El presupuesto entero (14.5), junto** (25-nov). La cuenta, en `agent/scripts/presupuesto.ts`, sin Node:
@@ -214,8 +214,8 @@ contado aparte. Lo que cierra en tus días: `cierranTusDias`, `stop_closed` al c
 presupuesto delante: `agent/launcher/presupuesto_delante.ts`, con `budget.json` para el que cruza (por fila), para el
 que explica y para el orden al cerrar; CR10 y EX10 en sus contratos; el que cruza espera ahora a moverse y al
 destino. Cerrar: `Reserva.enlace` y `enlaceDeLaEntrada`, mirados por la puerta 8. El techo: `Trabajo.cota`,
-`gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`), **sin cifra enchufada**: con un
-techo puesto, una capa cortada sin decir lo que gastó sigue parando la investigación, como antes. Al juntar: la
+`gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`); ver «El techo con las capas». Al
+juntar: la
 cuenta que ven el que cruza, el que explica y el cierre usa las zonas que trae el viaje, como la del viaje; y lo que
 avisan los datos abiertos (que Overpass no contesta) queda en los avisos del run (`abiertos.json`) y la
 investigación lo dice con sus demás avisos (`avisosDeLosAbiertos`). Pruebas:
@@ -223,6 +223,55 @@ investigación lo dice con sus demás avisos (`avisosDeLosAbiertos`). Pruebas:
 de mentira; el cierre con su enlace y el adelante del botón, solo en pruebas. Sabido: el primer mensaje para un día
 sobre un viaje de antes vuelve a lanzar una vez al que cruza y al que explica, porque su material cambia; y cambiar
 lo que buscas vuelve a lanzar al que conoce el destino, que no lo lee. Sin ver con IA.
+
+**El techo con las capas (14.7), junto** (25-nov, otra sesión de obra). El lanzador cortado acaba con
+`errorDeUnCortado` (`agent/launcher/asiento.ts`): `gasto.cortado` y `cota`, lo más que quedó sin contar;
+`lanzarAsiento` espera `GRACIA_AL_CORTAR` (8 segundos) y, tras el corte, solo cree un error marcado como de cortado.
+La llamada directa cuenta por el flujo (`apuntarSuceso` y `parcialDeLaCuenta`, en `ia_de_verdad.ts`) y
+`lanzadorDirecto` lo pasa a dólares (`parcialDe`, `cotaDeLoSinContar`, en `ia.ts`): la cota es lo que la vuelta en
+marcha aún podía escribir; si esa vuelta ya había empezado una búsqueda, o no había dicho lo que leyó, no hay cota.
+Claude Code solo da dólares si llega su resultado, que cortado no llega (`parcialDeClaudeCode`), y va sin precio:
+**con la cuenta de la casa, el techo se trata como antes**. `gastoParaElTecho` suma gasto y cota de un cortado (sin
+cota, null: no se sigue a ciegas), y `gastoDe` lleva `deCortados` y deja `sabido` en falso. El acta lleva `cortado` y
+`total.de_cortados`; `/cuenta/gasto`, `cut_usd`, que la web aún no enseña. Sin comprobar, para el ensayo: que el
+flujo de verdad diga lo que la documentación dice, que cortar deje de cobrar donde se deja de recibir, y si Claude
+Code da un resultado al cortarlo con cuidado. De la revisión, arreglado: `cerrarLosCortados` y la capa que entrega
+sin decir su gasto llevan la misma regla (`cotaDelTrabajo`); y lo que trabaja cuenta según lo va diciendo: el
+lanzador tiene un cuarto argumento, `alContar(gasto, cota)`, `lanzarAsiento` acepta `{ corte, alContar }` (con
+`cortadoDeFuera`), la casa lleva en memoria lo que trabaja (`vivos`) y `gastoParaElTecho(run, enMarcha)` lo suma; si
+se llega al techo, las capas en marcha se cortan y no se lanza más (lo que no es capa acaba, y después se para).
+Sabido: con Claude Code no se dice nada por el camino, y ahí el techo se puede pasar con lo que corre a la vez, como
+antes; con la llamada directa queda un rato sin contar, entre que se manda una vuelta y dice lo que leyó; y
+`lanzarPorDetras` sigue sin el tope de asientos a la vez.
+
+**Las cuentas, tras la revisión (14.5 y 14.6)** (25-nov, una sesión de arreglos). Una sola regla de quién paga
+qué, `preciosParaUno`, en `agent/scripts/capas.ts`, para las entradas, llegar y los billetes de moverse: un adulto,
+del que no se sabe la edad, solo coge precios que no dicen edades (si todos las dicen, no se sabe); un niño sin
+precio suyo paga el de adulto, también en moverse. Cuál se coge si valen varios, en un solo sitio:
+`SI_VALEN_VARIOS` (`agent/data/presupuesto.ts`: el más barato en las entradas y en llegar, el más caro en los
+billetes), que lee `elQueSeCoge`. Llegar a donde duermes solo cuenta las maneras que van a tu zona si el alojamiento
+la dice. `loQueCuestaLlegar` es la cuenta de cada manera de llegar, por coche o por persona, y la usan el presupuesto
+y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona y como cuenta
+(`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
+(`refDeUnaDuda`, en `web/src/lib/formato.ts`). Las pestañas del viaje caben a 390 de ancho, también las seis del
+viaje cerrado; en uno más estrecho la fila se desliza y su borde se desvanece mientras quede algo por ver. El caso
+inventado trae llegar a cada zona de la ruta. Sabido: un
+tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
+
+**La casa y la guía, tras la revisión del bloque 14** (25-nov, una sesión de arreglos). La guía de un viaje con días
+libres sale: el material marca `free`, el contrato dice qué se escribe (GW10: un día libre se queda libre), la puerta
+10 no le deja meter paradas ni nombrar las de otro día, y el cuaderno lo pinta sin croquis, en su hoja. El que cruza
+ya no espera a las capas: si ya acabaron lleva `budget.json`, y si no va sin él y no puede decir ninguna cifra del
+total (CR10); el que explica las sigue esperando. Lo que dijeron del presupuesto el que cruza y el que explica, si se
+conserva en un cambio que rehace la cuenta (tu botón de las entradas, otro ritmo), se vuelve a juzgar con la nueva y
+el que no pasa se rehace entero (`juzgarLoDicho`, en `investigar.ts`; `tirarLoConservado`, en `rehacer.ts`); el
+impacto lo pone en lo que quizá cambie y lo cuenta (`DICEN_EL_PRESUPUESTO`, en `agent/data/momentos.ts`). A un
+asiento con internet solo le llega lo que se busca de la lista fija (`agent/data/buscar.ts`, `loQueSeBusca`), nunca
+las palabras del viajero: tocaba al que conoce el destino y al del calendario. Cambiar lo que buscas rehace también
+el calendario; otro idioma no se alcanza y, si se ofreciera, se rehace entero. Pruebas: `guia_dias_libres`,
+`cruce_sin_esperar`, `lo_dicho_del_presupuesto` y `lo_que_se_busca`. Sabido: quitar o mover una parada cambia la
+cuenta sin rehacer a nadie, y el porqué de cada manera sigue dicho con la cuenta de antes; en la última hoja impresa
+de la guía, el título de las fuentes de allí se monta sobre la lista de encima. Sin IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

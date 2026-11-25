@@ -79,7 +79,14 @@ test("con el adelante lleva la investigación entera, sola, y apunta cada trabaj
     );
     assert.ok(trabajos.every((t) => t.estado === "done" && t.fallo === null && t.desde !== null && t.hasta !== null));
     assert.deepEqual(trabajos[0].gasto, GASTO);
-    assert.deepEqual(r.gasto, { turnos: 42, entrada: 14000, salida: 2800, usd: r.gasto.usd, sabido: true });
+    assert.deepEqual(r.gasto, {
+      turnos: 42,
+      entrada: 14000,
+      salida: 2800,
+      usd: r.gasto.usd,
+      sabido: true,
+      deCortados: 0,
+    });
     assert.ok(Math.abs(r.gasto.usd - 0.7) < 1e-9);
     assert.ok(existsSync(join(run, "viaje.json")));
     assert.equal(leerJson(join(run, "viaje.json")).calendario.avisos.length, 1);
@@ -282,7 +289,7 @@ test("los trabajos de un run: se apuntan una vez cada uno, se ponen al día y se
   await conRun(async (run) => {
     assert.deepEqual([...ESTADOS_DE_UN_TRABAJO], ["queued", "working", "done", "stopped", "failed"]);
     assert.deepEqual(trabajosDe(run), []);
-    assert.deepEqual(gastoDe(run), { turnos: 0, entrada: 0, salida: 0, usd: 0, sabido: true });
+    assert.deepEqual(gastoDe(run), { turnos: 0, entrada: 0, salida: 0, usd: 0, sabido: true, deCortados: 0 });
     const uno: Trabajo = {
       puesto: "a",
       asiento: "x",
@@ -298,7 +305,7 @@ test("los trabajos de un run: se apuntan una vez cada uno, se ponen al día y se
     apuntarTrabajo(run, { ...uno, estado: "done", hasta: "h", gasto: GASTO });
     apuntarTrabajo(run, { ...uno, puesto: "b", estado: "failed", gasto: { ...GASTO, usd: 0.2 }, fallo: "se rompió" });
     assert.deepEqual(estados(run), { a: "done", b: "failed" });
-    assert.deepEqual(gastoDe(run), { turnos: 6, entrada: 2000, salida: 400, usd: 0.25, sabido: true });
+    assert.deepEqual(gastoDe(run), { turnos: 6, entrada: 2000, salida: 400, usd: 0.25, sabido: true, deCortados: 0 });
     apuntarTrabajo(run, { ...uno, puesto: "c", estado: "stopped", gasto: null });
     assert.equal(gastoDe(run).sabido, false);
     // Un archivo estropeado, o un trabajo que no lo es, no rompe la lectura.

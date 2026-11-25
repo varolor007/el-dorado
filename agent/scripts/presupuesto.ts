@@ -10,15 +10,15 @@
 import {
   COMIDAS_AL_DIA,
   PLAZAS_DE_UN_COCHE,
-  PRECIOS_QUE_NO_SE_PONEN,
   SE_PAGAN_POR_COCHE,
+  SI_VALEN_VARIOS,
+  type CualSeCoge,
   type PARTES_DEL_PRESUPUESTO,
 } from "../data/presupuesto.ts";
 import type {
   DeLasEntradas,
   DeMoverse,
   DelDestino,
-  Edades,
   FuenteDeUnDato,
   Importe,
   ManeraDeLlegar,
@@ -29,7 +29,7 @@ import type {
 } from "../output/capas.ts";
 import type { Punto, Viaje, ZonaDeLaRuta } from "../output/viaje.ts";
 import { cuentaDelGrupo, viajesDeLosDias } from "./capa_moverse.ts";
-import { entradaDe } from "./capas.ts";
+import { elQueSeCoge, entradaDe, preciosParaUno } from "./capas.ts";
 
 type ClaseDeParte = (typeof PARTES_DEL_PRESUPUESTO)[number];
 
@@ -93,40 +93,16 @@ export const sinSaber = (parte: ClaseDeParte, moneda: string, faltan: number): P
 
 const redondo = (n: number): number => Math.round(n * 100) / 100;
 
-// 1. El precio de cada uno, para quien es.
+// 1. El precio de cada uno, para quien es: la regla es una sola, la de `capas.ts`, que usa también moverse allí.
 
-const cubre = (e: Edades | null, edad: number): boolean =>
-  e !== null && (e.desde === null || e.desde <= edad) && (e.hasta === null || edad <= e.hasta);
-const deNinos = (p: PrecioDeCapa): boolean => p.para === "child" || p.para === "infant" || p.para === "youth";
-const comoAdulto = (p: PrecioDeCapa): boolean => p.para === "adult" || p.para === "any";
+export { preciosParaUno };
 
-/**
- * Los precios que le valen a uno: a un adulto (sin edad), los de adulto o los de cualquiera; a un niño, los que dicen
- * unas edades que tienen la suya; si no hay, y hay uno de niño sin edades, no se sabe si es el suyo; si tampoco, paga
- * como un adulto, si ese precio no le deja fuera por la edad. Nunca el de estudiante, mayor, familia o grupo.
- */
-export function preciosParaUno(precios: PrecioDeCapa[], edad: number | null): PrecioDeCapa[] {
-  const ponibles = precios.filter((p) => !(PRECIOS_QUE_NO_SE_PONEN as readonly string[]).includes(p.para));
-  if (edad === null) return ponibles.filter(comoAdulto);
-  const porSuEdad = ponibles.filter((p) => cubre(p.edades, edad));
-  if (porSuEdad.length > 0) return porSuEdad;
-  if (ponibles.some((p) => deNinos(p) && p.edades === null)) return [];
-  return ponibles.filter((p) => comoAdulto(p) && p.edades === null);
-}
-
-/** El que más conviene de unos precios: gratis; si no, el más barato en la moneda del viaje; si no, en otra. */
-export function elQueConviene(precios: PrecioDeCapa[], moneda: string): PrecioDeCapa | null {
-  const gratis = precios.find((p) => p.cuanto === "free");
-  if (gratis !== undefined) return gratis;
-  const conImporte = precios.filter((p) => p.cuanto !== "free") as (PrecioDeCapa & { cuanto: Importe })[];
-  const deLaMoneda = conImporte.filter((p) => p.cuanto.moneda === moneda);
-  const entre =
-    deLaMoneda.length > 0 ? deLaMoneda : conImporte.filter((p) => p.cuanto.moneda === conImporte[0]?.cuanto.moneda);
-  return entre.reduce<PrecioDeCapa | null>(
-    (mejor, p) => (mejor === null || (p.cuanto as Importe).importe < (mejor.cuanto as Importe).importe ? p : mejor),
-    null,
-  );
-}
+/** El que más conviene de unos precios, en las entradas: gratis; si no, el más barato en la moneda del viaje. */
+export const elQueConviene = (
+  precios: readonly PrecioDeCapa[],
+  moneda: string,
+  regla: CualSeCoge = SI_VALEN_VARIOS.entradas,
+): PrecioDeCapa | null => elQueSeCoge(precios, moneda, regla);
 
 /** Lo que cuesta algo para el grupo: un importe por moneda (sin los gratis) y de qué páginas sale. */
 export type DelGrupo = { importes: Importe[]; fuentes: FuenteDeUnDato[] };
@@ -152,7 +128,12 @@ function juntar(cuantos: { cuanto: Importe | "free"; veces: number; fuente: Fuen
  */
 export type CadaUnoDelGrupo = DelGrupo & { faltan: number; cuantos: number; gratis: boolean };
 
-export function cadaUnoDelGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): CadaUnoDelGrupo | null {
+export function cadaUnoDelGrupo(
+  precios: PrecioDeCapa[] | null,
+  grupo: Grupo,
+  moneda: string,
+  regla: CualSeCoge = SI_VALEN_VARIOS.entradas,
+): CadaUnoDelGrupo | null {
   if (precios === null || precios.length === 0) return null;
   const personas: (number | null)[] = [
     ...Array.from({ length: Math.max(0, grupo.adultos) }, () => null),
@@ -161,7 +142,7 @@ export function cadaUnoDelGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, mo
   const cuantos = [];
   let faltan = 0;
   for (const edad of personas) {
-    const p = elQueConviene(preciosParaUno(precios, edad), moneda);
+    const p = elQueConviene(preciosParaUno(precios, edad), moneda, regla);
     if (p === null) faltan++;
     else cuantos.push({ cuanto: p.cuanto, veces: 1, fuente: p.fuente });
   }
@@ -173,23 +154,70 @@ export function cadaUnoDelGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, mo
  * Lo que cuesta algo que se paga por persona, para el grupo: cada uno con el precio que le vale. Null si a alguno no
  * se le sabe: entonces no se sabe la cosa entera, y no se suma a medias.
  */
-export function delGrupo(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): DelGrupo | null {
-  const c = cadaUnoDelGrupo(precios, grupo, moneda);
+export function delGrupo(
+  precios: PrecioDeCapa[] | null,
+  grupo: Grupo,
+  moneda: string,
+  regla: CualSeCoge = SI_VALEN_VARIOS.entradas,
+): DelGrupo | null {
+  const c = cadaUnoDelGrupo(precios, grupo, moneda, regla);
   return c === null || c.faltan > 0 ? null : { importes: c.importes, fuentes: c.fuentes };
 }
 
 /** Lo que paga un adulto, el precio que le toca: para decirlo al lado de lo del grupo. Null si no se sabe. */
-export const elDeUnAdulto = (precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null =>
-  precios === null ? null : elQueConviene(preciosParaUno(precios, null), moneda);
+export const elDeUnAdulto = (
+  precios: PrecioDeCapa[] | null,
+  moneda: string,
+  regla: CualSeCoge = SI_VALEN_VARIOS.entradas,
+): PrecioDeCapa | null => (precios === null ? null : elQueConviene(preciosParaUno(precios, null), moneda, regla));
+
+/**
+ * El precio de un coche (un taxi), el que se coge de los que valen para el coche entero: de cualquiera, de adulto o de
+ * grupo, sin edades, que un coche no tiene edad. Null si no se sabe.
+ */
+const precioDelCoche = (precios: PrecioDeCapa[] | null, moneda: string): PrecioDeCapa | null =>
+  precios === null
+    ? null
+    : elQueConviene(
+        precios.filter((p) => (p.para === "any" || p.para === "adult" || p.para === "group") && p.edades === null),
+        moneda,
+        SI_VALEN_VARIOS.llegar,
+      );
+
+/** Cuántos coches hacen falta para el grupo. */
+export const cochesPara = (grupo: Grupo): number =>
+  Math.max(1, Math.ceil((grupo.adultos + grupo.ninos.length) / PLAZAS_DE_UN_COCHE));
 
 /** Lo que cuesta algo que se paga por coche (un taxi), para el grupo: tantos coches como hagan falta. */
 export function porCoche(precios: PrecioDeCapa[] | null, grupo: Grupo, moneda: string): DelGrupo | null {
-  if (precios === null) return null;
-  const valen = precios.filter((p) => p.para === "any" || p.para === "adult" || p.para === "group");
-  const p = elQueConviene(valen, moneda);
-  if (p === null) return null;
-  const coches = Math.max(1, Math.ceil((grupo.adultos + grupo.ninos.length) / PLAZAS_DE_UN_COCHE));
-  return juntar([{ cuanto: p.cuanto, veces: coches, fuente: p.fuente }]);
+  const p = precioDelCoche(precios, moneda);
+  return p === null ? null : juntar([{ cuanto: p.cuanto, veces: cochesPara(grupo), fuente: p.fuente }]);
+}
+
+/**
+ * Lo que cuesta una manera de llegar de donde se aterriza, para el grupo, según se pague: por coche (un taxi), con el
+ * precio de un coche y cuántos hacen falta; o por persona, cada uno con el suyo. Es la única cuenta: la usan el
+ * presupuesto (`llegarADormir`) y la lista de llegar de «Allí», para que digan lo mismo (14.6).
+ */
+export type LoQueCuestaLlegar =
+  | { se: "por_coche"; coches: number; precio: PrecioDeCapa | null; grupo: DelGrupo | null }
+  | { se: "por_persona"; grupo: CadaUnoDelGrupo | null };
+
+export function loQueCuestaLlegar(
+  x: Pick<ManeraDeLlegar, "modo" | "precios">,
+  grupo: Grupo,
+  moneda: string,
+): LoQueCuestaLlegar {
+  if (!(SE_PAGAN_POR_COCHE as readonly string[]).includes(x.modo))
+    return { se: "por_persona", grupo: cadaUnoDelGrupo(x.precios, grupo, moneda, SI_VALEN_VARIOS.llegar) };
+  const precio = precioDelCoche(x.precios, moneda);
+  return { se: "por_coche", coches: cochesPara(grupo), precio, grupo: porCoche(x.precios, grupo, moneda) };
+}
+
+/** Lo que cuesta una manera de llegar para el grupo entero, para sumarlo; null si a alguno no se le sabe. */
+function deLlegarParaSumar(c: LoQueCuestaLlegar): DelGrupo | null {
+  if (c.se === "por_coche") return c.grupo;
+  return c.grupo === null || c.grupo.faltan > 0 ? null : { importes: c.grupo.importes, fuentes: c.grupo.fuentes };
 }
 
 // 2. Las partes que salen de las capas.
@@ -326,8 +354,8 @@ const DE_DONDE = { flight: "airport", train: "station", bus: "station" } as cons
 
 /**
  * Las maneras de llegar que valen para una manera del viaje: de donde llega su transporte (por su código, si alguna
- * lo dice) a la zona donde duerme. Si el alojamiento no dice su zona y todas van a la misma, valen todas; si van a
- * varias, no se sabe cuál.
+ * lo dice) a la zona donde duerme. Si el alojamiento dice su zona y ninguna va a ella, no se sabe: un trayecto a
+ * otra zona no es el tuyo. Si no la dice y todas van a la misma, valen todas; si van a varias, no se sabe cuál.
  */
 function lasQueLlevan(
   llegar: ManeraDeLlegar[],
@@ -340,8 +368,7 @@ function lasQueLlevan(
   const porCodigo = deAlli.filter((x) => x.desde.codigo?.toUpperCase() === codigo.toUpperCase());
   const candidatas = porCodigo.length > 0 ? porCodigo : deAlli.filter((x) => x.desde.codigo === null);
   const id = zona === null ? null : (zonas.find((z) => z.nombre === zona || z.id === zona)?.id ?? zona);
-  const aSuZona = id === null ? [] : candidatas.filter((x) => x.aZona === id);
-  if (aSuZona.length > 0) return aSuZona;
+  if (id !== null) return candidatas.filter((x) => x.aZona === id);
   return new Set(candidatas.map((x) => x.aZona)).size === 1 ? candidatas : [];
 }
 
@@ -366,11 +393,7 @@ export function llegarADormir(
   const zona = v.alojamientos.find((a) => a.id === m.alojamiento)?.zona ?? null;
   const grupo = grupoDe(v);
   const opciones = lasQueLlevan(mv.llegar, DE_DONDE[t.clase], t.a, zona, zonas)
-    .map((x) =>
-      (SE_PAGAN_POR_COCHE as readonly string[]).includes(x.modo)
-        ? porCoche(x.precios, grupo, m.moneda)
-        : delGrupo(x.precios, grupo, m.moneda),
-    )
+    .map((x) => deLlegarParaSumar(loQueCuestaLlegar(x, grupo, m.moneda)))
     .filter((x): x is DelGrupo => x !== null);
   const importeEn = (x: DelGrupo, moneda: string): number | null =>
     x.importes.length === 0

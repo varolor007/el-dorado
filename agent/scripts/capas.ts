@@ -4,7 +4,15 @@
 // La forma de la entrega de cada asiento va en su archivo (`capa_moverse.ts`, `capa_destino.ts`, `capa_entradas.ts`).
 
 import { DIAS_DE_LA_SEMANA, type DiaDeLaSemana, type ParaQuien } from "../data/capas.ts";
-import type { DeLasEntradas, EntradaDeUnSitio, FuenteDeUnDato, Horario, PrecioDeCapa } from "../output/capas.ts";
+import { PRECIOS_QUE_NO_SE_PONEN, type CualSeCoge } from "../data/presupuesto.ts";
+import type {
+  DeLasEntradas,
+  EntradaDeUnSitio,
+  Edades,
+  FuenteDeUnDato,
+  Horario,
+  PrecioDeCapa,
+} from "../output/capas.ts";
 import { formaNormal } from "../tools/enlaces.ts";
 import { SIN_SABER } from "./formas.ts";
 
@@ -30,7 +38,6 @@ export type HorarioEntregado = {
   seen: string;
 };
 
-/** La fuente de un dato, como la da la entrega: la página y el día en que se vio. */
 /** La página y el día de un dato. La página se guarda en su forma normal, la que pinta la web. */
 export const fuenteDe = (x: { source: string; seen: string }): FuenteDeUnDato => ({
   url: formaNormal(x.source) ?? x.source,
@@ -50,6 +57,56 @@ export function precioDe(p: PrecioEntregado): PrecioDeCapa {
 /** Unos precios de una entrega, o «unknown»: null, que no se sabe. */
 export const preciosDe = (ps: PrecioEntregado[] | typeof SIN_SABER): PrecioDeCapa[] | null =>
   ps === SIN_SABER ? null : ps.map(precioDe);
+
+// El precio de cada uno: una sola regla para las entradas, llegar a donde se duerme y los billetes de moverse allí.
+
+const cubre = (e: Edades | null, edad: number): boolean =>
+  e !== null && (e.desde === null || e.desde <= edad) && (e.hasta === null || edad <= e.hasta);
+const deNinos = (p: PrecioDeCapa): boolean => p.para === "child" || p.para === "infant" || p.para === "youth";
+/** Un precio que vale para un adulto del que no se sabe la edad: de adulto o de cualquiera, sin decir edades. */
+const deAdultoSinEdades = (p: PrecioDeCapa): boolean => (p.para === "adult" || p.para === "any") && p.edades === null;
+
+/**
+ * Los precios que le valen a uno. A un adulto, del que no se sabe la edad, los de adulto o de cualquiera que no dicen
+ * edades: uno que las dice (de 18 a 25, hasta 17) no se le pone, y si todos las dicen, no se sabe; no se le supone una
+ * edad. A un niño, los que dicen unas edades que tienen la suya; si no hay, y hay uno de niño sin edades, no se sabe
+ * si es el suyo; si tampoco, paga como un adulto, con uno que no dice edades. Nunca el de estudiante, mayor, familia
+ * o grupo. La usan el presupuesto (entradas y llegar) y la cuenta de moverse (sus billetes).
+ */
+export function preciosParaUno(precios: readonly PrecioDeCapa[], edad: number | null): PrecioDeCapa[] {
+  const ponibles = precios.filter((p) => !(PRECIOS_QUE_NO_SE_PONEN as readonly string[]).includes(p.para));
+  if (edad === null) return ponibles.filter(deAdultoSinEdades);
+  const porSuEdad = ponibles.filter((p) => cubre(p.edades, edad));
+  if (porSuEdad.length > 0) return porSuEdad;
+  if (ponibles.some((p) => deNinos(p) && p.edades === null)) return [];
+  return ponibles.filter(deAdultoSinEdades);
+}
+
+/**
+ * El que se coge de unos precios que le valen a uno, por la regla que se dice (`SI_VALEN_VARIOS`): el más barato
+ * (lo gratis, antes) o el más caro. Entre los de la moneda del viaje (lo gratis vale en todas); si no hay y se deja,
+ * entre los de la primera otra moneda que salga, para decirlo aparte. Null si no hay ninguno.
+ */
+export function elQueSeCoge(
+  precios: readonly PrecioDeCapa[],
+  moneda: string | null,
+  regla: CualSeCoge,
+  otraMoneda = true,
+): PrecioDeCapa | null {
+  const cuanto = (p: PrecioDeCapa): number => (p.cuanto === "free" ? 0 : p.cuanto.importe);
+  const suyos = precios.filter((p) => p.cuanto === "free" || p.cuanto.moneda === moneda);
+  const primera = precios.find((p) => p.cuanto !== "free")?.cuanto;
+  const otra = primera === undefined || primera === "free" ? null : primera.moneda;
+  const entre =
+    suyos.length > 0 || !otraMoneda ? suyos : precios.filter((p) => p.cuanto !== "free" && p.cuanto.moneda === otra);
+  return entre.reduce<PrecioDeCapa | null>(
+    (elegido, p) =>
+      elegido === null || (regla === "cheapest" ? cuanto(p) < cuanto(elegido) : cuanto(p) > cuanto(elegido))
+        ? p
+        : elegido,
+    null,
+  );
+}
 
 /** Un horario de una entrega, en la forma del viaje. */
 export function horarioDe(h: HorarioEntregado): Horario {

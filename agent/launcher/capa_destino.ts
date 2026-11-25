@@ -10,6 +10,7 @@
 // que se comprueba de la forma del viaje. Este archivo no llama a ninguna IA ni lanza nada.
 
 import { CIFRAS_DE_UNA_COSA, LETRAS_DE_UNA_COSA, LO_MAS_DE_COSAS, TOPE_POR_CLASE } from "../data/capa_destino.ts";
+import { loQueSeBusca } from "../data/buscar.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/capas.ts";
 import type { FaltaDeUnaCapa } from "../data/capas.ts";
 import { topesDeInternet } from "../data/internet.ts";
@@ -24,14 +25,15 @@ export const SABER = "saber.json";
 const ASIENTO = "local-knowledge";
 
 /**
- * Lo que ve: el destino, sus fechas, su idioma y su moneda, y lo que busca el viajero (de sus toques o resumido por
- * el que escucha, nunca sus palabras); la ruta, con sus zonas; y sus topes: cuántas cosas en total y por clase, lo
- * largo de cada frase y de cada nombre, cuántas cifras y lo que puede salir a internet. Ni quién viaja, ni sus
+ * Lo que ve: el destino, sus fechas, su idioma y su moneda, y lo que busca el viajero, solo lo que es de la lista
+ * fija de lo que se puede buscar (`loQueSeBusca`): busca en internet con lo que lee, y nada escrito por el viajero ni
+ * resumido de sus palabras sale a internet. La ruta, con sus zonas; y sus topes: cuántas cosas en total y por clase,
+ * lo largo de cada frase y de cada nombre, cuántas cifras y lo que puede salir a internet. Ni quién viaja, ni sus
  * precios.
  */
 export function piezasDelDestino(m: Material): Pieza[] {
   return [
-    pieza("trip.json", { ...viajeParaLasCapas(m), looking_for: m.viaje.looking_for }),
+    pieza("trip.json", { ...viajeParaLasCapas(m), looking_for: loQueSeBusca(m.viaje.looking_for) }),
     pieza("route.json", rutaParaLasCapas(m)),
     pieza("limits.json", {
       items_allowed: LO_MAS_DE_COSAS,

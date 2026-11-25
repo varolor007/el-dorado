@@ -114,7 +114,10 @@ export type ParadaParaLaGuia = {
 export type DiaParaLaGuia = {
   date: string;
   weekday: string;
+  /** El título del día, de sus paradas; en un día libre no lo hay, y es `unknown`. */
   title: string;
+  /** Un día libre: sin paradas ni tramos, el ritmo lo deja para el viajero. Lo que se escribe de él, sin sitios. */
+  free: boolean;
   stops: ParadaParaLaGuia[];
   legs: TramoParaLaGuia[];
   /** Dónde se come ese día, si el viaje lo sabe (14.6). */
@@ -230,7 +233,8 @@ export function paraLaGuia(v: Viaje, e: Entendido | null, m: Manera | null, dice
     return {
       date: d.fecha,
       weekday: semana.get(d.fecha) ?? SIN_SABER,
-      title: d.titulo,
+      title: paradas.length === 0 || d.titulo.trim() === "" ? SIN_SABER : d.titulo,
+      free: paradas.length === 0,
       stops: paradas.map((p) => ({
         id: p.id,
         name: p.nombre,

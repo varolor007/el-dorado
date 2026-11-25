@@ -13,6 +13,7 @@ import { abrirViaje, leerVersion, leerViaje, nuevoRun, pasar, type ViajeEnLaMesa
 import { rehacer } from "../../agent/launcher/rehacer.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
 import type { Entendido } from "../../agent/scripts/formas.ts";
+import { cambioQueNoVale } from "../../agent/scripts/cambios.ts";
 import { clasesDelCambio, impactoDe } from "../../agent/scripts/impacto.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson } from "../cases/inventado/asientos.ts";
 import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
@@ -101,12 +102,17 @@ test("un viajero más: solo la cuenta del presupuesto, sin ninguna capa; las ent
   }
 });
 
-test("otro idioma: el que conoce el destino otra vez, y ninguna otra capa", async () => {
-  const impacto = impactoDe(["language"]);
+test("otro idioma no se alcanza: la casa lo rechaza; si se ofreciera, se rehace entero, como lo que no se lee", () => {
+  assert.equal(cambioQueNoVale(ENTENDIDO, { ...ENTENDIDO, language: "fr" }), "language");
   assert.deepEqual(
-    impacto.redo.filter((x) => CAPAS.includes(x.who)).map((x) => x.who),
-    ["local-knowledge"],
+    impactoDe(["language"]).redo.map((x) => x.step),
+    impactoDe(["other"]).redo.map((x) => x.step),
   );
+});
+
+test("lo que buscas lo leen también el del calendario y el que conoce el destino: se rehacen con ello", () => {
+  const pasos = impactoDe(["looking_for"]).redo.map((x) => x.step);
+  for (const paso of ["route", "pick", "calendar", "local_knowledge"] as const) assert.ok(pasos.includes(paso), paso);
 });
 
 test("lo que buscas: la ruta otra vez, y con ella las capas que la leen; las entradas, las de antes", async () => {

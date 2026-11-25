@@ -174,6 +174,8 @@ export type DiaDelCuaderno = {
   entrada: string;
   paradas: ParadaDelCuaderno[];
   tramos: TramoDelCuaderno[];
+  /** Un día libre: sin paradas, sin croquis. Uno de antes no lo trae. */
+  libre?: boolean;
   /** Dónde comer ese día (14.6): sus sitios, de los datos, y la frase del que escribe. Uno de antes no lo trae. */
   comer?: ComerDelCuaderno[];
   comerDice?: string | null;
@@ -387,6 +389,7 @@ export function montarCuaderno(
       entrada: suyo.intro,
       paradas,
       tramos,
+      ...(delDado.free ? { libre: true } : {}),
       comer: deComer,
       comerDice: deComer.length > 0 ? (suyo.eat ?? null) : null,
     };
@@ -980,8 +983,13 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
         "div",
         null,
         t("h3", null, d.titulo),
-        h("p", "dato", t("span", null, corta(d.fecha)), t("span", null, r.paradas(d.paradas.length))),
-        t("p", "lugar", d.paradas.map((p) => p.nombre).join(", ")),
+        h(
+          "p",
+          "dato",
+          t("span", null, corta(d.fecha)),
+          t("span", null, d.paradas.length === 0 ? r.libre : r.paradas(d.paradas.length)),
+        ),
+        si(d.paradas.length > 0, () => t("p", "lugar", d.paradas.map((p) => p.nombre).join(", "))),
       ),
     ),
   );
@@ -1234,13 +1242,15 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
         h("div", null, t("span", "lugar", p.nombre), " ", t("span", "num", r.minutos(p.minutos))),
       ),
     );
+    // Un día sin paradas, el libre, no lleva croquis ni lista: su título y lo que se cuenta, y dónde comer si lo hay.
+    const sinParadas = d.paradas.length === 0;
     const izquierda =
       h("p", "lomo", esc(r.dia(d.n)), " ", t("span", "num", corta(d.fecha))) +
       t("h2", null, d.titulo) +
+      si(sinParadas, () => h("p", "dato", t("span", null, r.libre))) +
       t("p", null, d.entrada) +
-      croquis(c.idioma, marcasDe(d.paradas), duerme) +
-      t("p", "nota", r.mapaSin) +
-      h("ol", "lista", ...lista);
+      si(!sinParadas, () => croquis(c.idioma, marcasDe(d.paradas), duerme) + t("p", "nota", r.mapaSin)) +
+      si(!sinParadas, () => h("ol", "lista", ...lista));
     const piezas: string[] = [];
     const tramoA = new Map(d.tramos.map((x) => [x.a, x]));
     for (const p of d.paradas) {
@@ -1306,7 +1316,8 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
         ),
       );
     }
-    hojas.push(doble(izquierda, piezas.join("")));
+    if (sinParadas && piezas.length === 0) hojas.push(h("section", "doble sola", h("div", "pagina", izquierda)));
+    else hojas.push(doble(izquierda, piezas.join("")));
   }
 
   // Dónde se duerme y cómo se llega, y dónde se reserva.

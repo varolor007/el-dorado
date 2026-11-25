@@ -6,7 +6,7 @@
 //
 // Qué deja de valer con cada cambio lo dice `agent/scripts/impacto.ts`, con la tabla de `agent/data/momentos.ts`.
 
-import { cpSync, existsSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { LO_QUE_DEJA, REHECHO, SE_VUELVE_A_CONTAR, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import type { ClaseDeCambio, IdDePaso } from "../data/momentos.ts";
@@ -155,6 +155,35 @@ function copiarElPaso(desde: string, hasta: string, id: IdDePaso, rehace: IdDePa
       if (existsSync(origen)) cpSync(origen, join(hasta, nombre), COPIA);
     }
   }
+}
+
+/** Lo que un paso deja en un run, con los puestos de su asiento: lo que `copiarElPaso` copia. */
+function loDelPaso(run: string, id: IdDePaso): string[] {
+  const asiento = PASOS.find((p) => p.id === id)?.quien ?? CODIGO;
+  const puestos = asiento === CODIGO ? [] : puestosDe(run).filter((x) => x.asiento === asiento);
+  return [
+    ...LO_QUE_DEJA[id].map((x) => x.replace(/\/$/, "")),
+    ...puestos.flatMap((p) => [
+      `puestos/${p.id}`,
+      `sellos/${p.id}.json`,
+      `${p.id}.puertas.json`,
+      `consultado/${p.id}.json`,
+      `ordenes/${p.id}.txt`,
+    ]),
+  ];
+}
+
+/**
+ * Un paso que se conservó y ya no vale (lo que dijo no pasa su puerta con lo de ahora): se quita del run lo suyo, con
+ * los puestos de su asiento, para que la casa lo vuelva a lanzar desde el principio, y `rehecho.json` lo cuenta entre
+ * los que se rehacen. Solo en un run que rehace otro, y solo de un paso que conservó.
+ */
+export function tirarLoConservado(run: string, id: IdDePaso): void {
+  const r = rehechoDe(run);
+  if (r === null || !r.conserva.includes(id)) return;
+  for (const nombre of loDelPaso(run, id)) rmSync(join(run, nombre), { recursive: true, force: true });
+  const rehace = PASOS.map((p) => p.id as IdDePaso).filter((x) => x === id || r.rehace.includes(x));
+  guardarJson(join(run, REHECHO), { ...r, conserva: r.conserva.filter((x) => x !== id), rehace } satisfies Rehecho);
 }
 
 /**

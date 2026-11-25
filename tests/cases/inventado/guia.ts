@@ -291,6 +291,20 @@ export function sitiosInventados(): { sitios: Sitio[]; resumenes: Record<string,
   };
 }
 
+/**
+ * El viaje inventado con el primer y el último día libres, como los deja el ritmo normal: el día que se llega y el
+ * día que se va, sin paradas y sin título; las tres paradas, el día de en medio.
+ */
+export function viajeConDiasLibres(): Viaje {
+  const v = viajeParaLaGuia();
+  v.dias = [
+    { fecha: "2027-02-12", titulo: "", paradas: [], metros: [] },
+    { fecha: "2027-02-13", titulo: "El centro", paradas: ["p1", "p2", "p3"], metros: [1500, 800] },
+    { fecha: "2027-02-14", titulo: "", paradas: [], metros: [] },
+  ];
+  return v;
+}
+
 /** Un viaje inventado ya cerrado en una mesa nueva: un run con su viaje y sus sitios, su versión, y cerrado. */
 export function viajeCerradoEnLaMesa(o: { dueno?: string; mesa?: string; viaje?: Viaje } = {}): {
   mesa: string;
@@ -445,8 +459,11 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
     },
     days: d.days.map((dia) => ({
       date: dia.date,
-      title: dia.title,
-      intro: `Un día con ${dia.stops.length} paradas, sin prisa.`,
+      // Un día libre: su título y dos líneas, sin ninguna parada (GW10).
+      title: dia.free ? "Un día para ti" : dia.title,
+      intro: dia.free
+        ? "Este día no tiene paradas: es tuyo, para llevarlo a tu aire."
+        : `Un día con ${dia.stops.length} paradas, sin prisa.`,
       ...(dia.eat === undefined || dia.eat.length === 0
         ? {}
         : {

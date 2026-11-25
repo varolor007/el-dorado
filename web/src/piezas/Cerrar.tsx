@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Cierre, Dia, Manera, Ritmo, Viaje } from "../../../agent/output/viaje.ts";
 import { pideALaCasa } from "../lib/cuenta.ts";
-import { diaCorto, dinero } from "../lib/formato.ts";
+import { diaCorto, dinero, refDeUnaDuda } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 
 type Comun = { t: Textos; idioma: string };
@@ -305,7 +305,9 @@ export function Reservar({ t, idioma, viaje, cierre }: Comun & { viaje: Viaje; c
           .filter((s) => s.que !== "arrival_unknown" && s.que !== "arrival_off")
           .map((s) => (
             <p className="aviso" key={`${s.que}-${s.ref ?? ""}`}>
-              {t.cerrar.duda[s.que]?.(s.ref === null ? "" : nombreDe(viaje, s.ref))}
+              {t.cerrar.duda[s.que]?.(
+                s.ref === null ? "" : refDeUnaDuda(s.que, s.ref, idioma, (ref) => nombreDe(viaje, ref)),
+              )}
             </p>
           ))}
         {(cierre.dudas ?? []).map((d) => (

@@ -934,6 +934,7 @@ function Cuentas(x: DeViaje) {
         idioma={idioma}
         manera={marcada?.id ?? ""}
         dias={x.reparto.dias.length}
+        personas={viaje.adultos + viaje.ninos.length}
         {...presupuestoQueSeEnsena(viaje, x.reparto.dias, tusCambios(x, viaje, marcada))}
       />
       {viaje.palancas.length > 0 && (
@@ -1224,7 +1225,17 @@ export function TuViaje(x: DeViaje) {
       </div>
       <div className="pestanas" role="tablist" aria-label={t.viaje.rotulo}>
         {pestanas.map((p) => (
-          <button key={p} type="button" role="tab" aria-selected={x.pestana === p} onClick={() => x.aLaPestana(p)}>
+          <button
+            key={p}
+            type="button"
+            role="tab"
+            aria-selected={x.pestana === p}
+            onClick={(e) => {
+              // Si la fila se desliza, la pestaña que abres se ve entera.
+              e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+              x.aLaPestana(p);
+            }}
+          >
             {p === "book" ? t.cerrar.pestana : t.pestanas[p]}
             {p === "notes" && viaje.avisos.length > 0 && <i>{viaje.avisos.length}</i>}
           </button>
