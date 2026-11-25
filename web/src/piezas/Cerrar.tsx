@@ -6,7 +6,7 @@
 // claves y números; la única frase que viene de fuera es la del que explica, que ya pasó la puerta 7.
 
 import { useEffect, useRef, useState } from "react";
-import type { Cierre, Manera, Viaje } from "../../../agent/output/viaje.ts";
+import type { Cierre, Dia, Manera, Ritmo, Viaje } from "../../../agent/output/viaje.ts";
 import { pideALaCasa } from "../lib/cuenta.ts";
 import { diaCorto, dinero } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
@@ -50,7 +50,22 @@ function cambioDicho(t: Textos, idioma: string, cambio: string, diferencia: numb
  * «Me quedo con este»: cierra el viaje con la manera elegida. Mientras la casa trabaja, se dice por dónde va; si un
  * precio ha subido mucho, se pregunta; al acabar, se vuelve a pedir el viaje, que ya es el cerrado.
  */
-export function MeQuedo({ t, idioma, viaje, id, manera }: Comun & { viaje: Viaje; id: string; manera: Manera["id"] }) {
+export function MeQuedo({
+  t,
+  idioma,
+  viaje,
+  id,
+  manera,
+  dias,
+  ritmo,
+}: Comun & {
+  viaje: Viaje;
+  id: string;
+  manera: Manera["id"];
+  /** Los días como los tienes delante, con tu ritmo: es tu viaje el que se cierra. */
+  dias: Dia[];
+  ritmo: Ritmo;
+}) {
   const [cierre, setCierre] = useState<DelCierre | null>(null);
   const [fallo, setFallo] = useState(false);
   const [mandando, setMandando] = useState(false);
@@ -94,7 +109,9 @@ export function MeQuedo({ t, idioma, viaje, id, manera }: Comun & { viaje: Viaje
             type="button"
             className="boton boton--ancho"
             disabled={mandando}
-            onClick={() => void manda({ way: manera })}
+            onClick={() =>
+              void manda({ way: manera, days: dias.map((d) => ({ fecha: d.fecha, paradas: d.paradas })), pace: ritmo })
+            }
           >
             {t.viaje.cerrar}
           </button>

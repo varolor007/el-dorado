@@ -679,7 +679,17 @@ function Dormir(x: DeViaje) {
                         {t.dormir.ficha}
                       </button>
                     )}
-                    {x.tuyo != null && <MeQuedo t={t} idioma={idioma} viaje={viaje} id={x.tuyo} manera={m.id} />}
+                    {x.tuyo != null && (
+                      <MeQuedo
+                        t={t}
+                        idioma={idioma}
+                        viaje={viaje}
+                        id={x.tuyo}
+                        manera={m.id}
+                        dias={x.reparto.dias}
+                        ritmo={x.ritmo}
+                      />
+                    )}
                   </div>
                 )}
               </div>
