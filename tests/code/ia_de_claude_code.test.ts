@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { lanzadorDirecto, type Peticion } from "../../agent/launcher/ia.ts";
+import { runDe } from "../../agent/launcher/puesto.ts";
 import {
   entornoDeClaudeCode,
   leerSalida,
@@ -243,22 +244,44 @@ test("cómo acabó: cortada por larga, o una negativa; y el lanzador lo cuenta c
       pensarConClaudeCode({ con: CON, token: TOKEN, binario: m.binario, entorno: entornoDeLaMaquina() }),
       null,
     );
-    const carpeta = mkdtempSync(join(tmpdir(), "el-dorado-puesto-"));
+    const run = mkdtempSync(join(tmpdir(), "el-dorado-run-"));
     try {
-      const puesto = { id: "p1", asiento: "a", carpeta } as never;
-      for (const parte of ["contract", "in", "out"]) mkdirSync(join(carpeta, parte));
-      await assert.rejects(lanzador("orden", puesto), (e: Error & { gasto?: { usd: number } }) => {
-        assert.match(e.message, /no quiso contestar/);
-        assert.equal(e.gasto?.usd, 0.0123);
-        return true;
-      });
-      assert.deepEqual(readdirSync(join(carpeta, "out")), []);
+      const negada = async (carpeta: string): Promise<void> => {
+        const puesto = { id: "p1", asiento: "a", carpeta } as never;
+        for (const parte of ["contract", "in", "out"]) mkdirSync(join(carpeta, parte), { recursive: true });
+        await assert.rejects(lanzador("orden", puesto), (e: Error & { gasto?: { usd: number } }) => {
+          assert.match(e.message, /no quiso contestar/);
+          assert.equal(e.gasto?.usd, 0.0123);
+          return true;
+        });
+        assert.deepEqual(readdirSync(join(carpeta, "out")), []);
+      };
+      // En su sitio, colgado de su run: lo que dijo tal cual queda en el run, fuera del puesto.
+      await negada(join(run, "puestos", "p1"));
+      assert.deepEqual(readdirSync(run).sort(), ["puestos", "respuestas"]);
+      assert.deepEqual(readdirSync(join(run, "respuestas")), ["p1.txt"]);
+      // Suelto, sin run: no se guarda nada fuera de su carpeta, ni dos carpetas más arriba ni en ningún sitio.
+      const base = join(run, "otra", "cosa");
+      await negada(join(base, "suelto"));
+      assert.deepEqual(readdirSync(join(run, "otra")), ["cosa"]);
+      assert.deepEqual(readdirSync(base), ["suelto"]);
+      assert.deepEqual(readdirSync(run).sort(), ["otra", "puestos", "respuestas"]);
     } finally {
-      rmSync(carpeta, { recursive: true, force: true });
+      rmSync(run, { recursive: true, force: true });
     }
   } finally {
     m.borra();
   }
+});
+
+test("el run de un puesto es el que lo tiene en sus puestos; un puesto suelto no tiene run", () => {
+  assert.equal(
+    runDe({ carpeta: join("/mesa", "viajes", "v1", "runs", "r1", "puestos", "sitios-v1") }),
+    "/mesa/viajes/v1/runs/r1",
+  );
+  assert.equal(runDe({ carpeta: join(tmpdir(), "el-dorado-puesto-suelto") }), null);
+  assert.equal(runDe({ carpeta: "/puestos" }), null);
+  assert.equal(runDe({ carpeta: "/" }), null);
 });
 
 test("sus fallos se dicen para quien lleva el run, y nunca con el token dentro", async () => {

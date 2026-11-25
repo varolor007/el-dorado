@@ -593,6 +593,11 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   ensayo pantalla a pantalla, y la parada enseñada de las dos maneras, con la frase del conductor y sin ella, para
   que el PM elija viéndolas. Sus capturas, sin gastar: la mesa guardada del ensayo, abierta con una casa sin
   modelo ni cuenta.
+- **La batería de GitHub se mira después de cada subida** (la sesión, por un fallo suyo): estuvo en rojo desde la
+  mañana del 24-nov, 63 subidas, con la de la nube en verde. Una prueba del lanzador montaba un puesto suelto y la
+  casa guardaba su respuesta dos carpetas más arriba: en la nube, donde se trabaja como administrador, cabía en la
+  raíz de la máquina; en GitHub, no. En una investigación de verdad no pasaba, porque un puesto cuelga siempre de
+  su run. Arreglado en el código, no solo en la prueba (2.7): de un puesto suelto no se guarda nada fuera.
 - **El reloj de la investigación en vivo** (la sesión, al mirar las capturas): cada suceso dice «38 s» hasta el
   minuto y «4:03» desde ahí. En segundos con un decimal no cabía en su columna en una investigación de verdad,
   que dura un cuarto de hora.

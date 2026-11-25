@@ -654,3 +654,9 @@ se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
    `contract/README.md` y escriba solo en su `out/`) y `mirar.ts recoger`.
 5. Si hace falta el método, leer la hoja del ensamblador en `aurora-web`.
 6. Antes de lanzar algo nuevo que gaste (otra fuente de pago, un run del agente), el visto bueno del PM.
+7. Después de cada subida, mirar que la batería de GitHub sale en verde, y no fiarse solo de la de aquí: en la nube
+   se trabaja como administrador, y lo que escribe fuera de su carpeta pasa aquí y falla allí. Pasó el 24-nov: una
+   prueba del lanzador montaba un puesto suelto y la casa guardaba su respuesta dos carpetas más arriba, en la raíz
+   de la máquina; la batería de GitHub estuvo en rojo 63 subidas sin que nadie la mirase. Desde el 25-nov, lo que la
+   casa guarda de un asiento fuera de su puesto solo va al run del que cuelga (`runDe`, en
+   `agent/launcher/puesto.ts`), y de un puesto suelto no se guarda nada.

@@ -6,7 +6,7 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { Puesto } from "./puesto.ts";
+import { runDe, type Puesto } from "./puesto.ts";
 
 /** Una búsqueda: lo que se preguntó y lo que devolvió el buscador, que no es haber abierto nada. */
 export type Busqueda = { consulta: string; resultados: { url: string; titulo: string | null }[]; fallo: string | null };
@@ -99,19 +99,25 @@ export function intentadas(c: Consultado): string[] {
 }
 
 const archivoDe = (run: string, id: string): string => join(resolve(run), "consultado", `${id}.json`);
-const runDe = (p: Puesto): string => resolve(p.carpeta, "..", "..");
 
-/** Guarda lo consultado por un asiento en su run, de una vez: escrito aparte y con su nombre al final. */
+/**
+ * Guarda lo consultado por un asiento en su run, de una vez: escrito aparte y con su nombre al final. De un puesto
+ * suelto, sin run, no se guarda nada: la puerta de todos no verá ninguna página abierta, que es lo prudente.
+ */
 export function guardarConsultado(p: Puesto, c: Consultado): void {
-  const archivo = archivoDe(runDe(p), p.id);
-  mkdirSync(join(runDe(p), "consultado"), { recursive: true, mode: 0o700 });
+  const run = runDe(p);
+  if (run === null) return;
+  const archivo = archivoDe(run, p.id);
+  mkdirSync(join(run, "consultado"), { recursive: true, mode: 0o700 });
   writeFileSync(`${archivo}.a-medias`, JSON.stringify(c, null, 2), { mode: 0o600 });
   renameSync(`${archivo}.a-medias`, archivo);
 }
 
 /** Lo consultado por un asiento, del run; si no hay nada guardado, no consultó nada. Lo que no se lee, tampoco. */
 export function leerConsultado(p: Puesto): Consultado {
-  const archivo = archivoDe(runDe(p), p.id);
+  const run = runDe(p);
+  if (run === null) return NADA_CONSULTADO;
+  const archivo = archivoDe(run, p.id);
   if (!existsSync(archivo)) return NADA_CONSULTADO;
   try {
     const leido = JSON.parse(readFileSync(archivo, "utf8")) as Partial<Consultado>;

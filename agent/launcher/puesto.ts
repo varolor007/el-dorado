@@ -12,7 +12,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { huella, INTERNET, type Sello } from "../gates/puerta_metodo.ts";
 import { dentroDelRepositorio } from "./mesa.ts";
 
@@ -39,6 +39,16 @@ function copiarCarpeta(desde: string, hasta: string, fuera: Set<string> = new Se
   for (const nombre of readdirSync(desde)) {
     if (!SOLO_DE_LA_CASA.has(nombre) && !fuera.has(nombre)) copyFileSync(join(desde, nombre), join(hasta, nombre));
   }
+}
+
+/**
+ * El run del que cuelga un puesto (`<run>/puestos/<id>`), o `null` si el puesto está suelto. Lo que la casa guarda
+ * de un asiento fuera de su puesto va ahí, y de un puesto suelto no se guarda nada: dos carpetas más arriba de una
+ * carpeta cualquiera no hay un run, hay lo que caiga.
+ */
+export function runDe(puesto: Pick<Puesto, "carpeta">): string | null {
+  const carpeta = resolve(puesto.carpeta);
+  return basename(dirname(carpeta)) === "puestos" ? dirname(dirname(carpeta)) : null;
 }
 
 /** Monta el puesto `id` de un asiento dentro de la carpeta de un run y lo sella. Un puesto se monta una sola vez. */

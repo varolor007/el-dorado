@@ -6,12 +6,12 @@
 
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { topesDeInternet, USD_POR_BUSQUEDA } from "../data/internet.ts";
 import { ENTREGA, INTERNET, PASOS } from "../gates/puerta_metodo.ts";
 import { ordenDeApertura, type Gasto, type Lanzador } from "./asiento.ts";
 import { guardarConsultado, loQueNoPuedeSalir, NADA_CONSULTADO, type Consultado } from "./consultado.ts";
-import type { Puesto } from "./puesto.ts";
+import { runDe, type Puesto } from "./puesto.ts";
 
 /** Una pieza de lo que se manda: un texto, o una foto para que la mire. */
 export type Parte = { texto: string } | { foto: { tipo: string; base64: string } };
@@ -224,10 +224,10 @@ export function lanzadorDirecto(pensar: Pensar, precio: Precio | null): Lanzador
     const peticion = peticionDe(puesto);
     const r = await pensar(peticion, corte);
     const gasto = gastoDe(r, precio);
-    const run = resolve(puesto.carpeta, "..", "..");
+    const run = runDe(puesto);
     const consultado = r.consultado ?? NADA_CONSULTADO;
     const salio = consultado.busquedas.length + consultado.paginas.length + consultado.fallidas.length > 0;
-    if (existsSync(run) && statSync(run).isDirectory()) {
+    if (run !== null && existsSync(run) && statSync(run).isDirectory()) {
       mkdirSync(join(run, "respuestas"), { recursive: true, mode: 0o700 });
       writeFileSync(join(run, "respuestas", `${puesto.id}.txt`), r.texto, { mode: 0o600 });
       if (peticion.internet || salio) guardarConsultado(puesto, consultado);
