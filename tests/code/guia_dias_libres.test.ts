@@ -6,7 +6,8 @@ import assert from "node:assert/strict";
 import { readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { puertaGuia, type MaterialDeLaGuia } from "../../agent/gates/puerta_guia.ts";
+import { puertaCuaderno, puertaGuia, type MaterialDeLaGuia } from "../../agent/gates/puerta_guia.ts";
+import type { Cuaderno } from "../../agent/scripts/cuaderno.ts";
 import {
   carpetaDeLaGuia,
   documentoDeLaGuia,
@@ -261,4 +262,59 @@ test("lo que hay que llevar hecho: un aviso de las fechas sin nombre dice de qu�
   }
   for (const [idioma, r] of Object.entries(ROTULOS))
     for (const tema of TEMAS_DEL_CALENDARIO) assert.ok(r.temaDeFechas[tema] !== undefined, `${idioma}: ${tema}`);
+});
+
+// ---------- la web de un sitio: la que abrió el asiento, o la que dicen los datos abiertos
+
+/** El cuaderno pintado del viaje con capas, con la web de la torre dicha por los datos abiertos o abierta por él. */
+async function conLaWeb(deLosAbiertos: boolean | undefined) {
+  const viaje = viajeParaLaGuia({ capas: true });
+  const torre = viaje.entradas!.sitios.find((e) => e.web !== null)!;
+  if (deLosAbiertos === undefined) delete torre.webDeLosAbiertos;
+  else torre.webDeLosAbiertos = deLosAbiertos;
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    assert.deepEqual(e, { estado: "ready" });
+    const cuaderno = JSON.parse(readFileSync(join(carpetaDeLaGuia(v, p.n), "guia.json"), "utf8")) as Cuaderno;
+    return { viaje, cuaderno, html: documentoDeLaGuia(v) ?? "", web: torre.web! };
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+}
+
+const enlaceA = (html: string, url: string): string | undefined =>
+  new RegExp(`<a href="${url.replace(/[.?/]/g, "\\$&")}"[^>]*>([^<]*)</a>`).exec(html)?.[1];
+
+test("la web de un sitio dice de dónde sale: la de los datos abiertos, dicha así; la abierta, su web", async () => {
+  for (const [deLosAbiertos, rotulo] of [
+    [true, ROTULOS.es.webDeLosAbiertos],
+    [undefined, ROTULOS.es.webDeLosAbiertos],
+    [false, ROTULOS.es.webDelSitio],
+  ] as const) {
+    const { html, web } = await conLaWeb(deLosAbiertos);
+    assert.equal(enlaceA(html, web), rotulo, String(deLosAbiertos));
+  }
+});
+
+test("trampa: un cuaderno que da por suya la web de los datos abiertos, o la pone para reservar, no pasa", async () => {
+  const { viaje, cuaderno } = await conLaWeb(true);
+  const entradaDe = (c: Cuaderno) => c.dias.flatMap((d) => d.paradas).find((p) => p.entrada?.web != null)!.entrada!;
+  assert.deepEqual(puertaCuaderno(cuaderno, viaje, cuaderno.version).rojos, []);
+  const comoSuya = structuredClone(cuaderno);
+  entradaDe(comoSuya).webDeLosAbiertos = false;
+  assert.ok(puertaCuaderno(comoSuya, viaje, cuaderno.version).rojos.some((r) => /da por suya una web/.test(r.que)));
+  const paraReservar = structuredClone(cuaderno);
+  const e = entradaDe(paraReservar);
+  e.reservar = { haceFalta: true, donde: e.web, fuente: { url: e.web!, visto: "2026-11-20" } };
+  assert.ok(
+    puertaCuaderno(paraReservar, viaje, cuaderno.version).rojos.some((r) =>
+      /donde reservar una web de los/.test(r.que),
+    ),
+  );
 });

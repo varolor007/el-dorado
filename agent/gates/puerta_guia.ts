@@ -582,6 +582,11 @@ export function rojosDeLoDeAlli(c: Cuaderno, v: Viaje): Rojo[] {
       const suya = p.entrada ?? null;
       if (suya === null) return;
       const debe = entradaDelCuaderno(entradaDe(entradas, p.id), d.fecha);
+      // La web de los datos abiertos no se da por la oficial, ni se pone donde se reserva.
+      if (suya.web !== null && suya.webDeLosAbiertos === false && debe?.webDeLosAbiertos !== false)
+        rojo(`dias[${i}].paradas[${j}].entrada.web`, "da por suya una web que solo dicen los datos abiertos");
+      if (suya.web !== null && suya.reservar?.donde === suya.web && debe?.webDeLosAbiertos !== false)
+        rojo(`dias[${i}].paradas[${j}].entrada.reservar`, "pone donde reservar una web de los datos abiertos");
       if (!igual(suya, debe))
         rojo(`dias[${i}].paradas[${j}].entrada`, "no es la entrada ni el horario de esa parada ese día en el viaje");
     });
