@@ -631,6 +631,12 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **La tanda 6 va en dos pasos** (la sesión): primero su cimiento (8.1), con una sola sesión de obra, y después el
   alojamiento, el transporte, el día a día y los cambios, a la vez, sobre él. Si se hicieran todos a la vez, cada
   uno inventaría su manera de guardar una elección, de decir un impacto y de rehacer.
+- **Qué es una elección y qué es un cambio** (la sesión de obra del 8.1, con lo más prudente): elegir es escoger
+  entre lo que ya trae la versión que se ve, y se guarda encima, sin versión nueva y sin gastar; todo lo que pide
+  rehacer un paso es un cambio, y deja versión. Los días no se guardan: se guardan el ritmo y lo quitado, añadido y
+  movido, y se calculan como en la web. Rehacer conserva lo que no lee nada de lo que cambió, y no solo lo de
+  antes. De un viaje cerrado se puede volver a una versión abierta: no borra nada. Y caben veinte versiones y
+  treinta investigaciones por viaje, de partida.
 - **La revisión de la tanda 5** (la sesión, por la regla de la obra): tres adversarios en su copia. Dos
   bloqueantes, arreglados: seguir un cierre podía cerrar una versión vieja encima de otra nueva, y la guía enseñaba
   los precios de la investigación y no los del cierre. Lo que la sesión decidió al comprobar sus hallazgos queda en
@@ -660,6 +666,11 @@ Lo que deja el 25-nov, a decisión del PM:
   O esperar al ensayo de la tanda 7.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
+- **Del viaje a ratos (8.1)**: cuántas versiones e investigaciones caben en un viaje (veinte y treinta), y cuánto
+  se guarda y hasta cuándo; si de un viaje cerrado se puede volver a una versión abierta (hoy, sí); si vale la
+  tabla de lo que rehace cada cambio, sobre todo el gasto, los límites y lo ya reservado; y tres cosas que hoy
+  gastan más de lo que dice la hoja: un mensaje para un día son tres turnos y no uno, otro alojamiento mira a todos
+  los finalistas nuevos y no solo a uno, y un viajero más rehace también los papeles y las miradas.
 - **Lo que deja la revisión de la tanda 5, porque toca la hoja** (entero en `revisiones/tanda-5.md`): la puerta 8
   avisa de una llegada que no cuadra, de un enlace que no responde y de un precio caducado, y no impide cerrar,
   cuando su fila dice más; en qué idiomas se vende, y con ello en cuáles sale la guía; que un cierre que espera el

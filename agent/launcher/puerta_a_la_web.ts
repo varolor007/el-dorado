@@ -61,7 +61,11 @@ import {
   sesionDe,
   type Cuenta,
 } from "./cuentas.ts";
-import { gastoDeLaCuenta } from "./gasto.ts";
+import { gastoDeLaCuenta, gastoPorAsiento } from "./gasto.ts";
+import { estadoDelViaje, guardarElecciones, leerElecciones, versionesDe } from "./momentos.ts";
+import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../data/momentos.ts";
+import { EleccionQueNoVale, paraElCierre } from "../scripts/elecciones.ts";
+import { clasesDelCambio, impactoDe } from "../scripts/impacto.ts";
 import { Frenado, frenoDelVistazo, type Freno } from "./freno.ts";
 import { conocidos, Ocupado, turnos, ventanas } from "./frenos.ts";
 import { pararRun, type Fuentes } from "./investigar.ts";
@@ -94,6 +98,7 @@ import {
   ultimoCierre,
   ultimoRun,
   viajesDe,
+  volverA,
   type ViajeEnLaMesa,
 } from "./mesa.ts";
 import type { Viaje } from "../output/viaje.ts";
@@ -649,23 +654,28 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (apuntadoDesde(v, "closing", f.cierres.horas) >= f.cierres.deUnViaje)
         throw new Fallo(429, "too_many_closings");
       const viaje = leerVersion(v)?.viaje as Viaje | undefined;
-      if (typeof pedido.way !== "string" || !viaje?.maneras.some((m) => m.id === pedido.way))
-        throw new Fallo(400, "bad_way");
-      if (pedido.days !== undefined) {
+      // Lo que no manda la web sale de lo que elegiste y quedó guardado en la casa: la manera y tus días.
+      const tuyas = leerElecciones(v);
+      const manera = pedido.way === undefined ? tuyas.way : pedido.way;
+      if (typeof manera !== "string" || !viaje?.maneras.some((m) => m.id === manera)) throw new Fallo(400, "bad_way");
+      const guardados = pedido.days === undefined ? paraElCierre(viaje, tuyas) : null;
+      const dias = pedido.days ?? guardados?.dias;
+      const ritmo = pedido.days === undefined ? guardados?.ritmo : pedido.pace;
+      if (dias !== undefined) {
         try {
-          conTusDias(viaje, pedido.days, pedido.pace);
+          conTusDias(viaje, dias, ritmo);
         } catch {
           throw new Fallo(400, "bad_days");
         }
       }
       cierre = nuevoCierre(v, hoy());
       try {
-        elegir(v, cierre.carpeta, pedido.way, hoy(), { dias: pedido.days, ritmo: pedido.pace });
+        elegir(v, cierre.carpeta, manera, hoy(), { dias, ritmo });
       } catch (error) {
         if (error instanceof FalloAlCerrar) throw new Fallo(409, error.message);
         throw error;
       }
-      apuntar(v, "button", { boton: "close", cierre: cierre.n, manera: pedido.way }, hoy());
+      apuntar(v, "button", { boton: "close", cierre: cierre.n, manera }, hoy());
     }
     const conQue = conQuePiensa(p.cuenta);
     const clave = conQue === "key" ? claveDe(p.dueno, o.secreto, o.mesa) : null;
@@ -765,6 +775,63 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 202, cuerpo: { guide: n } };
   }
 
+  /**
+   * Tus elecciones sobre la versión que se enseña: leerlas y guardarlas, solo su dueño y solo con el viaje en el mapa.
+   * Se guardan encima, sin versión nueva, y no gastan. Lo que no es del viaje se dice por su campo, y no se guarda.
+   */
+  function tusElecciones(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    if (v.ficha.estado !== "on_map" || v.ficha.version === null) throw new Fallo(409, "not_now");
+    if (p.metodo === "GET") return { estado: 200, cuerpo: { version: v.ficha.version, choices: leerElecciones(v) } };
+    if (p.metodo !== "PUT") throw new Fallo(405, "method");
+    if (marchas.has(v.ficha.id)) throw new Fallo(409, "already_running");
+    if (!objeto(p.cuerpo) || !objeto(p.cuerpo.choices)) throw new Fallo(400, "bad_request");
+    try {
+      const choices = guardarElecciones(v, p.cuerpo.choices, hoy());
+      return { estado: 200, cuerpo: { version: v.ficha.version, choices } };
+    } catch (error) {
+      if (error instanceof EleccionQueNoVale) throw new Fallo(400, "bad_choice", { field: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * El impacto de un cambio, antes de rehacer nada: qué deja de valer, qué se rehace y quién, y lo que costaría. Sin
+   * IA y sin gastar: no cambia nada. El cambio llega por sus clases (`changes`, las de una pieza) o como lo entendido
+   * de después (`understood`), que se compara con el de la versión que se enseña.
+   */
+  function elImpacto(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    if (v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") throw new Fallo(409, "not_now");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    let clases: ClaseDeCambio[];
+    if (Array.isArray(pedido.changes)) {
+      if (pedido.changes.some((c) => !CLASES_DE_CAMBIO.includes(c as ClaseDeCambio)))
+        throw new Fallo(400, "bad_change");
+      clases = CLASES_DE_CAMBIO.filter((c) => (pedido.changes as unknown[]).includes(c));
+    } else if (objeto(pedido.understood)) {
+      if (!puertaEntendido(pedido.understood).verde) throw new Fallo(422, "unclear");
+      const antes = leerVersion(v)?.entendido as Entendido | undefined;
+      if (antes === undefined) throw NO_HAY();
+      clases = clasesDelCambio(antes, pedido.understood as Entendido);
+    } else throw new Fallo(400, "bad_request");
+    return { estado: 200, cuerpo: { impact: impactoDe(clases, gastoPorAsiento(p.dueno, o.mesa)) } };
+  }
+
+  /**
+   * Volver a una versión de antes: solo su dueño, con el viaje en el mapa o cerrado y sin nada en marcha. No borra
+   * ninguna, y el viaje pasa a estar como esa versión: cerrado si es la de un cierre.
+   */
+  function volverALaVersion(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    if (marchas.has(v.ficha.id) || guias.has(v.ficha.id)) throw new Fallo(409, "already_running");
+    if (v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") throw new Fallo(409, "not_now");
+    const n = objeto(p.cuerpo) ? p.cuerpo.version : undefined;
+    if (typeof n !== "number" || !v.ficha.versiones.some((x) => x.n === n)) throw new Fallo(400, "bad_version");
+    volverA(v, n, hoy());
+    return { estado: 200, cuerpo: { trip: resumen(v) } };
+  }
+
   function atender(p: Peticion): Respuesta {
     const [raiz, id, que, cual] = p.partes;
     if (raiz !== "viajes" || p.partes.length > 4) throw NO_HAY();
@@ -832,6 +899,27 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       const version = Number.isNaN(n) ? null : leerVersion(v, n);
       if (version === null) throw NO_HAY();
       return { estado: 200, cuerpo: { n, trip: version.viaje, events: version.sucesos } };
+    }
+    if (que === "elecciones" && cual === undefined) return tusElecciones(p);
+    if (que === "piezas" && cual === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      const piezas = estadoDelViaje(v, hoy());
+      if (piezas === null) throw NO_HAY();
+      return { estado: 200, cuerpo: { version: v.ficha.version, pieces: piezas } };
+    }
+    if (que === "impacto" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return elImpacto(p);
+    }
+    if (que === "versiones" && cual === undefined) {
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      return { estado: 200, cuerpo: { shown: v.ficha.version, versions: versionesDe(v) } };
+    }
+    if (que === "volver" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return volverALaVersion(p);
     }
     if (que === "guia" && cual === undefined) {
       if (p.metodo === "POST") return pedirLaGuia(p);

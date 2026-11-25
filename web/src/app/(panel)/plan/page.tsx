@@ -4,7 +4,7 @@
 // la investigación o tu viaje), qué día miras, a qué ritmo, de qué manera, y lo que has quitado, añadido o movido.
 // Lo que se enseña es un viaje tuyo, traído de la casa, si la dirección lo pide (?trip=<id>); si no, el grabado.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Manera, Punto, Ritmo, Suceso, Vistazo as ElVistazo } from "../../../../../agent/output/viaje.ts";
 import { RITMOS } from "../../../../../agent/output/viaje.ts";
 import { puertaEntendido } from "../../../../../agent/gates/puerta_entendido.ts";
@@ -19,6 +19,10 @@ import { Hoja } from "../../../piezas/Hoja.tsx";
 import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
+import { ElImpacto, TusVersiones } from "../../../piezas/Momentos.tsx";
+import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../../../../../agent/data/momentos.ts";
+import { impactoDe } from "../../../../../agent/scripts/impacto.ts";
+import { useTusElecciones, useVersiones } from "../../../lib/elecciones.ts";
 import { useCuenta, useViajeDeLaCasa } from "../../../lib/cuenta.ts";
 import { monedaDelNavegador, sitioDe } from "../../../lib/empezar.ts";
 import { dinero, noches } from "../../../lib/formato.ts";
@@ -96,6 +100,24 @@ export default function Planear() {
   const [quitadas, setQuitadas] = useState<string[]>([]);
   const [anadidas, setAnadidas] = useState<string[]>([]);
   const [fijadas, setFijadas] = useState<Record<string, number>>({});
+  // Tus elecciones de un viaje tuyo en el mapa viven en la casa: se leen al abrirlo y se guardan al cambiarlas.
+  const version = vivo.estado?.trip.version ?? null;
+  const tuyas = useTusElecciones(pedido != null && comoEsta === "on_map" ? pedido : null, version);
+  const versiones = useVersiones(pedido != null && enElMapa ? pedido : null, version);
+  const tocado = useRef(false);
+  const toca = (): void => {
+    tocado.current = true;
+  };
+  useEffect(() => {
+    const e = tuyas.leidas;
+    if (e === null) return;
+    tocado.current = false;
+    if (e.way !== null) setManera(e.way);
+    setRitmo(e.pace);
+    setQuitadas(e.removed);
+    setAnadidas(e.added);
+    setFijadas(e.moved);
+  }, [tuyas.leidas]);
 
   // Para abrir una pantalla suelta: ?at=look, ?at=live o ?at=trip, con &day=2, &tab=stay o &stay=3.
   useEffect(() => {
@@ -144,6 +166,29 @@ export default function Planear() {
     return repartir(viaje.paradas, fechas, ritmo, base, { quitadas, anadidas, fijadas }, viaje.caminos);
   }, [viaje, ritmo, cama, quitadas, anadidas, fijadas]);
   const deParada = useMemo(() => new Map((viaje?.paradas ?? []).map((p) => [p.id, p])), [viaje]);
+  // Lo que tocas se guarda en la casa, encima de lo de antes: elegir no gasta ni deja versión.
+  useEffect(() => {
+    if (!tocado.current || tuyas.leidas === null) return;
+    tuyas.guardar({
+      ...tuyas.leidas,
+      way: manera,
+      pace: ritmoPedido,
+      removed: quitadas,
+      added: anadidas,
+      moved: fijadas,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manera, ritmoPedido, quitadas, anadidas, fijadas]);
+  // Para mirar suelta la pieza del impacto: ?at=impact&change=dates, sobre el viaje que se enseña, sin gastar.
+  const [impactoSuelto, setImpactoSuelto] = useState<ClaseDeCambio[] | null>(null);
+  useEffect(() => {
+    const pedido = new URLSearchParams(window.location.search);
+    if (pedido.get("at") !== "impact") return;
+    const clases = (pedido.get("change") ?? "")
+      .split(",")
+      .filter((c): c is ClaseDeCambio => (CLASES_DE_CAMBIO as readonly string[]).includes(c));
+    setImpactoSuelto(clases.length > 0 ? clases : ["dates"]);
+  }, []);
 
   const alBuscar = (b: Busqueda): void => {
     // Con la casa conectada, buscar un sitio es empezar un viaje de verdad. Sin ella, la web enseña el grabado.
@@ -169,16 +214,19 @@ export default function Planear() {
     setEtapa("mundo");
   };
   const quita = (id: string): void => {
+    toca();
     setQuitadas((q) => [...q.filter((x) => x !== id), id]);
     setAnadidas((a) => a.filter((x) => x !== id));
     setFijadas(({ [id]: _, ...resto }) => resto);
     setParada(null);
   };
   const anade = (id: string): void => {
+    toca();
     setQuitadas((q) => q.filter((x) => x !== id));
     setAnadidas((a) => [...a.filter((x) => x !== id), id]);
   };
   const mueve = (id: string, aDia: number): void => {
+    toca();
     setFijadas((f) => ({ ...f, [id]: aDia }));
     setDia(aDia);
   };
@@ -490,7 +538,12 @@ export default function Planear() {
           <EnVivo {...comun} viaje={viaje} r={r} />
         </Hoja>
       )}
-      {etapa === "viaje" && viaje !== null && abierta === null && (
+      {etapa === "viaje" && viaje !== null && impactoSuelto !== null && (
+        <Hoja etiqueta={t.momentos.impacto}>
+          <ElImpacto {...comun} impacto={impactoDe(impactoSuelto)} alAhoraNo={() => setImpactoSuelto(null)} />
+        </Hoja>
+      )}
+      {etapa === "viaje" && viaje !== null && abierta === null && impactoSuelto === null && (
         <Hoja etiqueta={t.viaje.rotulo}>
           <TuViaje
             {...comun}
@@ -508,8 +561,14 @@ export default function Planear() {
               setDia(d);
               setParada(null);
             }}
-            alRitmo={setRitmo}
-            aLaManera={setManera}
+            alRitmo={(r) => {
+              toca();
+              setRitmo(r);
+            }}
+            aLaManera={(m) => {
+              toca();
+              setManera(m);
+            }}
             aLaParada={(id) => setParada((actual) => (actual === id ? null : id))}
             alAlojamiento={setFicha}
             alQuitar={quita}
@@ -520,6 +579,10 @@ export default function Planear() {
           />
           {pedido != null && comoEsta === "closed" && (
             <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />
+          )}
+          {tuyas.guardado === "fallo" && <p className="aviso">{t.momentos.noGuardado}</p>}
+          {pedido != null && versiones !== null && versiones.length > 0 && (
+            <TusVersiones {...comun} id={pedido} versiones={versiones} />
           )}
         </Hoja>
       )}

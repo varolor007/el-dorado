@@ -2426,3 +2426,75 @@ select.toque {
   border-radius: var(--radio-chico);
   background: var(--papel-2);
 }
+
+/* ---------- El viaje a ratos (8.1): tus versiones y lo que cambia antes de rehacer nada */
+
+.versiones {
+  margin-top: 18px;
+}
+.versiones__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.versiones__una {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+}
+.versiones__una > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.versiones__una[data-vista="true"] {
+  box-shadow: inset 0 0 0 1px var(--oro);
+}
+.versiones__una .enlace,
+.versiones__una .pastilla {
+  flex-shrink: 0;
+}
+.impacto .rotulo {
+  margin-top: 6px;
+}
+.impacto__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.impacto__fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.impacto__lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--papel-2);
+  overflow-wrap: anywhere;
+}
+.impacto__cuesta {
+  margin-top: 8px;
+}
+.impacto__lista .dato {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

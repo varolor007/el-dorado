@@ -3,8 +3,9 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov, por su cimiento (8.1); las tandas 4 y 5, con el
-visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 6, por momentos, en obra desde el 25-nov: su cimiento (8.1), hecho y junto, y sus cuatro
+momentos (8.2, 8.3, 8.6 y 8.5), en marcha con una sesión cada uno; las tandas 4 y 5, con el visto bueno del PM** (el
+estado, punto a punto, en [plan.md](plan.md)).
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
@@ -19,6 +20,36 @@ lo que el viajero elige, guardado en la casa; el estado de cada pieza, sacado de
 por claves y sin IA; rehacer solo lo que dejó de valer, en una investigación que parte de la anterior; y las
 versiones, con volver a la de antes. Después, sobre él y a la vez: el alojamiento (8.2), el transporte (8.3), el día
 a día (8.6) y los cambios (8.5). Vigilar el precio (8.7) es del PM.
+
+**La casa por momentos (8.1), junta** (25-nov). Es el suelo de los otros cuatro puntos: quien toque uno, que la lea.
+- **Elecciones**: lo que el viajero escoge entre lo que ya trae la versión que ve (la manera, un alojamiento o un
+  transporte de los suyos, el ritmo, lo que quita, añade o mueve, y sus gustos, marcados sin aplicar). En
+  `viajes/<id>/elecciones/<n>.json`, por versión, encima y sin versión nueva (`GET` y `PUT /viajes/<id>/elecciones`,
+  solo su dueño y solo en el mapa). Los días no se guardan: se calculan con el mismo repartir que la web
+  (`agent/scripts/elecciones.ts`: `comprobarElecciones`, `diasElegidos`, `alojamientoDe`, `transporteDe`,
+  `paraElCierre`; en la casa, `leerElecciones` y `guardarElecciones`, en `agent/launcher/momentos.ts`). El cierre
+  parte de lo guardado si la web no manda sus días.
+- **Estado**: el de cada pieza, cada parada y cada precio, calculado y por claves (`agent/scripts/estado.ts`,
+  `GET /viajes/<id>/piezas`).
+- **Impacto**: qué deja de valer con un cambio, qué pasos se rehacen y con qué, qué se queda, y lo que costaría,
+  sin IA (`agent/data/momentos.ts`: `CAMBIOS`, `LEE`, `LO_QUE_DEJA`; `agent/scripts/impacto.ts`: `clasesDelCambio`,
+  `impactoDe`; `POST /viajes/<id>/impacto`, que no cambia nada). El coste sale de lo que gastó cada asiento en las
+  investigaciones de esa cuenta (`gastoPorAsiento`); si de alguna no se sabe todo, dice que no se sabe.
+- **Rehacer**: `rehacer(v, {clases, entendido?, pedido?})`, en `agent/launcher/rehacer.ts`, abre una investigación
+  que parte de la de la versión que se enseña: copia, con sus horas (la puerta de todos mira el orden de los pasos
+  de un asiento por la hora de sus archivos), lo que deja cada paso que no lee nada de lo que cambió, con sus
+  puestos y sus veredictos, y deja `rehecho.json` (de cuál viene, con qué cambio, y lo que pide el momento, en
+  `pedido`). No copia ni los trabajos ni el adelante: la investigación nueva solo cuenta lo que lanza. La lleva
+  `llevar`, como a cualquiera, y al acabar su versión lleva `de` y `cambio`.
+- **Versiones**: `GET /viajes/<id>/versiones` y `POST /viajes/<id>/volver` (`versionesDe`, `volverA`); al volver a
+  una de antes vuelven sus elecciones, y de un viaje cerrado se puede volver a una abierta.
+- **Quién responde**: `agent/data/responde.ts` (`quienResponde(sitio)`), la tabla de la hoja.
+- **Web**: `web/src/lib/elecciones.ts` (`useTusElecciones`, `useVersiones`) y `web/src/piezas/Momentos.tsx`
+  (`TusVersiones` y `ElImpacto`, que se ve suelta con `?at=impact&change=<clase>`).
+- **Topes de partida**, del PM: veinte versiones y treinta investigaciones por viaje. No se borra nada.
+- **Lo que no cuadra todavía con la hoja**, para el PM: un mensaje para un día rehace también al que cruza y al
+  que explica (tres turnos, y la hoja dice uno); otro alojamiento rehace la búsqueda y mira a todos los finalistas
+  que salgan, no solo al nuevo; y un viajero más rehace también los papeles y las miradas.
 
 **La revisión de la tanda 5** (25-nov): tres adversarios en su copia; su informe, hallazgo a hallazgo, en
 [revisiones/tanda-5.md](revisiones/tanda-5.md), y sus pantallas, con el viaje del ensayo cerrado de verdad, en

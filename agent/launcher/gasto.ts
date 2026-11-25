@@ -9,6 +9,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { REHECHO } from "../data/momentos.ts";
 import { viajesDe, type ViajeEnLaMesa } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 
@@ -65,7 +66,12 @@ function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
     llamadas: lanzados.length,
     sabido: gasto.sabido,
     ultima: horas.at(-1) ?? null,
-    entera: gasto.sabido && lanzados.length > 0 && v.ficha.versiones.some((x) => x.run === n),
+    // Una investigación que rehace otra por un cambio no es entera: solo lanzó lo que dejó de valer.
+    entera:
+      gasto.sabido &&
+      lanzados.length > 0 &&
+      v.ficha.versiones.some((x) => x.run === n) &&
+      !existsSync(join(run, REHECHO)),
   };
 }
 
@@ -131,4 +137,34 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
     siguiente:
       enteras.length === 0 ? null : { usd: enteras.reduce((s, x) => s + x, 0) / enteras.length, de: enteras.length },
   };
+}
+
+/**
+ * Lo que gastó de media cada asiento en una investigación de esa cuenta: por cada run que acabó en el mapa (también
+ * los que rehicieron otro) y del que se sabe todo lo que gastó, la suma de los trabajos de ese asiento. Es con lo que
+ * se estima lo que cuesta rehacer un paso (`agent/scripts/impacto.ts`). Un asiento que no ha trabajado nunca en esa
+ * cuenta no sale: de él no se sabe.
+ */
+export function gastoPorAsiento(dueno: string, mesa: string): Record<string, { usd: number; de: number }> {
+  const sumas = new Map<string, number[]>();
+  for (const ficha of viajesDe(dueno, mesa)) {
+    const v: ViajeEnLaMesa = { carpeta: join(resolve(mesa), "viajes", ficha.id), ficha };
+    for (const r of ficha.runs) {
+      const run = join(v.carpeta, "runs", String(r.n));
+      const g = gastoDe(run);
+      if (!g.sabido || !ficha.versiones.some((x) => x.run === r.n)) continue;
+      const porAsiento = new Map<string, number>();
+      for (const t of trabajosDe(run)) {
+        if (t.estado === "queued" || t.gasto === null) continue;
+        porAsiento.set(t.asiento, (porAsiento.get(t.asiento) ?? 0) + t.gasto.usd);
+      }
+      for (const [asiento, usd] of porAsiento) sumas.set(asiento, [...(sumas.get(asiento) ?? []), usd]);
+    }
+  }
+  return Object.fromEntries(
+    [...sumas].map(([asiento, usds]) => [
+      asiento,
+      { usd: usds.reduce((s, x) => s + x, 0) / usds.length, de: usds.length },
+    ]),
+  );
 }

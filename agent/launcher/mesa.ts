@@ -20,6 +20,7 @@ import {
   readFileSync,
   realpathSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -70,7 +71,16 @@ export function guardarJson(ruta: string, dato: unknown): void {
 // La carpeta de cada viaje.
 
 /** Una versión del viaje. La que sale de cerrarlo lleva el número de su cierre, y la de su run sigue siendo la otra. */
-export type Version = { n: number; cuando: string; run: number; motivo: string; cierre?: number };
+export type Version = {
+  n: number;
+  cuando: string;
+  run: number;
+  motivo: string;
+  cierre?: number;
+  /** La de un cambio: la versión de la que partió y las clases de su cambio (`agent/data/momentos.ts`). */
+  de?: number;
+  cambio?: string[];
+};
 export type RunDelViaje = { n: number; cuando: string };
 
 export type Ficha = {
@@ -235,14 +245,24 @@ export function cambiarLoEntendido(v: ViajeEnLaMesa, entendido: unknown, cuando 
 
 const carpetaDelRun = (v: ViajeEnLaMesa, n: number): string => join(v.carpeta, "runs", String(n));
 
-/** Abre una investigación del viaje, con lo entendido como está ahora, y devuelve su carpeta. */
-export function nuevoRun(v: ViajeEnLaMesa, cuando = new Date()): string {
+/**
+ * Abre una investigación del viaje, con lo entendido como está ahora, y devuelve su carpeta. Si se le da con qué
+ * llenarla antes (`preparar`, lo que conserva un cambio de la investigación de antes), se llena aparte y la carpeta
+ * entra entera con su nombre: un corte no deja un run a medias.
+ */
+export function nuevoRun(v: ViajeEnLaMesa, cuando = new Date(), preparar?: (carpeta: string) => void): string {
   if (!SE_PASA_A[v.ficha.estado].includes("researching"))
     throw new Error(`un viaje ${v.ficha.estado} no se investiga: antes hay que confirmarlo`);
   const n = v.ficha.runs.length + 1;
   const run = carpetaDelRun(v, n);
-  mkdirSync(run, { recursive: true, mode: 0o700 });
-  copyFileSync(join(v.carpeta, "entendido.json"), join(run, "entendido.json"));
+  // Una carpeta con ese número que no está en la ficha es de un corte de antes: nadie la conoce, y se rehace.
+  if (existsSync(run)) rmSync(run, { recursive: true, force: true });
+  const aparte = join(v.carpeta, "runs", `.${n}.a-medias`);
+  rmSync(aparte, { recursive: true, force: true });
+  mkdirSync(aparte, { recursive: true, mode: 0o700 });
+  copyFileSync(join(v.carpeta, "entendido.json"), join(aparte, "entendido.json"));
+  preparar?.(aparte);
+  renameSync(aparte, run);
   const de = v.ficha.estado;
   v.ficha.runs.push({ n, cuando: cuando.toISOString() });
   v.ficha.estado = "researching";
@@ -255,6 +275,17 @@ export function nuevoRun(v: ViajeEnLaMesa, cuando = new Date()): string {
 export function ultimoRun(v: ViajeEnLaMesa): string | null {
   const n = v.ficha.runs.length;
   return n === 0 ? null : carpetaDelRun(v, n);
+}
+
+/** Si el run rehace otro por un cambio (`rehecho.json`), de qué versión partió y con qué clases de cambio. */
+function deUnCambio(run: string): Pick<Version, "de" | "cambio"> {
+  try {
+    const r = JSON.parse(readFileSync(join(run, "rehecho.json"), "utf8")) as { version?: unknown; cambio?: unknown };
+    const cambio = Array.isArray(r.cambio) ? r.cambio.filter((c): c is string => typeof c === "string") : [];
+    return typeof r.version === "number" ? { de: r.version, cambio } : {};
+  } catch {
+    return {};
+  }
 }
 
 /**
@@ -279,12 +310,12 @@ export function guardarVersion(v: ViajeEnLaMesa, run: number, motivo: string, cu
   for (const nombre of SI_LO_HAY)
     if (existsSync(join(desde, nombre))) copyFileSync(join(desde, nombre), join(aparte, nombre));
   renameSync(aparte, hasta);
-  const version: Version = { n, cuando: cuando.toISOString(), run, motivo };
+  const version: Version = { n, cuando: cuando.toISOString(), run, motivo, ...deUnCambio(desde) };
   v.ficha.versiones.push(version);
   v.ficha.version = n;
   v.ficha.estado = "on_map";
   escribirFicha(v, cuando);
-  apuntar(v, "version", { version: n, run, motivo }, cuando);
+  apuntar(v, "version", { version: n, run, motivo, ...deUnCambio(desde) }, cuando);
   return version;
 }
 
@@ -359,9 +390,15 @@ export function guardarCierre(v: ViajeEnLaMesa, cierre: number, cuando = new Dat
   return version;
 }
 
-/** Vuelve a enseñar una versión de antes. No borra ninguna. */
+/**
+ * Vuelve a enseñar una versión de antes. No borra ninguna. Con el viaje en el mapa o cerrado, pasa a estar como esa
+ * versión: cerrado si es la de un cierre, y en el mapa si no.
+ */
 export function volverA(v: ViajeEnLaMesa, n: number, cuando = new Date()): void {
-  if (!v.ficha.versiones.some((x) => x.n === n)) throw new Error("este viaje no tiene esa versión");
+  const version = v.ficha.versiones.find((x) => x.n === n);
+  if (version === undefined) throw new Error("este viaje no tiene esa versión");
+  if (v.ficha.estado === "on_map" || v.ficha.estado === "closed")
+    v.ficha.estado = version.cierre === undefined ? "on_map" : "closed";
   v.ficha.version = n;
   escribirFicha(v, cuando);
   apuntar(v, "back_to", { version: n }, cuando);
