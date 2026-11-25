@@ -135,6 +135,7 @@ export function puertaDeLasEntradas(e: unknown, m: Material, tanda: number, run:
     hoy: m.hoy,
     abiertas: puesto === null ? null : abiertas(leerConsultado(puesto)),
     deLosAbiertos: m.abiertos.flatMap((a) => a.fuentes.map((f) => f.url)),
+    websDeLosAbiertos: Object.fromEntries(m.abiertos.map((a) => [a.sitio, a.web])),
   });
   if (!v.verde) return v.rojos;
   return pegasDeLasEntradas(paraEnsenarEntradas([e as EntregaDeLasEntradas], [], m.abiertos), suyos);

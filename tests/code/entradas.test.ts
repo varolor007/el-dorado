@@ -488,6 +488,73 @@ test("la puerta 13: cada trampa, su rojo", () => {
   assert.deepEqual(rojosDe(null), ["delivery: no es un objeto"]);
 });
 
+/** Textos que un navegador abre como una página https, y que no están escritos en su forma normal. */
+const RAROS = (pagina: string): string[] => {
+  const resto = pagina.slice("https://".length);
+  return [
+    `https:${resto}`,
+    `https:/${resto}`,
+    `https:\\\\${resto.replaceAll("/", "\\")}`,
+    `h\nttps://${resto}`,
+    ` ${pagina}`,
+    `HTTPS://${resto}`,
+    `https://user@${resto}`,
+    `https://127.0.0.1/x`,
+  ];
+};
+
+test("la puerta 13: dónde reservar y su web, una página que abrió o la que dicen los datos abiertos", () => {
+  const WEB = "https://q1.inventado.example/";
+  const para = { ...PARA, websDeLosAbiertos: { Q1: WEB, Q2: null } };
+  const con = (cambia: (e: any) => void): string[] => {
+    const e = structuredClone(buena()) as any;
+    cambia(e);
+    return rojosDe(e, para);
+  };
+  // La que abrió y la que dicen los datos abiertos de ese sitio, valen.
+  assert.deepEqual(
+    con((e) => (e.sights[0].official_site = PAGINA_DE_LAS_ENTRADAS)),
+    [],
+  );
+  assert.deepEqual(
+    con((e) => (e.sights[0].official_site = WEB)),
+    [],
+  );
+  assert.deepEqual(
+    con((e) => (e.sights[0].booking.where = WEB)),
+    [],
+  );
+  // Una que solo le salió en el buscador, no; ni la web de los datos abiertos de otro sitio.
+  const noAbrio = /no es una página que abriera de verdad, ni la web que dicen de este sitio los datos abiertos/;
+  for (const [donde, cambia] of [
+    ["sights[0].official_site", (e: any) => (e.sights[0].official_site = "https://reventa.inventado.example/q1")],
+    ["sights[0].booking.where", (e: any) => (e.sights[0].booking.where = "https://reventa.inventado.example/q1")],
+    ["sights[1].official_site", (e: any) => (e.sights[1].official_site = WEB)],
+  ] as const) {
+    const rojos = con(cambia);
+    assert.ok(
+      rojos.some((r) => r.startsWith(`${donde}: `) && noAbrio.test(r)),
+      `${donde}: ${rojos.join(" | ")}`,
+    );
+  }
+  // Ninguna escrita de otra forma, aunque sea la que abrió.
+  for (const raro of RAROS(PAGINA_DE_LAS_ENTRADAS)) {
+    for (const campo of ["official_site", "where", "source"] as const) {
+      const rojos = con((e) => {
+        if (campo === "official_site") e.sights[0].official_site = raro;
+        else if (campo === "where") e.sights[0].booking.where = raro;
+        else e.sights[0].prices[0].source = raro;
+      });
+      assert.ok(
+        rojos.some((r) => /forma normal/.test(r)),
+        `${campo} ${JSON.stringify(raro)}: ${rojos.join(" | ")}`,
+      );
+    }
+  }
+  // Sin la memoria de lo consultado, solo su forma.
+  assert.deepEqual(rojosDe(structuredClone(buena()), { ...para, abiertas: null }), []);
+});
+
 // ---------- lo que pasa al viaje
 
 const ABIERTOS: DatosAbiertos[] = [

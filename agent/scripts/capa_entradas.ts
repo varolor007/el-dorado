@@ -4,6 +4,7 @@
 
 import type { SinMirar } from "../data/capas.ts";
 import type { DeLasEntradas, EntradaDeUnSitio, FuenteDeUnDato, Horario, PrecioDeCapa } from "../output/capas.ts";
+import { formaNormal } from "../tools/enlaces.ts";
 import { leerHorarioDeOsm } from "../tools/horarios.ts";
 import { diasQueCierra, fuenteDe, horarioDe, preciosDe, type HorarioEntregado, type PrecioEntregado } from "./capas.ts";
 import { SIN_SABER } from "./formas.ts";
@@ -101,10 +102,10 @@ export function entradaMirada(s: SitioEntregado, a: DatosAbiertos | undefined): 
         ? null
         : {
             haceFalta: s.booking.needed,
-            donde: s.booking.where === SIN_SABER ? null : s.booking.where,
+            donde: s.booking.where === SIN_SABER ? null : (formaNormal(s.booking.where) ?? s.booking.where),
             fuente: fuenteDe(s.booking),
           },
-    web: s.official_site === SIN_SABER ? (a?.web ?? null) : s.official_site,
+    web: s.official_site === SIN_SABER ? (a?.web ?? null) : (formaNormal(s.official_site) ?? s.official_site),
     mirado: true,
   };
 }
