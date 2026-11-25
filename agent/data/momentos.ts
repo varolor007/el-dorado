@@ -130,8 +130,8 @@ export type PiezaDelViaje = (typeof PIEZAS_DEL_VIAJE)[number];
  * Las capas del destino (bloque 14), con lo más prudente: otro destino, otras fechas u otra ruta lo rehacen todo (por
  * la ruta, que leen las tres); otras fechas, además, los horarios y los precios de las entradas, por los sitios
  * elegidos. Un viajero más, solo la cuenta del presupuesto, que es código: las entradas ya traen el precio por edad
- * (la hoja: «con un viajero más no hace falta»). Lo que busca el viajero y su idioma tocan al que conoce el destino,
- * que lo lee y escribe en él. Lo demás les llega por `LEE`.
+ * (la hoja: «con un viajero más no hace falta»). Lo que busca el viajero toca al que conoce el destino, que lo lee
+ * (solo lo de la lista fija). Lo demás les llega por `LEE`.
  */
 export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePaso[] }> = {
   destination: {
@@ -147,12 +147,20 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   passports: { pasos: ["search", "papers"], quizas: [] },
   budget: { pasos: ["table"], quizas: [] },
   currency: { pasos: ["search"], quizas: [] },
-  language: { pasos: ["explain", "local_knowledge"], quizas: [] },
+  // Otro idioma no se alcanza: la casa no lo ofrece y lo rechaza (`cambioQueNoVale`, en `agent/scripts/cambios.ts`).
+  // Si algún día se ofrece, casi todo lo que escribe para el viajero va en él (el porqué de cada parada, lo que dice
+  // el que mira, lo que explica, lo de allí, los avisos de las fechas): se rehace entero, como lo que no se sabe leer.
+  language: {
+    pasos: ["sights", "route", "search", "papers", "calendar", "pick", "getting_around", "local_knowledge", "tickets"],
+    quizas: [],
+  },
   pace: { pasos: ["days"], quizas: [] },
   // Un gusto de una cosa del alojamiento (`agent/data/gustos.ts`) solo cambia cómo se cruza la ficha de cada uno.
   lodging_taste: { pasos: ["table"], quizas: [] },
   taste: { pasos: ["route", "pick"], quizas: [] },
-  looking_for: { pasos: ["route", "pick", "local_knowledge"], quizas: [] },
+  // Lo que buscas lo leen la ruta y el del día a día, enteros; y el que conoce el destino y el del calendario, solo lo
+  // de la lista fija (`loQueSeBusca`), que también puede cambiar.
+  looking_for: { pasos: ["route", "pick", "calendar", "local_knowledge"], quizas: [] },
   limits: { pasos: ["route", "pick", "table"], quizas: [] },
   booked: { pasos: ["route", "pick", "search", "table"], quizas: [] },
   // Lo que no se sabe leer se rehace entero: es lo más prudente.
@@ -175,6 +183,14 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   // demás de las entradas se queda como estaba. Los días se vuelven a repartir con sus horarios, y la cuenta.
   tickets: { pasos: ["tickets"], quizas: [] },
 };
+
+/**
+ * Los pasos que pueden decir en sus frases cifras del presupuesto entero (14.7): el que cruza y el que explica. No lo
+ * leen para decidir (no está en su `LEE`), pero lo tienen delante y su puerta mira esas cifras con él. Si un cambio
+ * rehace el presupuesto y los conserva, lo que dijeron se vuelve a pasar por su puerta con la cuenta nueva, y el que
+ * no pasa se rehace: por eso el impacto los pone entre los que quizá se rehacen (`maybe`), y cuenta lo que costarían.
+ */
+export const DICEN_EL_PRESUPUESTO: readonly IdDePaso[] = ["cross", "explain"];
 
 /** Las piezas del viaje que salen de cada paso: si el paso se rehace, se quedan por rehacer. */
 export const PIEZAS_DE_UN_PASO: Record<IdDePaso, PiezaDelViaje[]> = {

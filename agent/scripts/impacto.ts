@@ -6,6 +6,7 @@
 import {
   CAMBIOS,
   CLASES_DE_CAMBIO,
+  DICEN_EL_PRESUPUESTO,
   LEE,
   MIRAN_TODAS_LAS_ENTRADAS,
   PIEZAS_DE_UN_PASO,
@@ -193,6 +194,9 @@ export function impactoDe(clases: readonly ClaseDeCambio[], estimado: EstimadoPo
   }));
   const keep = ORDEN.filter((id) => !rehacen.includes(id));
   const posibles = new Set(clases.flatMap((c) => CAMBIOS[c].quizas).filter((id) => !rehacen.includes(id)));
+  // Con el presupuesto rehecho, lo que ya dijeron de él el que cruza y el que explica se vuelve a juzgar con la cuenta
+  // nueva, y el que no pasa se rehace (14.7): quizá, y se cuenta.
+  if (rehacen.includes("budget")) for (const id of DICEN_EL_PRESUPUESTO) if (!rehacen.includes(id)) posibles.add(id);
   const maybe = enOrden(posibles).map((step) => ({ step, who: quienDa(step) }));
   // Cada clase dice lo suyo: las piezas de sus pasos o, si toca menos, las suyas (`PIEZAS_DE_UNA_CLASE`).
   const piezas = new Set<PiezaDelViaje>(

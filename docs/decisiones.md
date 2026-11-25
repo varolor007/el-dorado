@@ -778,7 +778,10 @@ Lo que deja el 25-nov, a decisión del PM:
   un mensaje: hoy solo se lee. El botón que mira las entradas de un sitio añadido: ocho sitios como mucho, con el tope
   de los mensajes, tres al día. Que un mensaje para un día no vuelve a mirar las entradas. El orden en que se miran
   cuando pasan del tope: los imprescindibles y los que tienen puerta, primero. Que una página de datos abiertos no
-  vale como fuente de un precio que da el asiento. Si en el ensayo se prueba a cortar a Claude con cuidado, por su
+  vale como fuente de un precio que da el asiento. Qué se hace cuando quitas o mueves una parada y cambia la cuenta: no se rehace a nadie, porque una elección no
+  gasta, y el porqué de cada manera sigue dicho con la cuenta de antes; lo prudente sería una nota en la web. Que un
+  niño sin precio suyo paga el de adulto también en los billetes, que sube lo de moverse de las familias. Si en el
+  ensayo se prueba a cortar a Claude con cuidado, por su
   entrada, para que diga lo gastado: no está documentado y no se puede probar sin gastar. Y verlo con IA de verdad,
   que es un gasto.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,

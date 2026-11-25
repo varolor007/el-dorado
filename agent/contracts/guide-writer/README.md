@@ -23,6 +23,8 @@ may mention a price or an hour of your material where it helps the traveller, bu
   the first stop (`from` is `stay`), and from each stop to the next, each with its `metres`, its `minutes`, whether
   it is walked (`on_foot`) and whether those numbers come from a routing source or are the house's estimate
   (`measured_by`: `source` or `estimate`).
+  A day with `free` set to `true` is a free day: the pace of the trip left it to the traveller, often the day they
+  arrive or the day they leave. It has no stops and no legs, and its `title` is `unknown`: you write it.
   When the trip knows it, a stop also has its `ticket`: its `prices` (each `for` whom, with its `ages`, its `amount`
   or `free`, and its `currency`), or `unknown`; `open_that_day` (`yes`, `no` or `unknown`: `no` means it is closed
   that day); `hours_that_day` (each with `opens` and `closes`); and `book_ahead`. A stop without `ticket` has nothing

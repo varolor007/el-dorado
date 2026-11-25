@@ -15,7 +15,8 @@ It works the same for a city, a town, an island or a whole region, in any countr
 - `trip.json`: today's date (`today`); the destination (its name, its country in two letters and whether it is a
   city, a region or a country); the dates (`check_in`, `check_out`); the traveller's language (`language`, the
   language you write in); the currency of the trip (`currency`); and what the traveller is looking for
-  (`looking_for`).
+  (`looking_for`: only what is on the fixed list of what can be looked for, in English, such as `Eat well` or
+  `Nature`; never their own words).
 - `route.json`: the shape of the route, its bases (where the traveller sleeps, with their nights) and its zones, each
   with its `id`, its base, its `label` (the name the traveller reads), its `centre` and its `radius_m`.
 - `limits.json`: how many things you may hand in (`items_allowed`) and how many of each class (`per_kind`); how long

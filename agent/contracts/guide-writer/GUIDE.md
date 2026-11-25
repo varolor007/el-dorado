@@ -25,6 +25,11 @@ three short texts:
   `ticket`, you may say it is free, or that it is closed that day (`open_that_day` is `no`), or the hours it opens
   that day: only as the material gives them.
 
+A free day (`free` is `true`) has no stops: its `title` says in a few words that the day is theirs, and its `intro`,
+in one or two sentences, what kind of day it is in the trip (the day they arrive, the day they leave, a day between
+two others), by its date and from what your material says. You do not fill it: no stop of another day, no place,
+no plan that is not in your material. If it has `eat`, you write it as on any other day.
+
 Two examples of the form of a `what`, in English and of two different kinds, so that you copy neither:
 `A covered market from the end of the nineteenth century, where the stalls of the town still sell fish and fruit.`,
 or `The hill of the old castle: from its walls the whole bay is seen.` Yours come only from your material.
@@ -63,4 +68,4 @@ estimates, a deadline that is `unknown`. Plainly, in their language.
 Before delivering: a place that is not a stop of the trip or of your material; a number that is not in the material;
 a clock time or a price that is not in the material; a restaurant; a transport mode that is not in `in/around.json`; a
 promise; a word from inside; an adjective without its fact; a stop, a leg, a day with `eat` or a thing to do without
-its text; an `eat` on a day without it.
+its text; an `eat` on a day without it; a stop, a leg or a place on a free day.
