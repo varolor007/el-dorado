@@ -613,3 +613,21 @@ test("tus días pasan las cuentas de la puerta 9: el que no cabe se dice, y qued
     rmSync(mesa, { recursive: true, force: true });
   }
 });
+
+test("«tus días han cambiado» solo sale en la versión de la que salió el mensaje, si dejó una más nueva", async () => {
+  const { loQueSeEnsena } = await import("../../web/src/lib/diaADia.ts");
+  const hecho = { state: "done" as const, from: 2, version: 3 };
+  // Lo mandaste desde la 2 y dejó la 3: en la 2, el aviso y el paso a verla; en la 3, lo que cambió.
+  assert.equal(loQueSeEnsena(hecho, 2, false).nuevo, true);
+  assert.deepEqual(loQueSeEnsena(hecho, 3, false), { trabajando: false, acabado: true, nuevo: false, parado: false });
+  // La trampa: tras otro cambio (la 4) o al volver a una de antes (la 1), ya no lleva a nada nuevo.
+  for (const version of [4, 1, null]) {
+    const x = loQueSeEnsena(hecho, version, false);
+    assert.ok(!x.nuevo && !x.acabado && !x.trabajando && !x.parado, String(version));
+  }
+  // Trabajando, siempre se dice; parado, solo en la versión de la que salió.
+  assert.equal(loQueSeEnsena({ state: "working", from: 2, version: null }, 4, false).trabajando, true);
+  assert.equal(loQueSeEnsena({ state: "stopped", from: 2, version: null }, 2, false).parado, true);
+  assert.equal(loQueSeEnsena({ state: "stopped", from: 2, version: null }, 3, false).parado, false);
+  assert.deepEqual(loQueSeEnsena(null, 2, false), { trabajando: false, acabado: false, nuevo: false, parado: false });
+});
