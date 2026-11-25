@@ -842,6 +842,7 @@ const en = {
     enlaces: "Where to book",
     clase: {
       where_priced: "Where we saw the price",
+      other_seller: "Another seller",
       search: "Search with your dates",
       own_site: "The place's own website (not where we saw the price)",
     } as Record<string, string>,
@@ -850,6 +851,7 @@ const en = {
       unchecked: "We could not check this link.",
       down: "This link did not answer today.",
     } as Record<string, string>,
+    deOtroDia: "Another seller's price is from the day we searched. Today it may be different.",
     mapas: "On Google Maps",
     dondeDuermes: "Where you sleep",
     dia: (n: number, fecha: string) => `Day ${n}, ${fecha}`,
@@ -1655,6 +1657,7 @@ const es: Textos = {
     enlaces: "Dónde se reserva",
     clase: {
       where_priced: "Donde vimos el precio",
+      other_seller: "Otro vendedor",
       search: "La búsqueda, con tus fechas",
       own_site: "La web del propio alojamiento (no es donde vimos el precio)",
     },
@@ -1663,6 +1666,7 @@ const es: Textos = {
       unchecked: "No hemos podido comprobar este enlace.",
       down: "Este enlace no ha respondido hoy.",
     },
+    deOtroDia: "El precio de otro vendedor es el del día que buscamos. Hoy puede ser otro.",
     mapas: "En Google Maps",
     dondeDuermes: "Dónde duermes",
     dia: (n, fecha) => `Día ${n}, ${fecha}`,

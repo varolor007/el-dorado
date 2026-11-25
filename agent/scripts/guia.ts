@@ -77,8 +77,13 @@ export type ParaLaGuia = {
   todo: CosaParaLaGuia[];
 };
 
-/** La manera con que se hace el viaje: la que se pidió, o la única que tiene. Sin ella no se sabe dónde se duerme. */
+/**
+ * La manera con que se hace el viaje: la que se cerró, que es con la que el viajero se quedó. Si el viaje no lleva
+ * su cierre, la que se pida o la única que tiene. Sin ella no se sabe dónde se duerme.
+ */
 export function maneraDeLaGuia(v: Viaje, pedida?: string | null): Manera | null {
+  const cerrada = v.cierre?.manera ?? null;
+  if (cerrada !== null) return v.maneras.find((m) => m.id === cerrada) ?? null;
   if (pedida != null) return v.maneras.find((m) => m.id === pedida) ?? null;
   return v.maneras.length === 1 ? v.maneras[0] : null;
 }

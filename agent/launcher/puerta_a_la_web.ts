@@ -27,7 +27,8 @@
 //   POST   /viajes/<id>/guia           «Quiero mi guía», con el viaje cerrado, su manera ({ "way" }) y su techo
 //   GET    /viajes/<id>/guia           cómo está la última guía: si sale, si salió, de qué versión y si se quedó atrás
 //   GET    /viajes/<id>/guia/documento la guía hecha, como documento: la página que se ve, se imprime y se descarga
-//   POST   /viajes/<id>/cerrar         «me quedo con este», con su manera ({ "way": ... }); o que sigues aunque un
+//   POST   /viajes/<id>/cerrar         «me quedo con este», con su manera y tus días ({ "way", "days", "pace" }); o
+//                                       que sigues aunque un
 //                                       precio haya subido mucho ({ "prices": "go_on" })
 //   GET    /viajes/<id>/cierre         por dónde va el último cierre y, si espera tu sí, lo que ha cambiado
 
@@ -75,6 +76,7 @@ import {
   seguir,
   type FuentesDelCierre,
 } from "./cerrar.ts";
+import { conTusDias } from "../scripts/cierre.ts";
 import {
   abrirViaje,
   apuntar,
@@ -634,9 +636,16 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       const viaje = leerVersion(v)?.viaje as Viaje | undefined;
       if (typeof pedido.way !== "string" || !viaje?.maneras.some((m) => m.id === pedido.way))
         throw new Fallo(400, "bad_way");
+      if (pedido.days !== undefined) {
+        try {
+          conTusDias(viaje, pedido.days, pedido.pace);
+        } catch {
+          throw new Fallo(400, "bad_days");
+        }
+      }
       cierre = nuevoCierre(v, hoy());
       try {
-        elegir(v, cierre.carpeta, pedido.way, hoy());
+        elegir(v, cierre.carpeta, pedido.way, hoy(), { dias: pedido.days, ritmo: pedido.pace });
       } catch (error) {
         if (error instanceof FalloAlCerrar) throw new Fallo(409, error.message);
         throw error;

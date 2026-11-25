@@ -488,12 +488,12 @@ cada día, una capa del mapa. Se abre: cuando quieras.
 
 **Flujo**
 
-1. **Tú, «Me quedo con este»** (tú). Te quedas con el viaje como está: la manera de dormir y de llegar que hayas elegido, y tus días.
-2. **Los precios de hoy** (código de la casa). Vuelve a pedir el precio de cada pieza a su fuente. Si alguno ha cambiado desde que lo viste, lo dice antes de que reserves.
-3. **El que explica** (asiento de ia). Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar.
-4. **Puerta 8: ¿todo cuadra?** (puerta). Las horas de llegada cuadran con la entrada al alojamiento; las noches, con las fechas; cada enlace responde; y ningún precio pasa de su edad máxima.
-5. **Los enlaces** (código de la casa) *(por decidir)*. Cada pieza lleva el enlace de donde se encontró su precio, con las fechas ya puestas: una agencia, un comparador o la web del propio hotel. Los tienes siempre en la página de tu viaje.
-6. **Sale tu viaje** (lo que sale). El Dorado propone y enlaza: no reserva ni cobra. Cada reserva la haces tú, en la web de quien vende. La página de tu viaje se queda ahí, con sus enlaces.
+1. **Tú, «Me quedo con este»** (tú) *(hecho)*. Te quedas con el viaje como está: la manera de dormir y de llegar que hayas elegido, y tus días.
+2. **Los precios de hoy** (código de la casa) *(hecho, por decidir)*. Vuelve a pedir el precio de cada pieza a su fuente. Si alguno ha cambiado desde que lo viste, lo dice antes de que reserves; y si el total sube mucho, o algo se queda sin precio, para y te pregunta.
+3. **El que explica** (asiento de ia) *(hecho)*. Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar. El orden y los plazos los saca el código; él escribe una frase de cada cosa. Sin IA, el viaje se cierra igual, sin frases, y lo dice.
+4. **Puerta 8: ¿todo cuadra?** (puerta) *(hecho)*. Las horas de llegada cuadran con la entrada al alojamiento; las noches, con las fechas; cada enlace responde; y ningún precio pasa de su edad máxima.
+5. **Los enlaces** (código de la casa) *(hecho, por decidir)*. Cada pieza lleva el enlace de donde se encontró su precio, con las fechas ya puestas: una agencia, un comparador o la web del propio hotel. Los tienes siempre en la página de tu viaje.
+6. **Sale tu viaje** (lo que sale) *(hecho)*. El Dorado propone y enlaza: no reserva ni cobra. Cada reserva la haces tú, en la web de quien vende. La página de tu viaje se queda ahí, con sus enlaces.
 
 **Te espera**
 
@@ -683,7 +683,7 @@ Cada viaje tiene su carpeta en la mesa, fuera del repositorio: ningún dato de u
 | 5. ¿Cada nivel, con su prueba? | La investigación y El alojamiento | Cada nivel, de su lista y con su foto o su opinión; la foto, de la habitación de ese precio y del inventario; sin prueba, «no se sabe» | hecho |
 | 6. ¿Cada número sale de la tabla? | La investigación, El transporte y Cambios | Los números, iguales a los del código; las piezas, de las mismas fechas; cada palanca, con su estado; dos rondas | hecho |
 | 7. ¿Sin promesas y con su aviso? | La investigación y Cerrar el viaje | Los números del texto, en la tabla; ninguna palabra prohibida; el aviso de IA y el de los precios | hecho |
-| 8. ¿Todo cuadra? | Cerrar el viaje | Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado | en borrador |
+| 8. ¿Todo cuadra? | Cerrar el viaje | Las horas con la entrada al alojamiento, las noches con las fechas, los enlaces vivos y ningún precio caducado | hecho |
 | 9. ¿Cada día cabe? | La investigación y El día a día | Cada parada existe en los datos, con su sitio y su fuente; ninguna repetida; las horas caben en el día; ningún salto pasa del tope. Hecha, menos lo que cierra cada día, que espera a tener de dónde saberlo | en parte |
 | 10. ¿La guía dice lo que dice el viaje? | La guía | Cada sitio, cada hora y cada precio, en el viaje cerrado; cada foto, con su autor y su licencia; ninguna palabra prohibida; su aviso | hecho |
 | La de todos | Cada asiento, al entregar | Cada paso dejó su archivo y en su orden; cada dato, con su fuente, su fecha y su etiqueta; cada página citada se consultó de verdad: está en la memoria de lo consultado de ese asiento, que guarda la casa | hecho |
@@ -711,7 +711,7 @@ Una puerta mide las cuentas, la forma, de dónde sale cada cosa y que las piezas
 | La investigación | El mapa vivo: pulsos donde se busca, contadores y hallazgos que aparecen; al lado, las preguntas, lo que he entendido y lo que falta | Contestas, miras o te vas: sigue sola | en parte |
 | Tu viaje | El mapa con una capa por día, las paradas numeradas con su foto y sus flechas, y la hoja por pestañas: los días, dónde dormir, las cuentas y los avisos; las tres maneras y las palancas | Cambias de día, mueves el ritmo, abres una ficha, quitas, añades o mueves una parada | en parte |
 | Una ficha | Un alojamiento: sus fotos, cómo es con su prueba, su precio con su fecha y lo que te deja cerca. Una parada: por qué ir, cuánto lleva y cómo llegar | Eliges, descartas o preguntas | en parte |
-| Cerrar el viaje | Los precios de hoy, lo que ha cambiado y dónde se reserva cada cosa | Vas a reservar, a la web de quien vende | pendiente |
+| Cerrar el viaje | Los precios de hoy, lo que ha cambiado y dónde se reserva cada cosa | Vas a reservar, a la web de quien vende | hecho |
 | Tu guía | El cuaderno de tu viaje | Lo imprimes, lo guardas como PDF o lo descargas | hecho |
 | Tu panel | El carril, que lleva de una parte a otra; tus viajes, cada uno dibujado y donde lo dejaste; tu clave de IA y lo que has gastado | Retomas un viaje, empiezas otro o pones tu clave | en parte |
 
@@ -756,7 +756,7 @@ Todos piensan igual, en seis pasos, que contestan de una vez y la casa escribe, 
 | El de la ruta | Dónde duermes cada noche, por dónde entras y sales, y en qué zonas buscar. Hecho con los sitios de los datos abiertos y sin salir a internet: el centro de cada zona y lo que se anda los pone el código. Falta el buscador, y de dónde salen los tiempos de un traslado | Sí | en parte |
 | El que mira el alojamiento | Las fotos y las opiniones de cada finalista: la ficha de cómo es, con niveles y pruebas. Hecho, a ciegas y sin salir a internet, y probado con cinco alojamientos de verdad; falta el contraste con otras webs | Sí | en parte |
 | El que cruza | Lee la tabla del código, recorre la lista fija de palancas, cierra las tres maneras de hacer el viaje y elige qué palancas contarte. Hecho con el alojamiento y con el transporte que haya; las palancas del transporte esperan a su búsqueda | No | en parte |
-| El que explica | Escribe qué ganas y qué pierdes con cada manera, y lo que ahorra cada palanca; los números, con sus diferencias ya hechas, se los da el código. Falta lo que hay que hacer y para cuándo, que sale de los papeles y de cerrar el viaje | No | en parte |
+| El que explica | Escribe qué ganas y qué pierdes con cada manera, y lo que ahorra cada palanca; los números, con sus diferencias ya hechas, se los da el código. Al cerrar, una frase de cada reserva y de cada plazo, con el orden que le da el código. Sin estrenar al cerrar con IA de verdad | No | en parte |
 | El conductor | Vigila la investigación, devuelve cada rojo a su dueño y cuida el tiempo y el gasto. Hecho: devolver cada rojo, el tiempo, el gasto y el acta son cosa del código; el asiento solo entra cuando una investigación se para, y elige entre una vuelta más de ese asiento, con una indicación, o parar y contarte qué pasó y qué puedes hacer. Estrenado con una parada de verdad, en la que pidió la vuelta de más y acertó; falta ver de verdad la otra salida | No | en parte |
 | El del día a día | Qué merece tu tiempo y qué no, en qué orden y cuánto lleva; repartirlo por días es cosa del código. Hecho con los sitios de los datos abiertos y sin salir a internet: lo que echa en falta lo dice, y no entra hasta que una fuente lo traiga | Sí | en parte |
 | El que escribe la guía | Los textos de tu cuaderno: cada día, contado para quien lo va a andar, solo con lo que hay en el viaje. Hecho, a falta de su primera guía con IA de verdad; dónde comer y lo que te pierdes en autobús, por decidir | No | en parte |

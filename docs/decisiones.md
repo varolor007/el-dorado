@@ -593,6 +593,22 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   ensayo pantalla a pantalla, y la parada enseñada de las dos maneras, con la frase del conductor y sin ella, para
   que el PM elija viéndolas. Sus capturas, sin gastar: la mesa guardada del ensayo, abierta con una casa sin
   modelo ni cuenta.
+- **Cómo se cierra un viaje** (la sesión de obra, con lo más prudente; los números, a firma del PM): el orden de
+  las reservas lo saca entero el código (primero lo que más se mueve de precio, después lo que no se puede
+  cancelar, y al final lo que se reserva con tiempo), y el que explica solo escribe una frase de cada cosa; sin IA
+  se cierra igual, sin frases. Si el total sube un 10 % o más, o una pieza se queda sin precio, se para y se
+  pregunta. Una llegada que no cuadra con la hora de entrada no para el cierre: se dice y queda sin confirmar. Un
+  precio vale un día si se pidió ahora y siete si era guardado. Cada enlace se comprueba con una petición de su
+  cabecera, doce por cierre como mucho. Y el que explica gana un modo de cerrar, en vez de abrir un asiento nuevo,
+  porque la hoja dice «el que explica».
+- **El viaje cerrado guarda los días que el viajero tiene delante** (la sesión, al juntar): los manda la web con su
+  ritmo, y la casa comprueba que cada fecha y cada parada son del viaje. La guía sale de esos días y de la manera
+  con que se cerró.
+- **Toda hora de una fuente, en veinticuatro horas** (la sesión, al cerrar el primer viaje de verdad): la fuente
+  escribe «03:00 PM», y se leía como las tres de la madrugada. Lo que no se entiende como una hora no se adivina.
+- **El enlace de otro vendedor se dice como de otro vendedor** (la sesión): con su precio del día que se buscó, y
+  una línea que dice que hoy puede ser otro. Antes se leía «donde vimos el precio» junto a un precio que no era el
+  de hoy.
 - **La guía se guarda como una página que se imprime** (la sesión de obra, con lo más prudente y a confirmar por
   el PM): un documento HTML que se basta solo, con sus fotos dentro. El PDF sale del diálogo de imprimir del
   navegador, y además se descarga la página. Un PDF hecho por la casa pide una pieza de fuera, que es del PM.
@@ -621,6 +637,10 @@ Lo que deja el 25-nov, a decisión del PM:
   O esperar al ensayo de la tanda 7.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
+- **Del cierre**: sus números (la edad máxima de un precio, la subida que pregunta y los enlaces que se
+  comprueban); si vale cerrar sin frases cuando no hay IA; y lo de siempre con LiteAPI, que su precio no tiene
+  página pública donde reservarlo: hoy se enseña el nuestro de hoy y, al lado, el de otro vendedor con su enlace.
+  Y lanzar el primer cierre con IA de verdad.
 - **De la guía**: dónde parar a comer y lo que te pierdes en autobús, que la hoja nombra y no están en el viaje
   (añadirlos es añadir sitios: por ejemplo, sitios de paso de los datos abiertos cerca del camino); si vale que el
   PDF salga del navegador; cuántas guías se pueden pedir de un viaje; y lanzar la primera guía con IA de verdad.

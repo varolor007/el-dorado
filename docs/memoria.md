@@ -3,8 +3,9 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 5, cerrar el viaje y la guía, en obra desde el 25-nov; la tanda 4, hecha, ensayada y
-revisada, a falta del visto bueno del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 5, cerrar el viaje y la guía, construida y junta (25-nov), a falta de la revisión de sus
+tres adversarios; la tanda 4, hecha, ensayada y revisada, a falta del visto bueno del PM** (el estado, punto a
+punto, en [plan.md](plan.md)).
 
 **La tanda 5** (25-nov). El PM dijo «Seguimos? Luego entro a la página a revisar», y la sesión lo leyó como el sí
 para empezarla mientras él mira la 4, y se lo dijo así. Van dos sesiones de obra a la vez, cada una en su rama:
@@ -12,6 +13,34 @@ cerrar el viaje con sus enlaces (8.4 y 3.13, `claude/eldorado-8-4-cerrar-el-viaj
 `claude/eldorado-12-la-guia`), que parte de un viaje cerrado. Sus encargos dejan fuera lo que es del PM: la marca
 de afiliado (3.9), la edad máxima de un precio, los dibujos de la guía (12.3) y cualquier dependencia nueva. Al
 juntarlas: los tipos, la batería, las biblias, las capturas y los tres adversarios.
+
+**Cerrar el viaje (8.4 y 3.13), junto** (25-nov). `POST /viajes/<id>/cerrar` (`{way, days, pace}`, o
+`{prices: "go_on"}` para seguir cuando un precio subió mucho) y `GET /viajes/<id>/cierre`. Lo lleva
+`agent/launcher/cerrar.ts`, por etapas que se retoman desde el disco, en `viajes/<id>/cierres/<k>/`: lo elegido (la
+manera, y los días que tiene delante el viajero, que la web reparte con su ritmo y `conTusDias` comprueba que son del
+viaje), los precios de hoy (el alojamiento, a su fuente; el vuelo, el mismo, a la suya), el sí del viajero si hace
+falta, los enlaces, el orden y la puerta 8. Las cuentas, sin Node, en `agent/scripts/cierre.ts`; los números de
+partida, en `agent/data/cierre.ts`; la puerta 8, en `agent/gates/puerta_cierre.ts`, que lo vuelve a contar todo desde
+lo que dio cada fuente; la puerta 7 del orden, `puertaDelOrden`, en `puerta_explica.ts` (el contrato del que explica
+tiene un modo de cerrar, con `in/closing.json` y la norma EX9); los enlaces, en `agent/tools/enlaces.ts`. El viaje
+cerrado es una versión más (`Version.cierre`, motivo `closed`), con la ficha en `closed` y `viaje.cierre` (tipo
+`Cierre`, en `agent/output/viaje.ts`): la manera, los precios de hoy con lo que cambió, el total, los enlaces con lo
+que respondieron, los de Google Maps, el orden, los plazos de los papeles y lo que queda sin confirmar. En la web,
+`web/src/piezas/Cerrar.tsx`: el botón en la manera elegida, la pregunta si un precio sube, y la pestaña «Reservar».
+Sin IA se cierra igual, con el orden del código y sin frases. Al juntarlo se cerró el viaje del ensayo con su fuente
+de verdad, sin IA: el precio de hoy llegó y el enlace respondió. De ahí: toda hora de una fuente se pasa a
+veinticuatro horas (`agent/tools/horas.ts`; la de entrada llegaba como «03:00 PM» y se leía como las tres de la
+madrugada); comprobar un enlace solo llama a páginas de fuera (`paginaDeFuera`), también tras una redirección; y el
+enlace de otro vendedor se dice como tal (`other_seller`), con su precio del día que se buscó. La guía toma del
+cierre la manera y los días. **Falta**: las frases del que explica con IA de verdad; un viaje con vuelo; saber si el
+precio de hoy es de la misma habitación que se miró (la fuente da su nombre con cada precio y el cierre no lo
+guarda: en dos cierres seguidos el más barato se movió 20 euros); un freno a cerrar muchas veces; y lo que pasa en
+vivo, que la web pregunta cada segundo.
+
+**Lo que enseñó juntar dos ramas a la vez** (25-nov): las dos añadían al final de la hoja de estilos, y al juntarlas
+una regla se quedó sin cerrar; la web dejó de pintarse con los tipos y la batería en verde. La batería cuenta ahora
+las llaves de la hoja (`tests/code/web.test.ts`). Y `MAP.md`, donde las dos alargan el mismo renglón, se junta
+palabra a palabra.
 
 **La guía (12.1 y 12.2), junta** (25-nov). Con el viaje cerrado, `POST /viajes/<id>/guia` (`{way}`, y un techo si
 se quiere) lanza al que escribe la guía: `agent/contracts/guide-writer/`, sin internet, con su material en
@@ -31,8 +60,7 @@ la miró en pantalla y como quedaría impresa, y retocó dos cosas: cada cosa de
 qué va con los datos del viaje (la parada, el papel), y no solo con la frase del asiento; y al imprimir, los dos
 lados de cada doble página corren seguidos (de once hojas con varias casi en blanco, a ocho). Se probó también sobre
 el viaje del ensayo, con el asiento de mentira: sale con sus catorce paradas y sus fotos de verdad dentro. **Falta**:
-su primera guía con IA de verdad (un gasto: espera al PM); que tome los días y la manera con que se cerró el viaje,
-porque hoy la web reparte los días a su manera (ritmo, quitar, añadir) y la guía usa los guardados; que el gasto de
+su primera guía con IA de verdad (un gasto: espera al PM); que el gasto de
 las guías cuente en la cuenta (`gasto.ts` solo suma los runs); y un tope de guías por viaje. Al mirarla salió
 también el autor de algunas fotos, que Commons da como una frase suya («No machine-readable author provided. Fulano
 assumed»): desde el 25-nov el autor es el nombre de dentro, y sin nombre no hay autor (3.10, `agent/tools/sitios.ts`).

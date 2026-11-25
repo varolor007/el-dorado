@@ -281,6 +281,19 @@ test("«Quiero mi guía» solo con el viaje cerrado, y con su manera si tiene m�
   }
 });
 
+test("la guía se hace con la manera con que se cerró el viaje, se pida la que se pida", () => {
+  const viaje = viajeParaLaGuia();
+  viaje.cierre = { manera: "cheapest" } as never;
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    assert.equal(pedirGuia(v, { hoy: HOY }).manera, "cheapest");
+    assert.equal(pedirGuia(v, { manera: "best_value", hoy: HOY }).manera, "cheapest");
+    assert.equal(pedirGuia(v, { manera: "different", hoy: HOY }).manera, "cheapest");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
 test("la guía sale de un viaje cerrado: con su versión, con sus fotos dentro, y dice si se queda atrás", async () => {
   const { mesa, v } = viajeCerradoEnLaMesa();
   try {

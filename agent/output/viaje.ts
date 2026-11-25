@@ -335,7 +335,7 @@ export type PrecioDeHoy = {
  * Qué es un enlace de reserva: la página donde se vio ese precio, la búsqueda en la web de la fuente con las fechas
  * ya puestas, o la web del propio alojamiento, que no es donde se vio el precio.
  */
-export const CLASES_DE_ENLACE = ["where_priced", "search", "own_site"] as const;
+export const CLASES_DE_ENLACE = ["where_priced", "other_seller", "search", "own_site"] as const;
 /** Lo que se supo de un enlace al cerrar: responde, no se pudo saber (la web no deja mirar) o no responde. */
 export const COMPROBACIONES_DE_ENLACE = ["ok", "unchecked", "down"] as const;
 export type ComprobacionDeEnlace = (typeof COMPROBACIONES_DE_ENLACE)[number];

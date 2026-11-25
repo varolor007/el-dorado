@@ -26,6 +26,7 @@ import type {
   SinConfirmar,
   Viaje,
 } from "../output/viaje.ts";
+import { RITMOS } from "../output/viaje.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import { diaEnGoogleMaps, enlaceSinClaves, sitioEnGoogleMaps } from "../tools/enlaces.ts";
 
@@ -166,7 +167,8 @@ export type DelAlojamiento = { web: string | null; entradaDesde: string | null }
 
 /**
  * Los enlaces de reserva de cada pieza, sin comprobar todavía: donde se vio su precio (el de hoy, o el que se vio),
- * los de los otros vendedores que dieron precio, y la web del propio alojamiento, que no es donde se vio el precio.
+ * los de los otros vendedores que dieron precio, cada uno con el suyo del día que se buscó, y la web del propio
+ * alojamiento, que no es donde se vio el precio.
  * Solo direcciones https sin claves, y cada una una vez.
  */
 export function enlacesSinComprobar(
@@ -199,7 +201,8 @@ export function enlacesSinComprobar(
       pon({
         pieza: "lodging",
         ref: m.alojamiento,
-        clase: "where_priced",
+        // Otro vendedor, con el precio que tenía el día que se buscó: no es el precio de hoy, y se dice así.
+        clase: "other_seller",
         url: o.enlace,
         vendedor: o.vendedor,
         precio: { total: o.total, moneda: o.moneda },
@@ -411,4 +414,52 @@ function queEs(v: Viaje, ref: string): string {
   if (v.alojamientos.some((a) => a.id === ref)) return "lodging";
   if (v.transportes.some((t) => t.id === ref)) return "transport";
   return v.paradas.some((p) => p.id === ref) ? "sight" : "other";
+}
+
+/** Los días como los tiene delante el viajero al cerrar: cada fecha con sus paradas, en su orden, por sus ids. */
+export type TusDias = { fecha: string; paradas: string[] }[];
+
+/**
+ * El viaje con los días que tiene delante el viajero («y tus días», dice la hoja): la web los reparte con su ritmo y
+ * con lo que quitó, añadió o movió, y pueden no ser los de la versión. Se mira que sean de verdad: cada fecha, del
+ * viaje y en orden; cada parada, del viaje y en un solo día. Lo que se anda entre paradas lo cuenta el código, y lo
+ * que no está en ningún día queda fuera, con su porqué de antes o, si no lo tenía, porque lo quitó el viajero.
+ * Si algo no cuadra, lanza un error: no se cierra con unos días que no son del viaje.
+ */
+export function conTusDias(v: Viaje, dias: unknown, ritmo?: unknown): Viaje {
+  const fechas = new Set<string>();
+  for (
+    let d = new Date(`${v.entrada}T00:00:00Z`);
+    d <= new Date(`${v.salida}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1)
+  )
+    fechas.add(d.toISOString().slice(0, 10));
+  if (!Array.isArray(dias) || dias.length === 0 || dias.length > fechas.size)
+    throw new Error("los días no son una lista");
+  const deParada = new Map(v.paradas.map((p) => [p.id, p]));
+  const puestas = new Set<string>();
+  const c = caminosDe(v.caminos);
+  let antes = "";
+  const suyos: Viaje["dias"] = dias.map((crudo: unknown) => {
+    const d = crudo as { fecha?: unknown; paradas?: unknown };
+    if (typeof d?.fecha !== "string" || !fechas.has(d.fecha) || d.fecha <= antes)
+      throw new Error("un día no es del viaje o no va en orden");
+    antes = d.fecha;
+    if (!Array.isArray(d.paradas)) throw new Error("un día no dice sus paradas");
+    const ids = d.paradas.map((id) => {
+      if (typeof id !== "string" || !deParada.has(id) || puestas.has(id)) throw new Error("una parada no vale");
+      puestas.add(id);
+      return id;
+    });
+    const titulo = v.dias.find((x) => x.fecha === d.fecha)?.titulo ?? "";
+    const metros = ids
+      .slice(1)
+      .map((id, i) => trayectoEntre(deParada.get(ids[i])!.punto, deParada.get(id)!.punto, c).metros);
+    return { fecha: d.fecha, titulo, paradas: ids, metros };
+  });
+  const fuera = v.paradas.map((p) => p.id).filter((id) => !puestas.has(id));
+  const porQueFuera: Viaje["porQueFuera"] = {};
+  for (const id of fuera) porQueFuera[id] = v.porQueFuera[id] ?? "removed";
+  const suRitmo = RITMOS.find((r) => r === ritmo) ?? v.ritmo;
+  return { ...v, dias: suyos, fuera, porQueFuera, ritmo: suRitmo };
 }

@@ -195,6 +195,20 @@ test("los enlaces (3.13): solo https y sin claves; cada parada y cada día, el s
   );
   // El del otro vendedor llevaba un token: no se enseña.
   assert.ok(!enlaces.some((e) => e.url.includes("token")));
+  // El de otro vendedor, limpio, va con su clase y con su precio, que es el del día que se buscó y no el de hoy.
+  const conOtro = viajeParaCerrar();
+  conOtro.alojamientos[1].otrasOfertas = [
+    { total: 171, moneda: "EUR", vendedor: "Otra Web", visto: HACE(48), enlace: "https://otra.inventada.example/p" },
+  ];
+  const otros = enlacesSinComprobar(conOtro, conOtro.maneras[0], precios, { web: null, entradaDesde: null });
+  assert.deepEqual(
+    otros.map((e) => [e.clase, e.vendedor, e.precio?.total ?? null]),
+    [
+      ["where_priced", "inventada", null],
+      ["search", "ZZ", null],
+      ["other_seller", "Otra Web", 171],
+    ],
+  );
   const mapas = mapasDe(v, "a2");
   assert.deepEqual(Object.keys(mapas.paradas).sort(), ["p1", "p2", "p3", "p4"]);
   assert.equal(mapas.dias.length, v.dias.length);
@@ -690,8 +704,11 @@ test("la puerta de la casa: «me quedo con este» solo para su dueño, de fondo,
     guardarVersion(v, 1, "first");
     assert.equal((await pide("POST", `/viajes/${id}/cerrar`, otro, { way: "cheapest" })).estado, 404);
     assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, { way: "la mejor" })).estado, 400);
+    const malos = { way: "cheapest", days: [{ fecha: "2030-01-01", paradas: [] }] };
+    assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, malos)).cuerpo.error, "bad_days");
     assert.equal((await pide("GET", `/viajes/${id}/cierre`, ana)).estado, 404);
-    const r = await pide("POST", `/viajes/${id}/cerrar`, ana, { way: "cheapest" });
+    const dias = [{ fecha: "2027-02-12", paradas: ["p1", "p2", "p3"] }];
+    const r = await pide("POST", `/viajes/${id}/cerrar`, ana, { way: "cheapest", days: dias, pace: "full" });
     assert.equal(r.estado, 202);
     await puerta.esperar();
     const c = await pide("GET", `/viajes/${id}/cierre`, ana);
@@ -699,6 +716,8 @@ test("la puerta de la casa: «me quedo con este» solo para su dueño, de fondo,
     assert.equal((await pide("GET", `/viajes/${id}/cierre`, otro)).estado, 404);
     const version = await pide("GET", `/viajes/${id}/version`, ana);
     assert.equal(version.cuerpo.trip.cierre.manera, "cheapest");
+    assert.deepEqual(version.cuerpo.trip.dias[0].paradas, ["p1", "p2", "p3"]);
+    assert.equal(version.cuerpo.trip.ritmo, "full");
     // Sin IA en la casa se cierra igual, y lo dice.
     assert.equal(version.cuerpo.trip.cierre.sinFrases, "no_ai");
     assert.ok(comprobados.length > 0);
@@ -708,4 +727,51 @@ test("la puerta de la casa: «me quedo con este» solo para su dueño, de fondo,
     await puerta.esperar();
     await puerta.cerrar();
   }
+});
+
+test("se cierra con los días que tiene delante el viajero, y con su manera, guardados al cerrar", async () => {
+  const { v } = enElMapa();
+  const c = nuevoCierre(v, new Date(AHORA));
+  // Quitó el mercado (p2), añadió el museo (p4) al segundo día y va a un ritmo tranquilo.
+  const dias = [
+    { fecha: "2027-02-12", paradas: ["p1"] },
+    { fecha: "2027-02-13", paradas: ["p3", "p4"] },
+  ];
+  assert.throws(
+    () => elegir(v, c.carpeta, "cheapest", new Date(AHORA), { dias: [{ fecha: "2027-03-01", paradas: [] }] }),
+    /bad_days/,
+  );
+  assert.throws(
+    () => elegir(v, c.carpeta, "cheapest", new Date(AHORA), { dias: [{ fecha: "2027-02-12", paradas: ["p1", "p1"] }] }),
+    /bad_days/,
+  );
+  assert.throws(
+    () => elegir(v, c.carpeta, "cheapest", new Date(AHORA), { dias: [{ fecha: "2027-02-12", paradas: ["nada"] }] }),
+    /bad_days/,
+  );
+  elegir(v, c.carpeta, "best_value", new Date(AHORA), { dias, ritmo: "calm" });
+  const r = await llevarElCierre(v, c, {
+    fuentes: fuentes(alojamientoHoy(240)),
+    lanzador: null,
+    ahora: () => new Date(AHORA),
+  });
+  assert.equal(r.etapa, "done");
+  const viaje = leerVersion(v)!.viaje as Viaje;
+  assert.deepEqual(comprobarViaje(viaje), []);
+  assert.equal(viaje.cierre!.manera, "best_value");
+  assert.deepEqual(
+    viaje.dias.map((d) => d.paradas),
+    [["p1"], ["p3", "p4"]],
+  );
+  assert.equal(viaje.dias[1].metros.length, 1);
+  assert.equal(viaje.ritmo, "calm");
+  assert.deepEqual(viaje.fuera, ["p2"]);
+  assert.equal(viaje.porQueFuera.p2, "removed");
+  // Los enlaces de los días son los de sus días.
+  assert.equal(viaje.cierre!.mapas.dias.length, 2);
+  // La versión de antes sigue con sus días.
+  assert.deepEqual(
+    (leerVersion(v, 1)!.viaje as Viaje).dias.map((d) => d.paradas),
+    [["p1", "p2"], ["p3"]],
+  );
 });

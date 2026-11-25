@@ -73,7 +73,7 @@ export default function TuGuiaPagina() {
   useEffect(() => {
     if (viaje === null || manera !== null) return;
     const ids = viaje.maneras.map((m) => m.id as string);
-    const de = [pedidaManera, guia?.way ?? null, "best_value", ids[0] ?? null].find(
+    const de = [viaje.cierre?.manera ?? null, pedidaManera, guia?.way ?? null, "best_value", ids[0] ?? null].find(
       (x) => x !== null && ids.includes(x),
     );
     if (de !== undefined) setManera(de);
@@ -136,7 +136,7 @@ export default function TuGuiaPagina() {
 
       {puedePedir && viaje !== null && (
         <section className="tarjeta guia__pedir">
-          {viaje.maneras.length > 1 && (
+          {viaje.maneras.length > 1 && viaje.cierre == null && (
             <fieldset className="guia__maneras">
               <legend className="rotulo">{t.guia.manera}</legend>
               {viaje.maneras.map((m) => {

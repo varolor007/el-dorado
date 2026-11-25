@@ -36,7 +36,9 @@ import {
   sinConfirmarDe,
   totalDeHoy,
   type DeHoy,
+  conTusDias,
   type DelAlojamiento,
+  type TusDias,
   type ParaLaLlegada,
   type PiezaElegida,
 } from "../scripts/cierre.ts";
@@ -77,7 +79,17 @@ export type EtapaDelCierre = (typeof ETAPAS_DEL_CIERRE)[number];
 const hay = (carpeta: string, nombre: string): boolean => existsSync(join(carpeta, nombre));
 const leer = <T>(carpeta: string, nombre: string): T => JSON.parse(readFileSync(join(carpeta, nombre), "utf8")) as T;
 
-type Elegido = { version: number; manera: (typeof MANERAS)[number]; cuando: string };
+/**
+ * Lo que eligió el viajero al pulsar: la versión, la manera y, si la web los manda, los días como los tiene delante
+ * (con su ritmo y lo que quitó, añadió o movió). Sin ellos, los de la versión.
+ */
+type Elegido = {
+  version: number;
+  manera: (typeof MANERAS)[number];
+  cuando: string;
+  dias?: TusDias;
+  ritmo?: string;
+};
 type DeLosPrecios = {
   dados: Record<string, DeHoy>;
   llegada: ParaLaLlegada;
@@ -97,7 +109,13 @@ type DelOrden = {
 export class FalloAlCerrar extends Error {}
 
 /** «Me quedo con este»: apunta qué versión y qué manera se cierran. La manera tiene que ser de esa versión. */
-export function elegir(v: ViajeEnLaMesa, carpeta: string, manera: unknown, cuando: Date): Elegido {
+export function elegir(
+  v: ViajeEnLaMesa,
+  carpeta: string,
+  manera: unknown,
+  cuando: Date,
+  tuyos: { dias?: unknown; ritmo?: unknown } = {},
+): Elegido {
   const version = leerVersion(v);
   const viaje = version?.viaje as Viaje | undefined;
   if (version === null || viaje === undefined || v.ficha.version === null) throw new FalloAlCerrar("not_now");
@@ -107,6 +125,16 @@ export function elegir(v: ViajeEnLaMesa, carpeta: string, manera: unknown, cuand
     manera: manera as Elegido["manera"],
     cuando: cuando.toISOString(),
   };
+  if (tuyos.dias !== undefined) {
+    let con: Viaje;
+    try {
+      con = conTusDias(viaje, tuyos.dias, tuyos.ritmo);
+    } catch {
+      throw new FalloAlCerrar("bad_days");
+    }
+    elegido.dias = con.dias.map((d) => ({ fecha: d.fecha, paradas: d.paradas }));
+    elegido.ritmo = con.ritmo;
+  }
   guardarJson(join(carpeta, "elegido.json"), elegido);
   return elegido;
 }
@@ -122,7 +150,10 @@ function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Via
   const e = leer<Elegido>(carpeta, "elegido.json");
   const version = leerVersion(v, e.version);
   if (version === null) throw new Error("la versión que se cierra ya no está");
-  return { e, viaje: version.viaje as Viaje, entendido: version.entendido as Entendido };
+  const deLaVersion = version.viaje as Viaje;
+  // Con los días que tenía delante el viajero, si los mandó: es su viaje el que se cierra.
+  const viaje = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
+  return { e, viaje, entendido: version.entendido as Entendido };
 }
 
 /** Una promesa con su tiempo: si la fuente no contesta, no se le espera más. */
