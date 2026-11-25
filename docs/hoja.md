@@ -490,7 +490,7 @@ cada día, una capa del mapa. Se abre: cuando quieras.
 
 1. **Tú, «Me quedo con este»** (tú) *(hecho)*. Te quedas con el viaje como está: la manera de dormir y de llegar que hayas elegido, y tus días.
 2. **Los precios de hoy** (código de la casa) *(hecho, por decidir)*. Vuelve a pedir el precio de cada pieza a su fuente. Si alguno ha cambiado desde que lo viste, lo dice antes de que reserves; y si el total sube mucho, o algo se queda sin precio, para y te pregunta.
-3. **El que explica** (asiento de ia) *(hecho)*. Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar. El orden y los plazos los saca el código; él escribe una frase de cada cosa. Sin IA, el viaje se cierra igual, sin frases, y lo dice.
+3. **El que explica** (asiento de ia) *(por decidir)*. Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar. El orden y los plazos los saca el código; él escribe una frase de cada cosa.
 4. **Puerta 8: ¿todo cuadra?** (puerta) *(hecho)*. Las horas de llegada cuadran con la entrada al alojamiento; las noches, con las fechas; cada enlace responde; y ningún precio pasa de su edad máxima.
 5. **Los enlaces** (código de la casa) *(hecho, por decidir)*. Cada pieza lleva el enlace de donde se encontró su precio, con las fechas ya puestas: una agencia, un comparador o la web del propio hotel. Los tienes siempre en la página de tu viaje.
 6. **Sale tu viaje** (lo que sale) *(hecho)*. El Dorado propone y enlaza: no reserva ni cobra. Cada reserva la haces tú, en la web de quien vende. La página de tu viaje se queda ahí, con sus enlaces.
@@ -517,7 +517,9 @@ cada día, una capa del mapa. Se abre: cuando quieras.
 
 **Red**
 
-- el código, a las fuentes
+- el código, a las fuentes, por los precios de hoy
+- el código, a la web de cada enlace de reserva: una sola petición, para saber si responde, y nunca a una dirección de dentro de una red
+- el que explica, no
 
 **Turnos de IA**
 

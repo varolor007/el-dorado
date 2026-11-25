@@ -223,7 +223,11 @@ const filas = [
       ["el código, a las fuentes", { t: "el que mira, a otras webs: el lector de webs ya está; falta dárselo en su contrato", n: true }],
       ["el código, a las fuentes", "el de los papeles, a las webs oficiales"],
       ["el código, a los datos abiertos de sitios", "el del día a día, al buscador"],
-      ["el código, a las fuentes"],
+      [
+        "el código, a las fuentes, por los precios de hoy",
+        "el código, a la web de cada enlace de reserva: una sola petición, para saber si responde, y nunca a una dirección de dentro de una red",
+        "el que explica, no",
+      ],
       ["el código, a las fotos de los sitios", "el que escribe la guía, no"],
       ["según lo que se rehace"],
     ],
@@ -715,8 +719,8 @@ const flujo = [
       tipo: "asiento",
       k: "El que explica",
       x: "qué reservar primero y para cuándo cada papel",
-      hecho: true,
-      d: "Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar. El orden y los plazos los saca el código; él escribe una frase de cada cosa. Sin IA, el viaje se cierra igual, sin frases, y lo dice.",
+      d: "Te deja el orden: qué conviene reservar primero (lo que más se mueve de precio o lo que se agota), para cuándo tiene que estar cada papel y qué queda sin confirmar. El orden y los plazos los saca el código; él escribe una frase de cada cosa.",
+      n: "Construido, sin estrenar con IA de verdad. Por decidir: si vale cerrar sin sus frases cuando no hay IA (hoy se cierra igual, y lo dice).",
     },
     {
       tipo: "puerta",
