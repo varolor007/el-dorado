@@ -146,7 +146,7 @@ import { porDondeVa } from "./pasos.ts";
 import { FalloDeUnDia, mensajeDeCara, pedirUnDia, prepararUnDia } from "./dia_a_dia.ts";
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
 import { TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
-import { queTrae } from "../scripts/cambios.ts";
+import { cambioQueNoVale, queTrae } from "../scripts/cambios.ts";
 import { guardarJson } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
@@ -1279,6 +1279,10 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     const claro = puertaEntendido(pedido.understood, { hoy: hoy().toISOString().slice(0, 10) });
     if (!claro.verde) throw new Fallo(422, "unclear", { fields: [...new Set(claro.rojos.map((r) => r.donde))] });
     const despues = pedido.understood as Entendido;
+    // Lo de después tiene que poder salir de las preguntas de un cambio: lo demás no se cree.
+    const noVale = cambioQueNoVale(como.antes, despues);
+    if (noVale === "language") throw new Fallo(409, "language_change");
+    if (noVale !== null) throw new Fallo(400, "bad_change", { field: noVale });
     const { clases, viajeNuevo } = queTrae(como.antes, despues);
     if (viajeNuevo) throw new Fallo(409, "new_trip");
     if (clases.length === 0) throw new Fallo(409, "nothing_changed");

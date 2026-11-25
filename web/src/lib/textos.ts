@@ -1168,6 +1168,8 @@ const en = {
         unclear: "Something of what you changed is not clear. Check your dates and who is going.",
         new_trip: "Another destination is a new trip: search it at the top.",
         nothing_changed: "Nothing has changed yet.",
+        language_change: "The language of a trip cannot be changed yet.",
+        bad_change: "Something of what you changed cannot be changed from here.",
       })[clave] ?? "Something went wrong. Try again in a moment.",
   },
   // Tu guía (12.2): el cuaderno de un viaje cerrado, que se pide, se ve y se descarga.
@@ -2320,6 +2322,8 @@ const es: Textos = {
         unclear: "Algo de lo que has cambiado no está claro. Mira tus fechas y quién va.",
         new_trip: "Otro destino es un viaje nuevo: búscalo arriba.",
         nothing_changed: "Todavía no has cambiado nada.",
+        language_change: "El idioma de un viaje aún no se puede cambiar.",
+        bad_change: "Algo de lo que has cambiado no se puede cambiar desde aquí.",
       })[clave] ?? "Algo ha fallado. Prueba otra vez en un momento.",
   },
   guia: {
