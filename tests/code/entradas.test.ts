@@ -10,11 +10,13 @@ import { puertaDias } from "../../agent/gates/puerta_dias.ts";
 import { puertaEntradas, type ParaLasEntradas } from "../../agent/gates/puerta_entradas.ts";
 import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import { hayContrato } from "../../agent/launcher/capas.ts";
+import { losDiasSinEntradas, tandasDeSitios } from "../../agent/launcher/capa_entradas.ts";
 import { comprobarViaje, type DeLasEntradas, type Parada, type Viaje } from "../../agent/output/viaje.ts";
 import { abreElDia } from "../../agent/scripts/capas.ts";
 import {
   cierraEnElViaje,
   entradaAbierta,
+  ordenParaMirar,
   paraEnsenarEntradas,
   type DatosAbiertos,
   type EntregaDeLasEntradas,
@@ -548,4 +550,47 @@ test("lo que cierra en el viaje: de sus entradas; sin ellas, o si faltan, nada",
 test("los datos abiertos inventados pasan por el mismo camino que los de verdad", async () => {
   const [a] = await abiertosInventados()([sitio("Q1", "Faro")]);
   assert.equal(entradaAbierta("Q1", a).horarios?.[0].fuente.url, "https://datos.inventado.example/Q1");
+});
+
+// ---------- el orden en que se miran, si pasan del tope
+
+test("si hay más sitios que el tope: imprescindibles y con puerta primero, siempre igual", () => {
+  const ids = Array.from({ length: 30 }, (_, i) => `Q${i + 1}`);
+  const sitios = ids.map((id) => sitio(id, id));
+  // El 5 y el 20, imprescindibles; los pares tienen horario; del 3 se sabe que no se paga ni tiene horario.
+  const go = ids.map((id, i) => ({ id, must: i === 4 || i === 19 }));
+  const abiertos: DatosAbiertos[] = ids.map((id, i) => ({
+    sitio: id,
+    horario: i % 2 === 1 ? "Tu-Su 10:00-18:00" : null,
+    dePago: i === 2 ? false : null,
+    web: null,
+    fuentes: [],
+  }));
+  const orden = ordenParaMirar(go, sitios, abiertos).map((s) => s.id);
+  // Entre los imprescindibles, también antes el que tiene puerta.
+  assert.deepEqual(orden.slice(0, 2), ["Q20", "Q5"]);
+  assert.deepEqual(orden.slice(2, 5), ["Q2", "Q4", "Q6"]);
+  assert.equal(orden.at(-1), "Q3");
+  assert.equal(new Set(orden).size, 30);
+  assert.deepEqual(
+    ordenParaMirar(go, sitios, abiertos).map((s) => s.id),
+    orden,
+  );
+  // Sin datos abiertos, el orden del que elige, con los imprescindibles delante.
+  assert.deepEqual(
+    ordenParaMirar(go, sitios, [])
+      .map((s) => s.id)
+      .slice(0, 3),
+    ["Q5", "Q20", "Q1"],
+  );
+  // Lo que pasa del tope se dice como tal, y no como un fallo.
+  const e = paraEnsenarEntradas([], orden, abiertos);
+  assert.deepEqual(losDiasSinEntradas(e), [
+    "6 sitios se quedan sin mirar sus entradas: pasan del tope de 24 por viaje",
+  ]);
+  assert.deepEqual(losDiasSinEntradas({ sitios: [], falta: "failed" }), [
+    "los días se reparten sin los horarios de las entradas (failed)",
+  ]);
+  assert.deepEqual(losDiasSinEntradas(paraEnsenarEntradas([], ids.slice(0, 24), [])), []);
+  assert.equal(tandasDeSitios(ordenParaMirar(go, sitios, abiertos)).flat().length, 24);
 });

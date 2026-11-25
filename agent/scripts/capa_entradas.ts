@@ -129,3 +129,37 @@ export function cierraEnElViaje(v: {
 }): Record<string, string[]> {
   return diasQueCierra(v.entradas, fechasDe(v.entrada, v.salida));
 }
+
+/**
+ * Cuánto pide un sitio que se le miren las entradas, por lo que dicen los datos abiertos: 0 si tiene puerta (dicen su
+ * horario, o que se paga); 1 si no dicen nada; 2 si dicen que no se paga y no tienen horario (un mirador, una plaza).
+ */
+export function puertaDeUnSitio(a: DatosAbiertos | undefined): 0 | 1 | 2 {
+  if (a === undefined) return 1;
+  if (a.horario !== null || a.dePago === true) return 0;
+  return a.dePago === false ? 2 : 1;
+}
+
+/**
+ * En qué orden se miran las entradas de los sitios elegidos, para que lo que pase del tope no quede fuera al azar:
+ * primero los imprescindibles para el viajero; después, los que tienen puerta antes que los que no dicen nada, y estos
+ * antes que los que no la tienen; y a igualdad, por el orden de importancia del que elige los sitios. Sin nada de azar:
+ * la misma entrada da siempre el mismo orden.
+ */
+export function ordenParaMirar<S extends { id: string }>(
+  elegidos: readonly { id: string; must: boolean }[],
+  sitios: readonly S[],
+  abiertos: readonly DatosAbiertos[],
+): S[] {
+  const conSuSitio = elegidos.flatMap((e, i) => {
+    const s = sitios.find((x) => x.id === e.id);
+    return s === undefined
+      ? []
+      : [{ s, i, must: e.must, puerta: puertaDeUnSitio(abiertos.find((a) => a.sitio === e.id)) }];
+  });
+  const vistos = new Set<string>();
+  return conSuSitio
+    .filter((x) => !vistos.has(x.s.id) && vistos.add(x.s.id))
+    .sort((a, b) => Number(b.must) - Number(a.must) || a.puerta - b.puerta || a.i - b.i)
+    .map((x) => x.s);
+}

@@ -164,9 +164,15 @@ export function cierraEnElRun(run: string, fechas: readonly string[]): Record<st
 
 /**
  * Lo que se dice al repartir los días si las entradas fallaron, no pasaron su puerta o tardaron más que su tope: que
- * se reparten sin sus horarios. Si su asiento aún no tiene contrato, no es un fallo: no se dice nada.
+ * se reparten sin sus horarios. Si su asiento aún no tiene contrato, no es un fallo: no se dice nada. Y si había más
+ * sitios elegidos que su tope, cuántos se quedaron sin mirar por eso (los que van al final de `ordenParaMirar`).
  */
 export function losDiasSinEntradas(e: DeLasEntradas | undefined): string[] {
-  if (e === undefined || e.falta === null || e.falta === "no_contract") return [];
-  return [`los días se reparten sin los horarios de las entradas (${e.falta})`];
+  if (e === undefined || e.falta === "no_contract") return [];
+  if (e.falta !== null) return [`los días se reparten sin los horarios de las entradas (${e.falta})`];
+  // Lo que pasa del tope no es un fallo del asiento: no se le dio. Se dice como tal.
+  const porElTope = e.sitios.length - SITIOS_EN_TOTAL;
+  return porElTope > 0
+    ? [`${porElTope} sitios se quedan sin mirar sus entradas: pasan del tope de ${SITIOS_EN_TOTAL} por viaje`]
+    : [];
 }

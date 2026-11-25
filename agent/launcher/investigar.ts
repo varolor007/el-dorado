@@ -50,7 +50,7 @@ import type {
 } from "../scripts/formas.ts";
 import { pedirCaminos, sinFuenteDeRutas, type DeLosCaminos, type FuenteDeRutas } from "../scripts/caminos.ts";
 import { avisosDeSiempre, montarViajeHecho, sucesosDe } from "../scripts/monta_viaje.ts";
-import { cierraEnElViaje } from "../scripts/capa_entradas.ts";
+import { cierraEnElViaje, ordenParaMirar } from "../scripts/capa_entradas.ts";
 import { fechasDe, repartir } from "../scripts/ritmo.ts";
 import { diasDe, lugaresParaLaRuta, resolverZonas } from "../scripts/ruta.ts";
 import { montarTabla } from "../scripts/tabla.ts";
@@ -915,8 +915,13 @@ function capasDeDetras(run: string, viaje: Entendido, f: Fuentes): string[] {
 async function lasEntradas(run: string, viaje: Entendido, elegida: EntregaDeSitios, f: Fuentes): Promise<string[]> {
   if (hay(run, ENTRADAS) && capaDelRun<{ falta: unknown }>(run, ENTRADAS)?.falta !== "no_contract") return [];
   const { sitios } = leer<DeLosSitios>(run, "sitios.json");
-  const elegidos = elegida.go.flatMap((x) => sitios.find((s) => s.id === x.id) ?? []);
-  const abiertos = await traerLosAbiertos(run, elegidos, f.abiertos);
+  const abiertos = await traerLosAbiertos(
+    run,
+    elegida.go.flatMap((x) => sitios.find((s) => s.id === x.id) ?? []),
+    f.abiertos,
+  );
+  // Si pasan del tope, se miran primero los imprescindibles y los que tienen puerta (14.4).
+  const elegidos = ordenParaMirar(elegida.go, sitios, abiertos);
   return deUnaCapa(run, capaDeLasEntradasDe(run), materialDeLasCapas(run, viaje, elegidos, abiertos), f);
 }
 
