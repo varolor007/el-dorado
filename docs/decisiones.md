@@ -690,15 +690,20 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   restaurante con nombre, porque no hay fuente de opiniones; las comidas van aparte, como una horquilla; y las tres
   maneras de hacer el viaje se siguen comparando por dormir y llegar. **No es una decisión: no se construye nada
   hasta la firma del PM.**
+- **Las capas del destino, firmadas** (el PM, a la propuesta: «vale pues integra las capas y cuando estén le damos
+  el try del 7 que decías»). Entran las tres, como estaban propuestas: corren en la investigación, por detrás, y van
+  antes del ensayo. La sesión lo lee también como el visto bueno a la tanda 6, con lo suyo pendiente en este
+  registro, y se lo dice. **No lo lee como el sí a gastar**: el ensayo, el «7», espera su adelante cuando las capas
+  estén. Se construyen en una tanda propia, la 6 bis, para no mover el número de las que ya se nombran en estos
+  documentos: primero su suelo (14.1), con una sola sesión de obra, y después las capas, a la vez, sobre él, como se
+  hizo con la tanda 6.
 
 ## Pendientes
 
 Lo que deja el 25-nov, a decisión del PM:
 
-- **La propuesta de las capas del destino** (hoja, en violeta; plan, bloque 14): su firma. Y con ella: si entran
-  las tres capas o solo alguna; si corren siempre en la investigación o solo cuando se piden; si se recomiendan
-  sitios concretos donde comer, que pide una fuente de opiniones; y si van antes del ensayo, para que los tres
-  viajes de verdad ya las lleven y se mida lo que cuestan.
+- **De las capas del destino** (firmadas el 25-nov): si se recomiendan sitios concretos donde comer, que pide una
+  fuente de opiniones; y sus números, que salen de la obra y se miden en el ensayo.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.
