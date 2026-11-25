@@ -39,6 +39,7 @@ import {
   type ParteDelPresupuesto as ClaseDeParte,
 } from "../data/presupuesto.ts";
 import { pegasDelTexto } from "../gates/textos.ts";
+import { enlaceQueVale } from "../tools/enlaces.ts";
 
 export { FALTAS_DE_UNA_CAPA, PARA_QUIEN, DIAS_DE_LA_SEMANA };
 export type { FaltaDeUnaCapa, ParaQuien, DiaDeLaSemana };
@@ -225,16 +226,8 @@ const esNombre = (v: unknown): boolean =>
   v === null || (typeof v === "string" && v.trim() !== "" && v.length <= LETRAS_DE_UN_NOMBRE && !/[\n\r]/.test(v));
 const esNumero = (v: unknown, minimo = 0): boolean => typeof v === "number" && Number.isFinite(v) && v >= minimo;
 
-/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro. */
-export function enlaceDeCapa(v: unknown): boolean {
-  if (typeof v !== "string") return false;
-  try {
-    const u = new URL(v);
-    return u.protocol === "https:" && u.username === "" && u.password === "";
-  } catch {
-    return false;
-  }
-}
+/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro, escrita en su forma normal. */
+export const enlaceDeCapa = (v: unknown): boolean => enlaceQueVale(v);
 
 function pegasDeLaFuente(f: unknown, donde: string, pegas: Pega[]): void {
   const x = f as FuenteDeUnDato | null;

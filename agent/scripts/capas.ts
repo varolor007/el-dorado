@@ -5,6 +5,7 @@
 
 import { DIAS_DE_LA_SEMANA, type DiaDeLaSemana, type ParaQuien } from "../data/capas.ts";
 import type { DeLasEntradas, EntradaDeUnSitio, FuenteDeUnDato, Horario, PrecioDeCapa } from "../output/capas.ts";
+import { formaNormal } from "../tools/enlaces.ts";
 import { SIN_SABER } from "./formas.ts";
 
 // 1. La forma común de las entregas, en inglés, como sus contratos. «unknown» es que no se sabe, nunca un número.
@@ -30,7 +31,11 @@ export type HorarioEntregado = {
 };
 
 /** La fuente de un dato, como la da la entrega: la página y el día en que se vio. */
-export const fuenteDe = (x: { source: string; seen: string }): FuenteDeUnDato => ({ url: x.source, visto: x.seen });
+/** La página y el día de un dato. La página se guarda en su forma normal, la que pinta la web. */
+export const fuenteDe = (x: { source: string; seen: string }): FuenteDeUnDato => ({
+  url: formaNormal(x.source) ?? x.source,
+  visto: x.seen,
+});
 
 /** Un precio de una entrega, en la forma del viaje. La moneda, en sus tres letras mayúsculas. */
 export function precioDe(p: PrecioEntregado): PrecioDeCapa {

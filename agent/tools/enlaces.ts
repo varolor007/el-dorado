@@ -5,15 +5,28 @@
 
 import type { Punto } from "../output/viaje.ts";
 
-/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro. */
-export function enlaceQueVale(texto: unknown): texto is string {
-  if (typeof texto !== "string" || texto.length > 2048) return false;
+/**
+ * La forma normal de una dirección https: la que escribe el navegador cuando la lee (`new URL(texto).href`). Un
+ * navegador lee como una dirección textos que no lo parecen («https:sitio/x», «https:\\sitio\x», con un salto de
+ * línea dentro): por eso un enlace solo vale si viene escrito ya en su forma normal, y es esa la que se guarda y se
+ * pinta. Lo único que se le perdona es la barra de una dirección que no lleva camino («https://sitio.org»). Lo que no
+ * es una dirección https, sin usuario ni clave, es null.
+ */
+export function formaNormal(texto: unknown): string | null {
+  if (typeof texto !== "string" || texto.length > 2048) return null;
+  let u: URL;
   try {
-    const u = new URL(texto);
-    return u.protocol === "https:" && u.username === "" && u.password === "" && u.hostname !== "";
+    u = new URL(texto);
   } catch {
-    return false;
+    return null;
   }
+  if (u.protocol !== "https:" || u.username !== "" || u.password !== "" || u.hostname === "") return null;
+  return u.href === texto || u.href === `${texto}/` ? u.href : null;
+}
+
+/** Una dirección que la web puede abrir: https, sin usuario ni clave dentro, y escrita en su forma normal. */
+export function enlaceQueVale(texto: unknown): texto is string {
+  return formaNormal(texto) !== null;
 }
 
 /**
@@ -45,7 +58,7 @@ const punto = (p: Punto): string => `${p.lat},${p.lon}`;
 /** El enlace de un sitio a Google Maps, por su nombre y su punto. No pide clave. */
 export function sitioEnGoogleMaps(p: Punto, nombre?: string): string {
   const q = nombre === undefined || nombre.trim() === "" ? punto(p) : `${nombre} @${punto(p)}`;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  return new URL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`).href;
 }
 
 /** Las paradas intermedias que admite un enlace de Google Maps sin clave: van las que caben. */
@@ -60,8 +73,8 @@ export function diaEnGoogleMaps(puntos: Punto[], aPie: boolean): string | null {
   const intermedias = puntos.slice(1, -1).slice(0, PARADAS_INTERMEDIAS).map(punto).join("|");
   const modo = aPie ? "&travelmode=walking" : "";
   const paradas = intermedias === "" ? "" : `&waypoints=${encodeURIComponent(intermedias)}`;
-  return (
+  return new URL(
     `https://www.google.com/maps/dir/?api=1${modo}&origin=${punto(puntos[0])}` +
-    `&destination=${punto(puntos[puntos.length - 1])}${paradas}`
-  );
+      `&destination=${punto(puntos[puntos.length - 1])}${paradas}`,
+  ).href;
 }

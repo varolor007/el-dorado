@@ -31,7 +31,7 @@ import {
 } from "../data/capa_moverse.ts";
 import { PARA_QUIEN, LETRAS_DE_UN_NOMBRE } from "../data/capas.ts";
 import { FRASE_DEL_VIAJERO } from "../data/viaje.ts";
-import { paginaDeFuera } from "../launcher/consultado.ts";
+import { enlaceDeFuera } from "../launcher/consultado.ts";
 import { pegasDeMoverse } from "../output/capas.ts";
 import { paraEnsenarMoverse, type EntregaDeMoverse } from "../scripts/capa_moverse.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -102,8 +102,8 @@ export function puertaMoverse(v: unknown, p: ParaMoverse): Veredicto {
 
   // La página y el día de cualquier dato (RM1, RM2).
   const fuente = (x: Objeto, donde: string): void => {
-    if (typeof x.source !== "string" || !paginaDeFuera(x.source.trim()))
-      rojo(`${donde}.source`, "no dice la página que abrió, una dirección https de fuera (RM1)");
+    if (!enlaceDeFuera(x.source))
+      rojo(`${donde}.source`, "no dice la página que abrió, una dirección https de fuera, en su forma normal (RM1)");
     if (!esFecha(x.seen)) rojo(`${donde}.seen`, "no dice el día en que se vio, YYYY-MM-DD (RM2)");
     else if (Math.abs(diaDe(x.seen) - diaDe(p.hoy)) > DIAS_DE_HOLGURA)
       rojo(`${donde}.seen`, `no es hoy, ${p.hoy}: un precio es el del día en que se vio (RM2)`);

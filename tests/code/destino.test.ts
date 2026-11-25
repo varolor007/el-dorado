@@ -11,6 +11,7 @@ import type { Lanzador } from "../../agent/launcher/asiento.ts";
 import { darElAdelante, llevar } from "../../agent/launcher/casa.ts";
 import type { Material } from "../../agent/launcher/capas.ts";
 import { piezasDelDestino, puertaDelDestino } from "../../agent/launcher/capa_destino.ts";
+import { paginasEn } from "../../agent/launcher/consultado.ts";
 import { puertaDestino, type ParaElDestino } from "../../agent/gates/puerta_destino.ts";
 import type { Viaje } from "../../agent/output/viaje.ts";
 import { paraEnsenarDestino } from "../../agent/scripts/capa_destino.ts";
@@ -133,6 +134,26 @@ test("puerta 12: cada cosa, con su página https y su fecha, que no es de despu�
 
 // ---------- sus zonas
 
+/** Textos que un navegador abre como una página https, y que no están escritos en su forma normal. */
+const RAROS = (pagina: string): string[] => {
+  const resto = pagina.slice("https://".length);
+  return [
+    `https:${resto}`,
+    `https:/${resto}`,
+    `https:\\\\${resto.replaceAll("/", "\\")}`,
+    `h\nttps://${resto}`,
+    ` ${pagina}`,
+    `HTTPS://${resto}`,
+    `https://user@${resto}`,
+    `https://127.0.0.1/x`,
+  ];
+};
+
+test("puerta 12: una página que el navegador abriría, pero no escrita en su forma normal, no vale", () => {
+  for (const raro of RAROS(PAGINA_DEL_DESTINO))
+    noPasa(conCosa(0, { source: raro }), /^items\[0\]\.source: .*forma normal/);
+});
+
 test("puerta 12: cada zona es de la ruta; un barrio, una zona de comer y un mercado, con la suya", () => {
   noPasa(conCosa(I.barrio, { zone: "z9" }), /items\[0\]\.zone: habla de una zona que no es de la ruta/);
   noPasa(conCosa(I.barrio, { zone: 3 }), /items\[0\]\.zone: habla de una zona que no es de la ruta/);
@@ -234,6 +255,8 @@ test("lo que ve el que conoce el destino: el destino, la ruta, las fechas y lo q
   assert.deepEqual(Object.keys(viaje).sort(), ["currency", "dates", "destination", "language", "looking_for", "today"]);
   const todo = JSON.stringify(piezas);
   for (const nada of ["travellers", "passports", "budget", "said", "email", "origin"]) assert.ok(!todo.includes(nada));
+  // Ninguna página: así, la puerta de todos solo le deja citar las que abrió de verdad, en cualquiera de sus vueltas.
+  assert.deepEqual(paginasEn(todo), []);
   assert.deepEqual(
     piezas["route.json"].zones.map((z: Objeto) => z.id),
     ["z1", "z2"],

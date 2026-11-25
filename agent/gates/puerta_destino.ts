@@ -32,7 +32,7 @@ import {
 } from "../data/capa_destino.ts";
 import { LETRAS_DE_UN_NOMBRE } from "../data/capas.ts";
 import { FRASE_DEL_VIAJERO, FRASES_DEL_VIAJERO } from "../data/viaje.ts";
-import { enlaceDeCapa } from "../output/capas.ts";
+import { enlaceDeFuera } from "../launcher/consultado.ts";
 import { enLineaRecta, type Punto } from "../tools/distancias.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
 import { leerNumeros, pegaDeNombreDeFuera, pegasDeFrases, pegasDelTexto } from "./textos.ts";
@@ -104,8 +104,8 @@ export function puertaDestino(v: unknown, p: ParaElDestino): Veredicto {
     const deComer = CLASES_DE_COMER.includes(clase);
 
     // La página y su fecha.
-    if (typeof x.source !== "string" || !enlaceDeCapa(x.source.trim()))
-      rojo(`${donde}.source`, "no dice la página abierta de donde sale, https (RL1)");
+    if (!enlaceDeFuera(x.source))
+      rojo(`${donde}.source`, "no dice la página abierta de donde sale, https de fuera y en su forma normal (RL1)");
     if (!esFecha(x.seen)) rojo(`${donde}.seen`, "no es una fecha, YYYY-MM-DD: cada cosa lleva la suya (RL1)");
     else if (x.seen > p.hoy) rojo(`${donde}.seen`, "es de después de hoy: una página no se ve mañana");
 
