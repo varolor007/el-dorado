@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (989 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (994 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -143,8 +143,8 @@ responde deja fuera a las capas hasta que la pestaña «Allí» tenga su fila en
 **El de moverse (14.2), junto** (25-nov). Contrato en `agent/contracts/getting-around/` (RM1 a RM9); puerta 11 en
 `agent/gates/puerta_moverse.ts` (`seen` es hoy, con un día de holgura; sin aproximar; lo que no se sabe, en
 `unknowns`; ninguna palabra de lo mejor; los números de una frase, de sus datos); lo que ve, en `piezasDeMoverse`; la
-cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`, `viajesDeLosDias`,
-`manerasDeLlegar`), sin Node, para el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
+cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`, `viajesDeLosDias`), sin Node, para
+el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
 viaje, y por dónde se llega sale de lo entendido, no del vuelo elegido. Sin ver con IA.
 
 **El presupuesto entero (14.5), junto** (25-nov). La cuenta, en `agent/scripts/presupuesto.ts`, sin Node:
@@ -243,6 +243,18 @@ se llega al techo, las capas en marcha se cortan y no se lanza más (lo que no e
 Sabido: con Claude Code no se dice nada por el camino, y ahí el techo se puede pasar con lo que corre a la vez, como
 antes; con la llamada directa queda un rato sin contar, entre que se manda una vuelta y dice lo que leyó; y
 `lanzarPorDetras` sigue sin el tope de asientos a la vez.
+
+**Las cuentas, tras la revisión (14.5 y 14.6)** (25-nov, una sesión de arreglos). Una sola regla de quién paga
+qué, `preciosParaUno`, en `agent/scripts/capas.ts`, para las entradas, llegar y los billetes de moverse: un adulto,
+del que no se sabe la edad, solo coge precios que no dicen edades (si todos las dicen, no se sabe); un niño sin
+precio suyo paga el de adulto, también en moverse. Cuál se coge si valen varios, en un solo sitio:
+`SI_VALEN_VARIOS` (`agent/data/presupuesto.ts`: el más barato en las entradas y en llegar, el más caro en los
+billetes), que lee `elQueSeCoge`. Llegar a donde duermes solo cuenta las maneras que van a tu zona si el alojamiento
+la dice. `loQueCuestaLlegar` es la cuenta de cada manera de llegar, por coche o por persona, y la usan el presupuesto
+y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona y como cuenta
+(`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
+(`refDeUnaDuda`, en `web/src/lib/formato.ts`). El caso inventado trae llegar a cada zona de la ruta. Sabido: un
+tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

@@ -10,8 +10,8 @@ export const PAGINA_DE_MOVERSE = "https://transporte.inventado.example/tarifas";
 
 /**
  * Lo que entregaría. Sin internet (la llamada directa de mentira no abre páginas): que no encontró cómo llegar, y lo
- * dice. El que trabaja en su puesto abre la página del transporte: un autobús del aeropuerto que le dice la casa a la
- * primera zona, el autobús en todas las zonas, un billete suelto, un abono de un día y uno de tres días, con lo que
+ * dice. El que trabaja en su puesto abre la página del transporte: un autobús del aeropuerto que le dice la casa a cada
+ * zona de la ruta, el autobús en todas las zonas, un billete suelto, un abono de un día y uno de tres días, con lo que
  * paga un adulto y lo que paga un niño, y que se paga sin contacto.
  */
 export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conPagina: boolean): EntregaDeMoverse {
@@ -42,22 +42,20 @@ export function entregaDeMoverse(viaje: Objeto | null, ruta: Objeto | null, conP
     };
   return {
     seat: "getting-around",
-    arrivals: [
-      {
-        from: {
-          kind: "airport",
-          code: typeof aeropuerto === "string" && /^[A-Z]{3}$/.test(aeropuerto) ? aeropuerto : "unknown",
-          name: "unknown",
-        },
-        to_zone: zona,
-        mode: "bus",
-        minutes: 40,
-        prices: [precio(3)],
-        until: "23:30",
-        source: PAGINA_DE_MOVERSE,
-        seen: visto,
+    arrivals: zonas.map((zona) => ({
+      from: {
+        kind: "airport",
+        code: typeof aeropuerto === "string" && /^[A-Z]{3}$/.test(aeropuerto) ? aeropuerto : "unknown",
+        name: "unknown",
       },
-    ],
+      to_zone: zona,
+      mode: "bus",
+      minutes: 40,
+      prices: [precio(3)],
+      until: "23:30",
+      source: PAGINA_DE_MOVERSE,
+      seen: visto,
+    })),
     no_arrival: null,
     transport: [{ mode: "bus", zones: zonas, until: "23:30", source: PAGINA_DE_MOVERSE, seen: visto }],
     tickets: [

@@ -21,6 +21,17 @@ export function diaDeLaSemana(fecha: string, idioma: string): string {
   return new Intl.DateTimeFormat(idioma, { weekday: "short", timeZone: "UTC" }).format(new Date(fecha + "T00:00:00Z"));
 }
 
+/** «vie 6 mar»: una fecha del viaje, como la dice la web, en el idioma del viajero. */
+export const fechaDicha = (fecha: string, idioma: string): string =>
+  `${diaDeLaSemana(fecha, idioma)} ${diaCorto(fecha, idioma)}`;
+
+/** Lo no confirmado al cerrar que se refiere a un día del viaje, no a un alojamiento, un transporte o una parada. */
+export const DUDAS_DE_UN_DIA: readonly string[] = ["day_does_not_fit", "stop_closed"];
+
+/** La referencia de algo no confirmado, dicha: un día, como las demás fechas de la web; lo demás, por su nombre. */
+export const refDeUnaDuda = (que: string, ref: string, idioma: string, nombre: (ref: string) => string): string =>
+  DUDAS_DE_UN_DIA.includes(que) && /^\d{4}-\d{2}-\d{2}$/.test(ref) ? fechaDicha(ref, idioma) : nombre(ref);
+
 export function noches(entrada: string, salida: string): number {
   return Math.round((Date.parse(salida) - Date.parse(entrada)) / 86_400_000);
 }

@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { COMIDAS_AL_DIA, PLAZAS_DE_UN_COCHE } from "../../agent/data/presupuesto.ts";
+import { COMIDAS_AL_DIA, PLAZAS_DE_UN_COCHE, SI_VALEN_VARIOS } from "../../agent/data/presupuesto.ts";
 import { SALTO_MAXIMO } from "../../agent/data/dias.ts";
 import { puertaCruce, type MaterialDeCruce } from "../../agent/gates/puerta_cruce.ts";
 import { puertaDelOrden, puertaExplica, type MaterialDeExplicar } from "../../agent/gates/puerta_explica.ts";
@@ -18,11 +18,13 @@ import type {
   Presupuesto,
 } from "../../agent/output/capas.ts";
 import { comprobarViaje, type Viaje } from "../../agent/output/viaje.ts";
+import { precioPara } from "../../agent/scripts/capa_moverse.ts";
 import { paraElOrden } from "../../agent/scripts/cierre.ts";
 import { paraExplicar } from "../../agent/scripts/explica.ts";
 import {
   conOtrosDias,
   delGrupo,
+  elDeUnAdulto,
   presupuestoDe,
   preciosParaUno,
   SIN_CUENTA_DE_MOVERSE,
@@ -335,6 +337,80 @@ test("niños y mayores: cada precio, para quien es", () => {
   assert.equal(Math.ceil(5 / PLAZAS_DE_UN_COCHE), 2);
   assert.equal(parte(p, "cheapest", "arrival").total, 15 * 2);
   assert.deepEqual(pegasDe(v, p), []);
+});
+
+test("un adulto, del que no se sabe la edad, no coge un precio que solo vale para unas edades", () => {
+  const dos = { adultos: 2, ninos: [] };
+  // La trampa: un precio de unas edades, gratis, al lado del de adulto. Dos adultos pagan el de adulto, nunca gratis.
+  const trampas: [PrecioDeCapa[], number][] = [
+    [[eur(17), gratis("adult", { desde: 18, hasta: 25 })], 17],
+    [[eur(17), gratis("any", { desde: null, hasta: 17 })], 17],
+    [[eur(20, "adult"), gratis("any", { desde: 0, hasta: 5 })], 20],
+  ];
+  for (const [precios, adulto] of trampas) {
+    assert.deepEqual(
+      preciosParaUno(precios, null).map((x) => x.cuanto),
+      [{ importe: adulto, moneda: "EUR" }],
+    );
+    assert.deepEqual(delGrupo(precios, dos, "EUR")?.importes, [{ importe: adulto * 2, moneda: "EUR" }]);
+    assert.deepEqual(elDeUnAdulto(precios, "EUR")?.cuanto, { importe: adulto, moneda: "EUR" });
+  }
+  // Un niño de cuatro sí entra en el gratis de cero a cinco.
+  assert.deepEqual(delGrupo(trampas[2][0], { adultos: 2, ninos: [4] }, "EUR")?.importes, [
+    { importe: 40, moneda: "EUR" },
+  ]);
+  // Si todo lo que le valdría a un adulto dice unas edades, no se sabe, y se dice: no se le supone una edad.
+  assert.deepEqual(preciosParaUno([gratis("adult", { desde: 18, hasta: 25 })], null), []);
+  assert.equal(delGrupo([eur(9, "adult", { desde: 26, hasta: null })], dos, "EUR"), null);
+  assert.equal(elDeUnAdulto([gratis("any", { desde: 0, hasta: 5 })], "EUR"), null);
+  // Lo mismo en los billetes de moverse allí y en llegar a donde se duerme, con su taxi.
+  assert.equal(precioPara([eur(2), gratis("adult", { desde: 18, hasta: 25 })], null, "EUR"), 2);
+  assert.equal(precioPara([gratis("any", { desde: 0, hasta: 5 })], null, "EUR"), null);
+  const m = moverse();
+  const [bus, taxi] = m.llegar;
+  m.llegar = [{ ...bus, precios: [eur(3), gratis("any", { desde: 0, hasta: 5 })] }];
+  assert.equal(parte(presupuestoDe(viajeInventado(), { moverse: m }), "cheapest", "arrival").total, 3 * 2 * 2);
+  m.llegar = [{ ...taxi, precios: [gratis("any", { desde: 0, hasta: 5 })] }];
+  assert.equal(parte(presupuestoDe(viajeInventado(), { moverse: m }), "cheapest", "arrival").origen, "unknown");
+});
+
+test("una sola regla para el precio de un niño, en las entradas, en llegar y en moverse allí", () => {
+  // Sin precio suyo, un niño paga el de adulto (si ese precio no le deja fuera por la edad), en las dos cuentas.
+  assert.deepEqual(
+    preciosParaUno([eur(2)], 8).map((x) => x.cuanto),
+    [{ importe: 2, moneda: "EUR" }],
+  );
+  assert.equal(precioPara([eur(2)], 8, "EUR"), 2);
+  assert.equal(precioPara([eur(2, "adult", { desde: 13, hasta: null })], 8, "EUR"), null);
+  // Con un precio de niño sin edades, no se sabe si es el suyo: en las dos.
+  assert.equal(precioPara([eur(2, "any"), eur(1, "child")], 8, "EUR"), null);
+  assert.deepEqual(preciosParaUno([eur(2, "any"), eur(1, "child")], 8), []);
+  // Moverte allí de una familia, con billetes que solo dicen el precio de adulto: se sabe, y cada niño paga el suyo.
+  const v: Viaje = { ...conTrayectos(), ninos: [8] };
+  const g = parte(presupuestoDe(v, todoSabido()), "cheapest", "getting_around");
+  assert.deepEqual([g.origen, g.total], ["computed", 2 * 2 * 3]);
+  // Qué se coge si valen varios no cambia, y está dicho en un solo sitio: el más barato en las entradas y en llegar,
+  // el más caro en los billetes.
+  assert.deepEqual(SI_VALEN_VARIOS, { entradas: "cheapest", llegar: "cheapest", billetes: "dearest" });
+  assert.equal(precioPara([eur(2), eur(1.5)], null, "EUR"), 2);
+  assert.deepEqual(delGrupo([eur(2), eur(1.5)], { adultos: 1, ninos: [] }, "EUR")?.importes[0].importe, 1.5);
+});
+
+test("llegar a donde se duerme: si el alojamiento dice su zona y ninguna manera va a ella, no se sabe", () => {
+  const m = moverse();
+  m.llegar = m.llegar.map((x) => ({ ...x, aZona: "z2" }));
+  const v = viajeInventado();
+  const enElCentro: Viaje = { ...v, alojamientos: v.alojamientos.map((a) => ({ ...a, zona: "Centro" })) };
+  const zonas = [
+    { id: "z1", nombre: "Centro" },
+    { id: "z2", nombre: "Puerto" },
+  ];
+  // La trampa: todas van a otra zona, la misma. No es la tuya.
+  const p = presupuestoDe(enElCentro, { moverse: m }, { zonas });
+  assert.deepEqual([parte(p, "cheapest", "arrival").origen, parte(p, "cheapest", "arrival").faltan], ["unknown", 2]);
+  // Si el alojamiento no dice su zona y todas van a la misma, valen todas.
+  const sinZona: Viaje = { ...v, alojamientos: v.alojamientos.map((a) => ({ ...a, zona: null })) };
+  assert.equal(parte(presupuestoDe(sinZona, { moverse: m }, { zonas }), "cheapest", "arrival").total, 3 * 2 * 2);
 });
 
 test("un taxi se paga por coche: para dos conviene más que el autobús si este es caro", () => {
