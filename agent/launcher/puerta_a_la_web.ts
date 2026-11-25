@@ -37,7 +37,8 @@
 //   GET    /viajes/<id>/cierre         por dónde va el último cierre, de qué versión es y, si espera tu sí, lo que
 //                                       ha cambiado
 //   POST   /viajes/<id>/dia            un mensaje tuyo para tus días ({ "said", "day" }): lo que costaría, sin
-//                                       cambiar nada; con { "go": true }, tu botón, y el del día a día se pone a ello
+//                                       cambiar nada; con { "go": true, "ceiling" }, tu botón, y el del día a día
+//                                       se pone a ello
 //   GET    /viajes/<id>/dia            cómo va tu último mensaje: lo que dijiste, por dónde va y lo que cambió
 //   GET    /viajes/<id>/cambiar        para cambiar lo que pediste (8.5): lo entendido del que partes, cómo se
 //                                       rehace y lo que se ha quedado atrás (un cierre o una guía)
@@ -1135,6 +1136,9 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (marchas.has(id) || guias.has(id)) throw new Fallo(409, "already_running");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
     const al = { said: pedido.said, day: pedido.day, cuando: hoy() };
+    const techo = pedido.ceiling === undefined || pedido.ceiling === null ? null : pedido.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
     const conQue = conQuePiensa(p.cuenta);
     if (pedido.go !== true) {
       try {
@@ -1156,9 +1160,9 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     }
     // El cierre que esperaba tu sí era de la versión de antes: queda abandonado.
     abandonarElCierre(v);
-    darElAdelante(hecho.run, null, hoy());
+    darElAdelante(hecho.run, techo, hoy());
     apuntar(v, "day_message", { run: hecho.n, day: hecho.pedido.day }, hoy());
-    apuntar(v, "button", { boton: "day", run: hecho.n }, hoy());
+    apuntar(v, "button", { boton: "day", run: hecho.n, techo }, hoy());
     const lanzador =
       conQue === "house"
         ? (o.lanzadorDeLaCasa as Lanzador)
