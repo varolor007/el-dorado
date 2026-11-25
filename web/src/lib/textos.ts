@@ -341,7 +341,7 @@ const en = {
     entradas: "Tickets and opening hours",
     presupuesto: "The whole budget",
     todaviaNo: "Not known yet.",
-    cuantas: (n: number) => EN.plural(n, "thing found", "things found"),
+    cuantas: (n: number) => EN.cuenta(n, "thing found", "things found"),
     // Por qué falta una capa, por su clave (`FALTAS_DE_UNA_CAPA`).
     falta: {
       no_contract: "Not known yet.",
@@ -351,7 +351,7 @@ const en = {
     } as Record<string, string>,
     conEntrada: "Ticket and hours known",
     total: (dinero: string) => `With what is known: ${dinero}`,
-    faltan: (n: number) => (n === 0 ? "Nothing missing." : `${EN.plural(n, "thing", "things")} not known yet.`),
+    faltan: (n: number) => (n === 0 ? "Nothing missing." : `${EN.cuenta(n, "thing", "things")} not known yet.`),
   },
   cifras: {
     // Lo que cubre el total de la manera elegida: las noches o, si lleva transporte, también cómo se llega.
@@ -1561,7 +1561,7 @@ const es: Textos = {
     entradas: "Entradas y horarios",
     presupuesto: "El presupuesto entero",
     todaviaNo: "Todavía no se sabe.",
-    cuantas: (n) => ES.plural(n, "cosa encontrada", "cosas encontradas"),
+    cuantas: (n) => ES.cuenta(n, "cosa encontrada", "cosas encontradas"),
     falta: {
       no_contract: "Todavía no se sabe.",
       failed: "Esta vez no se pudo encontrar.",
@@ -1570,7 +1570,7 @@ const es: Textos = {
     },
     conEntrada: "Entrada y horario, sabidos",
     total: (dinero) => `Con lo que se sabe: ${dinero}`,
-    faltan: (n) => (n === 0 ? "No falta nada." : `${ES.plural(n, "cosa", "cosas")} todavía sin saber.`),
+    faltan: (n) => (n === 0 ? "No falta nada." : `${ES.cuenta(n, "cosa", "cosas")} todavía sin saber.`),
   },
   cifras: {
     total: (noches, transporte) =>
