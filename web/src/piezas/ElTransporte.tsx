@@ -163,12 +163,15 @@ export function ElTransporte({
   manera,
   id,
   cerrado = false,
+  alQuedarte,
 }: Comun & {
   viaje: Viaje;
   manera: Manera["id"];
   /** Tu viaje en la casa, o null si es el de muestra: entonces no se busca. */
   id: string | null;
   cerrado?: boolean;
+  /** Te quedaste con el que tienes: la manera de tu viaje se pinta con él. */
+  alQuedarte?: (transporte: string) => void;
 }) {
   const x = t.transporte;
   const [casa, setCasa] = useState<DeLaCasa | null>(null);
@@ -243,8 +246,10 @@ export function ElTransporte({
     if (leidas.estado !== 200) return setFallo("house_down");
     const choices = { ...(leidas.cuerpo.choices as object), transport: tuyo.id };
     const r = await pideALaCasa("PUT", `viajes/${id}/elecciones`, { choices });
-    if (r.estado === 200) setQuedado(true);
-    else setFallo("house_down");
+    if (r.estado === 200) {
+      setQuedado(true);
+      alQuedarte?.(tuyo.id);
+    } else setFallo("house_down");
   };
 
   const volverA = async (n: number): Promise<void> => {

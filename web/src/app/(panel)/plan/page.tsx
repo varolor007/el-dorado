@@ -107,6 +107,8 @@ export default function Planear() {
   // Dónde duermes, si elegiste otro que el de la manera, y tus gustos de las cosas del alojamiento (8.2).
   const [alojamientoElegido, setAlojamientoElegido] = useState<string | null>(null);
   const [gustos, setGustos] = useState<GustoMarcado[] | null>(null);
+  // Cómo llegas, si te quedaste con otro que el de la manera (8.3): la manera se pinta con él.
+  const [transporteElegido, setTransporteElegido] = useState<string | null>(null);
   // Tus elecciones de un viaje tuyo en el mapa viven en la casa: se leen al abrirlo y se guardan al cambiarlas.
   const version = vivo.estado?.trip.version ?? null;
   const tuyas = useTusElecciones(pedido != null && comoEsta === "on_map" ? pedido : null, version);
@@ -131,6 +133,7 @@ export default function Planear() {
     setAnadidas(e.added);
     setFijadas(e.moved);
     setAlojamientoElegido(e.lodging);
+    setTransporteElegido(e.transport);
     setGustos(e.tastes);
   }, [tuyas.leidas]);
 
@@ -192,6 +195,7 @@ export default function Planear() {
       added: anadidas,
       moved: fijadas,
       lodging: alojamientoElegido,
+      transport: transporteElegido,
       tastes: gustos,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -602,6 +606,7 @@ export default function Planear() {
             manera={elegida?.id ?? manera}
             id={pedido != null && enElMapa ? pedido : null}
             cerrado={comoEsta === "closed"}
+            alQuedarte={setTransporteElegido}
           />
         </Hoja>
       )}
@@ -649,6 +654,8 @@ export default function Planear() {
               tuyo={pedido != null && comoEsta === "on_map" ? pedido : null}
               version={vivo.estado?.trip.version ?? null}
               alTransporte={() => setEnElTransporte(true)}
+              alojamiento={alojamientoElegido}
+              transporte={transporteElegido}
             />
             {pedido != null && comoEsta === "closed" && (
               <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />
