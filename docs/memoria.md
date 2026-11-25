@@ -3,9 +3,16 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov y en obra, en la tanda 6 bis.
-La tanda 6, por momentos, está construida, revisada y arreglada, y el PM siguió adelante. Después de las capas va
-la tanda 7, el ensayo, que gasta y no empieza sin su adelante** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
+6 bis (971 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
+no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**Cómo se mira la web de las capas sin gastar** (borrador de la sesión que orquesta, fuera del repositorio): una casa
+de mentira con la puerta de verdad (`puertaALaWeb`, `fuentesInventadas` y `lanzadorDeMentira`), y con una fuente de
+rutas inventada que alarga lo que se anda, para que haya tramos que no se andan y se vea su coste y lo que conviene
+para moverse. El viaje del ensayo, que es de antes de las capas, dice «Todavía no se sabe» en «Allí» y en el
+presupuesto, sin romper nada.
 
 **El suelo de las capas (14.1), junto** (25-nov). Quien toque una capa, que lea esto. Las formas, en
 `agent/output/capas.ts` (el viaje lleva `moverse`, `saber`, `entradas` y `presupuesto`, cada uno opcional; lo que no
