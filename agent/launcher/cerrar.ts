@@ -48,6 +48,7 @@ import {
   type PiezaElegida,
 } from "../scripts/cierre.ts";
 import type { Busqueda } from "../scripts/busqueda_alojamiento.ts";
+import { conTuAlojamiento } from "../scripts/alojamiento.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { enlaceQueVale } from "../tools/enlaces.ts";
 import { hora24 } from "../tools/horas.ts";
@@ -94,6 +95,8 @@ type Elegido = {
   cuando: string;
   dias?: TusDias;
   ritmo?: string;
+  /** El alojamiento que eligió en lugar del de la manera (8.2), si eligió otro: se cierra con él. */
+  alojamiento?: string;
 };
 type DeLosPrecios = {
   dados: Record<string, DeHoy>;
@@ -121,7 +124,7 @@ export function elegir(
   carpeta: string,
   manera: unknown,
   cuando: Date,
-  tuyos: { dias?: unknown; ritmo?: unknown } = {},
+  tuyos: { dias?: unknown; ritmo?: unknown; alojamiento?: unknown } = {},
 ): Elegido {
   const version = leerVersion(v);
   const viaje = version?.viaje as Viaje | undefined;
@@ -132,6 +135,16 @@ export function elegir(
     manera: manera as Elegido["manera"],
     cuando: cuando.toISOString(),
   };
+  if (tuyos.alojamiento !== undefined && tuyos.alojamiento !== null) {
+    const m = viaje.maneras.find((x) => x.id === manera)!;
+    try {
+      if (typeof tuyos.alojamiento !== "string") throw new Error("bad_lodging");
+      if (conTuAlojamiento(viaje, m, tuyos.alojamiento).alojamiento !== m.alojamiento)
+        elegido.alojamiento = tuyos.alojamiento;
+    } catch {
+      throw new FalloAlCerrar("bad_lodging");
+    }
+  }
   if (tuyos.dias !== undefined) {
     let con: Viaje;
     try {
@@ -203,7 +216,16 @@ function delElegido(v: ViajeEnLaMesa, carpeta: string): { e: Elegido; viaje: Via
   if (version === null) throw new Error("la versión que se cierra ya no está");
   const deLaVersion = version.viaje as Viaje;
   // Con los días que tenía delante el viajero, si los mandó: es su viaje el que se cierra.
-  const viaje = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
+  const conDias = e.dias === undefined ? deLaVersion : conTusDias(deLaVersion, e.dias, e.ritmo);
+  // Con el alojamiento que eligió en lugar del de la manera, si eligió otro (8.2): la manera, con él y su total.
+  const tuyo = e.alojamiento ?? null;
+  const viaje =
+    tuyo === null
+      ? conDias
+      : {
+          ...conDias,
+          maneras: conDias.maneras.map((m) => (m.id === e.manera ? conTuAlojamiento(conDias, m, tuyo) : m)),
+        };
   return { e, viaje, entendido: version.entendido as Entendido };
 }
 

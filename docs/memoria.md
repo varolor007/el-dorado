@@ -7,6 +7,20 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 momentos (8.2, 8.3, 8.6 y 8.5), en marcha con una sesión cada uno; las tandas 4 y 5, con el visto bueno del PM** (el
 estado, punto a punto, en [plan.md](plan.md)).
 
+**El alojamiento, a ratos (8.2), junto** (25-nov). Desde la ficha (`web/src/piezas/Alojamiento.tsx`). Elegir otro
+de los que ya hay es una elección (`lodging`), y el total lo rehace el código (`conTuAlojamiento`, en
+`agent/scripts/alojamiento.ts`); el cierre cierra con él (`Elegido.alojamiento`). Tus gustos, al instante:
+`conTusGustos`, con las mismas cribas de la tabla, sobre la investigación de la versión que se enseña
+(`POST /viajes/<id>/gustos`). Buscar otra vez (`POST /viajes/<id>/alojamiento`, y su impacto en
+`/alojamiento/impacto`): lo pedido va en `rehecho.json`, en `pedido.lodging` (`zone`, `minimums`, `max_price`,
+`tastes`), mirado con `comprobarPedido`; la búsqueda lo lee con `buscarConLoPedido` (la zona pedida no se ensancha
+ni se bajan los mínimos: lo dijo el viajero), y mirar, con `reutilizarMiradas`: se copia el puesto de quien ya se
+miró, con su entrega y su hora, y vuelve a pasar sus puertas; de los nuevos se mira a `NUEVOS_QUE_SE_MIRAN`, dos.
+La pregunta por un alojamiento ya mirado (`GET` y `POST /viajes/<id>/alojamiento/pregunta`): el que mira, en un
+modo más de su contrato (MI7 y MI8), con el material de su puesto, en `viajes/<id>/preguntas/<n>/`; su respuesta
+pasa `agent/gates/puerta_respuesta.ts` antes de llegar a la pantalla. Los números de partida, del PM, en
+`agent/data/alojamiento.ts`. Sin ver con IA ni con fuentes de verdad.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee

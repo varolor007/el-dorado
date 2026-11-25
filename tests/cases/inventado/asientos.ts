@@ -197,13 +197,28 @@ export function entregaDeLosPapeles(preguntas: Objeto[] | null, filas: Objeto[] 
   return { seat: "papers", cells, unknowns: [] };
 }
 
+/** Lo que contestaría el que mira a una pregunta del viajero (8.2), con su prueba de su material. */
+export function respuestaPara(hoja: Objeto): Objeto {
+  return {
+    seat: "lodging-viewer",
+    mode: "question",
+    lodging_id: hoja.lodging_id,
+    question_id: "q1",
+    answer: "yes",
+    evidence: [{ kind: "photo", ref: "hotel-01.jpg", what: "free weights on a rack next to the treadmills" }],
+    says: "The gym photo shows free weights on a rack.",
+    unknowns: [],
+  };
+}
+
 /** Lo que entregaría cada asiento, según cuál sea y lo que tenga en su puesto. */
 export function entregaCon(asiento: string, dado: (nombre: string) => any): Objeto {
   if (asiento === "calendar") return entregaDelCalendario(dado("trip.json"), false);
   if (asiento === "papers") return entregaDeLosPapeles(dado("questions.json"), dado("travellers.json"));
   if (asiento === "listener") return entregaDeEscucha(dado("words.json"), dado("round.json"));
   if (asiento === "route-planner") return entregaDeRuta();
-  if (asiento === "lodging-viewer") return miradoPara(dado("sheet.json"));
+  if (asiento === "lodging-viewer")
+    return dado("question.json") == null ? miradoPara(dado("sheet.json")) : respuestaPara(dado("sheet.json"));
   if (asiento === "sights-picker") return entregaDeSitios();
   if (asiento === "trip-crosser") return entregaDeCruce(dado("table.json") as Tabla);
   if (asiento === "conductor") return entregaDelConductor(dado("stop.json"));

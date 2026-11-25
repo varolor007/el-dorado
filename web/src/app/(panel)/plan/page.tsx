@@ -20,6 +20,8 @@ import { Mapa, type Camara, type Marca } from "../../../piezas/Mapa.tsx";
 import { ATuGuia } from "../../../piezas/TuGuia.tsx";
 import { EnVivo, Ficha, Mundo, TuViaje, Vistazo, type Pestana } from "../../../piezas/Pantallas.tsx";
 import { ElImpacto, TusVersiones } from "../../../piezas/Momentos.tsx";
+import { TuAlojamiento } from "../../../piezas/Alojamiento.tsx";
+import type { GustoMarcado } from "../../../../../agent/scripts/alojamiento.ts";
 import { CLASES_DE_CAMBIO, type ClaseDeCambio } from "../../../../../agent/data/momentos.ts";
 import { impactoDe } from "../../../../../agent/scripts/impacto.ts";
 import { useTusElecciones, useVersiones } from "../../../lib/elecciones.ts";
@@ -100,6 +102,9 @@ export default function Planear() {
   const [quitadas, setQuitadas] = useState<string[]>([]);
   const [anadidas, setAnadidas] = useState<string[]>([]);
   const [fijadas, setFijadas] = useState<Record<string, number>>({});
+  // Dónde duermes, si elegiste otro que el de la manera, y tus gustos de las cosas del alojamiento (8.2).
+  const [alojamientoElegido, setAlojamientoElegido] = useState<string | null>(null);
+  const [gustos, setGustos] = useState<GustoMarcado[] | null>(null);
   // Tus elecciones de un viaje tuyo en el mapa viven en la casa: se leen al abrirlo y se guardan al cambiarlas.
   const version = vivo.estado?.trip.version ?? null;
   const tuyas = useTusElecciones(pedido != null && comoEsta === "on_map" ? pedido : null, version);
@@ -117,6 +122,8 @@ export default function Planear() {
     setQuitadas(e.removed);
     setAnadidas(e.added);
     setFijadas(e.moved);
+    setAlojamientoElegido(e.lodging);
+    setGustos(e.tastes);
   }, [tuyas.leidas]);
 
   // Para abrir una pantalla suelta: ?at=look, ?at=live o ?at=trip, con &day=2, &tab=stay o &stay=3.
@@ -155,7 +162,7 @@ export default function Planear() {
   const ritmo: Ritmo = ritmoPedido ?? RITMOS.find((x) => x === viaje?.ritmo) ?? "normal";
   const r = useReproductor(grabado?.sucesos ?? [], etapa === "vivo");
   const elegida = viaje?.maneras.find((m) => m.id === manera) ?? viaje?.maneras[0] ?? null;
-  const cama = viaje?.alojamientos.find((a) => a.id === elegida?.alojamiento) ?? null;
+  const cama = viaje?.alojamientos.find((a) => a.id === (alojamientoElegido ?? elegida?.alojamiento)) ?? null;
 
   // Los días se reparten aquí, al instante, con el ritmo que pidas, desde donde duermes y con lo que has cambiado.
   const reparto = useMemo(() => {
@@ -176,9 +183,11 @@ export default function Planear() {
       removed: quitadas,
       added: anadidas,
       moved: fijadas,
+      lodging: alojamientoElegido,
+      tastes: gustos,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manera, ritmoPedido, quitadas, anadidas, fijadas]);
+  }, [manera, ritmoPedido, quitadas, anadidas, fijadas, alojamientoElegido, gustos]);
   // Para mirar suelta la pieza del impacto: ?at=impact&change=dates, sobre el viaje que se enseña, sin gastar.
   const [impactoSuelto, setImpactoSuelto] = useState<ClaseDeCambio[] | null>(null);
   useEffect(() => {
@@ -405,9 +414,12 @@ export default function Planear() {
       // Con todos los días a la vista, las paradas van pequeñas y sin número; al abrir un día, las suyas crecen.
       d.paradas.forEach((id, n) => pinDeParada(id, i === dia ? n + 1 : null, dia !== null && i !== dia, dia === null));
     });
-    for (const m of viaje.maneras) pinDeCama(m.alojamiento, { elegida: m.id === elegida?.id });
+    // Dos maneras pueden dormir en el mismo sitio: su chincheta, una vez.
+    for (const id of new Set(viaje.maneras.map((m) => m.alojamiento))) pinDeCama(id, { elegida: id === cama?.id });
+    if (cama && !viaje.maneras.some((m) => m.alojamiento === cama.id)) pinDeCama(cama.id, { elegida: true });
     const fichaAbierta = viaje.alojamientos.find((a) => a.id === ficha);
-    if (fichaAbierta && !viaje.maneras.some((m) => m.alojamiento === fichaAbierta.id)) pinDeCama(fichaAbierta.id);
+    if (fichaAbierta && fichaAbierta.id !== cama?.id && !viaje.maneras.some((m) => m.alojamiento === fichaAbierta.id))
+      pinDeCama(fichaAbierta.id);
     const aLaVista = (delDia?.paradas ?? reparto.dias.flatMap((d) => d.paradas)).flatMap(
       (id) => deParada.get(id)?.punto ?? [],
     );
@@ -568,6 +580,8 @@ export default function Planear() {
             aLaManera={(m) => {
               toca();
               setManera(m);
+              // Otra manera trae su alojamiento: el que elegiste antes era sobre la de antes.
+              setAlojamientoElegido(null);
             }}
             aLaParada={(id) => setParada((actual) => (actual === id ? null : id))}
             alAlojamiento={setFicha}
@@ -594,6 +608,25 @@ export default function Planear() {
             nochesDelViaje={noches(viaje.entrada, viaje.salida)}
             alVolver={() => setFicha(null)}
           />
+          {pedido != null && comoEsta === "on_map" && (
+            <TuAlojamiento
+              {...comun}
+              id={pedido}
+              viaje={viaje}
+              a={abierta}
+              manera={elegida}
+              duermes={cama?.id ?? null}
+              gustos={gustos}
+              alGustos={(g) => {
+                toca();
+                setGustos(g);
+              }}
+              alElegir={(a) => {
+                toca();
+                setAlojamientoElegido(a);
+              }}
+            />
+          )}
         </Hoja>
       )}
       <Cargando texto={t.cargando} fuera={pintado} />

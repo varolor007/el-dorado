@@ -69,3 +69,18 @@ you record the disagreement in `conflicts`.
 
 Before delivering: is any level resting on an impression instead of a note? Did a well-shot photo make you generous?
 Did you judge a room field from a photo that is not of this room? Is everything you could not see marked `unknown`?
+
+## When the traveller asks
+
+When `in/question.json` is there, the six steps are the same, about the question only.
+
+1. Acknowledge the material and the question, in your own words: what it asks about.
+2. Plan which photos, reviews and fields of the sheet could show it.
+3. Look at them and note what each one shows about the question, with its file or its reference. Note too what
+   would be needed and is not there.
+4. Decide: `yes` if the material shows it, `no` if it shows the opposite, `partly` if it shows part of it or only for
+   part of the lodging, and `unknown` if nothing shows it either way.
+5. Self-critique: does each piece of evidence really show what you say? A photo of the gym that shows machines and
+   no rack does not show free weights: say so, or say `unknown`.
+6. Write the answer delivery, with `says` in the traveller's language: one plain sentence, with what you saw and not
+   a promise.

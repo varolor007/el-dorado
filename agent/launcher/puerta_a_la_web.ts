@@ -102,6 +102,21 @@ import {
   type ViajeEnLaMesa,
 } from "./mesa.ts";
 import type { Viaje } from "../output/viaje.ts";
+import { CAMBIOS_DE_ALOJAMIENTO, PREGUNTA } from "../data/alojamiento.ts";
+import { comprobarGustos, comprobarPedido, pideBuscar, PedidoQueNoVale } from "../scripts/alojamiento.ts";
+import {
+  conTusGustos,
+  DEL_ALOJAMIENTO,
+  FalloDeLaPregunta,
+  gastoDeUnaMirada,
+  impactoDelAlojamiento,
+  llevarLaPregunta,
+  pedirPregunta,
+  preguntaDeCara,
+  tusGustosDePartida,
+  type AlLlevarLaPregunta,
+} from "./alojamiento.ts";
+import { FalloAlRehacer, rehacer } from "./rehacer.ts";
 import { comprobarVistazo } from "../output/viaje.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import { claveDelVistazo, FalloDelVistazo, primerVistazo, type Esperas } from "../scripts/vistazo.ts";
@@ -148,6 +163,8 @@ export type OpcionesDeLaPuerta = {
   alLlevar?: AlLlevar;
   /** Cómo se lleva una guía: su tope y de dónde se bajan sus fotos. */
   alLlevarLaGuia?: AlLlevarLaGuia;
+  /** Cómo se lleva una pregunta sobre un alojamiento (8.2): su tope de tiempo, para las pruebas. */
+  alLlevarLaPregunta?: AlLlevarLaPregunta;
   /** Cada cuánto mira la casa si hay algo nuevo que contar a quien escucha, y cada cuánto le da señal de vida. */
   cadaMs?: number;
   latidoMs?: number;
@@ -670,7 +687,7 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       }
       cierre = nuevoCierre(v, hoy());
       try {
-        elegir(v, cierre.carpeta, manera, hoy(), { dias, ritmo });
+        elegir(v, cierre.carpeta, manera, hoy(), { dias, ritmo, alojamiento: pedido.lodging ?? tuyas.lodging });
       } catch (error) {
         if (error instanceof FalloAlCerrar) throw new Fallo(409, error.message);
         throw error;
@@ -832,6 +849,160 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     return { estado: 200, cuerpo: { trip: resumen(v) } };
   }
 
+  // ---------- el alojamiento, a ratos (8.2)
+
+  /** Las preguntas sobre un alojamiento que se están contestando ahora, por su viaje: una a la vez por viaje. */
+  const preguntas = new Map<string, Promise<void>>();
+
+  /**
+   * Tus gustos de las cosas del alojamiento, cruzados al instante con la ficha de cada alojamiento de la versión que
+   * se enseña: código, sin IA y sin gastar, y sin guardar nada (se guardan con tus elecciones). Sin gustos en el
+   * cuerpo, los de partida.
+   */
+  function tusGustos(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    if ((v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") || v.ficha.version === null)
+      throw new Fallo(409, "not_now");
+    const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
+    let marcados = null;
+    try {
+      marcados = pedido.tastes === undefined || pedido.tastes === null ? null : comprobarGustos(pedido.tastes);
+    } catch {
+      throw new Fallo(400, "bad_tastes");
+    }
+    const alojamientos = conTusGustos(v, marcados);
+    if (alojamientos === null) throw NO_HAY();
+    return {
+      estado: 200,
+      cuerpo: { version: v.ficha.version, from: tusGustosDePartida(v), lodgings: alojamientos },
+    };
+  }
+
+  /**
+   * Desde la ficha de un alojamiento: lo que costaría lo pedido (`impacto`), buscar otra vez con otra zona, otros
+   * mínimos u otro tope, o cruzar con tus gustos (la raíz), y una pregunta sobre un alojamiento (`pregunta`).
+   */
+  function delAlojamiento(p: Peticion, cual: string | undefined): Respuesta {
+    if (cual === "impacto") {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      const { pedido } = elPedidoDelAlojamiento(v, p.cuerpo);
+      const hecho = impactoDelAlojamiento(pedido, gastoPorAsiento(p.dueno, o.mesa), gastoDeUnaMirada(p.dueno, o.mesa));
+      return { estado: 200, cuerpo: hecho };
+    }
+    if (cual === "pregunta") {
+      if (p.metodo === "POST") return preguntarPorUnAlojamiento(p);
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      const v = suViaje(p);
+      return {
+        estado: 200,
+        cuerpo: {
+          question: preguntaDeCara(v, preguntas.has(v.ficha.id)),
+          each_usd: gastoDeUnaMirada(p.dueno, o.mesa),
+        },
+      };
+    }
+    if (cual !== undefined) throw NO_HAY();
+    if (p.metodo !== "POST") throw new Fallo(405, "method");
+    return otroAlojamiento(p);
+  }
+
+  /** Lo que pide el viajero desde la ficha, mirado contra el viaje que se enseña: lo que no vale no sale. */
+  function elPedidoDelAlojamiento(v: ViajeEnLaMesa, cuerpo: unknown) {
+    if (v.ficha.estado !== "on_map" && v.ficha.estado !== "closed") throw new Fallo(409, "not_now");
+    const viaje = leerVersion(v)?.viaje as Viaje | undefined;
+    if (viaje === undefined) throw NO_HAY();
+    const dado = objeto(cuerpo) ? cuerpo : {};
+    try {
+      return { pedido: comprobarPedido(dado.search, viaje.destino.punto), dado };
+    } catch (error) {
+      if (error instanceof PedidoQueNoVale) throw new Fallo(400, "bad_search", { field: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Otro alojamiento: la misma búsqueda con otra zona, otros mínimos u otro tope de gasto (o cruzar otra vez con tus
+   * gustos), en una investigación que parte de la de la versión que se enseña. Pregunta a la fuente y, si gasta, lo
+   * lanza con tu adelante, como `empezar`. Lo de antes se queda en su versión.
+   */
+  function otroAlojamiento(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (marchas.has(id) || guias.has(id) || preguntas.has(id)) throw new Fallo(409, "already_running");
+    const { pedido, dado } = elPedidoDelAlojamiento(v, p.cuerpo);
+    const techo = dado.ceiling === undefined || dado.ceiling === null ? null : dado.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    if (apuntadoDesde(v, "lodging_change", CAMBIOS_DE_ALOJAMIENTO.horas) >= CAMBIOS_DE_ALOJAMIENTO.deUnViaje)
+      throw new Fallo(429, "too_many_changes");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let hecho: ReturnType<typeof rehacer>;
+    try {
+      hecho = rehacer(v, {
+        clases: pideBuscar(pedido) ? ["lodging"] : ["lodging_taste"],
+        pedido: { [DEL_ALOJAMIENTO]: pedido },
+        cuando: hoy(),
+      });
+    } catch (error) {
+      if (error instanceof FalloAlRehacer)
+        throw new Fallo(error.message === "too_many_versions" ? 429 : 409, error.message);
+      throw error;
+    }
+    // El cierre que esperaba tu sí era de la versión de antes: queda abandonado, y ya no se sigue.
+    abandonarElCierre(v);
+    darElAdelante(hecho.run, techo, hoy());
+    apuntar(v, "lodging_change", { run: hecho.n, busca: pideBuscar(pedido) }, hoy());
+    apuntar(v, "button", { boton: "lodging", run: hecho.n, techo }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    marchar(id, hecho.run, lanzador);
+    return { estado: 202, cuerpo: { run: hecho.n, impact: hecho.impacto } };
+  }
+
+  /**
+   * Una pregunta sobre un alojamiento que se miró («¿el gimnasio tiene pesas?»): la contesta el que mira, con su
+   * prueba, tras tu adelante. Corre de fondo; la web pregunta por ella en `alojamiento/pregunta`.
+   */
+  function preguntarPorUnAlojamiento(p: Peticion): Respuesta {
+    const v = suViaje(p);
+    const id = v.ficha.id;
+    if (preguntas.has(id) || marchas.has(id)) throw new Fallo(409, "already_running");
+    if (apuntadoDesde(v, "lodging_question", PREGUNTA.horas) >= PREGUNTA.deUnViaje)
+      throw new Fallo(429, "too_many_questions");
+    const conQue = conQuePiensa(p.cuenta);
+    if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
+    const dado = objeto(p.cuerpo) ? p.cuerpo : {};
+    const techo = dado.ceiling === undefined || dado.ceiling === null ? null : dado.ceiling;
+    if (techo !== null && (typeof techo !== "number" || !Number.isFinite(techo) || techo <= 0))
+      throw new Fallo(400, "bad_ceiling");
+    const clave = conQue === "house" ? null : claveDe(p.dueno, o.secreto, o.mesa);
+    if (conQue !== "house" && clave === null) throw new Fallo(409, "no_key");
+    let n: number;
+    try {
+      n = pedirPregunta(v, { alojamiento: dado.lodging, pregunta: dado.question, techo, hoy: hoy() }).n;
+    } catch (error) {
+      if (error instanceof FalloDeLaPregunta) throw new Fallo(error.message === "not_now" ? 409 : 400, error.message);
+      throw error;
+    }
+    apuntar(v, "button", { boton: "lodging_question", pregunta: n, techo }, hoy());
+    const lanzador =
+      conQue === "house"
+        ? (o.lanzadorDeLaCasa as Lanzador)
+        : (o.lanzador as (clave: string) => Lanzador)(clave as string);
+    const marcha = llevarLaPregunta(v, n, lanzador, { hoy, ...o.alLlevarLaPregunta })
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => preguntas.delete(id));
+    preguntas.set(id, marcha);
+    return { estado: 202, cuerpo: { question: n } };
+  }
+
   function atender(p: Peticion): Respuesta {
     const [raiz, id, que, cual] = p.partes;
     if (raiz !== "viajes" || p.partes.length > 4) throw NO_HAY();
@@ -921,6 +1092,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       if (p.metodo !== "POST") throw new Fallo(405, "method");
       return volverALaVersion(p);
     }
+    if (que === "gustos" && cual === undefined) {
+      if (p.metodo !== "POST") throw new Fallo(405, "method");
+      return tusGustos(p);
+    }
+    if (que === "alojamiento") return delAlojamiento(p, cual);
     if (que === "guia" && cual === undefined) {
       if (p.metodo === "POST") return pedirLaGuia(p);
       if (p.metodo !== "GET") throw new Fallo(405, "method");
@@ -1075,7 +1251,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     servidor,
     enMarcha: () => [...marchas.keys()],
     esperar: async () => {
-      while (marchas.size > 0 || guias.size > 0) await Promise.all([...marchas.values(), ...guias.values()]);
+      while (marchas.size > 0 || guias.size > 0 || preguntas.size > 0)
+        await Promise.all([...marchas.values(), ...guias.values(), ...preguntas.values()]);
     },
     cerrar: async () => {
       for (const res of abiertos) res.end();
