@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { LARGO_DE_UN_MENSAJE } from "../../../agent/data/dia_a_dia.ts";
 import type { Impacto } from "../../../agent/scripts/impacto.ts";
 import { pideALaCasa } from "../lib/cuenta.ts";
+import { loQueSeEnsena } from "../lib/diaADia.ts";
 import type { Textos } from "../lib/textos.ts";
 import { ElImpacto } from "./Momentos.tsx";
 
@@ -80,10 +81,7 @@ export function TuMensaje({
   };
 
   // Tu último mensaje, si es de esta versión o acaba de dejar otra: lo que cambió y el paso a verlo.
-  const trabajando = enLaCasa?.state === "working";
-  const acabado = enLaCasa?.state === "done" && enLaCasa.version !== null && enLaCasa.version === version && !visto;
-  const nuevo = enLaCasa?.state === "done" && enLaCasa.version !== null && enLaCasa.version !== version;
-  const parado = enLaCasa?.state === "stopped" && enLaCasa.from === version && !visto;
+  const { trabajando, acabado, nuevo, parado } = loQueSeEnsena(enLaCasa, version, visto);
 
   return (
     <div className="grupo mensaje">
