@@ -678,11 +678,27 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   explica se conservan solo si lo que leerían es lo mismo, aunque se ahorre menos, para que no quede una frase
   vieja; un día que no cabe se dice y no se impide, porque es elección del viajero; y los cuatro momentos pasan a
   «en parte» en el plan, como el cierre, mientras no se vean con IA de verdad.
+- **Las capas del destino, propuestas en la hoja** (el PM, al repasar lo que falta para que el agente sea
+  funcional: «creo que aquí seguramente falten capas»; y después: «prepárame la propuesta de las capas nuevas en la
+  hoja»). Faltan: el viaje no sabe lo que cuesta cada entrada ni cuándo abre, cómo se mueve uno allí y lo que
+  cuesta, ni lo que conviene saber del destino, y su total solo suma dormir y llegar. La sesión lo propone en la
+  hoja, en violeta y sin tocar lo firmado, y en el plan, como bloque 14: tres asientos nuevos (el de moverse, el que
+  conoce el destino y el de las entradas), cada uno con su puerta (11, 12 y 13), y el presupuesto entero, que es
+  código. Lo que la sesión eligió al proponer, con lo más prudente: trabajan como el del calendario y el de los
+  papeles, saliendo a internet y citando cada página que abren; lo que no encuentran es «no se sabe», nunca un
+  número aproximado; el de moverse da los datos y lo que conviene lo calcula el código; no se recomienda un
+  restaurante con nombre, porque no hay fuente de opiniones; las comidas van aparte, como una horquilla; y las tres
+  maneras de hacer el viaje se siguen comparando por dormir y llegar. **No es una decisión: no se construye nada
+  hasta la firma del PM.**
 
 ## Pendientes
 
 Lo que deja el 25-nov, a decisión del PM:
 
+- **La propuesta de las capas del destino** (hoja, en violeta; plan, bloque 14): su firma. Y con ella: si entran
+  las tres capas o solo alguna; si corren siempre en la investigación o solo cuando se piden; si se recomiendan
+  sitios concretos donde comer, que pide una fuente de opiniones; y si van antes del ensayo, para que los tres
+  viajes de verdad ya las lleven y se mida lo que cuestan.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.

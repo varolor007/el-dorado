@@ -8,6 +8,15 @@ espera el visto bueno del PM: su cimiento (8.1), el alojamiento (8.2), el transp
 día a día (8.6). La tanda 7 no empieza sin él, y gasta. Las tandas 4 y 5, con su visto bueno** (el estado, punto a
 punto, en [plan.md](plan.md)).
 
+**Una propuesta a firma del PM: las capas del destino** (25-nov). Al repasar lo que falta para que el agente sea
+funcional, el PM vio que faltan capas: el viaje no sabe lo que cuesta cada entrada ni cuándo abre, cómo se mueve uno
+allí y lo que cuesta, ni lo que conviene saber del destino, y su total solo suma dormir y llegar. Pidió la propuesta
+en la hoja, y está: en violeta, en una caja arriba («Propuesta del 25-nov»), en el flujo de la investigación, del
+día a día y de los cambios, y en las tablas de las puertas, los asientos, los datos y las pantallas; y en el plan,
+como bloque 14. Son tres asientos nuevos, el de moverse (puerta 11), el que conoce el destino (puerta 12) y el de
+las entradas (puerta 13), y un paso de código, el presupuesto entero. **No hay nada construido, y no se construye
+hasta su firma.** Si la firma, dice también si van antes del ensayo.
+
 **La revisión de la tanda 6** (25-nov). Tres adversarios, cada uno en su copia; su informe, hallazgo a hallazgo y
 con lo que se hizo, en [revisiones/tanda-6.md](revisiones/tanda-6.md), y sus pantallas en la página de la revisión
 (https://claude.ai/artifact/KMBqFEhTmYD1HNH787LHqb). Un bloqueante, de la mecánica, arreglado: un cambio que se paraba dejaba el
