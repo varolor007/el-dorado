@@ -175,6 +175,12 @@ const en = {
     done: () => "Your trip is on the map",
     stopped: () => "The research has stopped here",
     retry: (paso: string) => (paso === "" ? "You asked to try this step again" : `You asked to try again: ${paso}`),
+    // Lo que cuentan las capas del destino (14.6): cuántas cosas de cada una, con su número delante.
+    ways_around: (n: number) => EN.plural(n, "thing found about getting around", "things found about getting around"),
+    good_to_know: (n: number) =>
+      EN.plural(n, "thing good to know about the place", "things good to know about the place"),
+    tickets_known: (n: number) =>
+      EN.plural(n, "sight with its ticket or its hours", "sights with their tickets or hours"),
     conductor: (ref: string) =>
       (
         ({
@@ -332,8 +338,8 @@ const en = {
   carril: { planear: "Plan", viajes: "Trips", clave: "AI key", cuenta: "Account", portada: "El Dorado, home" },
   cargando: "Unfolding the map",
   pestanas: { days: "Days", stay: "Sleep", money: "Money", there: "There", notes: "Notes" },
-  // Las capas del destino (bloque 14): la pestaña «Allí» y los huecos de la parada y de las cuentas. Su pantalla de
-  // verdad llega con 14.6; hasta entonces, solo lo que se sabe y lo que no.
+  // Las capas del destino (14.6): la pestaña «Allí», la entrada y el horario de cada parada, lo que cuesta un trayecto
+  // que no se anda y el presupuesto entero. Todo por claves y números; lo que no se sabe, se dice.
   alli: {
     titulo: "There",
     moverse: "Getting around",
@@ -349,9 +355,151 @@ const en = {
       rejected: "What was found did not pass its checks, so it is not shown.",
       late: "It took too long, so the trip was laid out without it.",
     } as Record<string, string>,
-    conEntrada: "Ticket and hours known",
     total: (dinero: string) => `With what is known: ${dinero}`,
     faltan: (n: number) => (n === 0 ? "Nothing missing." : `${EN.cuenta(n, "thing", "things")} not known yet.`),
+    // De dónde sale cada dato: la web de su página y el día en que se vio.
+    fuente: (sitio: string, dia: string) => `Source: ${sitio}, seen ${dia}`,
+    enMapa: "On the map",
+    // Cómo llegar de donde aterrizas a donde duermes.
+    llegar: "From where you land to where you sleep",
+    desde: { airport: "From the airport", station: "From the station", port: "From the port" } as Record<
+      string,
+      string
+    >,
+    deNombre: (nombre: string) => `From ${nombre}`,
+    aZona: (n: number) => `to area ${EN.cifra(n)} of your route`,
+    zonasSinNombre: "Your route has more than one area: they are numbered in the order they appear here.",
+    sinLlegar: {
+      not_found: "No way to get from where you land to where you sleep was found.",
+      no_public_way: "There is no public transport from where you land to where you sleep: it takes a taxi or a car.",
+    } as Record<string, string>,
+    modo: {
+      metro: "Metro",
+      tram: "Tram",
+      bus: "Bus",
+      train: "Train",
+      ferry: "Ferry",
+      cable: "Cable car",
+      shuttle: "Shuttle",
+      taxi: "Taxi",
+      ride_hailing: "Ride hailing",
+      car: "Car",
+      bike: "Bike",
+      walk: "On foot",
+    } as Record<string, string>,
+    minutos: (n: number) => `about ${EN.cifra(n)} min`,
+    hastaLas: (hora: string) => `runs until ${hora}`,
+    // Lo que hay para moverse allí, los billetes y cómo se paga.
+    transportes: "What there is",
+    billetes: "Tickets and passes",
+    billete: (clase: string, dias: number | null, viajes: number | null) =>
+      ({
+        single: "Single ticket",
+        day_pass: dias === null || dias === 1 ? "Day pass" : `${EN.cifra(dias)}-day pass`,
+        multi_day_pass: dias === null ? "Pass for several days" : `${EN.cifra(dias)}-day pass`,
+        multi_ride: viajes === null ? "Pack of rides" : `Pack of ${EN.cifra(viajes)} rides`,
+        travel_card: "Rechargeable travel card",
+      })[clase] ?? "Ticket",
+    cubre: (modos: string[]) =>
+      `for ${new Intl.ListFormat("en", { type: "disjunction" }).format(modos.map((m) => m.toLowerCase()))}`,
+    pagos: (como: string[]) => `You can pay ${new Intl.ListFormat("en", { type: "disjunction" }).format(como)}.`,
+    pago: {
+      contactless: "contactless",
+      card: "by card",
+      cash: "in cash",
+      app: "with an app",
+      travel_card: "with a local travel card",
+    } as Record<string, string>,
+    coche: (hace: boolean): string => (hace ? "You need a car to get around." : "You do not need a car to get around."),
+    // Lo que cuesta, para tu grupo y por persona.
+    paraElGrupo: (dinero: string, cuantos: number) =>
+      cuantos === 1 ? dinero : `${dinero} for the ${EN.cifra(cuantos)} of you`,
+    gratis: "Free",
+    gratisGrupo: (cuantos: number) => (cuantos === 1 ? "Free" : `Free for the ${EN.cifra(cuantos)} of you`),
+    porAdulto: (dinero: string) => `${dinero} per adult`,
+    faltanDeVosotros: (n: number, cuantos: number) =>
+      cuantos === 1 ? "Not known for you" : `not known for ${EN.cifra(n)} of you`,
+    sinPrecio: "Price not known",
+    para: {
+      any: "Anyone",
+      adult: "Adult",
+      child: "Child",
+      infant: "Baby",
+      youth: "Young person",
+      student: "Student",
+      senior: "Senior",
+      family: "Family",
+      group: "Group",
+    } as Record<string, string>,
+    edades: (desde: number | null, hasta: number | null) =>
+      desde === null
+        ? `up to ${EN.cifra(hasta ?? 0)}`
+        : hasta === null
+          ? `${EN.cifra(desde)} and over`
+          : `${EN.cifra(desde)} to ${EN.cifra(hasta)}`,
+    precioPara: (para: string, edades: string | null, dinero: string) =>
+      `${para}${edades === null ? "" : ` (${edades})`}: ${dinero}`,
+    // Lo que conviene saber, por sus clases.
+    clase: {
+      neighbourhood: "The areas of your route",
+      hours: "Local hours",
+      money: "Money",
+      practical: "Practical",
+      avoid: "Best avoided",
+      food_area: "Areas to eat",
+      market: "Markets",
+      dish: "Dishes of the place",
+      meal_cost: "What a meal costs",
+    } as Record<string, string>,
+    comer: "Where to eat",
+    comerNota: "Areas, markets and dishes. No restaurant is named: that would need a source of reviews.",
+    cuesta: (desde: string, hasta: string) => `Usually ${desde} to ${hasta}`,
+    nadaDe: "Nothing found of this.",
+    // Las entradas, en cada parada y en la pestaña.
+    entrada: "Ticket",
+    tusDias: "On your days",
+    abre: (franjas: { abre: string; cierra: string }[]) =>
+      new Intl.ListFormat("en", { type: "conjunction" }).format(franjas.map((f) => `${f.abre} to ${f.cierra}`)),
+    cerrado: "Closed",
+    sinHoras: "Hours not known",
+    sinHorario: "Opening hours not known.",
+    cierraTuDia: (dia: string) =>
+      `Closed on ${dia}, the day it is planned. Move it to another day, or check before going.`,
+    cierraCorto: "Closed that day",
+    elDiaPuesto: "planned",
+    reservar: (hace: boolean): string => (hace ? "Booking needed" : "No booking needed"),
+    reservarAqui: "Book here",
+    web: "Its official website",
+    soloAbiertos: "Its page was not looked at: only what open data says.",
+    resumen: (conPrecio: number, conHorario: number, de: number) =>
+      `Of your ${EN.cuenta(de, "stop", "stops")}: ${EN.cifra(conPrecio)} with ${EN.plural(conPrecio, "its", "their")} price, ${EN.cifra(conHorario)} with ${EN.plural(conHorario, "its", "their")} hours. Each one, in its stop.`,
+    cierranResumen: (n: number) =>
+      `${EN.cuenta(n, "stop is", "stops are")} closed on the day ${EN.plural(n, "it is", "they are")} planned.`,
+    // Un trayecto que no se anda: lo que cuesta, si se sabe.
+    suelto: (dinero: string) => `By public transport, a single ticket: ${dinero}`,
+    // El presupuesto entero, parte a parte.
+    parte: {
+      lodging: "Sleeping",
+      transport: "Getting there",
+      arrival: "From where you land to where you sleep",
+      getting_around: "Getting around there",
+      tickets: "Tickets",
+    } as Record<string, string>,
+    origen: {
+      priced: "A price, with its source",
+      computed: "Worked out from prices with their source",
+      unknown: "Not known",
+    } as Record<string, string>,
+    faltanParte: (n: number) => `${EN.cuenta(n, "thing", "things")} not known`,
+    aparte: (lista: string) => `Plus ${lista} in another currency, not added.`,
+    comidas: (desde: string, hasta: string) => `Meals, apart: ${desde} to ${hasta} a day`,
+    comidasViaje: (desde: string, hasta: string, dias: number) =>
+      `${desde} to ${hasta} for ${EN.cuenta(dias, "day", "days")}`,
+    comidasNota: "They depend on you, so they are not in the total.",
+    comidasNo: "What meals cost there is not known yet.",
+    comparan: "The ways are still compared by sleeping and getting there, which is what changes between them.",
+    deAntes:
+      "This budget is from before your changes: it does not count what you changed in your days, where you sleep or how you get there.",
   },
   cifras: {
     // Lo que cubre el total de la manera elegida: las noches o, si lleva transporte, también cómo se llega.
@@ -1408,6 +1556,9 @@ const es: Textos = {
     done: () => "Tu viaje está en el mapa",
     stopped: () => "La investigación se ha parado aquí",
     retry: (paso) => (paso === "" ? "Has pedido otro intento de este paso" : `Has pedido otro intento: ${paso}`),
+    ways_around: (n) => ES.plural(n, "cosa encontrada de cómo moverte", "cosas encontradas de cómo moverte"),
+    good_to_know: (n) => ES.plural(n, "cosa que conviene saber del destino", "cosas que conviene saber del destino"),
+    tickets_known: (n) => ES.plural(n, "sitio con su entrada o su horario", "sitios con su entrada o su horario"),
     conductor: (ref) =>
       (
         ({
@@ -1568,9 +1719,136 @@ const es: Textos = {
       rejected: "Lo que se encontró no pasó sus comprobaciones, así que no se enseña.",
       late: "Tardó demasiado, y el viaje se repartió sin ello.",
     },
-    conEntrada: "Entrada y horario, sabidos",
     total: (dinero) => `Con lo que se sabe: ${dinero}`,
     faltan: (n) => (n === 0 ? "No falta nada." : `${ES.cuenta(n, "cosa", "cosas")} todavía sin saber.`),
+    fuente: (sitio, dia) => `Fuente: ${sitio}, visto el ${dia}`,
+    enMapa: "En el mapa",
+    llegar: "De donde llegas a donde duermes",
+    desde: { airport: "Desde el aeropuerto", station: "Desde la estación", port: "Desde el puerto" },
+    deNombre: (nombre) => `Desde ${nombre}`,
+    aZona: (n) => `a la zona ${ES.cifra(n)} de tu ruta`,
+    zonasSinNombre: "Tu ruta tiene más de una zona: van numeradas en el orden en que salen aquí.",
+    sinLlegar: {
+      not_found: "No se encontró cómo ir de donde llegas a donde duermes.",
+      no_public_way: "No hay transporte público de donde llegas a donde duermes: hace falta un taxi o un coche.",
+    },
+    modo: {
+      metro: "Metro",
+      tram: "Tranvía",
+      bus: "Autobús",
+      train: "Tren",
+      ferry: "Barco",
+      cable: "Teleférico",
+      shuttle: "Lanzadera",
+      taxi: "Taxi",
+      ride_hailing: "Coche con conductor por aplicación",
+      car: "Coche",
+      bike: "Bici",
+      walk: "Andando",
+    },
+    minutos: (n) => `unos ${ES.cifra(n)} min`,
+    hastaLas: (hora) => `funciona hasta las ${hora}`,
+    transportes: "Lo que hay",
+    billetes: "Billetes y abonos",
+    billete: (clase, dias, viajes) =>
+      ({
+        single: "Billete suelto",
+        day_pass: dias === null || dias === 1 ? "Abono de un día" : `Abono de ${ES.cifra(dias)} días`,
+        multi_day_pass: dias === null ? "Abono de varios días" : `Abono de ${ES.cifra(dias)} días`,
+        multi_ride: viajes === null ? "Bono de varios viajes" : `Bono de ${ES.cifra(viajes)} viajes`,
+        travel_card: "Tarjeta recargable",
+      })[clase] ?? "Billete",
+    cubre: (modos) =>
+      `para ${new Intl.ListFormat("es", { type: "disjunction" }).format(modos.map((m) => m.toLowerCase()))}`,
+    pagos: (como) => `Se puede pagar ${new Intl.ListFormat("es", { type: "disjunction" }).format(como)}.`,
+    pago: {
+      contactless: "sin contacto",
+      card: "con tarjeta",
+      cash: "en efectivo",
+      app: "con una aplicación",
+      travel_card: "con una tarjeta de transporte de allí",
+    },
+    coche: (hace) => (hace ? "Para moverte hace falta coche." : "Para moverte no hace falta coche."),
+    paraElGrupo: (dinero, cuantos) => (cuantos === 1 ? dinero : `${dinero} para los ${ES.cifra(cuantos)}`),
+    gratis: "Gratis",
+    gratisGrupo: (cuantos) => (cuantos === 1 ? "Gratis" : `Gratis para los ${ES.cifra(cuantos)}`),
+    porAdulto: (dinero) => `${dinero} por adulto`,
+    faltanDeVosotros: (n, cuantos) =>
+      cuantos === 1 ? "No se sabe para ti" : `sin saber para ${ES.cifra(n)} de vosotros`,
+    sinPrecio: "Precio sin saber",
+    para: {
+      any: "Cualquiera",
+      adult: "Adulto",
+      child: "Niño",
+      infant: "Bebé",
+      youth: "Joven",
+      student: "Estudiante",
+      senior: "Mayor",
+      family: "Familia",
+      group: "Grupo",
+    },
+    edades: (desde, hasta) =>
+      desde === null
+        ? `hasta ${ES.cifra(hasta ?? 0)} años`
+        : hasta === null
+          ? `${ES.cifra(desde)} años o más`
+          : `de ${ES.cifra(desde)} a ${ES.cifra(hasta)} años`,
+    precioPara: (para, edades, dinero) => `${para}${edades === null ? "" : ` (${edades})`}: ${dinero}`,
+    clase: {
+      neighbourhood: "Las zonas de tu ruta",
+      hours: "Los horarios de allí",
+      money: "El dinero",
+      practical: "Lo práctico",
+      avoid: "Lo que conviene evitar",
+      food_area: "Zonas para comer",
+      market: "Mercados",
+      dish: "Platos del sitio",
+      meal_cost: "Lo que cuesta comer",
+    },
+    comer: "Dónde se come",
+    comerNota: "Zonas, mercados y platos. Ningún restaurante con nombre: para eso haría falta una fuente de opiniones.",
+    cuesta: (desde, hasta) => `Suele costar de ${desde} a ${hasta}`,
+    nadaDe: "No se encontró nada de esto.",
+    entrada: "Entrada",
+    tusDias: "En tus días",
+    abre: (franjas) =>
+      new Intl.ListFormat("es", { type: "conjunction" }).format(franjas.map((f) => `de ${f.abre} a ${f.cierra}`)),
+    cerrado: "Cerrado",
+    sinHoras: "Horas sin saber",
+    sinHorario: "El horario, sin saber.",
+    cierraTuDia: (dia) => `Cierra el ${dia}, el día en que está puesto. Muévelo a otro día, o compruébalo antes de ir.`,
+    cierraCorto: "Ese día cierra",
+    elDiaPuesto: "puesto",
+    reservar: (hace) => (hace ? "Hay que reservar" : "Sin reserva"),
+    reservarAqui: "Reservar aquí",
+    web: "Su web oficial",
+    soloAbiertos: "Su página no se miró: solo lo que dicen los datos abiertos.",
+    resumen: (conPrecio, conHorario, de) =>
+      `De tus ${ES.cuenta(de, "parada", "paradas")}: ${ES.cifra(conPrecio)} con su precio y ${ES.cifra(conHorario)} con su horario. Cada una, en su parada.`,
+    cierranResumen: (n) =>
+      `${ES.cuenta(n, "parada cierra", "paradas cierran")} el día en que ${ES.plural(n, "está puesta", "están puestas")}.`,
+    suelto: (dinero) => `En transporte, un billete suelto: ${dinero}`,
+    parte: {
+      lodging: "Dormir",
+      transport: "Llegar",
+      arrival: "De donde llegas a donde duermes",
+      getting_around: "Moverte allí",
+      tickets: "Entradas",
+    },
+    origen: {
+      priced: "Un precio, con su fuente",
+      computed: "Una cuenta, con precios con su fuente",
+      unknown: "Sin saber",
+    },
+    faltanParte: (n) => `${ES.cuenta(n, "cosa", "cosas")} sin saber`,
+    aparte: (lista) => `Y ${lista} en otra moneda, sin sumar.`,
+    comidas: (desde, hasta) => `Las comidas, aparte: de ${desde} a ${hasta} al día`,
+    comidasViaje: (desde, hasta, dias) => `De ${desde} a ${hasta} en ${ES.cuenta(dias, "día", "días")}`,
+    comidasNota: "Dependen de ti, así que no van en el total.",
+    comidasNo: "Lo que cuesta comer allí todavía no se sabe.",
+    comparan: "Las maneras se siguen comparando por dormir y llegar, que es lo que cambia de una a otra.",
+    deAntes:
+      "Este presupuesto es el de antes de tus cambios: no cuenta lo que cambiaste en tus días, en dónde duermes ni en cómo llegas.",
   },
   cifras: {
     total: (noches, transporte) =>

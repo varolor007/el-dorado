@@ -61,7 +61,11 @@ archivos, sin tocar los de las otras. Una línea por capa: cada sesión alarga s
   Node, que la web puede rehacer con otros días con `conOtrosDias`), `agent/launcher/presupuesto.ts` (cuando se monta
   el viaje, con las zonas de la ruta), `agent/gates/cifras_del_presupuesto.ts` (lo que miran las puertas 6 y 7 de sus
   cifras) y sus pruebas, en `tests/code/presupuesto.test.ts`.
-- **En la web (14.6)**: la pestaña «Allí» y los huecos de la parada y de las cuentas, en `web/src/piezas/Alli.tsx`.
+- **En la web (14.6)**: la pestaña «Allí», la entrada y el horario de cada parada (su tarjeta y su ficha), lo que
+  cuesta un trayecto que no se anda y el presupuesto entero en las cuentas, en `web/src/piezas/Alli.tsx`; sus cuentas
+  sin pantalla (el precio para tu grupo, cuándo abre en tus días, el billete suelto), en `web/src/lib/alli.ts`; sus
+  textos, en el bloque `alli` de `web/src/lib/textos.ts`; lo que cuentan en vivo, con `sucesosDeLasCapas`
+  (`agent/scripts/monta_viaje.ts`, y `agent/launcher/vivo.ts`); sus pruebas, en `tests/code/alli_web.test.ts`.
 
 ## Lo que aún no existe
 

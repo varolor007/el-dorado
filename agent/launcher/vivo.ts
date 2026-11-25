@@ -11,6 +11,7 @@ import { CONDUCTOR, REINTENTOS } from "../data/conductor.ts";
 import { RONDAS } from "../data/palancas.ts";
 import { PARADO } from "../data/pasos.ts";
 import { MANERAS, type Punto, type Suceso } from "../output/viaje.ts";
+import { sucesosDeLasCapas } from "../scripts/monta_viaje.ts";
 
 /** El archivo del run donde queda lo contado: una línea por suceso, y solo crece. */
 export const VIVO = "vivo.jsonl";
@@ -106,6 +107,9 @@ export function loQueHaPasado(run: string): Pasado[] {
     });
   }
 
+  // Las capas del destino (14.6), cuando su paso las deja: cuántas cosas trae cada una. Una que falta no cuenta nada.
+  pasado.push(...loQueTraenLasCapas(run));
+
   // El cruce, cuando se cierra: las maneras de hacerlo.
   for (let ronda = 1; ronda <= RONDAS; ronda++) {
     const cruce = leer(run, `cruce-${ronda}.json`)?.entrega as Objeto | undefined;
@@ -149,6 +153,13 @@ export function loQueHaPasado(run: string): Pasado[] {
   if (parado !== null && viaje === null)
     pasado.push({ clase: "stopped", ref: texto(parado.en), ...(pedidas > 0 ? { n: pedidas } : {}) });
   return pasado;
+}
+
+/** Lo que cuentan las capas del destino, por los archivos que deja cada una: la cuenta es la de lo grabado. */
+function loQueTraenLasCapas(run: string): Pasado[] {
+  const capa = (nombre: string) => leer(run, nombre) ?? undefined;
+  const capas = { moverse: capa("moverse.json"), saber: capa("saber.json"), entradas: capa("entradas.json") };
+  return sucesosDeLasCapas(capas as Parameters<typeof sucesosDeLasCapas>[0]);
 }
 
 function leerLista(run: string, nombre: string): unknown[] {
