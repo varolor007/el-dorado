@@ -337,10 +337,12 @@ function gastoDeCara(g: ReturnType<typeof gastoDeLaCuenta>): Record<string, unkn
       usd: v.usd,
       calls: v.llamadas,
       known: v.sabido,
+      // Lo que, de `usd`, es de asientos cortados: contado hasta el corte (14.7).
+      cut_usd: v.deCortados,
       last: v.ultima,
       researches: v.investigaciones,
     })),
-    total: { usd: g.total.usd, calls: g.total.llamadas, known: g.total.sabido },
+    total: { usd: g.total.usd, calls: g.total.llamadas, known: g.total.sabido, cut_usd: g.total.deCortados },
     next: g.siguiente === null ? null : { usd: g.siguiente.usd, from: g.siguiente.de },
   };
 }

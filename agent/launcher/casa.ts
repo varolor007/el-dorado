@@ -78,7 +78,7 @@ export function adelanteDe(run: string): Adelante | null {
 export type Llevado = Estado & {
   /** Hay asientos esperando y no se lanzan porque falta el adelante del viajero. */
   sinAdelante: boolean;
-  gasto: Gasto & { sabido: boolean };
+  gasto: Gasto & { sabido: boolean; deCortados: number };
   /** Los puestos que se lanzaron en esta llamada, en su orden. */
   lanzados: string[];
 };
@@ -91,8 +91,9 @@ export type AlLlevar = {
   conductor?: boolean;
   /**
    * Lo más que puede gastar una llamada de una capa del destino, en dólares, por su asiento; null si no se sabe
-   * acotar (14.7). Con ella, una capa que se corta sin decir lo que gastó se da por perdida y la investigación sigue,
-   * contando para el techo esa cota. Sin ella, como cualquier asiento: con techo, no se sigue a ciegas.
+   * acotar (14.7). Es para la capa que se corta sin que su lanzador diga nada de lo que gastó: con ella se da por
+   * perdida y la investigación sigue, contando para el techo esa cota. Sin ella, como cualquier asiento: con techo,
+   * no se sigue a ciegas. La que se corta y dice lo gastado hasta ahí no la usa: usa la cota que dice su lanzador.
    */
   cota?: (asiento: string) => number | null;
 };
@@ -179,8 +180,20 @@ async function llevarlo(run: string, f: Fuentes, lanzador: Lanzador, o: AlLlevar
     const entregado = existsSync(join(puesto.carpeta, "out", "delivery.json"));
     const estado = r.fueraDeTope ? "stopped" : r.error !== null || !entregado ? "failed" : "done";
     const fallo = estado === "done" ? null : (r.error ?? "acabó sin dejar su entrega");
-    // Una capa cortada sin decir lo que gastó: cuenta para el techo lo más que pudo gastar (14.7).
-    const cota = r.gasto === null && estado !== "done" ? cotaDe(puesto.asiento, o.cota) : null;
+    // Una capa cortada: cuenta para el techo lo gastado hasta el corte más lo que pudo quedar fuera, que dice su
+    // lanzador; y si no dijo nada, lo más que pudo gastar, si se sabe acotar (14.7). Un asiento que no es una capa
+    // no lleva cota: sin saber todo lo que gastó, con techo no se sigue a ciegas, como siempre.
+    const capa = ASIENTOS_DE_LAS_CAPAS.has(puesto.asiento);
+    const cota =
+      estado === "done"
+        ? null
+        : r.gasto?.cortado === true
+          ? capa
+            ? r.cota
+            : null
+          : r.gasto === null
+            ? cotaDe(puesto.asiento, o.cota)
+            : null;
     apuntarTrabajo(run, {
       ...base,
       estado,

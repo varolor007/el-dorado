@@ -867,7 +867,7 @@ test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el sigui
     const nada = await casa.pide("GET", "/cuenta/gasto");
     assert.deepEqual(nada, {
       estado: 200,
-      cuerpo: { spend: { trips: [], total: { usd: 0, calls: 0, known: true }, next: null } },
+      cuerpo: { spend: { trips: [], total: { usd: 0, calls: 0, known: true, cut_usd: 0 }, next: null } },
     });
     const id = await abre(casa);
     await casa.pide("POST", `/viajes/${id}/empezar`, { cuerpo: {} });
@@ -879,6 +879,7 @@ test("lo que ha gastado cada viaje, solo a su dueño, y lo que costará el sigui
       "calls",
       "check_in",
       "check_out",
+      "cut_usd",
       "destination",
       "id",
       "known",

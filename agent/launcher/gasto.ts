@@ -26,6 +26,8 @@ export type GastoDeUnViaje = {
   llamadas: number;
   /** Falso si de algún trabajo acabado no se sabe lo que gastó: entonces lo de arriba se queda corto. */
   sabido: boolean;
+  /** Lo que, de `usd`, es de asientos cortados: lo contado hasta el corte, y quizá algo más que no se contó (14.7). */
+  deCortados: number;
   /** Cuándo fue la última llamada, o null si no ha habido ninguna. */
   ultima: string | null;
   investigaciones: number;
@@ -34,7 +36,7 @@ export type GastoDeUnViaje = {
 export type GastoDeLaCuenta = {
   /** Los viajes que han tenido alguna investigación, del de la última llamada al de la primera. */
   viajes: GastoDeUnViaje[];
-  total: { usd: number; llamadas: number; sabido: boolean };
+  total: { usd: number; llamadas: number; sabido: boolean; deCortados: number };
   /** Lo que costó de media una investigación entera de esta cuenta, y de cuántas sale; null si no hay ninguna. */
   siguiente: { usd: number; de: number } | null;
 };
@@ -56,7 +58,14 @@ function aDonde(v: ViajeEnLaMesa): Pick<GastoDeUnViaje, "destino" | "entrada" | 
   return { destino: texto(destino.name), entrada: texto(fechas.check_in), salida: texto(fechas.check_out) };
 }
 
-type DeUnRun = { usd: number; llamadas: number; sabido: boolean; ultima: string | null; entera: boolean };
+type DeUnRun = {
+  usd: number;
+  llamadas: number;
+  sabido: boolean;
+  deCortados: number;
+  ultima: string | null;
+  entera: boolean;
+};
 
 function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
   const run = join(v.carpeta, "runs", String(n));
@@ -68,6 +77,7 @@ function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
     usd: gasto.usd,
     llamadas: lanzados.length,
     sabido: gasto.sabido,
+    deCortados: gasto.deCortados,
     ultima: horas.at(-1) ?? null,
     // Una investigación que rehace otra por un cambio no es entera: solo lanzó lo que dejó de valer.
     entera:
@@ -85,7 +95,7 @@ function deUnRun(v: ViajeEnLaMesa, n: number): DeUnRun {
  */
 function deLasCarpetas(v: ViajeEnLaMesa, cuales: "cierres" | "guias" | "preguntas"): Omit<DeUnRun, "entera"> {
   const raiz = join(v.carpeta, cuales);
-  const suma = { usd: 0, llamadas: 0, sabido: true, ultima: null as string | null };
+  const suma = { usd: 0, llamadas: 0, sabido: true, deCortados: 0, ultima: null as string | null };
   if (!existsSync(raiz)) return suma;
   for (const n of readdirSync(raiz).filter((x) => /^[1-9]\d*$/.test(x))) {
     const carpeta = join(raiz, n);
@@ -94,6 +104,7 @@ function deLasCarpetas(v: ViajeEnLaMesa, cuales: "cierres" | "guias" | "pregunta
     suma.usd += gasto.usd;
     suma.llamadas += lanzados.length;
     suma.sabido &&= gasto.sabido;
+    suma.deCortados += gasto.deCortados;
     for (const t of lanzados) {
       const h = t.hasta ?? t.desde;
       if (h !== null && (suma.ultima === null || h > suma.ultima)) suma.ultima = h;
@@ -125,6 +136,7 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
       usd: runs.reduce((s, r) => s + r.usd, 0) + otras.reduce((s, x) => s + x.usd, 0),
       llamadas: runs.reduce((s, r) => s + r.llamadas, 0) + otras.reduce((s, x) => s + x.llamadas, 0),
       sabido: runs.every((r) => r.sabido) && otras.every((x) => x.sabido),
+      deCortados: runs.reduce((s, r) => s + r.deCortados, 0) + otras.reduce((s, x) => s + x.deCortados, 0),
       ultima: ultimas.at(-1) ?? null,
       investigaciones: runs.length,
     });
@@ -136,6 +148,7 @@ export function gastoDeLaCuenta(dueno: string, mesa: string): GastoDeLaCuenta {
       usd: viajes.reduce((s, x) => s + x.usd, 0),
       llamadas: viajes.reduce((s, x) => s + x.llamadas, 0),
       sabido: viajes.every((x) => x.sabido),
+      deCortados: viajes.reduce((s, x) => s + x.deCortados, 0),
     },
     siguiente:
       enteras.length === 0 ? null : { usd: enteras.reduce((s, x) => s + x, 0) / enteras.length, de: enteras.length },

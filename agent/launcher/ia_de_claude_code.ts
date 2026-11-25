@@ -24,7 +24,7 @@ import { tmpdir } from "node:os";
 import { StringDecoder } from "node:string_decoder";
 import { join } from "node:path";
 import { paginaDeFuera, type Busqueda, type Consultado, type Pagina } from "./consultado.ts";
-import type { Internet, Pensar, Respuesta } from "./ia.ts";
+import type { Internet, Parcial, Pensar, Respuesta } from "./ia.ts";
 import { mensajesDe, type ConQue } from "./ia_de_verdad.ts";
 
 /** Cómo le llega a la casa el token de la suscripción, y cómo se lo pasa a Claude Code. */
@@ -267,6 +267,55 @@ export function leerSalida(salida: string, token?: string, internet = false): Re
 }
 
 /**
+ * Lo que llevaba contado Claude Code cuando se le cortó (14.7), de lo que alcanzó a decir. Según su documentación,
+ * cada mensaje del modelo lleva lo que leyó en ese paso (los que comparten seña repiten la misma cuenta, y se cuenta
+ * una vez), pero lo que escribió es provisional, y lo que cuesta solo lo dice su resultado final, que no llega si se
+ * le corta. Así que solo hay dólares si llegó a dar su resultado con un coste de verdad (más de cero: uno cortado
+ * puede darlo a cero). Sin precio (gasta de la suscripción), lo que quedó sin contar no se puede acotar: null.
+ */
+export function parcialDeClaudeCode(salida: string, internet: boolean): Parcial {
+  const sucesos: unknown[] = [];
+  for (const linea of salida.split(/\r?\n/)) {
+    if (linea.trim() === "") continue;
+    try {
+      sucesos.push(JSON.parse(linea));
+    } catch {
+      // Una línea a medias, la del corte, no es un suceso.
+    }
+  }
+  const vistos = new Map<string, number>();
+  for (const x of sucesos) {
+    const o = objeto(x);
+    const mensaje = objeto(o?.message);
+    if (o?.type !== "assistant" || mensaje === null || typeof mensaje.id !== "string") continue;
+    const uso = objeto(mensaje.usage) ?? {};
+    vistos.set(
+      mensaje.id,
+      numero(uso.input_tokens) + numero(uso.cache_creation_input_tokens) + numero(uso.cache_read_input_tokens),
+    );
+  }
+  const consultado = internet || sucesos.some((x) => pedidosEn(x).length > 0) ? consultadoDeClaudeCode(sucesos) : null;
+  const resultado = sucesos.map(objeto).findLast((x) => x?.type === "result") ?? null;
+  const usd = resultado?.total_cost_usd;
+  const conCoste = typeof usd === "number" && Number.isFinite(usd) && usd > 0;
+  const usoFinal = objeto(resultado?.usage);
+  const turnos = vistos.size;
+  return {
+    entrada:
+      conCoste && usoFinal !== null
+        ? numero(usoFinal.input_tokens) +
+          numero(usoFinal.cache_creation_input_tokens) +
+          numero(usoFinal.cache_read_input_tokens)
+        : [...vistos.values()].reduce((t, x) => t + x, 0),
+    salida: conCoste && usoFinal !== null ? numero(usoFinal.output_tokens) : 0,
+    ...(conCoste ? { usd } : {}),
+    ...(turnos > 1 ? { turnos } : {}),
+    ...(consultado === null ? {} : { consultado }),
+    sinContar: null,
+  };
+}
+
+/**
  * Cuenta, según llegan, las herramientas que pide: si pide una que no se le dio, o una búsqueda o una página de más,
  * dice por qué hay que cortarlo. Si no, null.
  */
@@ -382,7 +431,13 @@ export function pensarConClaudeCode(o: OpcionesDeClaudeCode): Pensar {
         hijo.on("close", (codigo) => {
           if (acabado) return;
           acaba();
-          if (porQueSeCorto !== null) return falla(new Error(porQueSeCorto));
+          // Cortado: con lo que alcanzó a decir, por si dice lo que gastó (14.7). El porqué ya va sin el token.
+          if (porQueSeCorto !== null)
+            return falla(
+              Object.assign(new Error(porQueSeCorto), {
+                parcial: parcialDeClaudeCode(Buffer.concat(trozos).toString("utf8"), internet !== null),
+              }),
+            );
           try {
             resuelve(leerSalida(Buffer.concat(trozos).toString("utf8"), token, internet !== null));
           } catch (e) {

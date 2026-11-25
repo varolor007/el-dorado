@@ -15,8 +15,9 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { lanzadorDirecto, type Peticion } from "../../agent/launcher/ia.ts";
-import { runDe } from "../../agent/launcher/puesto.ts";
+import { lanzarAsiento } from "../../agent/launcher/asiento.ts";
+import { lanzadorDirecto, parcialDe, type Peticion } from "../../agent/launcher/ia.ts";
+import { montarPuesto, runDe } from "../../agent/launcher/puesto.ts";
 import {
   entornoDeClaudeCode,
   leerSalida,
@@ -80,6 +81,24 @@ process.stdin.on("end", () => {
     process.kill(process.pid, "SIGKILL");
   }
   else if (modo === "tarda") setTimeout(() => di(resultado({})), 60000);
+  else if (modo === "pasos_y_dice" || modo === "pasos_y_calla") {
+    // Cada paso dice lo que leyó; dos mensajes con la misma seña repiten la cuenta. Al cortarlo, uno da su resultado
+    // con lo que costó, y el otro se va sin decir nada. Y en lo que dice va el token, que no debe salir.
+    const paso = (id, n) =>
+      di({ type: "assistant", message: { id,
+        content: [{ type: "text", text: "Pienso " + process.env.${TOKEN_DE_LA_CUENTA} }],
+        usage: { input_tokens: n, output_tokens: 1, cache_read_input_tokens: 10 } } });
+    paso("m1", 100);
+    paso("m1", 100);
+    paso("m2", 300);
+    process.on("SIGTERM", () => {
+      if (modo === "pasos_y_calla") process.exit(143);
+      const fin = resultado({ subtype: "error_during_execution", is_error: true, result: "", total_cost_usd: 0.021,
+        usage: { input_tokens: 420, output_tokens: 77 } });
+      process.stdout.write(JSON.stringify(fin) + "\\n", () => process.exit(143));
+    });
+    setTimeout(() => undefined, 60000);
+  }
 });
 `;
 
@@ -349,4 +368,52 @@ test("sin Claude Code en la máquina se dice; y lo que no se entiende de su sali
   // Una foto de una clase que no se mira no llega a lanzar nada.
   const raro: Peticion = { contrato: "c", partes: [{ foto: { tipo: "image/tiff", base64: "AA" } }] };
   await assert.rejects(pensar(raro), /no mira/);
+});
+
+test("cortado, dice lo que alcanzó: lo que leyó cada paso una vez y, si da su resultado, lo que costó", async () => {
+  for (const modo of ["pasos_y_dice", "pasos_y_calla"]) {
+    const corte = new AbortController();
+    setTimeout(() => corte.abort(), 400);
+    const { fallo } = await piensa(modo, { corte: corte.signal });
+    assert.match(fallo?.message ?? "", /se cortó/);
+    const p = parcialDe(fallo);
+    assert.ok(p !== null, modo);
+    // Sin precio no se puede acotar lo que quedó fuera.
+    assert.equal(p.sinContar, null);
+    if (modo === "pasos_y_dice") {
+      assert.equal(p.usd, 0.021);
+      assert.equal(p.entrada, 420);
+      assert.equal(p.salida, 77);
+    } else {
+      // Sin su resultado no hay dólares: solo lo que leyó, cada seña una vez.
+      assert.equal(p.usd, undefined);
+      assert.equal(p.entrada, 110 + 310);
+    }
+    assert.equal(p.turnos, 2);
+    assert.ok(!JSON.stringify({ m: fallo?.message, ...fallo }).includes(TOKEN), `${modo}: lleva el token`);
+  }
+});
+
+test("el lanzador de la cuenta de la casa, cortado: con su resultado dice lo gastado; sin él, como antes", async () => {
+  for (const [modo, usd] of [
+    ["pasos_y_dice", 0.021],
+    ["pasos_y_calla", null],
+  ] as const) {
+    const m = conMentira(modo);
+    const run = mkdtempSync(join(tmpdir(), "el-dorado-cortado-cc-"));
+    try {
+      const puesto = montarPuesto(run, "a1-p1", "lodging-viewer", [{ ruta: "sheet.json", contenido: "{}" }]);
+      const pensar = pensarConClaudeCode({ con: CON, token: TOKEN, binario: m.binario, entorno: entornoDeLaMaquina() });
+      const r = await lanzarAsiento(puesto, lanzadorDirecto(pensar, null), { segundos: 0.4 });
+      assert.equal(r.fueraDeTope, true);
+      assert.equal(r.gasto?.usd ?? null, usd, modo);
+      if (usd !== null) assert.equal(r.gasto?.cortado, true);
+      // Sin precio, lo que quedó fuera no se acota: el techo lo trata como hoy.
+      assert.equal(r.cota, null);
+      assert.ok(!JSON.stringify(r).includes(TOKEN), `${modo}: lleva el token`);
+    } finally {
+      rmSync(run, { recursive: true, force: true });
+      m.borra();
+    }
+  }
 });
