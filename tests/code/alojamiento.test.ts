@@ -18,6 +18,7 @@ import {
   clasesDelPedido,
   impactoDelAlojamiento,
   llevarLaPregunta,
+  miraLoMismo,
   pedirPregunta,
   preguntaDeCara,
   tusGustosDePartida,
@@ -212,6 +213,39 @@ test("otro tope de gasto: la misma búsqueda; a quien ya se miró no se le mira,
     const despues = viajeDe(r.v);
     assert.ok(despues.alojamientos.every((a) => a.precio.total <= 260));
     assert.deepEqual(leerVersion(r.v, 1)?.viaje, antes);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("una mirada de antes se copia solo si mira lo mismo: con otras fotos, se mira otra vez", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const mirado = viajeDe(v).alojamientos.find((a) => a.comoEs.length > 0)!;
+    // La trampa de la revisión: al buscar otra vez, la fuente da otra foto por delante de las de la habitación.
+    const base = fuentesInventadas();
+    const otroOrden: FuenteAlojamiento = {
+      ...base.alojamiento,
+      async detalle(id) {
+        const d = await base.alojamiento.detalle(id);
+        if (id !== mirado.id) return d;
+        const otra = "https://fotos.invalid/otra-de-la-habitacion.jpg";
+        return { ...d, habitaciones: d.habitaciones.map((h) => ({ ...h, fotos: [otra, ...h.fotos] })) };
+      },
+    };
+    const r = await pedirYLlevar(mesa, v.ficha.id, { ...NADA, max_price: 1000 }, { ...base, alojamiento: otroOrden });
+    // Ese no se copia: se mira otra vez, como un nuevo, con las fotos de ahora.
+    assert.ok(r.lanzados.includes("lodging-viewer"));
+    const { quienes } = leerJson(join(r.run, "mirar.json")) as { quienes: { puesto: string; alojamiento: string }[] };
+    const suyo = quienes.find((q) => q.alojamiento === mirado.id)!;
+    // Y la foto de una prueba sale de lo que tuvo delante en su puesto, no de la búsqueda.
+    const direcciones = leerJson(join(r.run, "fotos", suyo.puesto.replace(/-p\d+$/, ""), "direcciones.json"));
+    const { busqueda } = leerJson(join(r.run, "busqueda.json")) as { busqueda: Busqueda };
+    const ficha = busqueda.finalistas.find((f) => f.alojamiento.id === mirado.id)!;
+    assert.equal(direcciones["room-01"], "https://fotos.invalid/otra-de-la-habitacion.jpg");
+    assert.equal(direcciones["room-01"], ficha.habitacion?.fotos[0]);
+    assert.ok(miraLoMismo(ficha, ficha));
+    assert.ok(!miraLoMismo(ficha, { ...ficha, habitacion: { ...ficha.habitacion!, id: "otra" } }), "otra habitación");
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }

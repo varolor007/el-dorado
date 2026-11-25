@@ -21,6 +21,9 @@ import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 
 const ASIENTO = "lodging-viewer";
 
+/** Dónde se apunta de qué dirección es cada foto de un puesto: `fotos/<clave>/direcciones.json`, en el run. */
+export const DIRECCIONES = "direcciones.json";
+
 /** De quién es cada puesto. Se guarda fuera de los puestos: el asiento no sabe qué alojamiento mira. */
 export type Quien = { puesto: string; alojamiento: string; nombre: string; pasada: number };
 export type Preparado = { puestos: Puesto[]; quienes: Quien[]; avisos: string[] };
@@ -58,6 +61,13 @@ export async function prepararMirar(
     const { bajadas, fallos } = await bajarFotos(elegidas.pedidas, join(run, "fotos", clave), o.fotos);
     if (fallos.length > 0) avisos.push(`${clave}: ${fallos.length} fotos no se pudieron bajar`);
     // La ficha de datos cuenta las fotos que de verdad llegan al puesto, no las que se pidieron.
+    // De dónde es cada foto del puesto, por su nombre en él: fuera del puesto, porque el asiento no la necesita, y es
+    // lo que dice a la web qué foto es la prueba de una respuesta (8.2), aunque la búsqueda cambie después.
+    mkdirSync(join(run, "fotos", clave), { recursive: true });
+    writeFileSync(
+      join(run, "fotos", clave, DIRECCIONES),
+      JSON.stringify(Object.fromEntries(bajadas.map((x) => [x.ruta.replace("photos/", ""), x.url])), null, 2),
+    );
     const deHabitacion = bajadas.filter((x) => x.ruta.startsWith("photos/room-")).length;
     elegidas.habitacion.dadas = deHabitacion;
     elegidas.hotel.dadas = bajadas.length - deHabitacion;
