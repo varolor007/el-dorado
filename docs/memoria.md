@@ -132,6 +132,13 @@ lleva `figures` (números u horas HH:MM), que no pasa al viaje: cada número de 
 restaurante y de opinión (inglés, español y comunes); un nombre propio a secas queda al contrato. La prueba de quién
 responde deja fuera a las capas hasta que la pestaña «Allí» tenga su fila en la hoja. Sin ver con IA.
 
+**El de moverse (14.2), junto** (25-nov). Contrato en `agent/contracts/getting-around/` (RM1 a RM9); puerta 11 en
+`agent/gates/puerta_moverse.ts` (`seen` es hoy, con un día de holgura; sin aproximar; lo que no se sabe, en
+`unknowns`; ninguna palabra de lo mejor; los números de una frase, de sus datos); lo que ve, en `piezasDeMoverse`; la
+cuenta, en `agent/scripts/capa_moverse.ts` (`cuentaDeMoverse`, `cuentaDelGrupo`, `viajesDeLosDias`,
+`manerasDeLlegar`), sin Node, para el presupuesto y la web. `between_bases` se guarda en la entrega y no llega al
+viaje, y por dónde se llega sale de lo entendido, no del vuelo elegido. Sin ver con IA.
+
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para
 lo siguiente». Hecho lo del idioma: la web dice que la guía todavía no está disponible en ese idioma. La sesión lee

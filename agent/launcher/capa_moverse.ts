@@ -6,13 +6,15 @@
 //
 //   moverse.json   lo que entregó y pasó su puerta, en la forma del viaje; o por qué falta
 //
-// Es de la sesión de 14.2: su contrato (`agent/contracts/getting-around/`), su puerta 11 (`puertaDeMoverse`, que hoy
-// solo mira la forma) y la cuenta de sueltos o abono. Este archivo no llama a ninguna IA ni lanza nada.
+// Su contrato está en `agent/contracts/getting-around/`, su puerta 11 en `agent/gates/puerta_moverse.ts`, y la cuenta
+// de sueltos o abono en `agent/scripts/capa_moverse.ts`. Este archivo no llama a ninguna IA ni lanza nada.
 
+import { LO_MAS_DE_MOVERSE } from "../data/capa_moverse.ts";
 import { topesDeInternet } from "../data/internet.ts";
 import type { FaltaDeUnaCapa } from "../data/capas.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
-import { pegasDeMoverse, type DeMoverse } from "../output/capas.ts";
+import { puertaMoverse, type ParaMoverse } from "../gates/puerta_moverse.ts";
+import type { DeMoverse } from "../output/capas.ts";
 import { paraEnsenarMoverse, type EntregaDeMoverse } from "../scripts/capa_moverse.ts";
 import { pieza, rutaParaLasCapas, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
 import type { Pieza } from "./puesto.ts";
@@ -20,25 +22,34 @@ import type { Pieza } from "./puesto.ts";
 export const MOVERSE = "moverse.json";
 const ASIENTO = "getting-around";
 
-/** Lo que ve: el destino, sus zonas, sus fechas, y lo que puede buscar y abrir. Por dónde se llega aún no se sabe. */
+/**
+ * Lo que ve, como dice la hoja: el destino, sus fechas, sus zonas, por dónde se llega (el aeropuerto que sepa la casa,
+ * o que no se sabe) y cuántos son; nunca quién viaja, sus edades ni sus precios. Y lo que puede buscar y abrir.
+ */
 export function piezasDeMoverse(m: Material): Pieza[] {
+  const { busquedas, paginas } = topesDeInternet(ASIENTO);
   return [
-    pieza("trip.json", viajeParaLasCapas(m)),
+    pieza("trip.json", {
+      ...viajeParaLasCapas(m),
+      arrival: { airport: m.viaje.destination.airport ?? "unknown" },
+      travellers: { adults: m.viaje.travellers.adults, children: m.viaje.travellers.children.length },
+    }),
     pieza("route.json", rutaParaLasCapas(m)),
-    pieza("limits.json", topesDeInternet(ASIENTO)),
+    pieza("limits.json", { searches: busquedas, pages: paginas, ...LO_MAS_DE_MOVERSE }),
   ];
 }
 
-/**
- * Su puerta. Hasta que esté la puerta 11, solo la forma: que sea su entrega y que pase lo que el viaje comprueba de
- * esta capa, con las zonas de la ruta.
- */
+/** Lo que la puerta 11 sabe del viaje: hoy, las zonas y las bases de la ruta, y el aeropuerto si se sabe. */
+export const paraLaPuerta = (m: Material): ParaMoverse => ({
+  hoy: m.hoy,
+  zonas: m.zonas.map((z) => z.id),
+  bases: m.ruta.bases.map((b) => b.id),
+  llegada: m.viaje.destination.airport ?? null,
+});
+
+/** Su puerta: la 11. */
 export function puertaDeMoverse(e: unknown, m: Material): Rojo[] {
-  if ((e as { seat?: unknown })?.seat !== ASIENTO) return [{ donde: "seat", que: "no es la entrega del de moverse" }];
-  return pegasDeMoverse(
-    paraEnsenarMoverse(e as EntregaDeMoverse),
-    m.zonas.map((z) => z.id),
-  );
+  return puertaMoverse(e, paraLaPuerta(m)).rojos;
 }
 
 /** Lo que se guarda cuando falta entera: nada, y por qué. */
