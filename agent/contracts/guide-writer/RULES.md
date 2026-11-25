@@ -30,3 +30,6 @@ These rules win over the guide.
 - **GW9. What the trip does not know is not mentioned.** A stop without `ticket`, a day without `eat`, no
   `in/around.json` or no `in/know.json`: you do not apologise, guess or leave a gap. A transport mode is named only if
   it is in `in/around.json`.
+- **GW10. A free day stays free.** A day with `free` set to `true` has no stops and no legs in your delivery, and its
+  `title` and `intro` name no stop of the trip, not even one of another day, and no place that is not in your
+  material: you do not invent a plan to fill it. If it has `eat`, it is written as always.

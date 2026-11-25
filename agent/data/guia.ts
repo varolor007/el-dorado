@@ -87,6 +87,8 @@ type Rotulos = {
   deUnVistazo: string;
   dia: (n: number) => string;
   paradas: (n: number) => string;
+  /** Un día sin paradas: el que el ritmo deja libre. */
+  libre: string;
   duermes: string;
   llegas: string;
   papeles: string;
@@ -212,6 +214,7 @@ export const ROTULOS: Record<string, Rotulos> = {
     deUnVistazo: "Your trip at a glance",
     dia: (n) => `Day ${n}`,
     paradas: (n) => cuenta(n, "stop", "stops"),
+    libre: "Free day",
     duermes: "Where you sleep",
     llegas: "How you get there",
     papeles: "Your papers",
@@ -414,6 +417,7 @@ export const ROTULOS: Record<string, Rotulos> = {
     deUnVistazo: "Tu viaje de un vistazo",
     dia: (n) => `Día ${n}`,
     paradas: (n) => cuenta(n, "parada", "paradas"),
+    libre: "Día libre",
     duermes: "Dónde duermes",
     llegas: "Cómo llegas",
     papeles: "Tus papeles",

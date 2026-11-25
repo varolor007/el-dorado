@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (994 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (1.012 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -255,6 +255,21 @@ y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona 
 (`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
 (`refDeUnaDuda`, en `web/src/lib/formato.ts`). El caso inventado trae llegar a cada zona de la ruta. Sabido: un
 tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
+
+**La casa y la guía, tras la revisión del bloque 14** (25-nov, una sesión de arreglos). La guía de un viaje con días
+libres sale: el material marca `free`, el contrato dice qué se escribe (GW10: un día libre se queda libre), la puerta
+10 no le deja meter paradas ni nombrar las de otro día, y el cuaderno lo pinta sin croquis, en su hoja. El que cruza
+ya no espera a las capas: si ya acabaron lleva `budget.json`, y si no va sin él y no puede decir ninguna cifra del
+total (CR10); el que explica las sigue esperando. Lo que dijeron del presupuesto el que cruza y el que explica, si se
+conserva en un cambio que rehace la cuenta (tu botón de las entradas, otro ritmo), se vuelve a juzgar con la nueva y
+el que no pasa se rehace entero (`juzgarLoDicho`, en `investigar.ts`; `tirarLoConservado`, en `rehacer.ts`); el
+impacto lo pone en lo que quizá cambie y lo cuenta (`DICEN_EL_PRESUPUESTO`, en `agent/data/momentos.ts`). A un
+asiento con internet solo le llega lo que se busca de la lista fija (`agent/data/buscar.ts`, `loQueSeBusca`), nunca
+las palabras del viajero: tocaba al que conoce el destino y al del calendario. Cambiar lo que buscas rehace también
+el calendario; otro idioma no se alcanza y, si se ofreciera, se rehace entero. Pruebas: `guia_dias_libres`,
+`cruce_sin_esperar`, `lo_dicho_del_presupuesto` y `lo_que_se_busca`. Sabido: quitar o mover una parada cambia la
+cuenta sin rehacer a nadie, y el porqué de cada manera sigue dicho con la cuenta de antes; en la última hoja impresa
+de la guía, el título de las fuentes de allí se monta sobre la lista de encima. Sin IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

@@ -10,7 +10,8 @@
 // Detrás de un proxy, con NODE_USE_ENV_PROXY=1 delante. Es la versión de mano de lo que lanza los pasos: la casa de
 // verdad, que los lanza sola y lo cuenta en vivo, llega con su tanda.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { DICEN_EL_PRESUPUESTO, type IdDePaso } from "../data/momentos.ts";
 import { join, resolve } from "node:path";
 import {
   CANDIDATOS_QUE_BASTAN,
@@ -112,7 +113,7 @@ import {
   type DeLosPapelesGuardado,
 } from "./papeles.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
-import { loPedidoDe, rehechoDe } from "./rehacer.ts";
+import { loPedidoDe, rehechoDe, tirarLoConservado } from "./rehacer.ts";
 import { entradasQueSeMiran } from "../scripts/impacto.ts";
 import { esUnPedidoDeEntradas } from "../scripts/dia_a_dia.ts";
 import { acaboSinEntregar, trabajosDe } from "./trabajos.ts";
@@ -655,7 +656,7 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
   return tabla;
 }
 
-function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuesto: Presupuesto): Pieza[] {
+function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuesto?: Presupuesto): Pieza[] {
   const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
   const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const palancas = PALANCAS.map((p) => ({
@@ -671,9 +672,11 @@ function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuest
     { ruta: "lodgings.json", contenido: json(alojamientosParaCruzar(busqueda, miradosDe(run))) },
     { ruta: "route.json", contenido: json(zonas) },
     { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
-    // El presupuesto entero de cada fila, de código (14.7): sus cifras son las únicas que puede decir de él.
-    { ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "row")) },
   ];
+  // El presupuesto entero de cada fila, de código (14.7), si sus capas ya acabaron: sus cifras son las únicas que
+  // puede decir de él. Sin él, no dice ninguna.
+  if (presupuesto !== undefined)
+    piezas.push({ ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "row")) });
   if (ronda > 1)
     piezas.push({ ruta: "previous.json", contenido: json(leer<DelCruce>(run, `cruce-${ronda - 1}.json`).entrega) });
   return piezas;
@@ -719,6 +722,47 @@ function paraLaCuenta(run: string, viaje: Entendido, tabla: Tabla): ParaLaCuenta
     ),
     papeles: paraElViajero(run),
   };
+}
+
+/**
+ * Lo conservado de la investigación de antes que dijo algo del presupuesto y hay que volver a juzgar con la cuenta de
+ * ahora (14.7): el que cruza, si tuvo el presupuesto delante (sin él no pudo decir ninguna cifra suya), y el que
+ * explica, que siempre lo tiene.
+ */
+function loDichoPorJuzgar(run: string): IdDePaso[] {
+  const r = rehechoDe(run);
+  if (r === null) return [];
+  return DICEN_EL_PRESUPUESTO.filter((id) => {
+    if (!r.conserva.includes(id)) return false;
+    if (id !== "cross") return hay(run, "explica.json");
+    return puestosDe(run).some((p) => p.asiento === "trip-crosser" && existsSync(join(p.carpeta, "in", "budget.json")));
+  });
+}
+
+/**
+ * Vuelve a pasar por su puerta lo conservado que dijo algo del presupuesto, con la cuenta de ahora. Lo que no pasa se
+ * tira para que se rehaga: si es el que cruza, también el que explica, que lee lo suyo, y la tabla de su segunda
+ * ronda, que salió de lo que pidió.
+ */
+function juzgarLoDicho(run: string, viaje: Entendido, porJuzgar: IdDePaso[]): void {
+  if (porJuzgar.includes("cross"))
+    for (let ronda = 1; ronda <= RONDAS; ronda++) {
+      if (!hay(run, `cruce-${ronda}.json`) || !hay(run, `tabla-${ronda}.json`)) continue;
+      const tabla = leer<Tabla>(run, `tabla-${ronda}.json`);
+      const presupuesto = presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
+      const entrega = leer<DelCruce>(run, `cruce-${ronda}.json`).entrega;
+      if (puertaCruce(entrega, { tabla, viaje, presupuesto }).verde) continue;
+      tirarLoConservado(run, "cross");
+      if (hay(run, "tabla-2.json")) rmSync(join(run, "tabla-2.json"), { force: true });
+      tirarLoConservado(run, "explain");
+      return;
+    }
+  if (!porJuzgar.includes("explain") || !hay(run, "explica.json")) return;
+  const dado = loQueSeExplica(run, viaje);
+  const presupuesto = presupuestoDelRun(run, viaje);
+  const entrega = leer<Guardado<EntregaDeExplicar>>(run, "explica.json").entrega;
+  if (!puertaExplica(entrega, { viaje, dado, avisos: avisosDeSiempre(viaje.language), presupuesto }).verde)
+    tirarLoConservado(run, "explain");
 }
 
 /** El presupuesto entero para el que explica y su puerta: el de las maneras que cerró el que cruza (14.7). */
@@ -1198,6 +1242,16 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       },
     ]);
 
+  // Lo que el que cruza y el que explica dijeron del presupuesto en la investigación de antes, si se conservó, se
+  // vuelve a pasar por su puerta con la cuenta de ahora (14.7), y el que no pasa se rehace. La cuenta necesita sus
+  // capas: si aún trabajan, se las espera, solo entonces y solo si hay algo conservado que juzgar.
+  const porJuzgar = loDichoPorJuzgar(run);
+  if (porJuzgar.length > 0) {
+    const capas = capasDeDetras(run, viaje, f);
+    if (capas.length > 0) return espera(...capas);
+    juzgarLoDicho(run, viaje, porJuzgar);
+  }
+
   // 5. La tabla y sus palancas, y el que cruza: dos rondas como mucho.
   for (let ronda = 1; ronda <= RONDAS; ronda++) {
     if (!hay(run, `cruce-${ronda}.json`)) {
@@ -1220,9 +1274,14 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
           },
         ]);
       }
-      // El presupuesto entero va delante del que cruza (14.7): sus capas tienen que estar.
-      if (deAlli.length > 0) return espera(...deAlli);
-      const presupuesto = presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
+      // El que cruza no espera a nadie: las capas van por detrás y sin frenar el viaje, y las tres maneras se comparan
+      // por dormir y llegar. Si el de moverse y el que conoce el destino ya acabaron (se recoge aquí lo que hayan
+      // entregado), lleva el presupuesto entero delante (14.7); si no, va sin él, y su puerta no le deja decir ninguna
+      // cifra del presupuesto entero (CR10).
+      const presupuesto =
+        capasDeDetras(run, viaje, f).length > 0
+          ? undefined
+          : presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
       // Con un mensaje para un día, si con esta tabla decide lo mismo que antes y con el mismo material, el que cruza
       // no se vuelve a lanzar.
       const delCruce = piezasDelCruce(run, viaje, ronda, presupuesto);

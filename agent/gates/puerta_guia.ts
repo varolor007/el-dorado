@@ -308,6 +308,7 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
 
   // Cada día, una vez y en su orden, con cada parada y cada tramo suyos.
   const escritos = lista(entrega.days);
+  const deLasParadas = [...new Set(dado.days.flatMap((d) => d.stops.map((p) => p.name)))];
   if (escritos.length > TOPES_DE_LA_GUIA.dias) rojo("days", "trae más días de los que caben");
   dado.days.forEach((dia, i) => {
     const donde = `days[${i}]`;
@@ -324,6 +325,16 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
     texto(`${donde}.title`, crudo.title, LARGO_EN_LA_GUIA.titulo);
     texto(`${donde}.intro`, crudo.intro);
     if (conComer) texto(`${donde}.eat`, crudo.eat);
+    // Un día libre no lleva paradas ni tramos, y lo que se cuenta de él no le pone ninguna: ni una de otro día.
+    if (dia.free === true) {
+      if (lista(crudo.stops).length > 0) rojo(`${donde}.stops`, "es un día libre: no lleva paradas");
+      if (lista(crudo.legs).length > 0) rojo(`${donde}.legs`, "es un día libre: no lleva tramos");
+      for (const campo of ["title", "intro"])
+        for (const nombre of deLasParadas)
+          if (esTexto(crudo[campo]) && nombra(crudo[campo], nombre))
+            rojo(`${donde}.${campo}`, `es un día libre, y le pone una parada: «${nombre}»`);
+      return;
+    }
     const ids = dia.stops.map((p) => p.id);
     const vistas = new Set<string>();
     lista(crudo.stops).forEach((p, j) => {

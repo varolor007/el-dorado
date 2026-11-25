@@ -10,6 +10,7 @@
 // Las cuentas de días las hace aquí el código: qué días del viaje toca cada hallazgo, cuántos días se mueve una
 // ventana y qué evita, alcanza, pierde o en qué entra con ello.
 
+import { loQueSeBusca } from "../data/buscar.ts";
 import { AVISOS_DE_FECHAS, LO_MAS_QUE_SE_MUEVE, VENTANAS } from "../data/calendario.ts";
 import type { AvisoDeFechas, DelCalendario, FALTAS_DEL_CALENDARIO, VentanaDeFechas } from "../output/viaje.ts";
 import type { Aviso, Entendido, EntregaDelCalendario } from "../scripts/formas.ts";
@@ -58,7 +59,8 @@ export function piezasDelCalendario(viaje: Entendido, hoy: string): Pieza[] {
     },
     home_country: viaje.origin?.country ?? "unknown",
     dates: { check_in, check_out, nights: diasEntre(check_in, check_out), flexible },
-    looking_for: viaje.looking_for,
+    // Busca en internet con lo que lee: de lo que busca el viajero, solo lo de la lista fija, nunca sus palabras.
+    looking_for: loQueSeBusca(viaje.looking_for),
     language: viaje.language,
   };
   const limits = {

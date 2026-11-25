@@ -27,6 +27,9 @@ sentences>", "stops": [...], "legs": [...], "eat": "<one or two sentences>" }`
   `{ "id": "<the id of the stop>", "what": "<what it is>", "why": "<why they go>", "when": "<when it is best>" }`.
 - `legs`: one entry per leg of that day, all of them, once:
   `{ "from": "<stay or the id of a stop>", "to": "<the id of a stop>", "says": "<one sentence>" }`.
+- On a free day (`free` is `true`), `stops` and `legs` are empty lists, `[]`, and `title` and `intro` say it is a
+  day of their own: the `title` in a few words and the `intro` in one or two sentences, with no stop and no place
+  that is not in your material (GW10). Its `eat`, as on any other day.
 
 ## An entry of `todo`
 
