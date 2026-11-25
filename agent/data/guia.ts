@@ -160,6 +160,12 @@ type Rotulos = {
   claseDelDestino: Record<"neighbourhood" | "hours" | "money" | "practical" | "avoid" | "food", string>;
   diaDeLaSemana: Record<DiaDeLaSemana, string>;
   desde: (lugar: string) => string;
+  /** De qué va un aviso de las fechas sin nombre propio: por su tema, como en la web; y si no se conoce el tema. */
+  temaDeFechas: Record<string, string>;
+  deTusFechas: string;
+  /** A qué zona de la ruta va una manera de llegar: por su número, o por su nombre. */
+  aZona: (n: number) => string;
+  aZonaNombre: (nombre: string) => string;
   hastaLas: (hora: string) => string;
   deTantos: (dias: number | null, viajes: number | null) => string;
   coche: (haceFalta: boolean) => string;
@@ -365,6 +371,20 @@ export const ROTULOS: Record<string, Rotulos> = {
       sun: "Sunday",
     },
     desde: (lugar) => `From ${lugar}`,
+    aZona: (n) => `to area ${n} of your route`,
+    temaDeFechas: {
+      weather: "The usual weather",
+      season: "The season",
+      festival: "A festival",
+      event: "An event",
+      public_holiday: "A public holiday there",
+      holiday_at_home: "A holiday back home",
+      closure: "Something closes",
+      sells_out: "It sells out months ahead",
+      days_needed: "The days it asks for",
+    },
+    deTusFechas: "Something on your dates",
+    aZonaNombre: (nombre) => `to ${nombre}`,
     hastaLas: (hora) => `until ${hora}`,
     teConviene: "What suits you best",
     tusTrayectos: (viajes, dias) =>
@@ -572,6 +592,20 @@ export const ROTULOS: Record<string, Rotulos> = {
       sun: "domingo",
     },
     desde: (lugar) => `Desde ${lugar}`,
+    aZona: (n) => `a la zona ${n} de tu ruta`,
+    temaDeFechas: {
+      weather: "El tiempo de esas semanas",
+      season: "La temporada",
+      festival: "Una fiesta",
+      event: "Un evento",
+      public_holiday: "Un festivo allí",
+      holiday_at_home: "Un festivo de donde sales",
+      closure: "Algo cierra",
+      sells_out: "Se agota con meses",
+      days_needed: "Los días que pide",
+    },
+    deTusFechas: "Algo de tus fechas",
+    aZonaNombre: (nombre) => `a ${nombre}`,
     hastaLas: (hora) => `hasta las ${hora}`,
     teConviene: "Lo que te conviene",
     tusTrayectos: (viajes, dias) =>

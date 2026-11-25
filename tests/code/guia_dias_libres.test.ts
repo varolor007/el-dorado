@@ -14,14 +14,21 @@ import {
   materialDeLaGuia,
   pedirGuia,
 } from "../../agent/launcher/guia.ts";
+import { TEMAS_DEL_CALENDARIO } from "../../agent/data/calendario.ts";
+import { ROTULOS } from "../../agent/data/guia.ts";
 import { comprobarViaje } from "../../agent/output/viaje.ts";
+import { conTusDias } from "../../agent/scripts/cierre.ts";
+import { tituloDelDia } from "../../agent/scripts/ritmo.ts";
 import { JPEG, type Objeto } from "../cases/inventado/asientos.ts";
+import type { Viaje } from "../../agent/output/viaje.ts";
 import {
+  capasParaLaGuia,
   entregaDeLaGuia,
   HOY,
   lanzadorDeLaGuia,
   viajeCerradoEnLaMesa,
   viajeConDiasLibres,
+  viajeParaLaGuia,
 } from "../cases/inventado/guia.ts";
 
 const CONTRATO = resolve(import.meta.dirname, "..", "..", "agent", "contracts", "guide-writer");
@@ -117,4 +124,141 @@ test("trampa: una guía que le mete una parada a un día libre no pasa la puerta
     enBlanco.days[0].title = "";
     assert.ok(rojosDe(enBlanco, m).some((r) => /days\[0\]\.title: está en blanco/.test(r)));
   });
+});
+
+test("con otros días que los de la investigación: cada día con paradas, con su título; ninguno «unknown»", async () => {
+  // Otro ritmo al cerrar: el día que era libre tiene paradas, y el que las tenía se queda libre.
+  const viaje = conTusDias(viajeConDiasLibres(), [
+    { fecha: "2027-02-12", paradas: ["p1", "p2"] },
+    { fecha: "2027-02-13", paradas: [] },
+    { fecha: "2027-02-14", paradas: ["p3"] },
+  ]);
+  const porNombre = new Map(viaje.paradas.map((p) => [p.id, p.nombre]));
+  assert.deepEqual(
+    viaje.dias.map((d) => d.titulo),
+    [tituloDelDia(viaje.paradas, ["p1", "p2"]), "", porNombre.get("p3")],
+  );
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const m = materialDeLaGuia(v, p);
+    assert.deepEqual(
+      m.dado.days.map((d) => [d.free, d.title === "unknown"]),
+      [
+        [false, false],
+        [true, true],
+        [false, false],
+      ],
+    );
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    assert.deepEqual(e, { estado: "ready" });
+    assert.ok(!/unknown/i.test(documentoDeLaGuia(v) ?? ""), "el cuaderno dice «unknown»");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("trampa: un título «unknown», en un día libre o en uno con paradas, no pasa la puerta 10", () => {
+  conMaterial((m) => {
+    for (const i of [0, 1]) {
+      const e = entregaDeLaGuia(m.dado) as { days: Objeto[] };
+      e.days[i].title = "Unknown";
+      assert.ok(
+        rojosDe(e, m).some((r) => r.startsWith(`days[${i}].title: copia «unknown»`)),
+        String(i),
+      );
+    }
+  });
+});
+
+test("un día con paradas y sin título en el viaje lleva en el material el de su parada más importante", () => {
+  const viaje = viajeConDiasLibres();
+  viaje.dias[1].titulo = "";
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const m = materialDeLaGuia(v, pedirGuia(v, { manera: "best_value", hoy: HOY }));
+    assert.equal(m.dado.days[1].title, tituloDelDia(viaje.paradas, viaje.dias[1].paradas));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+// ---------- Cómo moverte en papel: de donde llegas a donde duermes, sin repetir
+
+/** El viaje con capas, con la misma manera de llegar a cada una de las dos zonas de su ruta. */
+function conDosZonas(o: { zonas: boolean; duermeEn: string | null }): Viaje {
+  const viaje = viajeConDiasLibres();
+  Object.assign(viaje, capasParaLaGuia());
+  const llegada = viaje.moverse!.llegar[0];
+  viaje.moverse!.llegar = [llegada, { ...llegada, aZona: "z2" }];
+  if (o.zonas)
+    viaje.zonasDeLaRuta = [
+      { id: "z1", nombre: "Casco Inventado" },
+      { id: "z2", nombre: "Puerto Inventado" },
+    ];
+  viaje.alojamientos[0].zona = o.duermeEn;
+  return viaje;
+}
+
+/** Las líneas de «De donde llegas a donde duermes» del cuaderno de un viaje así, por su texto. */
+async function lineasDeLlegar(viaje: Viaje): Promise<string[]> {
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    assert.deepEqual(e, { estado: "ready" });
+    const html = documentoDeLaGuia(v) ?? "";
+    return [...html.matchAll(/<b>(Desde [^<]*)<\/b>/g)].map((x) => x[1]);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+}
+
+test("de donde llegas: si se sabe tu zona, solo la manera que va a ella", async () => {
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: true, duermeEn: "Puerto Inventado" })), [
+    "Desde Aeropuerto Inventado",
+  ]);
+});
+
+test("de donde llegas: sin saber tu zona, cada manera dice a cuál va, por su nombre o por su número", async () => {
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: true, duermeEn: null })), [
+    "Desde Aeropuerto Inventado, a Casco Inventado",
+    "Desde Aeropuerto Inventado, a Puerto Inventado",
+  ]);
+  assert.deepEqual(await lineasDeLlegar(conDosZonas({ zonas: false, duermeEn: null })), [
+    "Desde Aeropuerto Inventado, a la zona 1 de tu ruta",
+    "Desde Aeropuerto Inventado, a la zona 2 de tu ruta",
+  ]);
+});
+
+// ---------- la última hoja
+
+test("lo que hay que llevar hecho: un aviso de las fechas sin nombre dice de qué va, por su tema", async () => {
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje: viajeParaLaGuia({ capas: true }) });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    const html = documentoDeLaGuia(v) ?? "";
+    // El del caso inventado es del tiempo, sin nombre propio.
+    assert.match(html, /<b>El tiempo de esas semanas<\/b>/);
+    // Las fuentes de allí, en su propio bloque con su rótulo, y no con un título suelto tras la lista de encima.
+    assert.match(html, new RegExp(`<p class="lomo">${ROTULOS.es.deAlli}</p>`));
+    assert.ok(!html.includes(`<h3>${ROTULOS.es.deAlli}</h3>`));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+  for (const [idioma, r] of Object.entries(ROTULOS))
+    for (const tema of TEMAS_DEL_CALENDARIO) assert.ok(r.temaDeFechas[tema] !== undefined, `${idioma}: ${tema}`);
 });

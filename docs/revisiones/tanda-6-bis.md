@@ -5,7 +5,7 @@ del repositorio y sin tocar nada: solo informar. Miraron todo lo que hay desde q
 (14.1), el de moverse (14.2), el que conoce el destino (14.3), el de las entradas (14.4), el presupuesto entero
 (14.5), su web y su guía (14.6) y los demás momentos (14.7), hechos por once sesiones de obra, casi todas a la vez y
 sin verse, y juntados después por quien orquesta. Cada hallazgo se comprobó leyendo el código o con una prueba
-suelta, y lo que se arregló lleva su prueba en la batería, que pasó de 971 pruebas a 1.027. Los arreglos
+suelta, y lo que se arregló lleva su prueba en la batería, que pasó de 971 pruebas a 1.033. Los arreglos
 los hicieron cuatro sesiones de obra, cada una en su rama: cada una vio fallar su prueba antes de arreglar. Aquí
 queda cada hallazgo con lo que se hizo. Lo que toca a la hoja, y por tanto es del PM, va al final.
 
@@ -30,7 +30,7 @@ Antes de los adversarios, al juntar las ramas y mirarlas en la web, quien orques
 | En el móvil, con el viaje cerrado, las seis pestañas no cabían y la última se veía cortada | Caben a 390 de ancho; en uno más estrecho la fila se desliza y su borde se desvanece mientras quede algo por ver (14.6) |
 | Al cerrar, el aviso de una parada que cierra enseñaba la fecha en crudo («2027-03-06»), y un tramo que solo se hace en coche decía «en coche; en coche» | La fecha, dicha como las demás; el tramo, sin repetir (14.6) |
 | Un tramo que solo se hace en coche contaba un billete de transporte en «moverte allí» | Solo lleva billete el tramo que tiene transporte entre sus maneras; el de solo coche falta en la cuenta, sin inventar lo que cuesta, y lo dicen igual el presupuesto, «Allí», cada tramo y la guía (14.5) |
-| En el cuaderno de la guía: un día titulado «unknown», una línea repetida en «Cómo moverte», un título montado sobre una lista, y la web de un sitio sin decir que es la de los datos abiertos | En arreglo, con una sesión de obra (12.2) |
+| En el cuaderno de la guía: un día titulado «unknown», una línea repetida en «Cómo moverte», un título montado sobre una lista, y la web de un sitio sin decir que es la de los datos abiertos | Ningún día se titula «unknown», y la puerta 10 da rojo a un título así; llegar a donde duermes enseña solo las maneras que van a tu zona, o cada una con la suya; las fuentes de allí van en su bloque; la web de los datos abiertos, en arreglo (12.1 y 12.2) |
 
 ## La mecánica: lo que se rompe
 

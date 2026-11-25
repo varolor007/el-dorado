@@ -460,7 +460,7 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
     days: d.days.map((dia) => ({
       date: dia.date,
       // Un día libre: su título y dos líneas, sin ninguna parada (GW10).
-      title: dia.free ? "Un día para ti" : dia.title,
+      title: dia.free ? "Un día para ti" : dia.title === "unknown" ? dia.stops[0].name : dia.title,
       intro: dia.free
         ? "Este día no tiene paradas: es tuyo, para llevarlo a tu aire."
         : `Un día con ${dia.stops.length} paradas, sin prisa.`,
@@ -499,7 +499,9 @@ export function entregaDeLaGuia(d: ParaLaGuia): Objeto {
       says:
         c.kind === "paper" && c.before !== "unknown"
           ? `Rellena el formulario antes del ${Number(c.before.slice(8, 10))} de febrero.`
-          : "Llévalo hecho antes de salir.",
+          : c.kind === "dates"
+            ? "Mira cómo vienen esos días antes de salir."
+            : "Llévalo hecho antes de salir.",
     })),
     unknowns: ["De algunas paradas no sabemos más que su nombre, y algunos tiempos son aproximados."],
   };

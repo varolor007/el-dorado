@@ -25,6 +25,7 @@ import type {
   Punto,
   Transporte,
   Viaje,
+  ZonaDeLaRuta,
 } from "../output/viaje.ts";
 import type { ClaseDeBillete } from "../data/capa_moverse.ts";
 import type { LoQueConviene } from "./capa_moverse.ts";
@@ -158,7 +159,13 @@ export function convieneDelCuaderno(v: Viaje, manera: Manera | null): ConvieneDe
 }
 
 /** Cómo moverte, copiado del viaje: lo que hay que contar, sin su porqué de faltar. */
-export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche">;
+export type MoverseDelCuaderno = Pick<DeMoverse, "llegar" | "transportes" | "billetes" | "pagos" | "coche"> & {
+  /**
+   * A qué zona de la ruta va cada manera de llegar, por su id: su nombre o, sin él, su número. Solo cuando se enseñan
+   * maneras que van a zonas distintas (no se sabe la tuya, o ninguna va a ella); si no, no hace falta decirlo.
+   */
+  aZona?: Record<string, string | number>;
+};
 
 export type TramoDelCuaderno = {
   de: string;
@@ -188,7 +195,7 @@ export type DiaDelCuaderno = {
 export type DeQueVa =
   | { clase: "book_ahead"; nombre: string }
   | { clase: "paper"; pregunta: string; pais: string; estado: string }
-  | { clase: "dates"; nombre: string };
+  | { clase: "dates"; nombre: string | null; tema?: string };
 
 /**
  * De dónde sale un precio del cuaderno: del cierre, el que dio la fuente ese día (`closing`); el que se vio, porque al
@@ -329,6 +336,35 @@ function enlaceDelCierre(e: EnlaceDeReserva, a: Alojamiento | undefined, antes: 
   };
 }
 
+const otrasDeMoverse = (m: DeMoverse): Omit<MoverseDelCuaderno, "llegar" | "aZona"> => ({
+  transportes: m.transportes,
+  billetes: m.billetes,
+  pagos: m.pagos,
+  coche: m.coche,
+});
+
+/**
+ * De donde llegas a donde duermes, en papel: si se sabe la zona donde duermes y alguna manera va a ella, solo esas;
+ * si no, todas, y si van a zonas distintas, cada una con la suya (su nombre, o su número en la ruta), para que dos
+ * iguales a zonas distintas no parezcan la misma repetida.
+ */
+export function llegarDelCuaderno(
+  llegar: DeMoverse["llegar"],
+  zonas: ZonaDeLaRuta[] | undefined,
+  zonaDondeDuermes: string | null,
+): Pick<MoverseDelCuaderno, "llegar" | "aZona"> {
+  const tuya =
+    zonaDondeDuermes === null
+      ? null
+      : ((zonas ?? []).find((z) => z.nombre === zonaDondeDuermes || z.id === zonaDondeDuermes)?.id ?? zonaDondeDuermes);
+  const aLaTuya = tuya === null ? [] : llegar.filter((x) => x.aZona === tuya);
+  if (aLaTuya.length > 0) return { llegar: aLaTuya };
+  const ids = [...new Set(llegar.map((x) => x.aZona))];
+  if (ids.length <= 1) return { llegar };
+  const nombres = new Map((zonas ?? []).map((z) => [z.id, z.nombre]));
+  return { llegar, aZona: Object.fromEntries(ids.map((id, i) => [id, nombres.get(id) ?? i + 1])) };
+}
+
 /** El cuaderno de un viaje cerrado, con lo que escribió el asiento y pasó la puerta 10. */
 export function montarCuaderno(
   v: Viaje,
@@ -399,7 +435,7 @@ export function montarCuaderno(
   });
   const m = capaQueVale(v.moverse);
   const moverse: MoverseDelCuaderno | null = moverseConAlgo(m)
-    ? { llegar: m.llegar, transportes: m.transportes, billetes: m.billetes, pagos: m.pagos, coche: m.coche }
+    ? { ...llegarDelCuaderno(m.llegar, v.zonasDeLaRuta, duerme?.zona ?? null), ...otrasDeMoverse(m) }
     : null;
   // Los precios de lo de allí cuentan para la fecha de los precios, como los del viaje.
   for (const f of fuentesDeAlli({ dias, moverse, saber: comer.sinDia }, true)) vistos.push(f.visto);
@@ -446,9 +482,12 @@ export function montarCuaderno(
   const deQue = new Map<number, DeQueVa>();
   const casillas = (v.papeles?.casillas ?? []).filter((c) => c.estado !== "in_order");
   for (const cosa of dado.todo) {
-    // Un aviso de las fechas sin nombre propio no lleva rótulo: lo cuenta la frase del que escribe.
+    // Un aviso de las fechas sin nombre propio lleva de rótulo su tema («El tiempo de esas semanas»): la frase del
+    // que escribe puede no decir de qué va.
     if (cosa.kind === "paper")
       deQue.set(cosa.item, { clase: "paper", pregunta: cosa.question, pais: cosa.country, estado: cosa.state });
+    else if (cosa.kind === "dates")
+      deQue.set(cosa.item, { clase: "dates", nombre: cosa.name === SIN_SABER ? null : cosa.name, tema: cosa.topic });
     else if (cosa.name !== SIN_SABER) deQue.set(cosa.item, { clase: cosa.kind, nombre: cosa.name });
     if (cosa.kind === "paper") {
       const c = casillas.find(
@@ -1024,7 +1063,10 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
           "ul",
           "lista datos",
           ...mv.llegar.map((x) => {
-            const desde = r.desde(x.desde.nombre ?? r.deDonde[x.desde.clase]);
+            const zona = mv.aZona?.[x.aZona];
+            const desde =
+              r.desde(x.desde.nombre ?? r.deDonde[x.desde.clase]) +
+              (zona === undefined ? "" : `, ${typeof zona === "number" ? r.aZona(zona) : r.aZonaNombre(zona)}`);
             const partes = [
               r.modo[x.modo] ?? x.modo,
               x.minutos === null ? "" : r.minutos(x.minutos),
@@ -1421,7 +1463,7 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   // Un papel se dice con su país por su nombre y con cómo está: «no está claro» no es lo mismo que «hay que hacerlo».
   const deQueVa = (d: DeQueVa): string => {
     if (d.clase === "book_ahead") return `${d.nombre}. ${r.reservar}`;
-    if (d.clase === "dates") return d.nombre;
+    if (d.clase === "dates") return d.nombre ?? r.temaDeFechas[d.tema ?? ""] ?? r.deTusFechas;
     const pregunta = (r.pregunta as Record<string, string>)[d.pregunta] ?? d.pregunta;
     const estado = (r.estado as Record<string, string>)[d.estado];
     return `${pregunta}, ${pais(d.pais)}${estado === undefined ? "" : `. ${estado}`}`;
@@ -1511,20 +1553,25 @@ export function pintarCuaderno(c: Cuaderno, o: { incrustadas?: Incrustadas; atra
   const fuentesDeAlliHtml =
     deAlli.length === 0
       ? ""
-      : t("h3", null, r.deAlli) +
-        h(
-          "ul",
-          "lista",
-          ...deAlli.map((f) =>
-            h(
-              "li",
-              null,
-              h("span", "mota"),
-              h("p", null, enlace(f.url, new URL(f.url).host), " ", nota(`(${visto(f)})`)),
+      : h(
+          "div",
+          null,
+          t("p", "lomo", r.deAlli),
+          h(
+            "ul",
+            "lista",
+            ...deAlli.map((f) =>
+              h(
+                "li",
+                null,
+                h("span", "mota"),
+                h("p", null, enlace(f.url, new URL(f.url).host), " ", nota(`(${visto(f)})`)),
+              ),
             ),
           ),
         );
-  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos), fuentesDeAlliHtml);
+  // Las fuentes de allí, en su propio bloque: un título suelto tras la lista de encima se le montaba al imprimir.
+  const fuentes = h("div", null, t("p", "lomo", r.creditos), h("ul", "lista", ...creditos)) + fuentesDeAlliHtml;
   hojas.push(h("section", "doble cierre", h("div", "pagina", noSeSabe + fuentes), h("div", "pagina", avisos)));
 
   const aviso = o.atras === true ? `<p class="atras" role="status">${esc(r.atras)}</p>` : "";

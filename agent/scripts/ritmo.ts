@@ -236,11 +236,22 @@ export function repartir(
   return {
     dias: dias.map((d) => {
       const orden = enOrden(d.paradas, base, c);
-      // El día se llama como su parada más importante.
-      const titulo = porImportancia.find((p) => d.paradas.includes(p))?.nombre ?? "";
+      const titulo = tituloDelDia(
+        paradas,
+        d.paradas.map((p) => p.id),
+      );
       return { fecha: d.fecha, titulo, paradas: orden.map((p) => p.id), metros: medirDia(orden, c).metros };
     }),
     fuera,
     porQue,
   };
+}
+
+/**
+ * El título de un día: el nombre de su parada más importante (las imprescindibles primero, en el orden del viaje). Un
+ * día sin paradas, el libre, no tiene título: en blanco.
+ */
+export function tituloDelDia(paradas: readonly Parada[], ids: readonly string[]): string {
+  const suyas = paradas.filter((p) => ids.includes(p.id));
+  return (suyas.find((p) => p.imprescindible) ?? suyas[0])?.nombre ?? "";
 }
