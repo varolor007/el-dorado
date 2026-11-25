@@ -8,7 +8,8 @@ import { MODOS_PUBLICOS, POR_QUE_NO_SE_LLEGA } from "../data/capa_moverse.ts";
 import type { Billete, DeMoverse, FuenteDeUnDato, PrecioDeCapa } from "../output/capas.ts";
 import type { Dia, Parada, Punto, TablaDeCaminos } from "../output/viaje.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
-import { fuenteDe, preciosDe, sabido, type PrecioEntregado } from "./capas.ts";
+import { SI_VALEN_VARIOS } from "../data/presupuesto.ts";
+import { elQueSeCoge, fuenteDe, preciosDe, preciosParaUno, sabido, type PrecioEntregado } from "./capas.ts";
 import type { SIN_SABER } from "./formas.ts";
 
 type NoSe = typeof SIN_SABER;
@@ -94,11 +95,10 @@ export function paraEnsenarMoverse(e: EntregaDeMoverse): DeMoverse {
 // 2. El precio de una persona.
 
 /**
- * Lo que paga una persona según una lista de precios, en una moneda: el importe, «free», o null si no se sabe. Un
- * adulto (edad null) paga el de adulto, o el de cualquiera sin edades. Un niño paga el que dice su edad entre sus
- * edades; si no hay, el de cualquiera sin edades; un precio de niño sin edades no se le pone, porque no se sabe si es
- * el suyo. Los de familia, grupo, estudiante o mayor no se ponen a nadie: no se sabe si le tocan. Si valen varios
- * (con tarjeta o en papel), el más caro: la cuenta no se queda corta.
+ * Lo que paga una persona por un billete según su lista de precios, en una moneda: el importe, «free», o null si no
+ * se sabe. Quién paga qué es la regla de todas las cuentas (`preciosParaUno`, la misma del presupuesto): un adulto,
+ * el de adulto o de cualquiera sin edades; un niño, el de su edad, o el de adulto si no tiene uno suyo. Si valen
+ * varios (con tarjeta o en papel), el que dice `SI_VALEN_VARIOS.billetes`.
  */
 export function precioPara(
   precios: PrecioDeCapa[] | null,
@@ -106,24 +106,9 @@ export function precioPara(
   moneda: string,
 ): number | "free" | null {
   if (precios === null) return null;
-  const dentro = (p: PrecioDeCapa): boolean =>
-    p.edades !== null &&
-    edad !== null &&
-    (p.edades.desde === null || p.edades.desde <= edad) &&
-    (p.edades.hasta === null || edad <= p.edades.hasta);
-  const deEdad = (p: PrecioDeCapa): boolean =>
-    p.para !== "family" && p.para !== "group" && p.para !== "student" && p.para !== "senior" && dentro(p);
-  const valen =
-    edad === null
-      ? precios.filter((p) => p.para === "adult" || (p.para === "any" && p.edades === null))
-      : precios.some(deEdad)
-        ? precios.filter(deEdad)
-        : precios.filter((p) => p.para === "any" && p.edades === null);
-  const enLaMoneda = valen.filter((p) => p.cuanto === "free" || p.cuanto.moneda === moneda);
-  if (enLaMoneda.length === 0) return null;
-  const importes = enLaMoneda.map((p) => (p.cuanto === "free" ? 0 : p.cuanto.importe));
-  const mas = Math.max(...importes);
-  return mas === 0 ? "free" : mas;
+  const p = elQueSeCoge(preciosParaUno(precios, edad), moneda, SI_VALEN_VARIOS.billetes, false);
+  if (p === null) return null;
+  return p.cuanto === "free" || p.cuanto.importe === 0 ? "free" : p.cuanto.importe;
 }
 
 /** Las monedas de unos billetes, por cuántos precios llevan cada una; en empate, la primera que sale. */
@@ -460,36 +445,4 @@ export function sueltoDelGrupo(
     cuantos: cada.length,
     fuentes,
   };
-}
-
-// 5. Llegar de donde se aterriza.
-
-/**
- * Las maneras de llegar a una zona, con lo que paga por ellas una persona en una moneda: cada una con su sitio en la
- * capa, su modo, sus minutos y su precio (null si no se sabe), ordenadas de la más barata a la más cara, y las que no
- * se saben al final. Es de ida: la vuelta, si se cuenta, es otra igual. No elige: ordena.
- */
-export function manerasDeLlegar(
-  m: DeMoverse | undefined,
-  zona: string,
-  edad: number | null,
-  moneda: string,
-): { manera: number; modo: ModoDeMoverse; minutos: number | null; precio: number | null; fuente: FuenteDeUnDato }[] {
-  if (m === undefined || m.falta !== null) return [];
-  return m.llegar
-    .map((x, manera) => ({ x, manera }))
-    .filter(({ x }) => x.aZona === zona)
-    .map(({ x, manera }) => {
-      const p = precioPara(x.precios, edad, moneda);
-      return { manera, modo: x.modo, minutos: x.minutos, precio: p === "free" ? 0 : p, fuente: x.fuente };
-    })
-    .sort((a, b) =>
-      a.precio === null
-        ? b.precio === null
-          ? a.manera - b.manera
-          : 1
-        : b.precio === null
-          ? -1
-          : a.precio - b.precio || a.manera - b.manera,
-    );
 }

@@ -114,8 +114,8 @@ test("un trayecto que no se anda: el billete suelto de la cuenta de moverse, par
   };
   // El taxi no es transporte público: el suelto es el del autobús, para dos.
   assert.deepEqual(billeteSuelto(m, grupo(2)), { importe: 4, moneda: "EUR", faltan: 0, cuantos: 2, fuentes: [F] });
-  // Un niño, con una página que solo da el de adulto: no se le pone, y falta.
-  assert.equal(billeteSuelto(m, grupo(1, [8]))?.faltan, 1);
+  // Un niño, con una página que solo da el de adulto: paga el de adulto, la misma regla que en el presupuesto.
+  assert.deepEqual(billeteSuelto(m, grupo(1, [8])), { importe: 4, moneda: "EUR", faltan: 0, cuantos: 2, fuentes: [F] });
   assert.equal(billeteSuelto({ ...m, billetes: [{ ...m.billetes[2], precios: null }] }, grupo(2)), null);
   assert.equal(billeteSuelto({ ...m, falta: "late" }, grupo(2)), null);
   assert.equal(billeteSuelto(undefined, grupo(2)), null);
