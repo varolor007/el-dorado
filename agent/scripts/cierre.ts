@@ -32,6 +32,7 @@ import type {
   Viaje,
 } from "../output/viaje.ts";
 import { RITMOS } from "../output/viaje.ts";
+import { tituloDelDia } from "./ritmo.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import { diaEnGoogleMaps, enlaceSinClaves, sitioEnGoogleMaps } from "../tools/enlaces.ts";
 
@@ -540,7 +541,13 @@ export function conTusDias(v: Viaje, dias: unknown, ritmo?: unknown): Viaje {
       puestas.add(id);
       return id;
     });
-    const titulo = v.dias.find((x) => x.fecha === d.fecha)?.titulo ?? "";
+    // Si el día tiene las paradas de la investigación, su título; si no (otro ritmo, paradas movidas), el de sus
+    // paradas, como lo pone el ritmo: un día que era libre y ahora tiene paradas no se queda sin título.
+    const deAntes = v.dias.find((x) => x.fecha === d.fecha);
+    const titulo =
+      deAntes !== undefined && deAntes.titulo.trim() !== "" && deAntes.paradas.join("|") === ids.join("|")
+        ? deAntes.titulo
+        : tituloDelDia(v.paradas, ids);
     const metros = ids
       .slice(1)
       .map((id, i) => trayectoEntre(deParada.get(ids[i])!.punto, deParada.get(id)!.punto, c).metros);

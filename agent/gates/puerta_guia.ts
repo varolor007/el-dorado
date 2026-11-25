@@ -21,6 +21,7 @@ import { avisosDe } from "../data/palabras.ts";
 import type { Viaje } from "../output/viaje.ts";
 import { convieneDelCuaderno, entradaDelCuaderno, fuentesDeAlli, type Cuaderno } from "../scripts/cuaderno.ts";
 import { entradaDe } from "../scripts/capas.ts";
+import { SIN_SABER } from "../scripts/formas.ts";
 import { andando } from "../tools/distancias.ts";
 import { capaQueVale, comerPorDias, modosDelViaje, moverseConAlgo, type ParaLaGuia } from "../scripts/guia.ts";
 import type { Rojo, Veredicto } from "./puerta_busqueda.ts";
@@ -323,6 +324,9 @@ export function puertaGuia(entrega: unknown, m: MaterialDeLaGuia): VeredictoDeLa
           campo === "eat" ? "ese día el viaje no sabe dónde comer: no se dice" : "no es de la entrega",
         );
     texto(`${donde}.title`, crudo.title, LARGO_EN_LA_GUIA.titulo);
+    // «unknown» es lo que el material dice cuando no da título: no es un título para el viajero.
+    if (esTexto(crudo.title) && crudo.title.trim().toLowerCase() === SIN_SABER)
+      rojo(`${donde}.title`, "copia «unknown»: el título del día lo pone quien escribe");
     texto(`${donde}.intro`, crudo.intro);
     if (conComer) texto(`${donde}.eat`, crudo.eat);
     // Un día libre no lleva paradas ni tramos, y lo que se cuenta de él no le pone ninguna: ni una de otro día.

@@ -21,6 +21,8 @@ because yours goes in the language of `in/trip.json`, whichever it is.
 sentences>", "stops": [...], "legs": [...], "eat": "<one or two sentences>" }`
 
 - `date`: as in `in/days.json`.
+- `title`: yours, in a few words, from the day's stops and the `title` of `in/days.json`. That `title` is `unknown`
+  only on a free day: `unknown` is never a title.
 - `eat`: only on a day that has `eat` in `in/days.json`, and then always: where to stop and eat that day, by its
   places. On a day without `eat`, the field is not there.
 - `stops`: one entry per stop of that day, all of them, once:

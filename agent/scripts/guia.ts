@@ -24,6 +24,7 @@ import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import { andando } from "../tools/distancias.ts";
 import { abreElDia, diaDeLaSemana, entradaDe } from "./capas.ts";
 import { SIN_SABER, type Entendido } from "./formas.ts";
+import { tituloDelDia } from "./ritmo.ts";
 import { diasDe } from "./ruta.ts";
 
 type NoSe = typeof SIN_SABER;
@@ -233,7 +234,8 @@ export function paraLaGuia(v: Viaje, e: Entendido | null, m: Manera | null, dice
     return {
       date: d.fecha,
       weekday: semana.get(d.fecha) ?? SIN_SABER,
-      title: paradas.length === 0 || d.titulo.trim() === "" ? SIN_SABER : d.titulo,
+      // Un día libre no tiene título que copiar; uno con paradas y sin título lleva el de sus paradas.
+      title: paradas.length === 0 ? SIN_SABER : d.titulo.trim() !== "" ? d.titulo : tituloDelDia(v.paradas, d.paradas),
       free: paradas.length === 0,
       stops: paradas.map((p) => ({
         id: p.id,

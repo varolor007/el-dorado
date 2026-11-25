@@ -15,6 +15,8 @@ import {
   pedirGuia,
 } from "../../agent/launcher/guia.ts";
 import { comprobarViaje } from "../../agent/output/viaje.ts";
+import { conTusDias } from "../../agent/scripts/cierre.ts";
+import { tituloDelDia } from "../../agent/scripts/ritmo.ts";
 import { JPEG, type Objeto } from "../cases/inventado/asientos.ts";
 import {
   entregaDeLaGuia,
@@ -117,4 +119,65 @@ test("trampa: una guía que le mete una parada a un día libre no pasa la puerta
     enBlanco.days[0].title = "";
     assert.ok(rojosDe(enBlanco, m).some((r) => /days\[0\]\.title: está en blanco/.test(r)));
   });
+});
+
+test("con otros días que los de la investigación: cada día con paradas, con su título; ninguno «unknown»", async () => {
+  // Otro ritmo al cerrar: el día que era libre tiene paradas, y el que las tenía se queda libre.
+  const viaje = conTusDias(viajeConDiasLibres(), [
+    { fecha: "2027-02-12", paradas: ["p1", "p2"] },
+    { fecha: "2027-02-13", paradas: [] },
+    { fecha: "2027-02-14", paradas: ["p3"] },
+  ]);
+  const porNombre = new Map(viaje.paradas.map((p) => [p.id, p.nombre]));
+  assert.deepEqual(
+    viaje.dias.map((d) => d.titulo),
+    [tituloDelDia(viaje.paradas, ["p1", "p2"]), "", porNombre.get("p3")],
+  );
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const p = pedirGuia(v, { manera: "best_value", hoy: HOY });
+    const m = materialDeLaGuia(v, p);
+    assert.deepEqual(
+      m.dado.days.map((d) => [d.free, d.title === "unknown"]),
+      [
+        [false, false],
+        [true, true],
+        [false, false],
+      ],
+    );
+    const e = await llevarLaGuia(v, p.n, lanzadorDeLaGuia(), {
+      hoy: () => HOY,
+      traer: async () => JPEG,
+      encoger: async (b) => b,
+    });
+    assert.deepEqual(e, { estado: "ready" });
+    assert.ok(!/unknown/i.test(documentoDeLaGuia(v) ?? ""), "el cuaderno dice «unknown»");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("trampa: un título «unknown», en un día libre o en uno con paradas, no pasa la puerta 10", () => {
+  conMaterial((m) => {
+    for (const i of [0, 1]) {
+      const e = entregaDeLaGuia(m.dado) as { days: Objeto[] };
+      e.days[i].title = "Unknown";
+      assert.ok(
+        rojosDe(e, m).some((r) => r.startsWith(`days[${i}].title: copia «unknown»`)),
+        String(i),
+      );
+    }
+  });
+});
+
+test("un día con paradas y sin título en el viaje lleva en el material el de su parada más importante", () => {
+  const viaje = viajeConDiasLibres();
+  viaje.dias[1].titulo = "";
+  const { mesa, v } = viajeCerradoEnLaMesa({ viaje });
+  try {
+    const m = materialDeLaGuia(v, pedirGuia(v, { manera: "best_value", hoy: HOY }));
+    assert.equal(m.dado.days[1].title, tituloDelDia(viaje.paradas, viaje.dias[1].paradas));
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
 });
