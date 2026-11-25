@@ -10,6 +10,7 @@ import { RITMOS } from "../../../../../agent/output/viaje.ts";
 import { puertaEntendido } from "../../../../../agent/gates/puerta_entendido.ts";
 import { respuestasDe, respuestasDeLoEntendido, type Respuestas } from "../../../../../agent/scripts/empezar.ts";
 import type { Entendido } from "../../../../../agent/scripts/formas.ts";
+import { cierraEnElViaje } from "../../../../../agent/scripts/capa_entradas.ts";
 import { fechasDe, repartir } from "../../../../../agent/scripts/ritmo.ts";
 import { Buscador, type Busqueda } from "../../../piezas/Buscador.tsx";
 import { Cargando } from "../../../piezas/Cargando.tsx";
@@ -185,7 +186,9 @@ export default function Planear() {
     const fechas = fechasDe(viaje.entrada, viaje.salida);
     const base = cama?.punto ?? viaje.destino.punto;
     // Con la tabla de caminos del viaje, si la trae: los mismos números que la casa.
-    return repartir(viaje.paradas, fechas, ritmo, base, { quitadas, anadidas, fijadas }, viaje.caminos);
+    // Y con lo que se sabe que cierra cada sitio, de sus entradas: los mismos días que la casa.
+    const cierra = cierraEnElViaje(viaje);
+    return repartir(viaje.paradas, fechas, ritmo, base, { quitadas, anadidas, fijadas }, viaje.caminos, cierra);
   }, [viaje, ritmo, cama, quitadas, anadidas, fijadas]);
   const deParada = useMemo(() => new Map((viaje?.paradas ?? []).map((p) => [p.id, p])), [viaje]);
   // Lo que tocas se guarda en la casa, encima de lo de antes: elegir no gasta ni deja versión.

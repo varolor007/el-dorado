@@ -51,5 +51,8 @@ export const CERCA_DE_UN_DIA = 2000;
  */
 export const DEMASIADO_LEJOS = 0.5;
 
-/** Por qué una parada no está en ningún día: el viajero la quitó, queda lejos de las demás o no cabe en los días. */
-export const MOTIVOS_DE_FUERA = ["removed", "far", "full"] as const;
+/**
+ * Por qué una parada no está en ningún día: el viajero la quitó, queda lejos de las demás, no cabe en los días, o
+ * cierra los días en los que cabría (lo dicen sus entradas, 14.4).
+ */
+export const MOTIVOS_DE_FUERA = ["removed", "far", "full", "closed"] as const;

@@ -18,7 +18,7 @@ Node: `abreElDia`, `diasQueCierra`, `entradaDe`) y `agent/launcher/capas.ts`. Ca
 `getting_around` y `local_knowledge` por detrás desde la ruta (`capasDeDetras`), `tickets` cuando entrega el que
 elige los sitios, con los días esperándolo hasta su tope (600 segundos), y `budget`, de código, antes de montar el
 viaje. Sin contrato en `agent/contracts/<asiento>/` (`getting-around`, `local-knowledge`, `tickets`) una capa no se
-lanza; las pruebas usan contratos de prueba (`tests/cases/inventado/contratos/`) mientras no esté el de verdad.
+lanza; los tres contratos ya están, y los de prueba del suelo se quitaron al juntarlos (25-nov).
 **Cómo se enchufa una capa**: escribir su contrato (con `README.md`, `DELIVERY.md` e `INTERNET.md`); afinar su
 entrega y `paraEnsenar...` en `agent/scripts/capa_<x>.ts`, sin cambiar la forma del viaje; poner su puerta en
 `agent/gates/` y cambiarla en una línea de `agent/launcher/capa_<x>.ts`; afinar su asiento de mentira; y sus pruebas
@@ -148,6 +148,19 @@ prueba), y un trayecto que no se anda es el que pasa de 3.500 metros, lo mismo q
 frases del presupuesto entero con `agent/gates/cifras_del_presupuesto.ts`, y sus materiales aceptan `presupuesto`, que
 hoy nadie les pasa: sin él, una cifra en una frase del presupuesto entero sale roja. Al viaje le falta el id de la
 zona de cada alojamiento. Sin ver con IA ni con fuentes de verdad.
+
+**El de las entradas (14.4), junto** (25-nov). Datos abiertos en `agent/tools/abiertos.ts` (Wikidata para la web y
+el objeto de OpenStreetMap; la API de OpenStreetMap; el buscador de OpenStreetMap, una consulta por segundo, solo si
+el resultado lleva el identificador del sitio) y el horario en `agent/tools/horarios.ts`. Contrato en
+`agent/contracts/tickets/` (TK1 a TK8); puerta 13 en `agent/gates/puerta_entradas.ts`, con las páginas abiertas del
+puesto (`capaDeLasEntradasDe(run)`). Al viaje, manda el asiento; su «unknown» y lo no mirado, con los datos abiertos.
+Lo que cierra cada día: `cierraEnElRun` y `cierraEnElViaje`; el ritmo lo recibe como séptimo parámetro, con el motivo
+«closed», y la puerta 9 lo mira con `cierra`. Lo usan la casa, el montaje del viaje, `diasElegidos` y la web. Si pasan
+del tope, `ordenParaMirar`: primero los imprescindibles y los que tienen puerta; el aviso, con los del run. Sabido: el
+viaje no distingue un sitio sin mirar por el tope de uno cuya tanda falló; «closed» sale en la web con lo que no cabe
+a ese ritmo; el buscador de OpenStreetMap es una salida nueva del código, y sus condiciones (citar a OpenStreetMap,
+una consulta por segundo) van a `docs/condiciones.md` antes de vender. Sin pantalla nueva ni capturas, y sin ver con
+IA.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

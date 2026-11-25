@@ -195,6 +195,8 @@ export type Decidido = {
   mirados: Record<string, Mirado>;
   /** La tabla de caminos del viaje, si la hay: viaja con él, para que la web mida con los mismos números. */
   caminos?: TablaDeCaminos | null;
+  /** Los días que se sabe que cierra cada parada, de sus entradas (14.4): el ritmo no la pone esos días. */
+  cierra?: Record<string, string[]>;
   /** Los avisos de las fechas, o por qué faltan: viajan tal cual, ya con las cuentas del código. */
   calendario?: DelCalendario | null;
   /** La tabla de los papeles, con lo que decidió el viajero: viaja tal cual. */
@@ -215,7 +217,8 @@ export function montarViaje(b: Busqueda, d: Decidido): Viaje {
     alojamientos.find((a) => a.id === (maneras.find((m) => m.id === "best_value") ?? maneras[0])?.alojamiento)?.punto ??
     ({ lat: b.estancia.lat, lon: b.estancia.lon } satisfies Punto);
   const caminos = d.caminos != null && d.caminos.caminos.length > 0 ? d.caminos : null;
-  const reparto = repartir(d.paradas, fechasDe(b.estancia.entrada, b.estancia.salida), d.ritmo, base, {}, caminos);
+  const fechas = fechasDe(b.estancia.entrada, b.estancia.salida);
+  const reparto = repartir(d.paradas, fechas, d.ritmo, base, {}, caminos, d.cierra ?? {});
   const centro = { lat: b.estancia.lat, lon: b.estancia.lon };
   return {
     id: d.id,
@@ -331,6 +334,8 @@ export type Hecho = {
   alLado?: Vuelo | null;
   /** La tabla de caminos del viaje, si se pidió: lo que dijo la fuente de rutas. */
   caminos?: TablaDeCaminos | null;
+  /** Los días que se sabe que cierra cada parada, de sus entradas (14.4). */
+  cierra?: Record<string, string[]>;
   /** Los avisos de las fechas del del calendario, o por qué faltan. */
   calendario?: DelCalendario | null;
   /** La tabla de los papeles, o por qué falta. */
@@ -428,6 +433,7 @@ export function montarViajeHecho(h: Hecho): Viaje {
     avisos: h.explica.unknowns,
     mirados: h.mirados,
     caminos: h.caminos,
+    cierra: h.cierra,
     calendario: conSusFrases(h.calendario ?? null, h.explica.dates),
     papeles: h.papeles,
   });
