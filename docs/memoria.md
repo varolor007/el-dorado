@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (971 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (972 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -217,7 +217,8 @@ destino. Cerrar: `Reserva.enlace` y `enlaceDeLaEntrada`, mirados por la puerta 8
 `gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`), **sin cifra enchufada**: con un
 techo puesto, una capa cortada sin decir lo que gastó sigue parando la investigación, como antes. Al juntar: la
 cuenta que ven el que cruza, el que explica y el cierre usa las zonas que trae el viaje, como la del viaje; y lo que
-avisan los datos abiertos (que Overpass no contesta) queda en los avisos del run (`abiertos.json`). Pruebas:
+avisan los datos abiertos (que Overpass no contesta) queda en los avisos del run (`abiertos.json`) y la
+investigación lo dice con sus demás avisos (`avisosDeLosAbiertos`). Pruebas:
 `techo_de_las_capas`, `presupuesto_delante`, `cambios_con_capas`, `cierre` y `entradas`. Mirado en la web con una casa
 de mentira; el cierre con su enlace y el adelante del botón, solo en pruebas. Sabido: el primer mensaje para un día
 sobre un viaje de antes vuelve a lanzar una vez al que cruza y al que explica, porque su material cambia; y cambiar

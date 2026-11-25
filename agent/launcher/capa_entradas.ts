@@ -268,3 +268,15 @@ export function losDiasSinEntradas(e: DeLasEntradas | undefined): string[] {
     ? [`${porElTope} sitios se quedan sin mirar sus entradas: pasan del tope de ${SITIOS_EN_TOTAL} por viaje`]
     : [];
 }
+
+/** Lo que avisaron los datos abiertos de las entradas en un run, para los avisos de la investigación. */
+export function avisosDeLosAbiertos(run: string): string[] {
+  const ruta = join(run, ABIERTOS);
+  if (!existsSync(ruta)) return [];
+  try {
+    const { avisos } = JSON.parse(readFileSync(ruta, "utf8")) as { avisos?: unknown };
+    return Array.isArray(avisos) ? avisos.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}

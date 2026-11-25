@@ -122,6 +122,7 @@ import { capaDelDestino } from "./capa_destino.ts";
 import {
   capaDeLasEntradasDe,
   cierraEnElRun,
+  avisosDeLosAbiertos,
   conLasDeAntes,
   entradasDeAntes,
   repartirLasEntradas,
@@ -1177,6 +1178,7 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
       if (!a.pasadas.some((p) => p.metodo.verde && p.comoEs.verde)) avisos.push(`${a.nombre}: se queda sin mirar`);
     if (!hay(run, "caminos.json")) avisos.push(...(await pedirLaTablaDeCaminos(run, viaje, r.entrega, f)));
     avisos.push(...losDiasSinEntradas(capaDelRun<DeLasEntradas>(run, ENTRADAS)));
+    avisos.push(...avisosDeLosAbiertos(run));
     const rojos = await repartirLosDias(run, viaje, r.entrega, f);
     if (rojos.length > 0) return para("days", "los días (puerta 9)", rojos);
   }
