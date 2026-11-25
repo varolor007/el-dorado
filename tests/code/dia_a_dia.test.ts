@@ -11,7 +11,7 @@ import { test } from "node:test";
 import { LARGO_DE_UN_MENSAJE, MENSAJES_DE_UN_VIAJE, PALABRAS_DE_UNA_CLASE } from "../../agent/data/dia_a_dia.ts";
 import { RAICES } from "../../agent/data/sitios.ts";
 import { puertaSitios } from "../../agent/gates/puerta_dias.ts";
-import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
+import { adelanteDe, darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
   conservarElCruce,
   FalloDeUnDia,
@@ -34,6 +34,7 @@ import {
   raicesDeLasClases,
 } from "../../agent/scripts/dia_a_dia.ts";
 import { diasElegidos, SIN_ELEGIR } from "../../agent/scripts/elecciones.ts";
+import { impactoDe } from "../../agent/scripts/impacto.ts";
 import type { Tabla } from "../../agent/scripts/formas.ts";
 import { consultaDeSitios, type Sitio } from "../../agent/tools/sitios.ts";
 import { fuentesInventadas, lanzadorDeMentira, leerJson } from "../cases/inventado/asientos.ts";
@@ -154,12 +155,30 @@ test("el impacto de un mensaje: el del día a día seguro; el que cruza y el que
   );
   assert.equal(i.cost.usd, 0.1);
   assert.equal(i.spends, true);
+  // La trampa: el que cruza y el que explica pueden lanzarse. Lo más que puede costar los cuenta, y se dice.
+  assert.deepEqual(i.most, { usd: 0.35, unknown: [] });
+  const sinSaber = impactoDeUnDia({ "sights-picker": { usd: 0.1, de: 2 } });
+  assert.equal(sinSaber.cost.usd, 0.1);
+  assert.deepEqual(sinSaber.most, { usd: null, unknown: ["trip-crosser", "trip-explainer"] });
   // Si pides algo que no estaba, los sitios se buscan seguro: es código, y no cuesta.
   const conSitios = impactoDeUnDia(estimado, true);
   assert.equal(conSitios.redo[0].step, "sights");
   assert.ok(!conSitios.maybe.some((x) => x.step === "sights") && !conSitios.keep.includes("sights"));
   assert.equal(conSitios.cost.usd, 0.1);
   assert.equal(impactoDeUnDia({}).cost.usd, null);
+});
+
+test("lo más que puede costar vale para cualquier impacto con algo que quizá haya que rehacer", () => {
+  // Otro transporte puede tirar los papeles: lo seguro no los cuenta, y lo más que puede ser, sí.
+  const uno = { usd: 0.1, de: 1 };
+  const estimado = { papers: { usd: 0.3, de: 1 }, "lodging-viewer": uno, "trip-crosser": uno, "trip-explainer": uno };
+  const transporte = impactoDe(["transport"], estimado);
+  assert.ok(transporte.maybe.some((x) => x.step === "papers"));
+  assert.equal(transporte.cost.usd, 0.3);
+  assert.deepEqual(transporte.most, { usd: 0.6, unknown: [] });
+  // Sin nada de IA en lo que quizá haya que rehacer, no hay un segundo coste que decir.
+  assert.equal(impactoDe(["pace"]).most, undefined);
+  assert.equal(impactoDe(["lodging"]).most, undefined);
 });
 
 // ---------- la puerta 9 con un mensaje
@@ -417,9 +436,25 @@ test("la puerta: lo que costaría sin cambiar nada; con tu botón, sale; y cómo
     assert.equal((await pide("POST", `/viajes/${id}/dia`, otro, { said: "menos museos" })).estado, 404);
     assert.equal((await pide("GET", `/viajes/${id}/dia`, otro)).estado, 404);
 
-    // Con tu botón: sale, y se cuenta cómo va.
-    const sale = await pide("POST", `/viajes/${id}/dia`, ana, { said: "un día de playa", day: 0, go: true });
+    // Un techo de gasto que no vale no sale, como en los demás momentos que gastan, y no abre nada.
+    for (const ceiling of [0, -1, "5", {}])
+      assert.deepEqual(
+        await pide("POST", `/viajes/${id}/dia`, ana, { said: "un día de playa", day: 0, go: true, ceiling }),
+        { estado: 400, cuerpo: { error: "bad_ceiling" } },
+        String(ceiling),
+      );
+    assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);
+
+    // Con tu botón y tu techo: sale con él, y se cuenta cómo va.
+    const sale = await pide("POST", `/viajes/${id}/dia`, ana, {
+      said: "un día de playa",
+      day: 0,
+      go: true,
+      ceiling: 2,
+    });
     assert.equal(sale.estado, 202);
+    const delRun = join(mesa, "viajes", id, "runs", String(sale.cuerpo.run));
+    assert.equal(adelanteDe(delRun)?.techo, 2);
     await puerta.esperar();
     const va = (await pide("GET", `/viajes/${id}/dia`, ana)).cuerpo.message;
     assert.equal(va.state, "done");

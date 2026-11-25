@@ -2494,6 +2494,9 @@ select.toque {
 .impacto__cuesta {
   margin-top: 8px;
 }
+.impacto__hasta {
+  margin-top: 2px;
+}
 .impacto__lista .dato {
   flex-shrink: 0;
   white-space: nowrap;

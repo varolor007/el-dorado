@@ -9,7 +9,7 @@ import type { Punto, Viaje } from "../output/viaje.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import type { TusDias } from "./cierre.ts";
 import { SIN_ELEGIR, type Elecciones } from "./elecciones.ts";
-import { impactoDe, type EstimadoPorAsiento, type Impacto } from "./impacto.ts";
+import { costesDe, impactoDe, type EstimadoPorAsiento, type Impacto } from "./impacto.ts";
 
 /** Lo que pide un mensaje tuyo a la casa, tal cual queda en `rehecho.json` (`pedido`). */
 export type PedidoDeUnDia = {
@@ -132,7 +132,7 @@ export const SOLO_SI_CAMBIA = ["cross", "explain"] as const;
 /**
  * El impacto de un mensaje tuyo, antes de mandarlo: el del día a día otra vez y, si pides algo que no estaba, los
  * sitios de los datos abiertos (código). El que cruza y el que explica, solo si cambia lo que deciden: van en
- * `maybe`, y lo que costaría cuenta solo lo que seguro se lanza.
+ * `maybe`: lo que costaría (`cost`) cuenta lo que seguro se lanza, y lo más que puede ser (`most`), también a ellos.
  */
 export function impactoDeUnDia(estimado: EstimadoPorAsiento = {}, buscaSitios = false): Impacto {
   const base = impactoDe(["day"], estimado);
@@ -144,8 +144,5 @@ export function impactoDeUnDia(estimado: EstimadoPorAsiento = {}, buscaSitios = 
     ...base.redo.filter((x) => solo.has(x.step)),
   ];
   const keep = base.keep.filter((id) => !(buscaSitios && id === "sights"));
-  const asientos = [...new Set(redo.map((x) => x.who).filter((w) => w !== CODIGO))];
-  const unknown = asientos.filter((a) => estimado[a] === undefined);
-  const usd = unknown.length > 0 ? null : Math.round(asientos.reduce((s, a) => s + estimado[a].usd, 0) * 100) / 100;
-  return { ...base, redo, keep, maybe, spends: asientos.length > 0, cost: { usd, unknown } };
+  return { changes: base.changes, redo, keep, maybe, pieces: base.pieces, ...costesDe(redo, maybe, estimado) };
 }

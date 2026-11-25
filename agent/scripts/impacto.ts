@@ -129,7 +129,39 @@ export type Impacto = {
    * investigaciones de esa cuenta. Null si de alguno no se sabe: entonces no se dice una cifra.
    */
   cost: { usd: number | null; unknown: string[] };
+  /**
+   * Lo más que puede costar: lo de `cost` y, además, lo de cada asiento de `maybe` que no se lanza ya, por si hay que
+   * rehacerlo. Solo cuando `maybe` lleva un asiento de IA de más; si no, no está.
+   */
+  most?: { usd: number | null; unknown: string[] };
 };
+
+/** Lo que costaría lanzar a esos asientos: la suma de su media, o null si de alguno no se sabe, y de cuáles. */
+export function costeDe(asientos: readonly string[], estimado: EstimadoPorAsiento): Impacto["cost"] {
+  const unicos = [...new Set(asientos.filter((w) => w !== CODIGO))];
+  const unknown = unicos.filter((a) => estimado[a] === undefined);
+  const usd = unknown.length > 0 ? null : Math.round(unicos.reduce((s, a) => s + estimado[a].usd, 0) * 100) / 100;
+  return { usd, unknown };
+}
+
+/**
+ * El coste de un impacto: lo seguro, por lo que se rehace, y lo más que puede ser, con lo que quizá haya que rehacer.
+ * Lo usa cualquier impacto con `maybe`.
+ */
+export function costesDe(
+  redo: readonly PasoDelImpacto[],
+  maybe: readonly PasoDelImpacto[],
+  estimado: EstimadoPorAsiento,
+): Pick<Impacto, "spends" | "cost" | "most"> {
+  const seguros = redo.map((x) => x.who).filter((w) => w !== CODIGO);
+  const deMas = maybe.map((x) => x.who).filter((w) => w !== CODIGO && !seguros.includes(w));
+  const cost = costeDe(seguros, estimado);
+  return {
+    spends: seguros.length > 0,
+    cost,
+    ...(deMas.length > 0 ? { most: costeDe([...seguros, ...deMas], estimado) } : {}),
+  };
+}
 
 const quienDa = (id: IdDePaso): string => PASOS.find((p) => p.id === id)?.quien ?? CODIGO;
 
@@ -147,8 +179,5 @@ export function impactoDe(clases: readonly ClaseDeCambio[], estimado: EstimadoPo
   const pieces = (
     ["lodging", "transport", "days", "prices", "date_warnings", "papers", "ways", "guide"] as const
   ).filter((p) => piezas.has(p));
-  const asientos = [...new Set(redo.map((x) => x.who).filter((w) => w !== CODIGO))];
-  const unknown = asientos.filter((a) => estimado[a] === undefined);
-  const usd = unknown.length > 0 ? null : Math.round(asientos.reduce((s, a) => s + estimado[a].usd, 0) * 100) / 100;
-  return { changes: [...clases], redo, keep, maybe, pieces, spends: asientos.length > 0, cost: { usd, unknown } };
+  return { changes: [...clases], redo, keep, maybe, pieces, ...costesDe(redo, maybe, estimado) };
 }
