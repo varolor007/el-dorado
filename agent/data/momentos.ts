@@ -96,7 +96,9 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   destination: { pasos: ["sights", "route", "search", "papers", "calendar", "pick"], quizas: [] },
   origin: { pasos: ["search", "papers", "calendar"], quizas: [] },
   dates: { pasos: ["sights", "route", "search", "papers", "calendar", "pick"], quizas: [] },
-  travellers: { pasos: ["search", "papers"], quizas: [] },
+  // Un viajero más, o uno menos: la habitación y el precio («un viajero más cambia la habitación y el precio», dice
+  // la hoja). Los papeles solo si cambian sus filas, que es la clase «passports» (`clasesDelCambio`).
+  travellers: { pasos: ["search"], quizas: [] },
   rooms: { pasos: ["search"], quizas: [] },
   passports: { pasos: ["search", "papers"], quizas: [] },
   budget: { pasos: ["table"], quizas: [] },
@@ -204,3 +206,10 @@ export type Eleccion = (typeof ELECCIONES)[number];
  * tope, no se rehace: se dice, y se puede volver a una de antes.
  */
 export const TOPES_DE_UN_VIAJE = { versiones: 20, runs: 30 };
+
+/**
+ * Los cambios de lo que pediste (8.5) que se pueden lanzar de un viaje en esas horas, de partida y prudentes, como
+ * los cierres: cada uno vuelve a lanzar asientos. Es del PM (cuántos cambios y con qué tope); hasta que lo diga, este.
+ * Por encima siguen los topes de versiones y de investigaciones de un viaje (`TOPES_DE_UN_VIAJE`).
+ */
+export const TOPE_DE_CAMBIOS = { horas: 24, deUnViaje: 6 };
