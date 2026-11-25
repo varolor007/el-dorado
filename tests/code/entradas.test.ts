@@ -3,7 +3,7 @@
 // con lo que cierra cada día, y la investigación inventada entera con su contrato de verdad. Sin gastar.
 
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { puertaDias } from "../../agent/gates/puerta_dias.ts";
@@ -770,6 +770,37 @@ test("la puerta 13 en la casa: un precio de una página que no abrió vuelve al 
       JSON.stringify(puertas.rojos),
     );
     assert.ok(estado.esperan.includes("entradas-v2"));
+  } finally {
+    rmSync(run, { recursive: true, force: true });
+  }
+});
+
+test("la puerta 13 en la casa: una vuelta que corrige puede citar la página que abrió en la de antes", async () => {
+  const run = runNuevo();
+  try {
+    const f = fuentesInventadas();
+    let estado = await sigue(run, f);
+    for (let i = 0; i < 20 && !estado.esperan.some((id) => id.startsWith("entradas-")); i++) {
+      for (const id of [...estado.esperan, ...(estado.porDetras ?? [])])
+        if (existsSync(join(run, "puestos", id))) trabaja(run, id);
+      estado = await sigue(run, f);
+    }
+    // La primera vuelta abre su página, pero escribe mal una moneda.
+    trabaja(run, "entradas-v1", (_asiento, e) => {
+      e.sights[0].prices[0].currency = "eur";
+    });
+    estado = await sigue(run, f);
+    assert.ok(estado.esperan.includes("entradas-v2"));
+    // La segunda la corrige sin abrir nada: la página de antes sigue valiendo, en la 13 como en la de todos.
+    trabaja(run, "entradas-v2");
+    writeFileSync(
+      join(run, "consultado", "entradas-v2.json"),
+      JSON.stringify({ busquedas: [], paginas: [], fallidas: [] }),
+    );
+    estado = await sigue(run, f);
+    const puertas = leerJson(join(run, "entradas-v2.puertas.json"));
+    assert.deepEqual(puertas.rojos, []);
+    assert.ok(!estado.esperan.includes("entradas-v3"));
   } finally {
     rmSync(run, { recursive: true, force: true });
   }

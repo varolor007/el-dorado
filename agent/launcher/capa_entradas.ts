@@ -31,7 +31,7 @@ import {
 import type { Entendido } from "../scripts/formas.ts";
 import type { Sitio } from "../tools/sitios.ts";
 import { capaDelRun, guardarEnElRun, pieza, viajeParaLasCapas, type CapaDeIA, type Material } from "./capas.ts";
-import { abiertas, leerConsultado } from "./consultado.ts";
+import { abiertas, leerConsultadoEnSusVueltas } from "./consultado.ts";
 import { puestosDe, type Pieza } from "./puesto.ts";
 
 export const ENTRADAS = "entradas.json";
@@ -133,7 +133,8 @@ export function puertaDeLasEntradas(e: unknown, m: Material, tanda: number, run:
     entrada: m.viaje.dates.check_in,
     salida: m.viaje.dates.check_out,
     hoy: m.hoy,
-    abiertas: puesto === null ? null : abiertas(leerConsultado(puesto)),
+    // Lo que abrió en esta vuelta y en las de antes, como la puerta de todos: corregir no obliga a abrirlo otra vez.
+    abiertas: puesto === null ? null : abiertas(leerConsultadoEnSusVueltas(puesto)),
     deLosAbiertos: m.abiertos.flatMap((a) => a.fuentes.map((f) => f.url)),
     websDeLosAbiertos: Object.fromEntries(m.abiertos.map((a) => [a.sitio, a.web])),
   });
