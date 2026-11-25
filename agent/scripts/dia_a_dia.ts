@@ -5,7 +5,8 @@
 import { CLASES_DE_UN_MENSAJE, LARGO_DE_UN_MENSAJE, PALABRAS_DE_UNA_CLASE, UN_MENSAJE } from "../data/dia_a_dia.ts";
 import { CODIGO } from "../data/pasos.ts";
 import { RAICES } from "../data/sitios.ts";
-import type { Punto, Viaje } from "../output/viaje.ts";
+import { cuentasDeUnDia, type NoCabe } from "../gates/puerta_dias.ts";
+import type { Dia, Punto, Viaje } from "../output/viaje.ts";
 import { caminosDe, trayectoEntre } from "../tools/caminos.ts";
 import type { TusDias } from "./cierre.ts";
 import { SIN_ELEGIR, type Elecciones } from "./elecciones.ts";
@@ -145,4 +146,23 @@ export function impactoDeUnDia(estimado: EstimadoPorAsiento = {}, buscaSitios = 
   ];
   const keep = base.keep.filter((id) => !(buscaSitios && id === "sights"));
   return { changes: base.changes, redo, keep, maybe, pieces: base.pieces, ...costesDe(redo, maybe, estimado) };
+}
+
+/**
+ * Tus días, con tus elecciones, por las mismas cuentas de la puerta 9: de cada fecha que no cabe, por qué (sus horas
+ * no caben en un día entero, o un salto no cabe en un día). Lo que mueves o añades entra aunque no quepa, porque es
+ * tu elección: no se impide, se dice en ese día, y al cerrar queda sin confirmar.
+ */
+export function noCabenTusDias(
+  v: Viaje,
+  dias: readonly Pick<Dia, "fecha" | "paradas" | "metros">[],
+): Record<string, NoCabe[]> {
+  const porId = new Map(v.paradas.map((p) => [p.id, p]));
+  const c = caminosDe(v.caminos);
+  const salida: Record<string, NoCabe[]> = {};
+  for (const d of dias) {
+    const { noCabe } = cuentasDeUnDia(d, porId, c);
+    if (noCabe.length > 0) salida[d.fecha] = noCabe;
+  }
+  return salida;
 }

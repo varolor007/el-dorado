@@ -25,7 +25,7 @@ import { enGoogleMaps, noches, reloj, trayectoEnGoogleMaps } from "../lib/format
 import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 import { MeQuedo, Reservar } from "./Cerrar.tsx";
-import { masCercaDeCadaDia } from "../../../agent/scripts/dia_a_dia.ts";
+import { masCercaDeCadaDia, noCabenTusDias } from "../../../agent/scripts/dia_a_dia.ts";
 import { TuMensaje } from "./DiaADia.tsx";
 
 type Comun = { t: Textos; idioma: string };
@@ -449,6 +449,9 @@ function Dias(x: DeViaje) {
       ? null
       : (masCercaDeCadaDia(viaje, [{ fecha: abierto.fecha, paradas: abierto.paradas }])[0] ?? null);
   const cercana = viaje.alojamientos.find((a) => a.id === cerca?.alojamiento) ?? null;
+  // Tus días, por las mismas cuentas de la puerta 9: el que no cabe lo dice, y se queda como lo dejaste (8.6).
+  const noCaben = noCabenTusDias(viaje, reparto.dias);
+  const noCabeElAbierto = abierto === null ? [] : (noCaben[abierto.fecha] ?? []);
   return (
     <>
       <div className="grupo">
@@ -489,6 +492,9 @@ function Dias(x: DeViaje) {
                 </span>
                 <span className="dia-tarjeta__texto">
                   <b>{d.titulo || t.viaje.sinParadas}</b>
+                  {noCaben[d.fecha] !== undefined && (
+                    <span className="pastilla pastilla--ojo">{t.diaADia.noCabeCorto}</span>
+                  )}
                   <span className="dato">
                     {t.viaje.paradas(paradas.length)}
                     {andado > 0 ? `, ${andar(andado, idioma).lejos}` : ""}
@@ -519,6 +525,14 @@ function Dias(x: DeViaje) {
               : ""}
           </span>
           {abierto.paradas.length === 0 && <p className="suave">{t.viaje.sinParadas}</p>}
+          {noCabeElAbierto.length > 0 && (
+            <div className="aviso dia__nocabe" role="note">
+              {noCabeElAbierto.map((que) => (
+                <p key={que}>{t.diaADia.noCabe[que] ?? que}</p>
+              ))}
+              <p className="dato">{t.diaADia.tuEleccion}</p>
+            </div>
+          )}
           {cercana !== null && cerca?.minutos != null && (
             <span className="dato">
               {cercana.id === cama?.id

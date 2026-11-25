@@ -831,6 +831,7 @@ const en = {
       link_unchecked: (de: string) => `${de}: a link could not be checked.`,
       papers_doubtful: (pais: string) => `Your papers for ${pais}: something is unclear.`,
       papers_late: (pais: string) => `Your papers for ${pais}: a deadline has passed.`,
+      day_does_not_fit: (fecha: string) => `Your day ${fecha} does not fit in a day: it is as you left it.`,
     } as Record<string, (de: string) => string>,
     llegada: {
       ok: (h: string | null) =>
@@ -1194,6 +1195,13 @@ const en = {
   // El día a día a ratos (8.6): tu mensaje para tus días, y lo que se ve de cada parada y de cada día.
   diaADia: {
     movida: "Moved by you",
+    // Un día tuyo que no pasa las cuentas de la puerta 9: se dice, y no se impide.
+    noCabe: {
+      hours: "This day does not fit: its visits and the time between them add up to more than a full day.",
+      jump: "This day does not fit: one of its trips between stops is too long for a single day.",
+    } as Record<string, string>,
+    noCabeCorto: "Does not fit",
+    tuEleccion: "It is your choice: you can keep it like this. When you close the trip, it stays as not confirmed.",
     masCerca: (nombre: string, min: number) => `Closest stay to this day: ${nombre}, about ${min} min on average`,
     laTuya: (min: number) => `Where you sleep is the closest stay to this day, about ${min} min on average`,
     escribe: "Ask for a change, in your words",
@@ -1978,6 +1986,7 @@ const es: Textos = {
       link_unchecked: (de) => `${de}: un enlace no se ha podido comprobar.`,
       papers_doubtful: (pais) => `Tus papeles para ${pais}: algo no está claro.`,
       papers_late: (pais) => `Tus papeles para ${pais}: un plazo ya ha pasado.`,
+      day_does_not_fit: (fecha) => `Tu día ${fecha} no cabe en un día: queda como lo dejaste.`,
     },
     llegada: {
       ok: (h) =>
@@ -2333,6 +2342,12 @@ const es: Textos = {
   },
   diaADia: {
     movida: "La moviste tú",
+    noCabe: {
+      hours: "Este día no cabe: sus visitas y lo que se tarda de una a otra suman más de un día entero.",
+      jump: "Este día no cabe: uno de sus trayectos entre paradas es demasiado largo para un solo día.",
+    },
+    noCabeCorto: "No cabe",
+    tuEleccion: "Es tu elección: puedes dejarlo así. Al cerrar el viaje, queda entre lo que no está confirmado.",
     masCerca: (nombre, min) => `El alojamiento más cerca de este día: ${nombre}, a unos ${min} min de media`,
     laTuya: (min) => `Donde duermes es lo más cerca de este día, a unos ${min} min de media`,
     escribe: "Pide un cambio, con tus palabras",

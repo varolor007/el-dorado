@@ -126,6 +126,38 @@ export type Repartido = {
   caminos?: TablaDeCaminos | null;
 };
 
+/** Por qué un día no cabe, por su clave: sus horas no caben en un día entero, o un salto no cabe en un día. */
+export type NoCabe = "hours" | "jump";
+
+/** Un trayecto de un día, de su parada `j` a la siguiente: lo que dice el día, lo que tiene el camino y su tiempo. */
+export type Salto = { j: number; metros: number; delCamino: number; minutos: number };
+
+/**
+ * Las cuentas de la puerta 9 para un día: lo que suman sus visitas y sus trayectos, cada trayecto con la manera que
+ * tenga sentido (con la tabla de caminos, lo que dijo la fuente entre esas dos paradas; sin ella, la cuenta de la
+ * casa) y por qué no cabe, si no cabe. Las mismas para el día que reparte el código y para el que dejan tus
+ * elecciones: así un día tuyo pasa las mismas cuentas que la puerta.
+ */
+export function cuentasDeUnDia(
+  dia: Pick<Dia, "paradas" | "metros">,
+  porId: ReadonlyMap<string, Parada>,
+  c: ReturnType<typeof caminosDe>,
+): { minutos: number; saltos: Salto[]; noCabe: NoCabe[] } {
+  let minutos = 0;
+  for (const id of dia.paradas) minutos += porId.get(id)?.minutos ?? 0;
+  const saltos = dia.metros.map((metros, j): Salto => {
+    const de = porId.get(dia.paradas[j])?.punto;
+    const a = porId.get(dia.paradas[j + 1])?.punto;
+    const ir = c !== undefined && de !== undefined && a !== undefined ? trayectoEntre(de, a, c) : trayecto(metros);
+    minutos += ir.minutos;
+    return { j, metros, delCamino: ir.metros, minutos: ir.minutos };
+  });
+  const noCabe: NoCabe[] = [];
+  if (minutos > DIA_ENTERO) noCabe.push("hours");
+  if (saltos.some((x) => !(x.metros >= 0) || x.minutos > TRAYECTO_DE_UN_DIA)) noCabe.push("jump");
+  return { minutos, saltos, noCabe };
+}
+
 /** Los porqués que valen para dejar fuera algo imprescindible: no los pone el viajero, los mide el código. */
 const NO_CABE = ["far", "full"];
 
@@ -146,26 +178,19 @@ export function puertaDias(r: Repartido): Veredicto {
   const puestas: string[] = [];
   r.dias.forEach((dia, i) => {
     const donde = `dias[${i}]`;
-    let minutos = 0;
     for (const id of dia.paradas) {
-      const p = porId.get(id);
-      if (p === undefined) rojo(donde, `lleva la parada ${id}, que no existe`);
-      else minutos += p.minutos;
+      if (!porId.has(id)) rojo(donde, `lleva la parada ${id}, que no existe`);
       if (puestas.includes(id)) rojo(donde, `la parada ${id} ya está en otro día`);
       puestas.push(id);
     }
-    dia.metros.forEach((metros, j) => {
-      // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger. Con
-      // la tabla de caminos, lo que dijo la fuente entre esas dos paradas; sin ella, la cuenta de la casa.
-      const de = porId.get(dia.paradas[j])?.punto;
-      const a = porId.get(dia.paradas[j + 1])?.punto;
-      const ir = c !== undefined && de !== undefined && a !== undefined ? trayectoEntre(de, a, c) : trayecto(metros);
-      if (c !== undefined && ir.metros !== metros)
-        rojo(donde, `de la parada ${j + 1} a la ${j + 2} dice ${metros} m, y el camino tiene ${ir.metros}`);
-      minutos += ir.minutos;
-      if (!(metros >= 0) || ir.minutos > TRAYECTO_DE_UN_DIA)
+    // Cada trayecto, con la manera que tenga sentido: andando si se anda, y si no, con lo que haya que coger.
+    const { minutos, saltos } = cuentasDeUnDia(dia, porId, c);
+    for (const { j, metros, delCamino, minutos: tarda } of saltos) {
+      if (c !== undefined && delCamino !== metros)
+        rojo(donde, `de la parada ${j + 1} a la ${j + 2} dice ${metros} m, y el camino tiene ${delCamino}`);
+      if (!(metros >= 0) || tarda > TRAYECTO_DE_UN_DIA)
         rojo(donde, `de la parada ${j + 1} a la ${j + 2} hay ${metros} m: ese trayecto no cabe dentro de un día`);
-    });
+    }
     if (dia.metros.length !== Math.max(0, dia.paradas.length - 1))
       rojo(donde, "no dice lo que se anda entre sus paradas");
     if (minutos > DIA_ENTERO)

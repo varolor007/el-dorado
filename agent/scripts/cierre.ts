@@ -10,6 +10,7 @@ import {
   LA_HORA_DE_LLEGADA,
   SUBIDA_QUE_SE_PREGUNTA,
 } from "../data/cierre.ts";
+import { cuentasDeUnDia } from "../gates/puerta_dias.ts";
 import type {
   CambioDePrecio,
   ClaseDePieza,
@@ -353,6 +354,11 @@ export function sinConfirmarDe(
     if (c.estado === "doubtful") pon("papers_doubtful", c.pais);
     if (c.tarde) pon("papers_late", c.pais);
   }
+  // Un día tuyo que no pasa las cuentas de la puerta 9 (sus horas o un salto): es tu elección, y se cierra con él,
+  // pero sin confirmar que se pueda hacer (8.6).
+  const porId = new Map(v.paradas.map((p) => [p.id, p]));
+  const c = caminosDe(v.caminos);
+  for (const d of v.dias) if (cuentasDeUnDia(d, porId, c).noCabe.length > 0) pon("day_does_not_fit", d.fecha);
   return s;
 }
 

@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { LARGO_DE_UN_MENSAJE, MENSAJES_DE_UN_VIAJE, PALABRAS_DE_UNA_CLASE } from "../../agent/data/dia_a_dia.ts";
 import { RAICES } from "../../agent/data/sitios.ts";
-import { puertaSitios } from "../../agent/gates/puerta_dias.ts";
+import { puertaDias, puertaSitios } from "../../agent/gates/puerta_dias.ts";
 import { adelanteDe, darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
 import {
   ampliarLosSitios,
@@ -33,8 +33,10 @@ import {
   loQueNoEstaba,
   masCercaDeCadaDia,
   MensajeQueNoVale,
+  noCabenTusDias,
   raicesDeLasClases,
 } from "../../agent/scripts/dia_a_dia.ts";
+import { conTusDias, sinConfirmarDe } from "../../agent/scripts/cierre.ts";
 import { diasElegidos, SIN_ELEGIR } from "../../agent/scripts/elecciones.ts";
 import { impactoDe } from "../../agent/scripts/impacto.ts";
 import type { Tabla } from "../../agent/scripts/formas.ts";
@@ -555,6 +557,58 @@ test("lo añadido por un mensaje de antes, detrás del corte, ya se da: no se vu
     assert.deepEqual(luego.anadidosEn, []);
     assert.equal(luego.sitios.filter((s: Sitio) => s.id === "Q11").length, 1);
     assert.deepEqual(mensajeParaElegir(run)?.new_sights, []);
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
+test("tus días pasan las cuentas de la puerta 9: el que no cabe se dice, y queda sin confirmar al cerrar", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const viaje = viajeDe(v);
+    const porQue = (x: Viaje) => ({
+      paradas: x.paradas,
+      dias: x.dias,
+      fuera: x.fuera,
+      porQue: x.porQueFuera,
+      sitios: x.paradas.map((p) => p.id),
+      caminos: x.caminos,
+    });
+    // Los días de la casa caben: pasan la puerta 9, y no hay nada que decir ni que dejar sin confirmar.
+    assert.deepEqual(noCabenTusDias(viaje, viaje.dias), {});
+    assert.ok(!sinConfirmarDe(viaje, [], [], "ok").some((s) => s.que === "day_does_not_fit"));
+    // La trampa: con visitas más largas, mueves todo al primer día. El reparto lo pone, quepa o no, porque es tu
+    // elección; y la casa, sin moverlo, lo reparte en días que caben.
+    const largo: Viaje = { ...viaje, paradas: viaje.paradas.map((p) => ({ ...p, minutos: 120 })) };
+    assert.deepEqual(noCabenTusDias(largo, conTusDias(largo, diasElegidos(largo, SIN_ELEGIR)).dias), {});
+    const moved = Object.fromEntries(viaje.paradas.map((p) => [p.id, 0]));
+    const tuyos = conTusDias(largo, diasElegidos(largo, { ...SIN_ELEGIR, moved }));
+    const primero = tuyos.dias[0].fecha;
+    assert.deepEqual(noCabenTusDias(tuyos, tuyos.dias), { [primero]: ["hours"] });
+    // Las mismas cuentas que la puerta: ella rechaza ese día y solo ese.
+    const rojos = puertaDias(porQue(tuyos)).rojos;
+    assert.ok(rojos.length > 0 && rojos.every((r) => r.donde === "dias[0]"), JSON.stringify(rojos));
+    // Al cerrar con ellos, ese día queda sin confirmar, por su fecha.
+    assert.deepEqual(
+      sinConfirmarDe(tuyos, [], [], "ok").filter((s) => s.que === "day_does_not_fit"),
+      [{ que: "day_does_not_fit", ref: primero }],
+    );
+    // Un salto que no cabe en un día: una parada muy lejos, puesta en el mismo día que otra.
+    const lejos = {
+      ...viaje.paradas[1],
+      punto: { lat: viaje.paradas[1].punto.lat + 4, lon: viaje.paradas[1].punto.lon },
+    };
+    const conLejos: Viaje = {
+      ...viaje,
+      caminos: undefined,
+      paradas: viaje.paradas.map((p) => (p.id === lejos.id ? lejos : p)),
+    };
+    const dia = { fecha: viaje.dias[0].fecha, paradas: [viaje.paradas[0].id, lejos.id] };
+    const conSalto = conTusDias(conLejos, [dia]);
+    assert.ok(noCabenTusDias(conSalto, conSalto.dias)[dia.fecha]?.includes("jump"));
+    assert.ok(
+      puertaDias(porQue(conSalto)).rojos.some((r) => r.donde === "dias[0]" && /no cabe dentro de un día/.test(r.que)),
+    );
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
