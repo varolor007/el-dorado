@@ -375,6 +375,9 @@ test("el cierre entero: precios de hoy, enlaces, el orden con sus frases, la pue
   const { c, r } = await cerrarCon(v, fuentes(alojamientoHoy(186)), lanzador);
   assert.equal(r.etapa, "done", JSON.stringify(JSON.parse(readFileSync(join(c.carpeta, "puerta8.json"), "utf8"))));
   assert.equal(lanzador.veces, 1);
+  // El presupuesto entero del viaje que cierras, delante del que explica (14.7).
+  const cuenta = JSON.parse(readFileSync(join(c.carpeta, "puestos", "orden-v1", "in", "budget.json"), "utf8"));
+  assert.ok(Array.isArray(cuenta.ways) && cuenta.ways.length > 0);
   const otra = leerViaje(v.ficha.id, "u-1", mesa);
   assert.equal(otra.ficha.estado, "closed");
   assert.equal(otra.ficha.version, 2);

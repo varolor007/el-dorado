@@ -2,8 +2,8 @@
 
 These rules win over the guide.
 
-- **CR1. You do not calculate.** Every number in your delivery is copied from `in/table.json`. You write no number
-  of your own, not even in a sentence.
+- **CR1. You do not calculate.** Every number in your delivery is copied from `in/table.json` (or, about the whole
+  budget, from `in/budget.json`: CR10). You write no number of your own, not even in a sentence.
 - **CR2. You never mix prices of different dates or of different groups.** A way is one row of the table, whole.
 - **CR3. Every lever of the fixed list gets its status**: tested, discarded or not available, with its reason.
 - **CR4. You stop by rule, not by feeling**: two rounds at most, and requests only in the first.
@@ -18,3 +18,7 @@ These rules win over the guide.
   are one request.
 - **CR9. A lever is told only if it is worth telling.** It saves at least one hundredth of the total it starts
   from: a saving smaller than that is not told to the traveller.
+- **CR10. You may tell the whole budget only with the numbers of `in/budget.json`.** The total of a row is lodging
+  and getting there; the whole budget adds tickets, getting around and getting from where you land to where you
+  sleep. A sentence about the whole budget copies its numbers from `in/budget.json`, never from anywhere else, and
+  never sums them.

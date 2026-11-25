@@ -26,6 +26,9 @@ every difference included, was computed by the house: you copy it.
   weekdays; another lodging; another zone), what it saves, and how the minutes to what they will see
   (`minutes_change`) and the score change.
 - `checks.json`: what was looked at beyond the table, with its status. It may be an empty list.
+- `budget.json`: the whole budget of each way, worked out by the house (`ways`: its total with what is known, how
+  many things are not known, what is in another currency, and part by part), and the meals apart, per person and
+  per day. See EX10.
 - `dates.json`, only if there is something to tell about the dates: what the calendar found and passed its checks.
   `trip` gives the dates of the trip, its days and its nights. Each entry of `findings` has its position
   (`finding`), its class (`kind`: `blocks`, `raises`, `bothers` or `favours`), its `topic`, its proper `name` or
@@ -40,9 +43,9 @@ every difference included, was computed by the house: you copy it.
 ## When the traveller closes the trip
 
 When the traveller says they keep their trip, you are given a different material, and you write only the order:
-`in/` holds `trip.json` (as always) and `closing.json`, and nothing else. Then you follow the section «When you close
-the trip» of `GUIDE.md`, the rule EX9 and the closing delivery of `DELIVERY.md`, and you write none of the other
-fields.
+`in/` holds `trip.json` (as always), `closing.json` and `budget.json` (the whole budget of the trip being kept, see
+EX10), and nothing else. Then you follow the section «When you close the trip» of `GUIDE.md`, the rule EX9 and the
+closing delivery of `DELIVERY.md`, and you write none of the other fields.
 
 - `closing.json`: what the house worked out when the traveller kept their trip. `trip` gives its dates, its nights,
   how many travel and its currency. Each entry of `steps` is a booking, in the order the house fixed (`step`): what

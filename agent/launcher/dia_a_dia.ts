@@ -31,6 +31,7 @@ import type { EntregaDeCruce, EntregaDeSitios, Entendido, Tabla } from "../scrip
 import { avisosDeSiempre } from "../scripts/monta_viaje.ts";
 import { diasDe } from "../scripts/ruta.ts";
 import type { Sitio } from "../tools/sitios.ts";
+import type { Presupuesto } from "../output/capas.ts";
 import { guardarJson, leerDiario, type ViajeEnLaMesa } from "./mesa.ts";
 import type { Pieza } from "./puesto.ts";
 import { leerElecciones, viajeDeLaVersion } from "./momentos.ts";
@@ -320,6 +321,7 @@ export function conservarElCruce(
   tabla: Tabla,
   viaje: Entendido,
   piezas: readonly Pieza[],
+  presupuesto?: Presupuesto,
 ): boolean {
   const desde = deDondeSale(run);
   const base = `cruce-${ronda}`;
@@ -328,7 +330,7 @@ export function conservarElCruce(
   if (loQueDecide(leer<Tabla>(desde, `tabla-${ronda}.json`)) !== loQueDecide(tabla)) return false;
   if (!mismoMaterial(desde, base, piezas)) return false;
   const entrega = leer<{ entrega: EntregaDeCruce }>(desde, `${base}.json`).entrega;
-  if (!puertaCruce(entrega, { tabla, viaje }).verde) return false;
+  if (!puertaCruce(entrega, { tabla, viaje, presupuesto }).verde) return false;
   return copiarPuestos(desde, run, base) > 0;
 }
 
@@ -342,6 +344,7 @@ export function conservarLaExplicacion(
   dado: ParaExplicar,
   viaje: Entendido,
   piezas: readonly Pieza[],
+  presupuesto?: Presupuesto,
 ): boolean {
   const desde = deDondeSale(run);
   if (desde === null || !hay(desde, "explica.json") || !sinPuestos(run, "explica")) return false;
@@ -357,7 +360,8 @@ export function conservarLaExplicacion(
       return false;
   }
   const entrega = leer<{ entrega: unknown }>(desde, "explica.json").entrega;
-  if (!puertaExplica(entrega, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).verde) return false;
+  if (!puertaExplica(entrega, { viaje, dado, avisos: avisosDeSiempre(viaje.language), presupuesto }).verde)
+    return false;
   return copiarPuestos(desde, run, "explica") > 0;
 }
 

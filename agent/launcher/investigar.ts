@@ -132,6 +132,13 @@ import {
 } from "./capa_entradas.ts";
 import { capaDeMoverse } from "./capa_moverse.ts";
 import { conLasCapas } from "./presupuesto.ts";
+import {
+  presupuestoParaElAsiento,
+  presupuestoParaElCruce,
+  presupuestoParaExplicar,
+  type ParaLaCuenta,
+} from "./presupuesto_delante.ts";
+import type { Presupuesto } from "../output/capas.ts";
 import { contar } from "./vivo.ts";
 import {
   ampliarLosSitios,
@@ -647,7 +654,7 @@ async function montarLaTabla(run: string, viaje: Entendido, f: Fuentes, ronda: n
   return tabla;
 }
 
-function piezasDelCruce(run: string, viaje: Entendido, ronda: number): Pieza[] {
+function piezasDelCruce(run: string, viaje: Entendido, ronda: number, presupuesto: Presupuesto): Pieza[] {
   const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
   const { zonas } = leer<DeLaRuta>(run, "ruta.json");
   const palancas = PALANCAS.map((p) => ({
@@ -663,6 +670,8 @@ function piezasDelCruce(run: string, viaje: Entendido, ronda: number): Pieza[] {
     { ruta: "lodgings.json", contenido: json(alojamientosParaCruzar(busqueda, miradosDe(run))) },
     { ruta: "route.json", contenido: json(zonas) },
     { ruta: "days.json", contenido: json(diasDe(viaje.dates.check_in, viaje.dates.check_out)) },
+    // El presupuesto entero de cada fila, de código (14.7): sus cifras son las únicas que puede decir de él.
+    { ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "row")) },
   ];
   if (ronda > 1)
     piezas.push({ ruta: "previous.json", contenido: json(leer<DelCruce>(run, `cruce-${ronda - 1}.json`).entrega) });
@@ -690,21 +699,16 @@ function loQueSeExplica(run: string, viaje: Entendido): ReturnType<typeof paraEx
   return deLasFechas === null ? dado : { ...dado, dates: deLasFechas };
 }
 
-function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar): Rojo[] {
-  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
-  const { zonas } = leer<DeLaRuta>(run, "ruta.json");
-  const { paradas } = leer<DeLosDias>(run, "dias.json");
-  const { tabla, cruce } = cruceCerrado(run);
-  const montado = montarViajeHecho({
+/** Lo del run con lo que se monta el viaje, con la tabla que se le da: todo menos el cruce y lo que se explica. */
+function paraLaCuenta(run: string, viaje: Entendido, tabla: Tabla): ParaLaCuenta {
+  return {
     id: `viaje-${viaje.destination.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${viaje.dates.check_in}`,
     viaje,
-    busqueda,
-    zonas,
+    busqueda: leer<{ busqueda: Busqueda }>(run, "busqueda.json").busqueda,
+    zonas: leer<DeLaRuta>(run, "ruta.json").zonas,
     mirados: miradosDe(run),
-    paradas,
+    paradas: leer<DeLosDias>(run, "dias.json").paradas,
     tabla,
-    cruce,
-    explica,
     transporte: transporteDe(run),
     alLado: alLadoDe(run),
     caminos: caminosDelRun(run),
@@ -713,7 +717,19 @@ function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar
       calendarioDelRun(run),
     ),
     papeles: paraElViajero(run),
-  });
+  };
+}
+
+/** El presupuesto entero para el que explica y su puerta: el de las maneras que cerró el que cruza (14.7). */
+function presupuestoDelRun(run: string, viaje: Entendido): Presupuesto {
+  const { tabla, cruce } = cruceCerrado(run);
+  return presupuestoParaExplicar(run, paraLaCuenta(run, viaje, tabla), cruce);
+}
+
+function montarElViaje(run: string, viaje: Entendido, explica: EntregaDeExplicar): Rojo[] {
+  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
+  const { tabla, cruce } = cruceCerrado(run);
+  const montado = montarViajeHecho({ ...paraLaCuenta(run, viaje, tabla), cruce, explica });
   // Las capas del destino que haya en el run, y el presupuesto entero, que es código (14.5).
   const hecho = conLasCapas(run, montado);
   const sucesos = sucesosDe(busqueda, hecho);
@@ -1202,16 +1218,19 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
           },
         ]);
       }
+      // El presupuesto entero va delante del que cruza (14.7): sus capas tienen que estar.
+      if (deAlli.length > 0) return espera(...deAlli);
+      const presupuesto = presupuestoParaElCruce(run, paraLaCuenta(run, viaje, tabla));
       // Con un mensaje para un día, si con esta tabla decide lo mismo que antes y con el mismo material, el que cruza
       // no se vuelve a lanzar.
-      const delCruce = piezasDelCruce(run, viaje, ronda);
-      conservarElCruce(run, ronda, tabla, viaje, delCruce);
+      const delCruce = piezasDelCruce(run, viaje, ronda, presupuesto);
+      conservarElCruce(run, ronda, tabla, viaje, delCruce, presupuesto);
       const r = recoger<EntregaDeCruce>(
         run,
         `cruce-${ronda}`,
         "trip-crosser",
         delCruce,
-        (e) => puertaCruce(e, { tabla, viaje }).rojos,
+        (e) => puertaCruce(e, { tabla, viaje, presupuesto }).rojos,
       );
       if ("espera" in r) return espera(r.espera);
       if ("parado" in r) return para("cross", "el cruce (puerta 6)", r.parado);
@@ -1235,21 +1254,24 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
     if (calendario !== null) return espera(calendario);
     if (deAlli.length > 0) return espera(...deAlli);
     const dado = loQueSeExplica(run, viaje);
+    // El presupuesto entero, hecho antes de que explique (14.7): el mismo que llevará el viaje.
+    const presupuesto = presupuestoDelRun(run, viaje);
     const piezas: Pieza[] = [
       { ruta: "trip.json", contenido: json(viaje) },
       { ruta: "ways.json", contenido: json(dado.ways) },
       { ruta: "levers.json", contenido: json(dado.levers) },
       { ruta: "checks.json", contenido: json(dado.checks) },
+      { ruta: "budget.json", contenido: json(presupuestoParaElAsiento(presupuesto, "way")) },
     ];
     if (dado.dates !== undefined) piezas.push({ ruta: "dates.json", contenido: json(dado.dates) });
     // Y si el que cruza se quedó con lo de antes, el que explica también, si se le da lo mismo y pasa su puerta.
-    conservarLaExplicacion(run, dado, viaje, piezas);
+    conservarLaExplicacion(run, dado, viaje, piezas, presupuesto);
     const r = recoger<EntregaDeExplicar>(
       run,
       "explica",
       "trip-explainer",
       piezas,
-      (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language) }).rojos,
+      (e) => puertaExplica(e, { viaje, dado, avisos: avisosDeSiempre(viaje.language), presupuesto }).rojos,
     );
     if ("espera" in r) return espera(r.espera);
     if ("parado" in r) return para("explain", "la explicación (puerta 7)", r.parado);
