@@ -2749,3 +2749,157 @@ select.toque {
   gap: 6px;
   justify-items: start;
 }
+
+/* ---------- Las capas del destino (14.6): la pestaña «Allí», la entrada de cada parada, el coste de un trayecto y el
+   presupuesto entero. Con las piezas de «Tus fechas»: cada dato, con su clase, su frase, su precio y su fuente. */
+.alli .fechas__sub {
+  margin-top: 4px;
+}
+.alli__clase {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.alli__cosa {
+  gap: 4px;
+}
+.alli__precio {
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+.alli__enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.alli__enlaces .enlace,
+.alli__linea .enlace,
+.entrada .enlace,
+.tramo__coste .enlace,
+.presupuesto .enlace {
+  font-size: 0.8rem;
+}
+.alli__linea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--tinta-suave);
+}
+.entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 2px 0 10px 66px;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  background: var(--velo);
+}
+.entrada__parte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.entrada__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  width: 100%;
+}
+.entrada__dia {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 400 0.76rem/1.5 var(--numeros);
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+.entrada__dia--puesto {
+  color: var(--tinta);
+  font-weight: 600;
+}
+.entrada__dia--cierra > span:last-child {
+  color: var(--ojo);
+}
+.tramo__coste {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.presupuesto__total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+.presupuesto__total b {
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+.presupuesto__partes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.parte {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--raya);
+  font-size: 0.88rem;
+}
+.parte__nombre {
+  color: var(--tinta);
+}
+.parte__cuanto {
+  text-align: right;
+  font: 500 0.86rem/1.4 var(--numeros);
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+.parte--unknown .parte__cuanto {
+  color: var(--tinta-tenue);
+  font-weight: 400;
+}
+.parte__origen,
+.parte__fuentes {
+  grid-column: 1 / -1;
+}
+.parte__fuentes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+.presupuesto__comidas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  background: var(--oro-tinte);
+  font-size: 0.88rem;
+}
+.presupuesto__comidas b {
+  font-weight: 600;
+  color: var(--tinta);
+}
+.presupuesto__comidas .suave {
+  margin: 0;
+}
+@media (max-width: 860px) {
+  .entrada {
+    margin-left: 0;
+  }
+}

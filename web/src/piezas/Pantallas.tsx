@@ -29,7 +29,8 @@ import { masCercaDeCadaDia, noCabenTusDias } from "../../../agent/scripts/dia_a_
 import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
 import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
-import { Alli, ElPresupuesto, EntradaDeLaParada } from "./Alli.tsx";
+import { Alli, CosteDelTrayecto, diceSiReservar, ElPresupuesto, EntradaDeLaParada, FichaDeLaEntrada } from "./Alli.tsx";
+import { presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -170,6 +171,12 @@ export function fraseDeSuceso(s: Suceso, t: Textos, idioma: string, deNoches: nu
       return { n: null, texto: t.vivo.stopped() };
     case "retry":
       return { n: null, texto: t.vivo.retry(t.casa.pasos[s.ref ?? ""] ?? "") };
+    case "ways_around":
+      return { n, texto: t.vivo.ways_around(s.n ?? 0) };
+    case "good_to_know":
+      return { n, texto: t.vivo.good_to_know(s.n ?? 0) };
+    case "tickets_known":
+      return { n, texto: t.vivo.tickets_known(s.n ?? 0) };
     case "conductor": {
       const texto = t.vivo.conductor(s.ref ?? "");
       return texto === null ? null : { n: null, texto };
@@ -484,6 +491,8 @@ function Dias(x: DeViaje) {
   // Tus días, por las mismas cuentas de la puerta 9: el que no cabe lo dice, y se queda como lo dejaste (8.6).
   const noCaben = noCabenTusDias(viaje, reparto.dias);
   const noCabeElAbierto = abierto === null ? [] : (noCaben[abierto.fecha] ?? []);
+  // Quiénes viajan, para lo que cuesta cada entrada y cada trayecto para el grupo (14.6).
+  const grupo = { adultos: viaje.adultos, ninos: viaje.ninos };
   return (
     <>
       <div className="grupo">
@@ -588,6 +597,9 @@ function Dias(x: DeViaje) {
                       {t.viaje.comoIr}
                     </a>
                   )}
+                  {desdeLaCama.cogiendo.length > 0 && (
+                    <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
+                  )}
                 </span>
               </div>
             )}
@@ -611,8 +623,17 @@ function Dias(x: DeViaje) {
                         {p.mejorHora !== undefined && t.parada.hora[p.mejorHora] !== undefined && (
                           <span className="pastilla">{t.parada.hora[p.mejorHora]}</span>
                         )}
-                        {p.reservar === true && <span className="pastilla">{t.parada.reservar}</span>}
-                        <EntradaDeLaParada t={t} entradas={x.viaje.entradas} parada={p.id} />
+                        {p.reservar === true && !diceSiReservar(x.viaje.entradas, p.id) && (
+                          <span className="pastilla">{t.parada.reservar}</span>
+                        )}
+                        <EntradaDeLaParada
+                          t={t}
+                          idioma={idioma}
+                          entradas={x.viaje.entradas}
+                          parada={p.id}
+                          fecha={abierto.fecha}
+                          grupo={grupo}
+                        />
                         {x.anadidas.includes(p.id) && <span className="pastilla">{t.acciones.tuya}</span>}
                         {!x.anadidas.includes(p.id) && x.fijadas?.[p.id] !== undefined && (
                           <span className="pastilla">{t.diaADia.movida}</span>
@@ -640,6 +661,17 @@ function Dias(x: DeViaje) {
                       )}
                     </div>
                   )}
+                  {x.parada === p.id && (
+                    <FichaDeLaEntrada
+                      t={t}
+                      idioma={idioma}
+                      entradas={x.viaje.entradas}
+                      parada={p.id}
+                      fecha={abierto.fecha}
+                      fechas={reparto.dias.map((d) => d.fecha)}
+                      grupo={grupo}
+                    />
+                  )}
                   {i < todas.length - 1 && (
                     <div className="tramo">
                       <span className="tramo__texto">
@@ -654,6 +686,9 @@ function Dias(x: DeViaje) {
                           >
                             {t.viaje.comoIr}
                           </a>
+                        )}
+                        {irEntre(p.punto, todas[i + 1].punto, c, idioma).cogiendo.length > 0 && (
+                          <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
                         )}
                       </span>
                     </div>
@@ -800,6 +835,25 @@ function Dormir(x: DeViaje) {
   );
 }
 
+/**
+ * Lo que has cambiado desde que se hizo el presupuesto del viaje (14.6): el ritmo, las paradas, y dónde duermes o cómo
+ * llegas si ya no son los precios de su presupuesto. Con algo cambiado, el presupuesto que se enseña es el de antes.
+ */
+function tusCambios(x: DeViaje, viaje: Viaje, marcada: Manera | undefined): TusCambios {
+  const partes = viaje.presupuesto?.maneras.find((m) => m.manera === marcada?.id)?.partes ?? [];
+  const otro = (parte: string, precio: number | undefined): boolean => {
+    const p = partes.find((y) => y.parte === parte);
+    return p?.total != null && precio !== undefined && Math.abs(p.total - precio) > 0.01;
+  };
+  const transporte = viaje.transportes.find((y) => y.id === marcada?.transporte);
+  return {
+    ritmo: x.ritmo !== viaje.ritmo,
+    paradas: x.quitadas.length > 0 || x.anadidas.length > 0 || Object.keys(x.fijadas ?? {}).length > 0,
+    alojamiento: otro("lodging", viaje.alojamientos.find((y) => y.id === marcada?.alojamiento)?.precio.total),
+    transporte: otro("transport", transporte?.precio.total),
+  };
+}
+
 function Cuentas(x: DeViaje) {
   const { t, idioma, viaje } = x;
   const tope = Math.max(...viaje.maneras.map((m) => m.total), 1);
@@ -835,7 +889,13 @@ function Cuentas(x: DeViaje) {
           </button>
         )}
       </div>
-      <ElPresupuesto t={t} idioma={idioma} presupuesto={viaje.presupuesto} manera={marcada?.id ?? ""} />
+      <ElPresupuesto
+        t={t}
+        idioma={idioma}
+        manera={marcada?.id ?? ""}
+        dias={x.reparto.dias.length}
+        {...presupuestoQueSeEnsena(viaje.presupuesto, tusCambios(x, viaje, marcada))}
+      />
       {viaje.palancas.length > 0 && (
         <div className="grupo">
           <h2 className="titulo">{t.viaje.palancas}</h2>
@@ -1123,7 +1183,7 @@ export function TuViaje(x: DeViaje) {
         {x.pestana === "days" && <Dias {...x} />}
         {x.pestana === "stay" && <Dormir {...x} viaje={conLoTuyo(x)} />}
         {x.pestana === "money" && <Cuentas {...x} viaje={conLoTuyo(x)} />}
-        {x.pestana === "there" && <Alli t={t} idioma={idioma} viaje={viaje} />}
+        {x.pestana === "there" && <Alli t={t} idioma={idioma} viaje={viaje} dias={reparto.dias} />}
         {x.pestana === "notes" && <Avisos {...x} />}
       </div>
     </>

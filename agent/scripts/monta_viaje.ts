@@ -300,10 +300,37 @@ export function sucesosDe(b: Busqueda, v: Viaje): Suceso[] {
   v.dias.forEach((dia, i) => {
     if (dia.paradas.length > 0) pasa(700, { clase: "day", n: i + 1, nombre: dia.titulo });
   });
+  for (const s of sucesosDeLasCapas(v)) pasa(500, s);
   for (const m of v.maneras) pasa(600, { clase: "way", ref: m.id });
   for (const p of v.palancas) pasa(500, { clase: "lever", ref: p.id });
   pasa(900, { clase: "done" });
   return sucesos;
+}
+
+/**
+ * Lo que cuentan las capas del destino (14.6): cuántas cosas trae cada una que esté y no falte. Lo mismo en vivo
+ * (`agent/launcher/vivo.ts`, de los archivos del run) que al grabar la investigación para volver a verla.
+ */
+export function sucesosDeLasCapas(c: {
+  moverse?: { llegar: unknown[]; transportes: unknown[]; billetes: unknown[]; falta: unknown };
+  saber?: { cosas: unknown[]; falta: unknown };
+  entradas?: { sitios: { precios: unknown; horarios: unknown }[]; falta: unknown };
+}): Omit<Suceso, "t">[] {
+  const n = (xs: unknown): number => (Array.isArray(xs) ? xs.length : 0);
+  const m = c.moverse?.falta === null ? c.moverse : undefined;
+  const s = c.saber?.falta === null ? c.saber : undefined;
+  const e = c.entradas?.falta === null ? c.entradas : undefined;
+  const dichos: Omit<Suceso, "t">[] = [
+    { clase: "ways_around", n: m === undefined ? 0 : n(m.llegar) + n(m.transportes) + n(m.billetes) },
+    { clase: "good_to_know", n: s === undefined ? 0 : n(s.cosas) },
+    {
+      clase: "tickets_known",
+      n: (Array.isArray(e?.sitios) ? e.sitios : []).filter(
+        (x) => Array.isArray(x?.precios) || Array.isArray(x?.horarios),
+      ).length,
+    },
+  ];
+  return dichos.filter((x) => (x.n ?? 0) > 0);
 }
 
 // El viaje hecho por el agente: las mismas piezas, pero decididas por sus asientos y por el código, no a mano.

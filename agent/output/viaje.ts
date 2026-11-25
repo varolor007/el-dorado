@@ -545,6 +545,11 @@ export const SUCESOS = [
   // El viajero pidió otra vuelta del paso que paró la investigación: `ref` dice el paso, y `n`, cuál de sus
   // pulsaciones es. Una parada que venga después lleva ese mismo `n`.
   "retry",
+  // Lo que encontraron las capas del destino (14.6): `n` cosas de cómo moverse, de lo que conviene saber y sitios con
+  // su entrada o su horario. Solo el número: lo encontrado se ve en el viaje.
+  "ways_around",
+  "good_to_know",
+  "tickets_known",
 ] as const;
 
 export type Suceso = {
