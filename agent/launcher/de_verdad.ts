@@ -117,7 +117,9 @@ export function resumenDe(r: DeVerdad): string[] {
   else lineas.push(`Sin acabar. Esperan: ${llevado.esperan.join(", ") || "nadie"}`);
   for (const aviso of llevado.avisos) lineas.push(`Aviso: ${aviso}`);
   const g = llevado.gasto;
-  const gastado = `${dolares(g.usd)}${g.sabido ? "" : " o más: de algún trabajo no se sabe"}`;
+  const gastado =
+    `${dolares(g.usd)}${g.sabido ? "" : " o más: de algún trabajo no se sabe"}` +
+    (g.deCortados > 0 ? ` (${dolares(g.deCortados)} de asientos cortados, contado hasta el corte)` : "");
   lineas.push(
     `Tardó ${Math.floor(r.segundos / 60)} min ${r.segundos % 60} s. Gastó ${gastado}, ` +
       `en ${g.turnos} llamadas (${g.entrada} de entrada y ${g.salida} de salida).`,
@@ -125,7 +127,10 @@ export function resumenDe(r: DeVerdad): string[] {
   for (const t of trabajosDe(run)) {
     const segundos =
       t.desde !== null && t.hasta !== null ? Math.round((Date.parse(t.hasta) - Date.parse(t.desde)) / 1000) : null;
-    const gasto = t.gasto === null ? "gasto sin saber" : dolares(t.gasto.usd);
+    const gasto =
+      t.gasto === null
+        ? "gasto sin saber"
+        : `${dolares(t.gasto.usd)}${t.gasto.cortado === true ? " hasta que se le cortó" : ""}`;
     lineas.push(
       `  ${t.puesto} (${t.asiento}): ${t.estado}, ${segundos ?? "?"} s, ${gasto}${t.fallo ? `, ${t.fallo}` : ""}`,
     );

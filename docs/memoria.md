@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (972 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (989 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -214,8 +214,8 @@ contado aparte. Lo que cierra en tus días: `cierranTusDias`, `stop_closed` al c
 presupuesto delante: `agent/launcher/presupuesto_delante.ts`, con `budget.json` para el que cruza (por fila), para el
 que explica y para el orden al cerrar; CR10 y EX10 en sus contratos; el que cruza espera ahora a moverse y al
 destino. Cerrar: `Reserva.enlace` y `enlaceDeLaEntrada`, mirados por la puerta 8. El techo: `Trabajo.cota`,
-`gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`), **sin cifra enchufada**: con un
-techo puesto, una capa cortada sin decir lo que gastó sigue parando la investigación, como antes. Al juntar: la
+`gastoParaElTecho` y `AlLlevar.cota` (`agent/launcher/trabajos.ts` y `casa.ts`); ver «El techo con las capas». Al
+juntar: la
 cuenta que ven el que cruza, el que explica y el cierre usa las zonas que trae el viaje, como la del viaje; y lo que
 avisan los datos abiertos (que Overpass no contesta) queda en los avisos del run (`abiertos.json`) y la
 investigación lo dice con sus demás avisos (`avisosDeLosAbiertos`). Pruebas:
@@ -223,6 +223,26 @@ investigación lo dice con sus demás avisos (`avisosDeLosAbiertos`). Pruebas:
 de mentira; el cierre con su enlace y el adelante del botón, solo en pruebas. Sabido: el primer mensaje para un día
 sobre un viaje de antes vuelve a lanzar una vez al que cruza y al que explica, porque su material cambia; y cambiar
 lo que buscas vuelve a lanzar al que conoce el destino, que no lo lee. Sin ver con IA.
+
+**El techo con las capas (14.7), junto** (25-nov, otra sesión de obra). El lanzador cortado acaba con
+`errorDeUnCortado` (`agent/launcher/asiento.ts`): `gasto.cortado` y `cota`, lo más que quedó sin contar;
+`lanzarAsiento` espera `GRACIA_AL_CORTAR` (8 segundos) y, tras el corte, solo cree un error marcado como de cortado.
+La llamada directa cuenta por el flujo (`apuntarSuceso` y `parcialDeLaCuenta`, en `ia_de_verdad.ts`) y
+`lanzadorDirecto` lo pasa a dólares (`parcialDe`, `cotaDeLoSinContar`, en `ia.ts`): la cota es lo que la vuelta en
+marcha aún podía escribir; si esa vuelta ya había empezado una búsqueda, o no había dicho lo que leyó, no hay cota.
+Claude Code solo da dólares si llega su resultado, que cortado no llega (`parcialDeClaudeCode`), y va sin precio:
+**con la cuenta de la casa, el techo se trata como antes**. `gastoParaElTecho` suma gasto y cota de un cortado (sin
+cota, null: no se sigue a ciegas), y `gastoDe` lleva `deCortados` y deja `sabido` en falso. El acta lleva `cortado` y
+`total.de_cortados`; `/cuenta/gasto`, `cut_usd`, que la web aún no enseña. Sin comprobar, para el ensayo: que el
+flujo de verdad diga lo que la documentación dice, que cortar deje de cobrar donde se deja de recibir, y si Claude
+Code da un resultado al cortarlo con cuidado. De la revisión, arreglado: `cerrarLosCortados` y la capa que entrega
+sin decir su gasto llevan la misma regla (`cotaDelTrabajo`); y lo que trabaja cuenta según lo va diciendo: el
+lanzador tiene un cuarto argumento, `alContar(gasto, cota)`, `lanzarAsiento` acepta `{ corte, alContar }` (con
+`cortadoDeFuera`), la casa lleva en memoria lo que trabaja (`vivos`) y `gastoParaElTecho(run, enMarcha)` lo suma; si
+se llega al techo, las capas en marcha se cortan y no se lanza más (lo que no es capa acaba, y después se para).
+Sabido: con Claude Code no se dice nada por el camino, y ahí el techo se puede pasar con lo que corre a la vez, como
+antes; con la llamada directa queda un rato sin contar, entre que se manda una vuelta y dice lo que leyó; y
+`lanzarPorDetras` sigue sin el tope de asientos a la vez.
 
 **El visto bueno a las tandas 4 y 5** (25-nov). El PM, a su punto de situación: «lo único, lo del idioma, que no es
 que se niegue, simplemente di que todavía no están soportados. Y por lo demás, nada, yo creo que ok, seguimos para

@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { join } from "node:path";
 import { topesDeInternet, USD_POR_BUSQUEDA } from "../data/internet.ts";
 import { ENTREGA, INTERNET, PASOS } from "../gates/puerta_metodo.ts";
-import { ordenDeApertura, type Gasto, type Lanzador } from "./asiento.ts";
+import { errorDeUnCortado, ordenDeApertura, type Gasto, type Lanzador } from "./asiento.ts";
 import { guardarConsultado, loQueNoPuedeSalir, NADA_CONSULTADO, type Consultado } from "./consultado.ts";
 import { runDe, type Puesto } from "./puesto.ts";
 
@@ -47,8 +47,51 @@ export type Respuesta = {
   consultado?: Consultado;
 };
 
-/** Quien llama a la IA de verdad. Si no llega a contestar, lanza un error. */
-export type Pensar = (p: Peticion, corte?: AbortSignal) => Promise<Respuesta>;
+/**
+ * Lo que quien piensa llevaba contado cuando se le cortó o falló a medias (14.7): lo de las vueltas acabadas y lo
+ * que ya dijo la que estaba en marcha. `sinContar` es lo más que pudo quedar fuera de eso, en sus unidades: lo que
+ * pudo leer y escribir todavía la vuelta en marcha y las búsquedas que pudo cobrar; null si no se puede acotar.
+ */
+export type Parcial = Pick<Respuesta, "entrada" | "salida" | "usd" | "turnos" | "busquedas" | "consultado"> & {
+  sinContar: { entrada: number; salida: number; busquedas: number } | null;
+};
+
+/**
+ * Quien llama a la IA de verdad. Si no llega a contestar, lanza un error; si se le corta o falla a medias, el error
+ * lleva en `parcial` lo que llevaba contado.
+ */
+export type Pensar = (p: Peticion, corte?: AbortSignal, alContar?: (lleva: Parcial) => void) => Promise<Respuesta>;
+
+const cuentaQueVale = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n >= 0;
+
+/** Lo que lleva colgado el error de quien piensa, si vale; si no, null. */
+export function parcialDe(e: unknown): Parcial | null {
+  const x = (typeof e === "object" && e !== null ? (e as { parcial?: unknown }).parcial : null) as Partial<Parcial>;
+  if (typeof x !== "object" || x === null || !cuentaQueVale(x.entrada) || !cuentaQueVale(x.salida)) return null;
+  const s = x.sinContar;
+  const sinContar =
+    typeof s === "object" &&
+    s !== null &&
+    cuentaQueVale(s.entrada) &&
+    cuentaQueVale(s.salida) &&
+    cuentaQueVale(s.busquedas)
+      ? { entrada: s.entrada, salida: s.salida, busquedas: s.busquedas }
+      : null;
+  return { ...x, entrada: x.entrada, salida: x.salida, sinContar } as Parcial;
+}
+
+/**
+ * Lo más que pudo quedar sin contar de un asiento cortado, en dólares: lo que pudo leer y escribir aún la vuelta en
+ * marcha, a su precio, y sus búsquedas. Sin precio o sin acotar, null: no se inventa.
+ */
+export function cotaDeLoSinContar(
+  sin: Parcial["sinContar"],
+  precio: Precio | null,
+  porBusqueda: number = USD_POR_BUSQUEDA,
+): number | null {
+  if (sin === null || precio === null) return null;
+  return (sin.entrada * precio.entrada + sin.salida * precio.salida) / 1e6 + sin.busquedas * porBusqueda;
+}
 
 /** Lo que cuesta la IA con la que se piensa, en dólares por millón: lo dice el entorno, con el modelo. */
 export type Precio = { entrada: number; salida: number };
@@ -220,11 +263,40 @@ export function precioDe(entorno: Record<string, string | undefined>): Precio {
  * respuesta no vale. Sin precio, lo que gastó lo tiene que decir quien piensa.
  */
 export function lanzadorDirecto(pensar: Pensar, precio: Precio | null): Lanzador {
-  return async (_orden, puesto, corte) => {
+  return async (_orden, puesto, corte, alContar) => {
     const peticion = peticionDe(puesto);
-    const r = await pensar(peticion, corte);
-    const gasto = gastoDe(r, precio);
     const run = runDe(puesto);
+    let r: Respuesta;
+    try {
+      // Lo que va diciendo quien piensa, en dólares, para quien lleva la cuenta del techo (14.7). Sin dólares, nada.
+      const lleva =
+        alContar === undefined
+          ? undefined
+          : (parcial: Parcial): void => {
+              try {
+                alContar(gastoDe(parcial, precio), cotaDeLoSinContar(parcial.sinContar, precio));
+              } catch {
+                // Sin precio ni coste dicho no hay dólares que decir.
+              }
+            };
+      r = await pensar(peticion, corte, lleva);
+    } catch (e) {
+      const mensaje = e instanceof Error ? e.message : String(e);
+      const parcial = parcialDe(e);
+      if (parcial === null) throw e;
+      // Lo que buscó y abrió antes del corte se guarda igual: la puerta de todos lo mira.
+      if (parcial.consultado !== undefined && run !== null && existsSync(run) && statSync(run).isDirectory())
+        guardarConsultado(puesto, parcial.consultado);
+      // Lo gastado hasta el corte, si se puede decir en dólares: lo dijo quien piensa o hay precio. Si no, como antes.
+      let gasto: Gasto | null = null;
+      try {
+        gasto = gastoDe(parcial, precio);
+      } catch {
+        gasto = null;
+      }
+      throw errorDeUnCortado(mensaje, gasto, cotaDeLoSinContar(parcial.sinContar, precio));
+    }
+    const gasto = gastoDe(r, precio);
     const consultado = r.consultado ?? NADA_CONSULTADO;
     const salio = consultado.busquedas.length + consultado.paginas.length + consultado.fallidas.length > 0;
     if (run !== null && existsSync(run) && statSync(run).isDirectory()) {

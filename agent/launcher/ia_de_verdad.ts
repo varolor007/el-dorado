@@ -11,7 +11,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { LO_MAS_DE_UNA_PAGINA, VUELTAS_CON_INTERNET } from "../data/internet.ts";
 import type { Busqueda, Consultado, Pagina } from "./consultado.ts";
-import type { Internet, Parte, Pensar, Peticion, Respuesta } from "./ia.ts";
+import type { Internet, Parcial, Parte, Pensar, Peticion, Respuesta } from "./ia.ts";
 
 /** Lo más que puede medir una respuesta. Va por partes, para que una larga no se corte por esperar. */
 export const MAXIMO_DE_UNA_RESPUESTA = 64_000;
@@ -152,7 +152,7 @@ export function pensarConClaude(
   con: ConQue,
   cliente: (clave: string) => ClienteDeIA = clienteDe,
 ): Pensar {
-  return async (p, corte) => {
+  return async (p, corte, alContar) => {
     const herramientas = p.internet ? herramientasDe(p.internet) : null;
     const pregunta = mensajesDe(p);
     const dicho: Anthropic.ContentBlock[] = [];
@@ -161,33 +161,58 @@ export function pensarConClaude(
     let busquedas: number | undefined;
     let turnos = 0;
     let fin: Respuesta["fin"] = "end";
+    // Lo que va diciendo la vuelta en marcha, según llega por el flujo (14.7). Las cifras de `message_delta` son
+    // acumuladas en la vuelta; las de `message_start`, lo que leyó al empezar.
+    let enMarcha: EnMarcha | null = null;
     try {
       for (;;) {
+        // Con el corte ya dado no se manda otra vuelta: lo que no se mandó no se cobra.
+        if (corte?.aborted) {
+          enMarcha = null;
+          throw new Anthropic.APIUserAbortError();
+        }
         turnos++;
-        const respuesta = await cliente(clave)
-          .messages.stream(
-            {
-              model: con.modelo,
-              max_tokens: MAXIMO_DE_UNA_RESPUESTA,
-              thinking: { type: "adaptive" },
-              ...(con.esfuerzo === null ? {} : { output_config: { effort: con.esfuerzo } }),
-              system: p.contrato,
-              ...(herramientas === null ? {} : { tools: herramientas }),
-              // Para seguir tras una pausa se le manda lo que ya dijo, tal cual, y nada más.
-              messages:
-                dicho.length === 0
-                  ? pregunta
-                  : [...pregunta, { role: "assistant", content: dicho as Anthropic.ContentBlockParam[] }],
-            },
-            { signal: corte },
-          )
-          .finalMessage();
+        enMarcha = { empezo: null, va: null, herramienta: false };
+        const flujo = cliente(clave).messages.stream(
+          {
+            model: con.modelo,
+            max_tokens: MAXIMO_DE_UNA_RESPUESTA,
+            thinking: { type: "adaptive" },
+            ...(con.esfuerzo === null ? {} : { output_config: { effort: con.esfuerzo } }),
+            system: p.contrato,
+            ...(herramientas === null ? {} : { tools: herramientas }),
+            // Para seguir tras una pausa se le manda lo que ya dijo, tal cual, y nada más.
+            messages:
+              dicho.length === 0
+                ? pregunta
+                : [...pregunta, { role: "assistant", content: dicho as Anthropic.ContentBlockParam[] }],
+          },
+          { signal: corte },
+        );
+        const esta = enMarcha;
+        // Lo que lleva contado hasta ahora, con lo de esta vuelta, para quien lleva el techo (14.7).
+        const dice = (m: EnMarcha | null): void =>
+          alContar?.(parcialDeLaCuenta({ entrada, salida, busquedas, turnos }, m, herramientas !== null));
+        if (typeof (flujo as { on?: unknown }).on === "function")
+          flujo.on("streamEvent", (suceso) => {
+            apuntarSuceso(esta, suceso);
+            const tipo = (suceso as { type?: unknown }).type;
+            if (
+              tipo === "message_start" ||
+              tipo === "message_delta" ||
+              (tipo === "content_block_start" && esta.herramienta)
+            )
+              dice(esta);
+          });
+        const respuesta = await flujo.finalMessage();
+        enMarcha = null;
         const uso = respuesta.usage;
         entrada += uso.input_tokens + (uso.cache_creation_input_tokens ?? 0) + (uso.cache_read_input_tokens ?? 0);
         salida += uso.output_tokens;
         const cobradas = uso.server_tool_use?.web_search_requests;
         if (typeof cobradas === "number") busquedas = (busquedas ?? 0) + cobradas;
         dicho.push(...respuesta.content);
+        dice(null);
         if (respuesta.stop_reason !== "pause_turn") {
           fin = finDe(respuesta.stop_reason);
           break;
@@ -199,7 +224,15 @@ export function pensarConClaude(
         }
       }
     } catch (e) {
-      throw falloDe(e);
+      // Se dice lo que se llevaba contado: lo de las vueltas acabadas y lo que dijo ya la que estaba en marcha. Si
+      // no se llegó a saber nada (falló al llamar, antes de que la IA dijera nada), es un fallo como siempre.
+      const acabadas = turnos - (enMarcha === null ? 0 : 1);
+      const nada = acabadas === 0 && (enMarcha === null || (enMarcha.empezo === null && enMarcha.va === null));
+      if (nada) throw falloDe(e);
+      const parcial = parcialDeLaCuenta({ entrada, salida, busquedas, turnos }, enMarcha, herramientas !== null);
+      throw Object.assign(falloDe(e), {
+        parcial: { ...parcial, ...(herramientas === null ? {} : { consultado: consultadoDe(dicho) }) },
+      });
     }
     return {
       // Lo que piensa por dentro no es su respuesta: solo cuenta el texto que dice.
@@ -212,6 +245,86 @@ export function pensarConClaude(
         ? {}
         : { consultado: consultadoDe(dicho), ...(busquedas === undefined ? {} : { busquedas }) }),
     };
+  };
+}
+
+/**
+ * Lo que dijo la vuelta en marcha por su flujo: lo que leyó al empezar (`message_start`), lo que llevaba al final
+ * (`message_delta`, con sus cifras acumuladas) y si llegó a pedir una herramienta del servidor.
+ */
+export type EnMarcha = {
+  empezo: { entrada: number; salida: number } | null;
+  va: { entrada: number | null; salida: number; busquedas: number | null } | null;
+  herramienta: boolean;
+};
+
+const n = (x: unknown): number => (typeof x === "number" && Number.isFinite(x) && x >= 0 ? x : 0);
+
+/** Apunta un suceso del flujo en lo que va diciendo la vuelta en marcha. */
+export function apuntarSuceso(m: EnMarcha, suceso: unknown): void {
+  const s = (typeof suceso === "object" && suceso !== null ? suceso : {}) as Record<string, unknown>;
+  if (s.type === "message_start") {
+    const uso = ((s.message as { usage?: unknown } | undefined)?.usage ?? {}) as Record<string, unknown>;
+    m.empezo = {
+      entrada: n(uso.input_tokens) + n(uso.cache_creation_input_tokens) + n(uso.cache_read_input_tokens),
+      salida: n(uso.output_tokens),
+    };
+  } else if (s.type === "message_delta") {
+    const uso = (s.usage ?? {}) as Record<string, unknown>;
+    const leyo = [uso.input_tokens, uso.cache_creation_input_tokens, uso.cache_read_input_tokens];
+    const conEntrada = typeof uso.input_tokens === "number";
+    const herramientas = (uso.server_tool_use ?? null) as Record<string, unknown> | null;
+    m.va = {
+      entrada: conEntrada ? leyo.reduce<number>((t, x) => t + n(x), 0) : null,
+      salida: n(uso.output_tokens),
+      busquedas: herramientas === null ? null : n(herramientas.web_search_requests),
+    };
+  } else if (s.type === "content_block_start") {
+    const tipo = (s.content_block as { type?: unknown } | undefined)?.type;
+    if (typeof tipo === "string" && (tipo === "server_tool_use" || tipo.endsWith("_tool_result"))) m.herramienta = true;
+  }
+}
+
+/**
+ * Lo que se llevaba contado al cortarse, y lo más que pudo quedar fuera (14.7). Lo de las vueltas acabadas, entero.
+ * De la vuelta en marcha: si ya dijo su cuenta del final, esa; si solo dijo lo que leyó al empezar, eso, y fuera
+ * queda como mucho lo que pudo escribir aún (hasta `MAXIMO_DE_UNA_RESPUESTA`). No se puede acotar, y se dice null,
+ * si aún no había dicho lo que leyó, o si con herramientas llegó a buscar o abrir: cada vez que el servidor vuelve
+ * a pensar tras una búsqueda lee todo otra vez, más lo que trajo, y eso la casa no lo sabe medir. Sin vuelta en
+ * marcha (el corte llegó entre dos), no queda nada fuera.
+ */
+export function parcialDeLaCuenta(
+  hecho: { entrada: number; salida: number; busquedas: number | undefined; turnos: number },
+  m: EnMarcha | null,
+  conHerramientas: boolean,
+): Parcial {
+  let { entrada, salida, busquedas } = hecho;
+  const { turnos } = hecho;
+  let sinContar: Parcial["sinContar"] = { entrada: 0, salida: 0, busquedas: 0 };
+  if (m === null) {
+    // El corte llegó entre dos vueltas: lo que no se mandó no se cobra.
+  } else if (m.va !== null) {
+    entrada += m.va.entrada ?? m.empezo?.entrada ?? 0;
+    salida += m.va.salida;
+    if (m.va.busquedas !== null) busquedas = (busquedas ?? 0) + m.va.busquedas;
+    if (m.va.entrada === null && m.empezo === null) sinContar = null;
+  } else if (m.empezo !== null) {
+    entrada += m.empezo.entrada;
+    salida += m.empezo.salida;
+    sinContar =
+      conHerramientas && m.herramienta
+        ? null
+        : { entrada: 0, salida: Math.max(0, MAXIMO_DE_UNA_RESPUESTA - m.empezo.salida), busquedas: 0 };
+  } else {
+    // La vuelta se mandó y aún no había dicho nada: no se sabe lo que leyó, ni si se cobra.
+    sinContar = null;
+  }
+  return {
+    entrada,
+    salida,
+    ...(turnos > 1 ? { turnos } : {}),
+    ...(busquedas === undefined ? {} : { busquedas }),
+    sinContar,
   };
 }
 
