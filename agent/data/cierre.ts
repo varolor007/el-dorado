@@ -30,12 +30,15 @@ export const SUBIDA_QUE_SE_PREGUNTA = 0.1;
 export const COMPROBAR_ENLACES = { segundos: 6, redirecciones: 3, porCierre: 12 };
 
 /**
- * La hora de llegada frente a la de entrada al alojamiento. La hora del destino no se sabe: se calcula por su
- * longitud (una hora cada 15 grados), con este margen de horas de más o de menos. Lo que cae dentro del margen no
- * se da por bueno ni por malo: se dice que no se sabe. Llegar más de estas horas antes de la entrada es esperar a la
- * habitación, y se dice.
+ * La hora de llegada frente a la de entrada al alojamiento. Si la fuente da la hora de llegada con su desfase, es
+ * esa. Si no, la hora del destino no se sabe: se calcula por su longitud (una hora cada 15 grados), con este margen
+ * de horas de más o de menos, porque la hora oficial puede apartarse del sol unas cuantas (el oeste de China, el
+ * oeste de Europa en verano). Lo que cae dentro del margen no se da por bueno ni por malo: se dice que no se sabe.
+ * Cerca de la línea de cambio de fecha (más de `lineaDeFecha` grados de longitud, a un lado o al otro) la longitud
+ * no dice ni el día: sin la hora de la fuente, no se sabe. Llegar más de `antesDeLaEntrada` horas antes de la
+ * entrada es esperar a la habitación, y se dice.
  */
-export const LA_HORA_DE_LLEGADA = { margen: 2, antesDeLaEntrada: 3 };
+export const LA_HORA_DE_LLEGADA = { margen: 3, antesDeLaEntrada: 3, lineaDeFecha: 150 };
 
 /** Lo que espera la casa a cada fuente al volver a pedir un precio, en segundos. */
 export const ESPERA_A_LAS_FUENTES = 30;

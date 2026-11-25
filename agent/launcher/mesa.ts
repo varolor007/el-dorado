@@ -324,17 +324,21 @@ export function ultimoCierre(v: ViajeEnLaMesa): { carpeta: string; n: number } |
 
 /**
  * Guarda el viaje cerrado como una versión más, y el viaje pasa a «cerrado». Lleva el viaje que dejó el cierre, y lo
- * entendido y los sucesos de la versión que se cerró. Una versión no se vuelve a escribir: si ese cierre ya dejó la
- * suya, se devuelve esa.
+ * entendido y los sucesos de la versión que se cerró: la que dice su `elegido.json`, que tiene que ser la que se
+ * enseña. Una versión no se vuelve a escribir: si ese cierre ya dejó la suya, se devuelve esa.
  */
 export function guardarCierre(v: ViajeEnLaMesa, cierre: number, cuando = new Date()): Version {
   const ya = v.ficha.versiones.find((x) => x.cierre === cierre);
   if (ya !== undefined) return ya;
   if (!SE_PASA_A[v.ficha.estado].includes("closed")) throw new Error("este viaje no se puede cerrar ahora");
-  const de = v.ficha.versiones.find((x) => x.n === v.ficha.version);
-  if (de === undefined) throw new Error("el viaje no tiene versión que cerrar");
   const desde = carpetaDelCierre(v, cierre);
   if (!existsSync(join(desde, "viaje.json"))) throw new Error("el cierre no ha dejado su viaje");
+  // Se cierra la versión que eligió el viajero al pulsar, y solo si sigue siendo la que se enseña: si mientras tanto
+  // salió otra, el viaje de una con los sucesos y lo entendido de la otra no es ninguna de las dos.
+  const elegido = JSON.parse(readFileSync(join(desde, "elegido.json"), "utf8")) as { version?: unknown };
+  if (elegido.version !== v.ficha.version) throw new Error("la versión que se cierra ya no es la que se enseña");
+  const de = v.ficha.versiones.find((x) => x.n === elegido.version);
+  if (de === undefined) throw new Error("el viaje no tiene versión que cerrar");
   const n = v.ficha.versiones.length + 1;
   const hasta = join(v.carpeta, "versiones", String(n));
   if (existsSync(hasta)) throw new Error("esa versión ya está escrita");

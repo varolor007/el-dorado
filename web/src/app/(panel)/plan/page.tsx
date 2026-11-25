@@ -516,6 +516,7 @@ export default function Planear() {
             alAnadir={anade}
             alMover={mueve}
             tuyo={pedido != null && comoEsta === "on_map" ? pedido : null}
+            version={vivo.estado?.trip.version ?? null}
           />
           {pedido != null && comoEsta === "closed" && (
             <ATuGuia viaje={pedido} manera={elegida?.id ?? manera} idioma={idioma} />

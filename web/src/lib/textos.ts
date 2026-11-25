@@ -337,6 +337,9 @@ const en = {
     total: (noches: number, transporte: string | null) =>
       transporte === null ? `for ${tusNochesEn(noches)}` : `${tusNochesEn(noches)} and ${transporteEn(transporte)}`,
     paradas: (n: number) => EN.plural(n, "stop", "stops"),
+    // Con el viaje cerrado, de qué día es el total de arriba: el de cuando se cerró o, si ese día no lo hubo, el visto.
+    alCerrar: (fecha: string) => `closed ${fecha}`,
+    vistoEl: (fecha: string) => `seen ${fecha}`,
     andando: "on foot",
     entreParadas: "between stops",
   },
@@ -1171,6 +1174,8 @@ const es: Textos = {
     total: (noches, transporte) =>
       transporte === null ? `por ${tusNochesEs(noches)}` : `${tusNochesEs(noches)} y ${transporteEs(transporte)}`,
     paradas: (n) => ES.plural(n, "parada", "paradas"),
+    alCerrar: (fecha) => `al cerrar, el ${fecha}`,
+    vistoEl: (fecha) => `visto el ${fecha}`,
     andando: "andando",
     entreParadas: "entre paradas",
   },

@@ -622,6 +622,17 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 - **De qué va cada cosa que hay que llevar hecha lo dicen los datos** (la sesión, al mirar la guía): el nombre de la
   parada o del papel lo pone el código, y la frase, el asiento. Y lo impreso corre seguido: ocho hojas donde había
   once.
+- **La revisión de la tanda 5** (la sesión, por la regla de la obra): tres adversarios en su copia. Dos
+  bloqueantes, arreglados: seguir un cierre podía cerrar una versión vieja encima de otra nueva, y la guía enseñaba
+  los precios de la investigación y no los del cierre. Lo que la sesión decidió al comprobar sus hallazgos queda en
+  `revisiones/tanda-5.md`. Tres cosas, con su porqué: una palabra con mayúscula que no está en el viaje deja de ser
+  un rojo de la puerta 10 y pasa a aviso, porque daba rojos falsos con «Gótico» o «Navidad» y cada uno gasta una
+  vuelta del asiento; a la puerta 7 del orden no se le pone esa regla; y la guía solo sale en los idiomas que
+  tienen sus rótulos y sus palabras prohibidas, en vez de salir con los rótulos en inglés sin decirlo.
+- **Pedir guías y cerrar tienen tope al día** (la sesión, con lo más prudente; los números, a firma del PM): de un
+  viaje, tres guías y seis intentos de cierre.
+- **La guía lleva los precios del día que se cerró el viaje** (la sesión, por lo que dice la hoja: «cada precio de
+  la guía está en el viaje cerrado»), con su fecha, y el de otro vendedor con la suya.
 - **La batería de GitHub se mira después de cada subida** (la sesión, por un fallo suyo): estuvo en rojo desde la
   mañana del 24-nov, 63 subidas, con la de la nube en verde. Una prueba del lanzador montaba un puesto suelto y la
   casa guardaba su respuesta dos carpetas más arriba: en la nube, donde se trabaja como administrador, cabía en la
@@ -640,6 +651,12 @@ Lo que deja el 25-nov, a decisión del PM:
   O esperar al ensayo de la tanda 7.
 - **De la tanda 5**: si los enlaces de reserva llevan nuestra marca de afiliado (3.9), los dibujos de la guía
   (12.3), y la edad máxima de un precio al cerrar.
+- **Lo que deja la revisión de la tanda 5, porque toca la hoja** (entero en `revisiones/tanda-5.md`): la puerta 8
+  avisa de una llegada que no cuadra, de un enlace que no responde y de un precio caducado, y no impide cerrar,
+  cuando su fila dice más; en qué idiomas se vende, y con ello en cuáles sale la guía; que un cierre que espera el
+  sí no caduca; si al seguir días después se vuelve a pedir el precio siempre o solo cuando caducó; los números de
+  la hora de llegada (tres horas de margen, y 150 grados para la línea de fecha) y los topes de guías y de cierres;
+  y que el código no puede saber si un texto nombra un sitio inventado, que es del revisor.
 - **Del cierre**: sus números (la edad máxima de un precio, la subida que pregunta y los enlaces que se
   comprueban); si vale cerrar sin frases cuando no hay IA; y lo de siempre con LiteAPI, que su precio no tiene
   página pública donde reservarlo: hoy se enseña el nuestro de hoy y, al lado, el de otro vendedor con su enlace.

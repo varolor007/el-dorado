@@ -138,6 +138,11 @@ export type Vuelo = Origen & {
   minutos: number | null;
   /** Lo que dura la ida, en minutos, si la fuente lo dice: con ello se sabe a qué hora se llega. */
   minutosIda?: number | null;
+  /**
+   * Cuándo llega la ida, con la hora del destino y su desfase (ISO con desfase), si la fuente lo dice: con ello no
+   * hace falta estimar la hora del destino.
+   */
+  llega?: string | null;
   /** Verdadero si el precio es de una búsqueda anterior de otra persona, y no de ahora. */
   guardado: boolean;
   enlace: string | null;

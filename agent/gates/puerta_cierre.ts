@@ -32,6 +32,8 @@ export type MaterialDelCierre = {
   /** Lo que respondió cada enlace que se comprobó, por su dirección. Lo que no está aquí no se comprobó. */
   comprobados: Record<string, ComprobacionDeEnlace>;
   llegada: ParaLaLlegada;
+  /** Cuándo se cerró de verdad, según su carpeta: con esa hora se mide la edad de cada precio. */
+  cuando: string;
 };
 
 const igual = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
@@ -55,7 +57,8 @@ export function puertaCierre(v: Viaje, m: MaterialDelCierre): Veredicto {
     if (!fechas.includes(d.fecha)) rojo("noches", `el día ${d.fecha} no es de las fechas del viaje`);
   if (v.dias.length > fechas.length) rojo("noches", "hay más días que fechas");
 
-  // Cada precio, el que dio su fuente, y ninguno que se da por bueno pasa de su edad máxima.
+  // Cada precio, el que dio su fuente, y ninguno que se da por bueno pasa de su edad máxima, medida cuando se cerró.
+  if (c.cuando !== m.cuando) rojo("cuando", "el cierre no dice la hora a la que se cerró");
   const deNuevo: PrecioDeHoy[] = m.piezas.map((p) => precioDeHoy(p, m.dados[p.ref] ?? "unknown", c.cuando));
   if (!igual(deNuevo, c.precios)) rojo("precios", "los precios de hoy no son los que dio cada fuente");
   for (const p of c.precios) {

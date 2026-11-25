@@ -30,7 +30,8 @@
 //   POST   /viajes/<id>/cerrar         «me quedo con este», con su manera y tus días ({ "way", "days", "pace" }); o
 //                                       que sigues aunque un
 //                                       precio haya subido mucho ({ "prices": "go_on" })
-//   GET    /viajes/<id>/cierre         por dónde va el último cierre y, si espera tu sí, lo que ha cambiado
+//   GET    /viajes/<id>/cierre         por dónde va el último cierre, de qué versión es y, si espera tu sí, lo que
+//                                       ha cambiado
 
 import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -67,6 +68,7 @@ import { pararRun, type Fuentes } from "./investigar.ts";
 import { FalloAlReintentar, reintentar } from "./reintentar.ts";
 import { documentoDeLaGuia, FalloDeLaGuia, guiaDeCara, llevarLaGuia, pedirGuia, type AlLlevarLaGuia } from "./guia.ts";
 import {
+  abandonarElCierre,
   cierreDeCara,
   comprobarEnlace,
   elegir,
@@ -75,6 +77,7 @@ import {
   llevarElCierre,
   seguir,
   type FuentesDelCierre,
+  versionDelCierre,
 } from "./cerrar.ts";
 import { conTusDias } from "../scripts/cierre.ts";
 import {
@@ -510,7 +513,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
   function empezar(p: Peticion): Respuesta {
     const v = suViaje(p);
     const id = v.ficha.id;
-    if (marchas.has(id)) throw new Fallo(409, "already_running");
+    // Ni con un cierre en marcha (va en `marchas`, como la investigación) ni con su guía escribiéndose.
+    if (marchas.has(id) || guias.has(id)) throw new Fallo(409, "already_running");
     const conQue = conQuePiensa(p.cuenta);
     if (conQue !== "house" && o.lanzador === undefined) throw new Fallo(503, "no_ai");
     const pedido = objeto(p.cuerpo) ? p.cuerpo : {};
@@ -535,6 +539,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     } catch {
       throw new Fallo(409, "not_now");
     }
+    // El cierre que esperaba tu sí era del viaje de antes: queda abandonado, y ya no se sigue.
+    abandonarElCierre(v);
     darElAdelante(run, techo, hoy());
     apuntar(v, "button", { boton: "start", techo }, hoy());
     const lanzador =
@@ -627,9 +633,15 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
     if (pedido.prices !== undefined) {
       const ultimo = ultimoCierre(v);
       if (pedido.prices !== "go_on") throw new Fallo(400, "bad_request");
-      if (ultimo === null || v.ficha.estado !== "on_map" || etapaDe(ultimo.carpeta) !== "yours")
+      // Solo se sigue un cierre que espera tu sí y es de la versión que se enseña.
+      if (
+        ultimo === null ||
+        v.ficha.estado !== "on_map" ||
+        etapaDe(ultimo.carpeta) !== "yours" ||
+        versionDelCierre(ultimo.carpeta) !== v.ficha.version
+      )
         throw new Fallo(409, "not_now");
-      seguir(ultimo.carpeta, hoy());
+      seguir(ultimo.carpeta, hoy(), v);
       cierre = ultimo;
       apuntar(v, "button", { boton: "close_go_on", cierre: ultimo.n }, hoy());
     } else {
@@ -676,7 +688,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
         if (!existsSync(join(cierre.carpeta, "parado.json")))
           writeFileSync(
             join(cierre.carpeta, "parado.json"),
-            JSON.stringify({ paso: "la casa", rojos: [{ donde: "house", que: "la casa se rompió mientras cerraba" }] }),
+            JSON.stringify({
+              paso: "la casa",
+              motivo: "house",
+              rojos: [{ donde: "house", que: "la casa se rompió mientras cerraba" }],
+            }),
           );
       })
       .finally(() => marchas.delete(id));
@@ -806,7 +822,8 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       const v = suViaje(p);
       const c = ultimoCierre(v);
       if (c === null) throw NO_HAY();
-      return { estado: 200, cuerpo: { closing: { ...cierreDeCara(v, c), running: marchas.has(v.ficha.id) } } };
+      const corre = marchas.has(v.ficha.id);
+      return { estado: 200, cuerpo: { closing: { ...cierreDeCara(v, c, corre), running: corre } } };
     }
     if (que === "version") {
       if (p.metodo !== "GET") throw new Fallo(405, "method");

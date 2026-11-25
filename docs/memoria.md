@@ -3,9 +3,34 @@
 Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: la tanda 5, cerrar el viaje y la guía, construida y junta (25-nov), a falta de la revisión de sus
-tres adversarios; la tanda 4, hecha, ensayada y revisada, a falta del visto bueno del PM** (el estado, punto a
-punto, en [plan.md](plan.md)).
+**Estamos aquí: la tanda 5, cerrar el viaje y la guía, construida, junta y revisada (25-nov), a falta del visto
+bueno del PM; la tanda 4, también a falta de su visto bueno** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**La revisión de la tanda 5** (25-nov): tres adversarios en su copia; su informe, hallazgo a hallazgo, en
+[revisiones/tanda-5.md](revisiones/tanda-5.md), y sus pantallas, con el viaje del ensayo cerrado de verdad, en
+https://claude.ai/artifact/7Hi7Rv6reMNjkJH8rmGNfb. La seguridad, sin bloqueantes; la mecánica y las biblias, con uno
+cada una, arreglados por dos sesiones de obra (`claude/eldorado-5r-cierre` y `claude/eldorado-5r-guia`) y juntos. La
+batería pasó de 706 pruebas a 779. Lo que hay que saber de cómo quedó:
+
+- **Un cierre es de una versión.** `guardarCierre` cierra la que dice su `elegido.json` y se niega si ya no es la que
+  se enseña; seguir pide lo mismo; no se investiga con un cierre o una guía en marcha, y al empezar otra
+  investigación el cierre que esperaba queda abandonado. Un cierre que no corre y no está acabado cuenta como
+  parado (`etapaViva`), y se puede volver a cerrar.
+- **La edad de un precio se mide al cerrar de verdad** (`Cierre.cuando`), y si al seguir ya caducó se vuelve a
+  pedir, una vez por cada sí.
+- **La guía sale del cierre**: el precio de hoy de cada pieza y los enlaces que respondieron (`PrecioDelCuaderno`,
+  `EnlaceDelCuaderno`), y la puerta 10 lo compara contra `viaje.cierre` con sus propias cuentas. Lleva la versión
+  de la mesa, no el número que el viaje lleva dentro.
+- **Lo que gasta tiene tope** (`agent/data/frenos.ts`): de un viaje, tres guías y seis intentos de cierre al día,
+  contados de su diario. Y el gasto de las guías cuenta en la cuenta (`deLasCarpetas`, en `gasto.ts`).
+- **Comprobar un enlace no sale a la red de la casa**: solo páginas de fuera, y antes de llamar se mira a qué
+  dirección lleva el nombre (`direccionDeDentro`), en cada salto. Cerrar del todo esa salida es del servidor.
+- **Una palabra con mayúscula que no está en el viaje ya no es un rojo de la puerta 10**: queda como aviso en el
+  `.puertas.json` del puesto. El código no distingue un sitio inventado de «Gótico»: eso es del revisor, por decidir.
+- **La guía solo sale en inglés y en español** (`IDIOMAS_DE_LA_GUIA`), que son los idiomas con rótulos y palabras
+  prohibidas; en otro, se niega y lo dice.
+- **Lo que queda del PM**, entero, al final de ese informe: la puerta 8 frente a su fila de la hoja, qué precio
+  manda, la marca de afiliado, los idiomas, lo de la guía y los números.
 
 **La tanda 5** (25-nov). El PM dijo «Seguimos? Luego entro a la página a revisar», y la sesión lo leyó como el sí
 para empezarla mientras él mira la 4, y se lo dijo así. Van dos sesiones de obra a la vez, cada una en su rama:

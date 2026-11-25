@@ -2,8 +2,9 @@
 
 Al juntar la obra de la tanda, el 25-nov-2026, la revisaron tres adversarios que no la hicieron, cada uno en su copia
 del repositorio y sin tocar nada: solo informar. Miraron todo lo que hay desde el cierre de la tanda 4. Cada hallazgo
-se comprobó leyendo el código o con una prueba suelta, y lo que se arregló lleva su prueba en la batería. Aquí queda
-cada hallazgo con lo que se hizo. Lo que toca a la hoja, y por tanto es del PM, va al final.
+se comprobó leyendo el código o con una prueba suelta, y lo que se arregló lleva su prueba en la batería, que pasó
+de 706 pruebas a 779. Los arreglos de la mecánica y de las biblias los hicieron dos sesiones de obra, cada una en su
+rama, y se juntaron y se probaron otra vez con el viaje del ensayo. Aquí queda cada hallazgo con lo que se hizo. Lo que toca a la hoja, y por tanto es del PM, va al final.
 
 Antes de ellos, al juntar las dos ramas y probarlas con el viaje de verdad del ensayo, quien orquesta encontró y
 arregló seis cosas, que quedan aquí porque ninguna la habría visto el caso inventado:
@@ -39,21 +40,21 @@ las palabras del viajero; y en lo cambiado no hay claves, identificadores de mod
 
 ## La mecánica: lo que se rompe
 
-Un bloqueante.
+Un bloqueante, arreglado.
 
 | Hallazgo | Qué pasaba | Qué se hizo |
 |---|---|---|
-| B1 | «Sigo» cerraba una versión vieja encima de la nueva, y las mezclaba: con un cierre esperando el sí se podía investigar otra vez, y al seguir se guardaba el viaje de la versión vieja con los sucesos, lo entendido y la investigación de la nueva | EN OBRA: el cierre guarda la versión que eligió y se niega si ya no es la que se enseña; seguir pide que el cierre sea de esa versión; y no se investiga con un cierre en marcha (8.4) |
-| I1 | Un bucle de recargas en la web: un viaje cerrado que se vuelve a investigar veía un cierre hecho, de otra versión, y recargaba sin fin | EN OBRA: el cierre dice de qué versión es, y la web solo sigue el de la que enseña (8.4) |
-| I2 | Un cierre a medias se quedaba colgado para siempre si la casa se caía: la web lo contaba como trabajando y escondía el botón | EN OBRA: un cierre que no corre y no está acabado cuenta como parado, y se puede volver a cerrar (8.4) |
-| I3 | La edad de un precio se medía al pulsar y no al cerrar: tras esperar días el sí, precios de hace días salían como de hoy | EN OBRA: se mide al cerrar de verdad, y si al seguir ya pasan de su edad se vuelven a pedir (8.4) |
+| B1 | «Sigo» cerraba una versión vieja encima de la nueva, y las mezclaba: con un cierre esperando el sí se podía investigar otra vez, y al seguir se guardaba el viaje de la versión vieja con los sucesos, lo entendido y la investigación de la nueva | El cierre guarda la versión que eligió, con sus sucesos, su entendido y su investigación, y se niega si ya no es la que se enseña; seguir pide que el cierre sea de esa versión; no se investiga con un cierre en marcha, y al empezar otra investigación el cierre que esperaba queda abandonado (8.4) |
+| I1 | Un bucle de recargas en la web: un viaje cerrado que se vuelve a investigar veía un cierre hecho, de otra versión, y recargaba sin fin | El cierre dice de qué versión es; la web solo sigue el de la que enseña, solo pregunta mientras corre y solo recarga si lo lanzó esa misma página (8.4) |
+| I2 | Un cierre a medias se quedaba colgado para siempre si la casa se caía: la web lo contaba como trabajando y escondía el botón | Un cierre que no corre y no está acabado cuenta como parado, en la casa y en la web, y se puede volver a cerrar (8.4) |
+| I3 | La edad de un precio se medía al pulsar y no al cerrar: tras esperar días el sí, precios de hace días salían como de hoy | La edad se mide cuando el viaje se cierra de verdad, y la puerta 8 comprueba esa hora. Si al seguir algún precio ya pasa de su edad, se vuelve a pedir antes de cerrar, una vez por cada sí (8.4). Si se vuelve a pedir siempre, o solo cuando caducó, del PM |
 | I4 | La guía enseñaba los precios y los enlaces de la investigación, no los del cierre | Hecho: es el bloqueante de las biblias (12.2) |
 | I5 | La regla de las mayúsculas de la puerta 10 daba rojos falsos con textos normales («Gothic», «Navidad», «I'm», la palabra tras un guion, los títulos en inglés), y cada rojo gasta una vuelta del asiento | Deja de ser un rojo y pasa a aviso, guardado con el veredicto del puesto y sin volver al asiento. Sigue en rojo nombrar entero un sitio conocido que no es del viaje (12.1) |
 | I6 | Lo que gasta la guía no se contaba en el gasto de la cuenta | Se cuenta en el viaje, como lo de los cierres, y no en la media de una investigación (11.4). De paso salió otro fallo: la «última llamada» de un viaje con un cierre se guardaba letra a letra, y el orden de los viajes en la lista de gasto se rompía. Arreglado |
-| M1 | La hora del destino, estimada por la longitud, se equivoca de día al otro lado de la línea de fecha y donde la hora oficial se aparta del sol | EN OBRA: más margen, y «no se sabe» cerca de la línea de fecha (8.4). Los números, del PM |
-| M2 | `hora24` no entendía «14:00:00», «15h» ni una hora dentro de una frase corta | EN OBRA (8.4) |
+| M1 | La hora del destino, estimada por la longitud, se equivoca de día al otro lado de la línea de fecha y donde la hora oficial se aparta del sol | Si la fuente da la hora de llegada con su desfase, se usa tal cual (hoy ninguna la da). Si no, tres horas de margen, y «no se sabe» con la longitud a más de 150 grados (8.4). Los números, del PM |
+| M2 | `hora24` no entendía «14:00:00», «15h» ni una hora dentro de una frase corta | Las entiende, si la frase lleva una sola hora; con dos, o con otro número al lado, no adivina (8.4) |
 | M3 | El croquis de la guía no maneja el meridiano 180: dos paradas a cada lado quedaban en los extremos | Si las longitudes abarcan más de medio mundo, las del oeste se cuentan seguidas de las del este, y quedan juntas (12.2) |
-| M4 | Se podía investigar mientras se escribe la guía: dos asientos gastando a la vez, y la guía sale ya atrasada | EN OBRA (8.4) |
+| M4 | Se podía investigar mientras se escribe la guía: dos asientos gastando a la vez, y la guía sale ya atrasada | No se empieza otra investigación mientras se escribe la guía (8.4) |
 
 Visto y sin pegas: los céntimos y el umbral de la subida; una moneda distinta, que no se toma por un cambio de
 precio; el total cuando falta una pieza; los días del viajero (el orden, las repetidas, las de fuera del viaje, los
@@ -62,18 +63,18 @@ horaria ni de la hora de la máquina.
 
 ## Las biblias: si es lo que dicen la hoja y el plan, y si es general
 
-Un bloqueante.
+Un bloqueante, arreglado.
 
 | Hallazgo | Qué pasaba | Qué se hizo |
 |---|---|---|
 | B1 | La guía no usaba el viaje cerrado para los precios ni para los enlaces: el viajero se llevaba impreso un precio que el cierre ya le había corregido, y un enlace que no respondía; y la puerta 10 comparaba contra esos mismos precios viejos | El cuaderno toma del cierre el precio de hoy de cada pieza (si hoy no lo hay, el que se vio, dicho como tal), el total, y los enlaces comprobados, cada uno con su clase y sin los que no respondieron, que se cuentan. La puerta 10 saca lo esperado del cierre con sus propias cuentas y lo compara, con doce trampas. Probado cerrando el viaje inventado por su flujo, con el hotel un 30 % más caro y su enlace caído, y con el viaje del ensayo (12.2) |
 | I1 | La puerta 8 no hace lo que dice su fila de la hoja: una llegada que no cuadra, un enlace que no responde y un precio caducado cierran en verde, con su aviso | Del PM: está al final |
 | I2 | Fuera del inglés y del español la puerta 10 apenas mira, y los rótulos del cuaderno salían en inglés sin decirlo | La guía solo sale en los idiomas que tienen sus rótulos y sus palabras prohibidas (hoy, inglés y español); en otro, se niega antes de lanzar a nadie y lo dice. Ya no hay rótulos en inglés por defecto (12.1). En qué idiomas se vende, del PM |
-| I3 | En un viaje cerrado la web enseñaba dos totales: arriba, el de la investigación y de la manera que estuviera elegida; en «Reservar», el de hoy | EN OBRA: arriba va el de hoy, de la manera con que se cerró (8.4) |
-| M1 | La llegada, por la longitud: la misma pega que la M1 de la mecánica | EN OBRA |
+| I3 | En un viaje cerrado la web enseñaba dos totales: arriba, el de la investigación y de la manera que estuviera elegida; en «Reservar», el de hoy | Arriba va el total de hoy de la manera con que se cerró, con su día; si ese día no hubo total, el que se vio, diciéndolo (8.4) |
+| M1 | La llegada, por la longitud: la misma pega que la M1 de la mecánica | Hecho con ella |
 | M2 | Los documentos no cuadraban: el plan decía que a la guía le faltaba tomar los días y la manera del cierre, y ya lo hace; la hoja daba por hecho al que explica al cerrar, que no ha corrido con IA de verdad; y cerrar sin frases cuando no hay IA estaba decidido en la hoja y pendiente en el registro | Corregidos: el paso del que explica al cerrar va sin marcar, con su nota, y cerrar sin frases queda como una decisión del PM (0.4) |
 | M3 | `MAP.md` quedó con frases pegadas al juntar las dos ramas, y la fila del que explica no decía su modo de cerrar | Corregido |
-| M4 | A la puerta 8 le faltaban trampas con su prueba para cinco de sus rojos | EN OBRA (8.4) |
+| M4 | A la puerta 8 le faltaban trampas con su prueba para cinco de sus rojos | Cada una tiene la suya, y una más: la hora del cierre (8.4) |
 | M5 | La hoja decía que al cerrar el código solo sale a las fuentes, y también pregunta a la web de cada enlace | Corregido en la hoja (0.4) |
 
 Visto y sin pegas: cada commit lleva su número; los contratos, en inglés; ningún identificador de modelo, ninguna

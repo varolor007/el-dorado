@@ -18,6 +18,8 @@ type DelCierre = {
   n: number;
   stage: string;
   running: boolean;
+  /** La versión del viaje que se cerraba: solo se sigue el cierre de la que se enseña. */
+  version?: number | null;
   prices?: {
     piece: string;
     ref: string;
@@ -30,7 +32,8 @@ type DelCierre = {
   total?: { antes: number; hoy: number | null };
 };
 
-const ACABADAS = ["yours", "done", "stopped"];
+/** Un cierre que ya no trabaja: espera tu sí, está hecho, o se paró. Uno a medias que no corre, se paró. */
+const parado = (c: DelCierre): boolean => !c.running && c.stage !== "yours" && c.stage !== "done";
 
 /** El nombre de una pieza, como se enseña: el del alojamiento, o de dónde a dónde va el transporte. */
 function nombreDe(viaje: Viaje, ref: string): string {
@@ -48,7 +51,8 @@ function cambioDicho(t: Textos, idioma: string, cambio: string, diferencia: numb
 
 /**
  * «Me quedo con este»: cierra el viaje con la manera elegida. Mientras la casa trabaja, se dice por dónde va; si un
- * precio ha subido mucho, se pregunta; al acabar, se vuelve a pedir el viaje, que ya es el cerrado.
+ * precio ha subido mucho, se pregunta; al acabar, se vuelve a pedir el viaje, que ya es el cerrado. Solo se sigue un
+ * cierre de la versión que se enseña, y solo se recarga la página tras uno que se lanzó desde ella.
  */
 export function MeQuedo({
   t,
@@ -58,9 +62,12 @@ export function MeQuedo({
   manera,
   dias,
   ritmo,
+  version,
 }: Comun & {
   viaje: Viaje;
   id: string;
+  /** La versión del viaje que se enseña. */
+  version: number | null;
   manera: Manera["id"];
   /** Los días como los tienes delante, con tu ritmo: es tu viaje el que se cierra. */
   dias: Dia[];
@@ -70,14 +77,20 @@ export function MeQuedo({
   const [fallo, setFallo] = useState<"no" | "fallo" | "muchos">("no");
   const [mandando, setMandando] = useState(false);
   const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Si el cierre que se sigue se lanzó desde esta página: solo entonces, al acabar, se recarga.
+  const lanzado = useRef(false);
 
   const mira = async (): Promise<void> => {
     const r = await pideALaCasa("GET", `viajes/${id}/cierre`);
     const c = r.estado === 200 ? (r.cuerpo.closing as DelCierre) : null;
-    if (c === null) return;
+    // El último cierre puede ser de otra versión (una de antes, ya cerrada o abandonada): no es el de este viaje.
+    if (c === null || version === null || c.version !== version) return setCierre(null);
     setCierre(c);
-    if (c.stage === "done" && !c.running) return window.location.reload();
-    if (c.running || !ACABADAS.includes(c.stage)) reloj.current = setTimeout(() => void mira(), 1200);
+    if (c.stage === "done" && !c.running) {
+      if (lanzado.current) window.location.reload();
+      return;
+    }
+    if (c.running) reloj.current = setTimeout(() => void mira(), 1200);
   };
 
   // Al volver a la página, si había un cierre esperando tu sí, o trabajando, se retoma.
@@ -87,7 +100,7 @@ export function MeQuedo({
       if (reloj.current !== null) clearTimeout(reloj.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, version]);
 
   const manda = async (cuerpo: Record<string, unknown>): Promise<void> => {
     setMandando(true);
@@ -95,11 +108,12 @@ export function MeQuedo({
     const r = await pideALaCasa("POST", `viajes/${id}/cerrar`, cuerpo);
     setMandando(false);
     if (r.estado !== 202) return setFallo(r.estado === 429 ? "muchos" : "fallo");
-    setCierre({ n: 0, stage: "prices", running: true });
+    lanzado.current = true;
+    setCierre({ n: 0, stage: "prices", running: true, version });
     void mira();
   };
 
-  const trabajando = cierre !== null && (cierre.running || !ACABADAS.includes(cierre.stage));
+  const trabajando = cierre !== null && cierre.running;
   const espera = cierre !== null && cierre.stage === "yours" && !cierre.running;
   return (
     <div className="cerrar">
@@ -148,7 +162,7 @@ export function MeQuedo({
           </div>
         </div>
       )}
-      {cierre?.stage === "stopped" && !cierre.running && <p className="aviso">{t.cerrar.etapa.stopped}</p>}
+      {cierre !== null && parado(cierre) && <p className="aviso">{t.cerrar.etapa.stopped}</p>}
       {fallo !== "no" && <p className="aviso">{fallo === "muchos" ? t.cerrar.muchos : t.cerrar.fallo}</p>}
     </div>
   );
