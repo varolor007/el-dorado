@@ -5,6 +5,10 @@
 
 import { RADIO_MAXIMO } from "./cribas.ts";
 
+/** Una lista de palabras, separadas por espacios, como palabras enteras y sin mirar mayúsculas; y lo que se añada. */
+const palabras = (lista: string, ...ademas: string[]): RegExp =>
+  new RegExp([...ademas, `(?<![\\p{L}])(?:${lista.split(" ").join("|")})(?![\\p{L}])`].join("|"), "iu");
+
 /**
  * Cuántos candidatos nuevos (los que no se habían mirado en la versión de la que se parte) mira el que mira el
  * alojamiento, como mucho, en un cambio de alojamiento. Los demás finalistas nuevos se quedan sin mirar, y se dice.
@@ -32,6 +36,29 @@ export const RESPUESTAS = ["yes", "no", "partly", "unknown"] as const;
  * puede hacer de un viaje en unas horas, porque cada una gasta una pasada del que mira.
  */
 export const PREGUNTA = { letras: 200, deUnViaje: 10, horas: 24 } as const;
+
+/** De qué es una pregunta, según el que contesta: de la habitación de ese precio o del resto del alojamiento. */
+export const DE_QUE_ES = ["room", "lodging"] as const;
+
+/**
+ * Las palabras que hacen de una pregunta una de la habitación de ese precio (MI4): su cama, su baño, su vista, su
+ * luz, su espacio. Con una de ellas, el que contesta no puede decir que es del alojamiento, ni probarla con una foto
+ * del hotel, que puede ser de una habitación mejor. En inglés y en español; las demás lenguas, con lo que diga él.
+ */
+export const DE_LA_HABITACION_EN_PALABRAS = palabras(
+  "rooms? bedrooms? beds? bathrooms? baths? showers? bathtubs? tubs? toilets? windows? balcon(?:y|ies) views? " +
+    "habitaci[oó]n(?:es)? dormitorios? cuartos? camas? baños? duchas? bañeras? ventanas? balc[oó]n(?:es)? vistas?",
+);
+
+/**
+ * Lo que habla de dinero en la frase de una respuesta: el que mira no ve el precio (su contrato), así que si su frase
+ * habla de precios, de descuentos o de porcentajes, es que lo ha puesto él o se lo ha dictado la pregunta.
+ */
+export const DE_PRECIO_EN_UNA_RESPUESTA = palabras(
+  "prices? priced costs? costing discounts? fees? charges? charged cheap(?:er|est)? expensive percent per\\s?cent " +
+    "precios? cuesta[ns]? costes? costos? descuentos? tarifas? barat[oa]s? caros? por\\s?ciento porcentajes?",
+  "%",
+);
 
 /** Las vueltas del que mira cuando la puerta le devuelve su respuesta: dos, como todos. */
 export const VUELTAS_DE_LA_PREGUNTA = 2;

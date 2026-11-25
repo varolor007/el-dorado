@@ -1106,6 +1106,7 @@ const en = {
     diferencia: (cuanto: string, sube: boolean) => (sube ? `${cuanto} more than yours` : `${cuanto} less than yours`),
     igual: "The same as yours",
     paisNuevo: (paises: string) => `It goes through ${paises}: your papers are checked for it too.`,
+    paisSinMirar: (paises: string) => `It goes through ${paises}, and your papers have not been checked for it.`,
     paisNoSe: "We do not know the country of one of its airports: check your papers for it.",
     escalaNoSe: "It has a stop, and the source does not say where: check if you need papers to change planes there.",
     elegir: "See what changes",
@@ -1124,6 +1125,7 @@ const en = {
     fallo: (clave: string) => {
       const frases: Record<string, string> = {
         too_many_searches: "You have looked many times today. Try again tomorrow.",
+        too_many_choices: "You have changed how you get there many times today. Try again tomorrow.",
         source_failed: "The source did not answer. Try again in a moment.",
         no_source: "Transport prices are not connected right now.",
         no_origin: "Without where you leave from, there is no transport to look for.",
@@ -2273,6 +2275,7 @@ const es: Textos = {
     diferencia: (cuanto, sube) => (sube ? `${cuanto} más que el tuyo` : `${cuanto} menos que el tuyo`),
     igual: "Lo mismo que el tuyo",
     paisNuevo: (paises) => `Pasa por ${paises}: tus papeles se miran también para allí.`,
+    paisSinMirar: (paises) => `Pasa por ${paises}, y tus papeles no se han mirado para allí.`,
     paisNoSe: "No sabemos el país de uno de sus aeropuertos: mira tus papeles para él.",
     escalaNoSe: "Hace escala, y la fuente no dice dónde: mira si necesitas papeles para cambiar de avión allí.",
     elegir: "Ver lo que cambia",
@@ -2291,6 +2294,7 @@ const es: Textos = {
     fallo: (clave) => {
       const frases: Record<string, string> = {
         too_many_searches: "Hoy has buscado muchas veces. Vuelve a probar mañana.",
+        too_many_choices: "Hoy has cambiado muchas veces cómo llegas. Vuelve a probar mañana.",
         source_failed: "La fuente no ha contestado. Prueba otra vez en un momento.",
         no_source: "Los precios del transporte no están conectados ahora.",
         no_origin: "Sin saber de dónde sales, no hay transporte que buscar.",

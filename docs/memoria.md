@@ -40,7 +40,9 @@ del impacto lo dice debajo de lo seguro. La ruta `dia` acepta `ceiling`. `sitios
 ese mensaje); `found` y `new_sights` cuentan solo eso. `conservarElCruce` y `conservarLaExplicacion` piden además
 el mismo material, pieza a pieza (`mismoMaterial`): un mensaje que cambia paradas mueve los minutos de la tabla, y
 vuelven los dos. La puerta 9 cuenta cada día con `cuentasDeUnDia`, y la web y el cierre la usan con tus días
-(`noCabenTusDias`; `day_does_not_fit` entre lo sin confirmar): se avisa y no se impide.
+(`noCabenTusDias`; `day_does_not_fit` entre lo sin confirmar): se avisa y no se impide. Y el aviso de que tus días
+han cambiado solo sale en la versión de la que salió el mensaje, si dejó una más nueva (`loQueSeEnsena`, en
+`web/src/lib/diaADia.ts`).
 
 **El transporte, a ratos (8.3), junto** (25-nov). La búsqueda otra vez es código (`agent/scripts/otro_transporte.ts`
 y `agent/launcher/otro_transporte.ts`; los números, en `agent/data/transporte.ts`), guardada en
@@ -89,6 +91,24 @@ lo que el viajero elige, guardado en la casa; el estado de cada pieza, sacado de
 por claves y sin IA; rehacer solo lo que dejó de valer, en una investigación que parte de la anterior; y las
 versiones, con volver a la de antes. Después, sobre él y a la vez: el alojamiento (8.2), el transporte (8.3), el día
 a día (8.6) y los cambios (8.5). Vigilar el precio (8.7) es del PM.
+
+**Los arreglos del alojamiento y del transporte, tras la revisión de la tanda 6** (25-nov; 8.2 y 8.3). La
+respuesta del que mira lleva `about` (`room` o `lodging`); su puerta (`agent/gates/puerta_respuesta.ts`) no deja
+hablar de dinero, cruza sus números con la ficha y las opiniones que se le dieron (los de la pregunta del viajero no
+cuentan, para que una orden escondida en ella no tenga camino) y aplica MI4: una foto que no es de la habitación no
+prueba una respuesta sobre ella. Las palabras de dinero y de la habitación, en `agent/data/alojamiento.ts`, solo en
+inglés y en español; en otro idioma manda el `about` que diga el asiento. `clasesDelPedido`
+(`agent/launcher/alojamiento.ts`): poner o quitar un imprescindible que tiene campo en `INSTALACIONES` es un cambio
+`lodging`, y se busca otra vez. `reutilizarMiradas` copia solo si `miraLoMismo` (la habitación y sus fotos), y las
+direcciones de las fotos de prueba salen de `run/fotos/<clave>/direcciones.json`, que se copia con la mirada.
+`gastoDeLaCuenta` suma `preguntas/`. Cerrar mira el alojamiento antes de `nuevoCierre` (400 `bad_lodging`), y
+`comprobarElecciones` no guarda uno de otra moneda que su manera. `ELECCIONES_DE_TRANSPORTE` (seis cada 24 horas,
+de partida; apunte `transport_choice`, 429 `too_many_choices`). Una búsqueda de transporte que falla también se
+apunta. `transporteDeCara` dice del tuyo `new_countries` y `country_unknown`, y `ElTransporte.tsx` lo avisa: no
+cambia qué aeropuertos se ofrecen ni relanza los papeles, que es del PM. `conLoTuyo` (`web/src/piezas/Pantallas.tsx`)
+pinta la manera elegida con tu alojamiento, tu transporte y su total, en dormir, en las cuentas y en la cifra de
+arriba. Al juntarlo con lo del cimiento, guardar el transporte elegido manda la versión de la que se leyeron las
+elecciones. Sabido y sin tocar: pulsar la manera que ya está elegida borra el alojamiento que elegiste.
 
 **Los arreglos del cimiento y de los cambios, tras la revisión de la tanda 6** (25-nov; 8.1 y 8.5). **Un cambio
 que se para ya no atasca el viaje**: `quedarseComoSuVersion` (`agent/launcher/mesa.ts`) lo devuelve a `on_map` o

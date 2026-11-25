@@ -5,6 +5,7 @@
 
 import { MINIMOS_QUE_SE_PIDEN, ZONA_QUE_SE_PIDE } from "../data/alojamiento.ts";
 import { COSAS } from "../data/gustos.ts";
+import { INSTALACIONES } from "../data/niveles.ts";
 import type { Manera, Punto, Viaje } from "../output/viaje.ts";
 import { enLineaRecta } from "../tools/distancias.ts";
 import { PESOS_DE_GUSTO, type Gusto } from "./formas.ts";
@@ -91,6 +92,30 @@ export function comprobarPedido(crudo: unknown, destino: Punto): PedidoDeAlojami
 /** Si el pedido pide buscar otra vez (otra zona, otros mínimos u otro tope), y no solo cruzar otros gustos. */
 export const pideBuscar = (p: PedidoDeAlojamiento): boolean =>
   p.zone !== null || p.minimums !== null || p.max_price !== null;
+
+/**
+ * Los imprescindibles que la búsqueda le pide a la fuente: los de las cosas que la fuente puede declarar (el
+ * gimnasio, la piscina), por su campo y en orden. Son los mismos que lee la búsqueda.
+ */
+export function imprescindiblesDeLaFuente(gustos: { thing: string; weight: string }[]): string[] {
+  const campos = gustos
+    .filter((g) => g.weight === "must" && Object.hasOwn(COSAS, g.thing) && COSAS[g.thing].campo in INSTALACIONES)
+    .map((g) => COSAS[g.thing].campo);
+  return [...new Set(campos)].sort();
+}
+
+/**
+ * Si el pedido pide buscar otra vez: por otra zona, otros mínimos u otro tope, o porque sus gustos cambian lo que
+ * la búsqueda le pide a la fuente (un imprescindible que la fuente puede declarar, puesto o quitado). Con eso, los
+ * finalistas de antes pueden quedar todos fuera, o faltar los que no lo tienen: la tabla sola no basta.
+ */
+export function pideBuscarConLosGustos(p: PedidoDeAlojamiento, dePartida: GustoMarcado[]): boolean {
+  if (pideBuscar(p)) return true;
+  if (p.tastes === null) return false;
+  const tocadas = new Set(p.tastes.map((g) => g.thing));
+  const despues = [...dePartida.filter((g) => !tocadas.has(g.thing)), ...p.tastes];
+  return imprescindiblesDeLaFuente(dePartida).join() !== imprescindiblesDeLaFuente(despues).join();
+}
 
 /**
  * Los gustos con que se cruza la ficha de cada alojamiento: los de lo entendido, con los marcados por el viajero

@@ -53,3 +53,10 @@ export const OPCIONES_QUE_SE_ENSENAN = 12;
 
 /** Cuántas veces se puede buscar otra vez el transporte de un viaje, en tantas horas: cada una pide a la fuente. */
 export const BUSQUEDAS_DE_TRANSPORTE = { deUnViaje: 12, horas: 24 };
+
+/**
+ * Cuántas veces se puede elegir otro transporte de un viaje, en tantas horas: cada una rehace y puede gastar (el que
+ * cruza, y los papeles o dónde dormir si cambian). De partida, como los cambios: seis por viaje cada 24 horas. Es
+ * del PM.
+ */
+export const ELECCIONES_DE_TRANSPORTE = { deUnViaje: 6, horas: 24 };

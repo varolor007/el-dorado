@@ -30,8 +30,13 @@ import { quienResponde } from "../data/responde.ts";
 import type { Rojo } from "../gates/puerta_busqueda.ts";
 import { pegasDeLaPregunta, puertaRespuesta, type EntregaDeLaRespuesta } from "../gates/puerta_respuesta.ts";
 import type { Viaje } from "../output/viaje.ts";
-import { gustosConLosTuyos, pideBuscar, type GustoMarcado, type PedidoDeAlojamiento } from "../scripts/alojamiento.ts";
-import type { Busqueda, ZonaDeBusqueda } from "../scripts/busqueda_alojamiento.ts";
+import {
+  gustosConLosTuyos,
+  pideBuscarConLosGustos,
+  type GustoMarcado,
+  type PedidoDeAlojamiento,
+} from "../scripts/alojamiento.ts";
+import type { Busqueda, Ficha, ZonaDeBusqueda } from "../scripts/busqueda_alojamiento.ts";
 import { cribar, imprescindiblesSinSaber, type Descarte } from "../scripts/cribas.ts";
 import type { Entendido, EntregaDeMirar } from "../scripts/formas.ts";
 import { impactoDe, type EstimadoPorAsiento, type Impacto } from "../scripts/impacto.ts";
@@ -42,7 +47,7 @@ import { lanzarAsiento, ordenDeApertura, recogerAsiento, type Lanzador, type Top
 import { adelanteDe, darElAdelante } from "./casa.ts";
 import { sinPalabras } from "./escuchar.ts";
 import { apuntar, guardarJson, leerVersion, viajesDe, type ViajeEnLaMesa } from "./mesa.ts";
-import { materialDe, type Quien, type Recogido } from "./mirar.ts";
+import { DIRECCIONES, materialDe, type Quien, type Recogido } from "./mirar.ts";
 import { montarPuesto, puestosDe, type Pieza, type Puesto } from "./puesto.ts";
 import { loPedidoDe, rehechoDe } from "./rehacer.ts";
 import { acaboSinEntregar, apuntarTrabajo, gastoDe, trabajosDe } from "./trabajos.ts";
@@ -118,7 +123,10 @@ export function reutilizarMiradas(run: string, b: Busqueda, nuevos = NUEVOS_QUE_
     return null;
   const desde = join(dirname(resolve(run)), String(r.de));
   const deAntes = new Map<string, string>();
-  if (hay(desde, "como_es.json") && hay(desde, "mirar.json")) {
+  const fichasDeAntes = new Map<string, Ficha>();
+  if (hay(desde, "como_es.json") && hay(desde, "mirar.json") && hay(desde, "busqueda.json")) {
+    for (const f of leer<{ busqueda: Busqueda }>(desde, "busqueda.json").busqueda.finalistas)
+      fichasDeAntes.set(f.alojamiento.id, f);
     for (const a of leer<Recogido>(desde, "como_es.json").alojamientos) {
       const buena = a.pasadas.find((p) => p.entrega !== null && p.metodo.verde && p.comoEs.verde);
       if (buena !== undefined) deAntes.set(a.alojamiento, buena.puesto);
@@ -127,7 +135,10 @@ export function reutilizarMiradas(run: string, b: Busqueda, nuevos = NUEVOS_QUE_
   const hecho: MiradasReusadas = { reusadas: [], nuevas: [], sinMirar: [] };
   for (const [i, ficha] of b.finalistas.entries()) {
     const id = ficha.alojamiento.id;
-    const puesto = deAntes.get(id);
+    let puesto = deAntes.get(id);
+    // La mirada de antes vale si miró lo mismo: la misma habitación de ese precio y las mismas fotos, en el mismo
+    // orden. Si la fuente da ahora otro cuarto u otras fotos, se le mira como a un nuevo.
+    if (puesto !== undefined && !miraLoMismo(fichasDeAntes.get(id), ficha)) puesto = undefined;
     if (puesto === undefined) {
       (hecho.nuevas.length < nuevos ? hecho.nuevas : hecho.sinMirar).push(id);
       continue;
@@ -141,12 +152,25 @@ export function reutilizarMiradas(run: string, b: Busqueda, nuevos = NUEVOS_QUE_
       copia(`puestos/${puesto}`, `puestos/${nuevo}`);
       copia(`${puesto}.puertas.json`, `${nuevo}.puertas.json`);
       copia(`ordenes/${puesto}.txt`, `ordenes/${nuevo}.txt`);
+      copia(`fotos/${claveDe(puesto)}/${DIRECCIONES}`, `fotos/${claveDe(nuevo)}/${DIRECCIONES}`);
       // El sello, lo último: un puesto sin sello es de un corte, y se rehace.
       copia(`sellos/${puesto}.json`, `sellos/${nuevo}.json`);
     }
     hecho.reusadas.push(id);
   }
   return hecho;
+}
+
+/** La clave de un finalista en un run, por el nombre de su puesto: `a3-p1` es `a3`. */
+const claveDe = (puesto: string): string => puesto.replace(/-p\d+$/, "");
+
+/** Las fotos que se le dan al que mira de una ficha, por su nombre en el puesto, con su dirección. */
+const fotosDe = (f: Ficha): string => JSON.stringify(elegirFotos(f.habitacion?.fotos ?? [], f.detalle?.fotos ?? []));
+
+/** Si mirar una ficha es mirar lo mismo que otra: la misma habitación de ese precio y las mismas fotos. */
+export function miraLoMismo(antes: Ficha | undefined, ahora: Ficha): boolean {
+  if (antes === undefined) return false;
+  return (antes.habitacion?.id ?? null) === (ahora.habitacion?.id ?? null) && fotosDe(antes) === fotosDe(ahora);
 }
 
 // ---------- tus gustos, al instante
@@ -243,16 +267,26 @@ export function gastoDeUnaMirada(dueno: string, mesa: string): number | null {
 export type ImpactoDelAlojamiento = { impact: Impacto; looks: { at_most: number; each_usd: number | null } };
 
 /**
+ * Las clases de cambio de lo pedido desde la ficha: buscar otra vez (`lodging`) si pide otra zona, otros mínimos u
+ * otro tope, o si sus gustos cambian un imprescindible que la búsqueda le pide a la fuente; si no, solo la tabla.
+ * `dePartida` son tus gustos de la versión de la que se parte.
+ */
+export const clasesDelPedido = (p: PedidoDeAlojamiento, dePartida: GustoMarcado[]): ClaseDeCambio[] =>
+  pideBuscarConLosGustos(p, dePartida) ? ["lodging"] : ["lodging_taste"];
+
+/**
  * Lo que dejaría de valer y lo que costaría lo pedido: buscar otra vez (la búsqueda, mirar a los nuevos, el que cruza
- * y el que explica) o, si solo cambian tus gustos, cruzar y explicar otra vez. Lo que costaría mirar no es lo de una
- * investigación entera: es lo de una mirada por cada candidato nuevo, como mucho los que caben.
+ * y el que explica) o, si solo cambian tus gustos y no lo que se busca, cruzar y explicar otra vez. Lo que costaría
+ * mirar no es lo de una investigación entera: es lo de una mirada por cada candidato nuevo, como mucho los que caben.
  */
 export function impactoDelAlojamiento(
   p: PedidoDeAlojamiento,
   estimado: EstimadoPorAsiento,
   porMirada: number | null,
+  dePartida: GustoMarcado[] = [],
 ): ImpactoDelAlojamiento {
-  const clases: ClaseDeCambio[] = pideBuscar(p) ? ["lodging"] : ["lodging_taste"];
+  const clases = clasesDelPedido(p, dePartida);
+  const busca = clases.includes("lodging");
   const conMiradas: EstimadoPorAsiento = { ...estimado };
   delete conMiradas[ASIENTO];
   if (porMirada !== null)
@@ -262,7 +296,7 @@ export function impactoDelAlojamiento(
     };
   return {
     impact: impactoDe(clases, conMiradas),
-    looks: { at_most: pideBuscar(p) ? NUEVOS_QUE_SE_MIRAN : 0, each_usd: porMirada },
+    looks: { at_most: busca ? NUEVOS_QUE_SE_MIRAN : 0, each_usd: porMirada },
   };
 }
 
@@ -419,7 +453,12 @@ export function siguePregunta(v: ViajeEnLaMesa, n: number): EstadoDeLaPregunta {
   let rojos = [...metodo.rojos];
   if (metodo.entrega !== null)
     rojos.push(
-      ...puertaRespuesta(metodo.entrega, { ...materialDe(puesto.carpeta), pregunta: ID_DE_LA_PREGUNTA }).rojos,
+      ...puertaRespuesta(metodo.entrega, {
+        ...materialDe(puesto.carpeta),
+        pregunta: ID_DE_LA_PREGUNTA,
+        textoDeLaPregunta: pedida.pregunta,
+        textoDeLasOpiniones: readFileSync(join(puesto.carpeta, "in", "reviews.json"), "utf8"),
+      }).rojos,
     );
   guardarJson(join(carpeta, `${puesto.id}.puertas.json`), { verde: rojos.length === 0, rojos });
   if (rojos.length === 0) {
@@ -489,15 +528,19 @@ export type PreguntaDeCara = {
   evidence: PruebaDeCara[];
 };
 
-/** La dirección de cada foto del material de un alojamiento, por el nombre que tenía en su puesto. */
+/**
+ * La dirección de cada foto del material de un alojamiento, por el nombre que tenía en su puesto: la que se apuntó
+ * al montar el puesto en que se miró (o al copiarlo), no la de la búsqueda de ahora, que puede dar otras fotos u
+ * otro orden. Sin lo apuntado, ninguna: mejor una prueba sin foto que una foto que no es.
+ */
 function direccionesDeLasFotos(v: ViajeEnLaMesa, version: number, alojamiento: string): Map<string, string> {
   const run = runDeLaVersion(v, version);
-  if (run === null || !hay(run, "busqueda.json")) return new Map();
-  const { busqueda } = leer<{ busqueda: Busqueda }>(run, "busqueda.json");
-  const f = busqueda.finalistas.find((x) => x.alojamiento.id === alojamiento);
-  if (f === undefined) return new Map();
-  const elegidas = elegirFotos(f.habitacion?.fotos ?? [], f.detalle?.fotos ?? []);
-  return new Map(elegidas.pedidas.map((p) => [p.ruta.replace("photos/", ""), p.url]));
+  const mirado = run === null ? null : puestoDeLaMirada(run, alojamiento);
+  if (run === null || mirado === null) return new Map();
+  const ruta = join(run, "fotos", claveDe(mirado.id), DIRECCIONES);
+  if (!existsSync(ruta)) return new Map();
+  const apuntadas = JSON.parse(readFileSync(ruta, "utf8")) as Record<string, string>;
+  return new Map(Object.entries(apuntadas).filter(([, url]) => typeof url === "string"));
 }
 
 export function preguntaDeCara(

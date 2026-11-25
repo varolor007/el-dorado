@@ -4,7 +4,7 @@
 // gastar.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -15,8 +15,10 @@ import {
   carpetaDeLaPregunta,
   conTusGustos,
   gastoDeUnaMirada,
+  clasesDelPedido,
   impactoDelAlojamiento,
   llevarLaPregunta,
+  miraLoMismo,
   pedirPregunta,
   preguntaDeCara,
   tusGustosDePartida,
@@ -40,8 +42,10 @@ import {
   comprobarPedido,
   conTuAlojamiento,
   gustosConLosTuyos,
+  imprescindiblesDeLaFuente,
   MARCADO,
   PedidoQueNoVale,
+  pideBuscarConLosGustos,
   type PedidoDeAlojamiento,
 } from "../../agent/scripts/alojamiento.ts";
 import type { Busqueda } from "../../agent/scripts/busqueda_alojamiento.ts";
@@ -214,6 +218,39 @@ test("otro tope de gasto: la misma búsqueda; a quien ya se miró no se le mira,
   }
 });
 
+test("una mirada de antes se copia solo si mira lo mismo: con otras fotos, se mira otra vez", async () => {
+  const { mesa, v } = await viajeEnElMapa();
+  try {
+    const mirado = viajeDe(v).alojamientos.find((a) => a.comoEs.length > 0)!;
+    // La trampa de la revisión: al buscar otra vez, la fuente da otra foto por delante de las de la habitación.
+    const base = fuentesInventadas();
+    const otroOrden: FuenteAlojamiento = {
+      ...base.alojamiento,
+      async detalle(id) {
+        const d = await base.alojamiento.detalle(id);
+        if (id !== mirado.id) return d;
+        const otra = "https://fotos.invalid/otra-de-la-habitacion.jpg";
+        return { ...d, habitaciones: d.habitaciones.map((h) => ({ ...h, fotos: [otra, ...h.fotos] })) };
+      },
+    };
+    const r = await pedirYLlevar(mesa, v.ficha.id, { ...NADA, max_price: 1000 }, { ...base, alojamiento: otroOrden });
+    // Ese no se copia: se mira otra vez, como un nuevo, con las fotos de ahora.
+    assert.ok(r.lanzados.includes("lodging-viewer"));
+    const { quienes } = leerJson(join(r.run, "mirar.json")) as { quienes: { puesto: string; alojamiento: string }[] };
+    const suyo = quienes.find((q) => q.alojamiento === mirado.id)!;
+    // Y la foto de una prueba sale de lo que tuvo delante en su puesto, no de la búsqueda.
+    const direcciones = leerJson(join(r.run, "fotos", suyo.puesto.replace(/-p\d+$/, ""), "direcciones.json"));
+    const { busqueda } = leerJson(join(r.run, "busqueda.json")) as { busqueda: Busqueda };
+    const ficha = busqueda.finalistas.find((f) => f.alojamiento.id === mirado.id)!;
+    assert.equal(direcciones["room-01"], "https://fotos.invalid/otra-de-la-habitacion.jpg");
+    assert.equal(direcciones["room-01"], ficha.habitacion?.fotos[0]);
+    assert.ok(miraLoMismo(ficha, ficha));
+    assert.ok(!miraLoMismo(ficha, { ...ficha, habitacion: { ...ficha.habitacion!, id: "otra" } }), "otra habitación");
+  } finally {
+    rmSync(mesa, { recursive: true, force: true });
+  }
+});
+
 /** La fuente inventada con tres alojamientos más, baratos y que cumplen: salen como candidatos nuevos. */
 function conNuevos(): FuenteAlojamiento {
   const base = fuenteDeDosBarrios();
@@ -299,6 +336,34 @@ test("lo que cuesta, antes: una mirada por cada nuevo que cabe, no una investiga
   assert.equal(gustos.looks.at_most, 0);
 });
 
+test("un imprescindible que la fuente declara, puesto o quitado, busca otra vez; un gusto de la tabla, no", () => {
+  const estimado = {
+    "lodging-viewer": { usd: 0.75, de: 1 },
+    "trip-crosser": { usd: 0.05, de: 1 },
+    "trip-explainer": { usd: 0.1, de: 1 },
+  };
+  const dePartida = [{ thing: "views", weight: "like" as const }];
+  // La trampa de la revisión: «piscina, imprescindible» solo rehacía la tabla, y la búsqueda la lee.
+  const conPiscina = { ...NADA, tastes: [{ thing: "pool", weight: "must" as const }] };
+  assert.deepEqual(imprescindiblesDeLaFuente(conPiscina.tastes), ["pool"]);
+  assert.equal(pideBuscarConLosGustos(conPiscina, dePartida), true);
+  assert.deepEqual(clasesDelPedido(conPiscina, dePartida), ["lodging"]);
+  const impacto = impactoDelAlojamiento(conPiscina, estimado, 0.15, dePartida);
+  assert.ok(impacto.impact.redo.some((x) => x.step === "search"));
+  assert.ok(impacto.impact.redo.some((x) => x.step === "look"));
+  assert.deepEqual(impacto.looks, { at_most: NUEVOS_QUE_SE_MIRAN, each_usd: 0.15 });
+  assert.ok((impacto.impact.cost.usd ?? 0) > 0, "dice antes lo que cuesta");
+  // Quitarla también busca: los que no la tienen no habían entrado.
+  const sinPiscina = { ...NADA, tastes: [{ thing: "pool", weight: "like" as const }] };
+  assert.equal(pideBuscarConLosGustos(sinPiscina, [{ thing: "pool", weight: "must" }]), true);
+  // La misma piscina imprescindible, o un gusto que la fuente no declara: solo la tabla.
+  assert.equal(pideBuscarConLosGustos(conPiscina, [{ thing: "pool", weight: "must" }]), false);
+  const vistas = { ...NADA, tastes: [{ thing: "views", weight: "must" as const }] };
+  assert.equal(pideBuscarConLosGustos(vistas, dePartida), false);
+  assert.deepEqual(clasesDelPedido(vistas, dePartida), ["lodging_taste"]);
+  assert.equal(impactoDelAlojamiento(vistas, estimado, 0.15, dePartida).looks.at_most, 0);
+});
+
 // ---------- tu elección, hasta el cierre
 
 test("tu elección: otro alojamiento de los que hay, guardado sin versión nueva; el cierre cierra con él", async () => {
@@ -369,12 +434,15 @@ test("la puerta de la respuesta: de su lista, con su prueba, y una frase sin enl
     fotos: ["hotel-01.jpg", "room-01.jpg"],
     opiniones: ["r1", "r2"],
     pregunta: "q1",
+    textoDeLaPregunta: "Does the gym have free weights?",
+    textoDeLasOpiniones: "[]",
   };
   const buena = {
     seat: "lodging-viewer",
     mode: "question",
     lodging_id: "a1",
     question_id: "q1",
+    about: "lodging",
     answer: "partly",
     evidence: [{ kind: "review", ref: "r2", what: "a guest mentions dumbbells only" }],
     says: "A guest mentions dumbbells, but no photo shows a bench.",
@@ -402,6 +470,50 @@ test("la puerta de la respuesta: de su lista, con su prueba, y una frase sin enl
   assert.deepEqual(pegasDeLaPregunta("Does the gym have free weights?", 200), []);
   assert.notDeepEqual(pegasDeLaPregunta("see https://example.com", 200), []);
   assert.notDeepEqual(pegasDeLaPregunta("a".repeat(201), 200), []);
+});
+
+test("la puerta de la respuesta: sin dinero, con los números de su material y la habitación con su foto", () => {
+  const material = {
+    hoja: { lodging_id: "a1", room: { size_m2: 22 }, services: ["pool"] },
+    fotos: ["hotel-01.jpg", "room-01.jpg"],
+    opiniones: ["r1"],
+    pregunta: "q1",
+    textoDeLaPregunta: "Is the pool open all year?",
+    textoDeLasOpiniones: JSON.stringify([{ ref: "r1", text: "the pool is about 12 m long and open from 8" }]),
+  };
+  const buena = {
+    seat: "lodging-viewer",
+    mode: "question",
+    lodging_id: "a1",
+    question_id: "q1",
+    about: "lodging",
+    answer: "partly",
+    evidence: [{ kind: "review", ref: "r1", what: "a guest says it is 12 m long and opens at 8" }],
+    says: "A guest says the pool is about 12 m long and opens at 8, nothing about the winter.",
+    unknowns: [],
+  };
+  const verde = (cambio: Record<string, unknown>, m = material): boolean =>
+    puertaRespuesta({ ...buena, ...cambio }, m).verde;
+  assert.equal(verde({}), true);
+  // Las trampas que encontró la revisión: un precio y un descuento inventados.
+  assert.equal(verde({ says: "A day pass costs 45 euros, and the pool is 12 m long." }), false);
+  assert.equal(verde({ says: "Te hacemos un 20 % de descuento si reservas hoy." }), false);
+  assert.equal(verde({ says: "The pool is 30 m long." }), false, "un número que no sale de su material");
+  assert.equal(verde({ says: "It has a pool for €10." }), false);
+  assert.equal(verde({ says: "Book today and get a discount." }), false);
+  assert.equal(verde({ says: "Photo room-01 and review r1 say the room is 22 m2." }), true, "sus referencias valen");
+  // MI4: una pregunta de la habitación no se prueba con una foto del hotel, ni se dice que es del alojamiento.
+  const deLaHabitacion = { ...material, textoDeLaPregunta: "Does the room have a view of the sea?" };
+  const conFotoDelHotel = { evidence: [{ kind: "photo", ref: "hotel-01.jpg", what: "a sea view" }] };
+  assert.equal(verde({ about: "room", ...conFotoDelHotel }, deLaHabitacion), false);
+  assert.equal(verde(conFotoDelHotel, deLaHabitacion), false, "dice que es del alojamiento, y no lo es");
+  assert.equal(verde({ about: "room", ...conFotoDelHotel }), false, "dice que es de la habitación");
+  const conFotoDeLaSuya = { evidence: [{ kind: "photo", ref: "room-01.jpg", what: "the sea from the window" }] };
+  assert.equal(
+    verde({ about: "room", ...conFotoDeLaSuya, says: "The room photo shows the sea." }, deLaHabitacion),
+    true,
+  );
+  assert.equal(verde({ about: "kitchen" }), false);
 });
 
 // ---------- la puerta de la casa
@@ -464,6 +576,13 @@ test("la puerta: tus gustos, lo que costaría, otra búsqueda y una pregunta, so
     assert.equal(imp.estado, 200);
     assert.equal(imp.cuerpo.looks.at_most, NUEVOS_QUE_SE_MIRAN);
     assert.equal(imp.cuerpo.impact.spends, true);
+    // Quitar el gimnasio imprescindible cambia lo que se le pide a la fuente: busca otra vez, y lo dice antes.
+    const sinGym = { search: { tastes: [{ thing: "gym", weight: "like" }] } };
+    const otraBusqueda = await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, sinGym);
+    assert.equal(otraBusqueda.cuerpo.looks.at_most, NUEVOS_QUE_SE_MIRAN);
+    assert.ok(otraBusqueda.cuerpo.impact.redo.some((x: { step: string }) => x.step === "search"));
+    const soloVistas = { search: { tastes: [{ thing: "views", weight: "must" }] } };
+    assert.equal((await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, soloVistas)).cuerpo.looks.at_most, 0);
     const mal = await pide("POST", `/viajes/${id}/alojamiento/impacto`, ana, { search: { zone: { lat: 0 } } });
     assert.deepEqual([mal.estado, mal.cuerpo.error, mal.cuerpo.field], [400, "bad_search", "zone"]);
     assert.equal(leerViaje(id, dueno, mesa).ficha.runs.length, 1);
@@ -496,6 +615,23 @@ test("la puerta: tus gustos, lo que costaría, otra búsqueda y una pregunta, so
     const m = nuevo.maneras.find((x) => x.id === "cheapest") ?? nuevo.maneras[0];
     const otroAlojamiento = nuevo.alojamientos.find((a) => a.id !== m.alojamiento && a.descartado == null);
     if (otroAlojamiento !== undefined) {
+      // La trampa de la revisión: uno de otra moneda no se guarda y, si ya estaba guardado, no abre un cierre vacío.
+      const enDisco = join(mesa, "viajes", id, "versiones", String(w.ficha.version), "viaje.json");
+      const tal = readFileSync(enDisco, "utf8");
+      const otraMoneda = JSON.parse(tal) as Viaje;
+      otraMoneda.alojamientos.find((a) => a.id === otroAlojamiento.id)!.precio.moneda = "XXX";
+      writeFileSync(enDisco, JSON.stringify(otraMoneda));
+      const deOtra = { choices: { way: m.id, lodging: otroAlojamiento.id } };
+      const noSeGuarda = await pide("PUT", `/viajes/${id}/elecciones`, ana, deOtra);
+      assert.deepEqual([noSeGuarda.estado, noSeGuarda.cuerpo.field], [400, "lodging"]);
+      const raiz = join(mesa, "viajes", id, "cierres");
+      const cierres = (): number => (existsSync(raiz) ? readdirSync(raiz).length : 0);
+      const antes = cierres();
+      const noCierra = await pide("POST", `/viajes/${id}/cerrar`, ana, deOtra.choices);
+      assert.deepEqual([noCierra.estado, noCierra.cuerpo.error], [400, "bad_lodging"]);
+      assert.equal(cierres(), antes, "no se abre un cierre que va a fallar");
+      assert.ok(!readFileSync(join(mesa, "viajes", id, "diario.jsonl"), "utf8").includes('"closing"'));
+      writeFileSync(enDisco, tal);
       const choices = { way: m.id, lodging: otroAlojamiento.id };
       assert.equal((await pide("PUT", `/viajes/${id}/elecciones`, ana, { choices })).estado, 200);
       assert.equal((await pide("POST", `/viajes/${id}/cerrar`, ana, {})).estado, 202);

@@ -58,6 +58,9 @@ type DeLaCasa = {
   flight: VueloDeCara | null;
   none: string | null;
   next_to: Transporte | null;
+  /** Los países de los aeropuertos del que tienes para los que no se han mirado tus papeles. */
+  new_countries?: string[];
+  country_unknown?: boolean;
   travellers: number;
   search: Busqueda | null;
   before: {
@@ -160,12 +163,15 @@ export function ElTransporte({
   manera,
   id,
   cerrado = false,
+  alQuedarte,
 }: Comun & {
   viaje: Viaje;
   manera: Manera["id"];
   /** Tu viaje en la casa, o null si es el de muestra: entonces no se busca. */
   id: string | null;
   cerrado?: boolean;
+  /** Te quedaste con el que tienes: la manera de tu viaje se pinta con él. */
+  alQuedarte?: (transporte: string) => void;
 }) {
   const x = t.transporte;
   const [casa, setCasa] = useState<DeLaCasa | null>(null);
@@ -239,9 +245,12 @@ export function ElTransporte({
     const leidas = await pideALaCasa("GET", `viajes/${id}/elecciones`);
     if (leidas.estado !== 200) return setFallo("house_down");
     const choices = { ...(leidas.cuerpo.choices as object), transport: tuyo.id };
-    const r = await pideALaCasa("PUT", `viajes/${id}/elecciones`, { choices });
-    if (r.estado === 200) setQuedado(true);
-    else setFallo("house_down");
+    // Con la versión de la que se leyeron: si mientras tanto se enseña otra, la casa no las guarda encima de ella.
+    const r = await pideALaCasa("PUT", `viajes/${id}/elecciones`, { version: leidas.cuerpo.version, choices });
+    if (r.estado === 200) {
+      setQuedado(true);
+      alQuedarte?.(tuyo.id);
+    } else setFallo("house_down");
   };
 
   const volverA = async (n: number): Promise<void> => {
@@ -299,6 +308,12 @@ export function ElTransporte({
             </span>
             <span className="dato">{x.visto(diaCorto(vuelo.seen.slice(0, 10), idioma))}</span>
             {vuelo.saved && <p className="aviso">{x.guardado}</p>}
+            {(casa?.new_countries ?? []).length > 0 && (
+              <p className="aviso">
+                {x.paisSinMirar((casa?.new_countries ?? []).map((c) => paisDicho(c, idioma)).join(", "))}
+              </p>
+            )}
+            {casa?.country_unknown === true && <p className="aviso">{x.paisNoSe}</p>}
             <p className="dato">{x.incluye}</p>
           </div>
         ) : (

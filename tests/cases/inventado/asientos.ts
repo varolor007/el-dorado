@@ -204,6 +204,7 @@ export function respuestaPara(hoja: Objeto): Objeto {
     mode: "question",
     lodging_id: hoja.lodging_id,
     question_id: "q1",
+    about: "lodging",
     answer: "yes",
     evidence: [{ kind: "photo", ref: "hotel-01.jpg", what: "free weights on a rack next to the treadmills" }],
     says: "The gym photo shows free weights on a rack.",

@@ -114,6 +114,9 @@ export function comprobarElecciones(v: Viaje, crudo: unknown): Elecciones {
     });
   }
   const e: Elecciones = { way, lodging, transport, pace, removed, added, moved, tastes };
+  // Un alojamiento en otra moneda que su manera no se puede sumar a su total: no se guarda (8.2).
+  if (lodging !== null && v.alojamientos.find((a) => a.id === lodging)?.precio.moneda !== maneraDe(v, e)?.moneda)
+    throw new EleccionQueNoVale("lodging");
   // Los días que salen de ellas tienen que ser del viaje: si no, no se guarda nada.
   try {
     conTusDias(v, diasElegidos(v, e), paceDe(v, e));

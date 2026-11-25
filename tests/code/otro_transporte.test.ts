@@ -4,14 +4,23 @@
 // cerrar con el transporte elegido. Nada sale a internet ni gasta.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { CAMBIOS, CLASES_DE_CAMBIO } from "../../agent/data/momentos.ts";
-import { HORARIOS } from "../../agent/data/transporte.ts";
+import { ELECCIONES_DE_TRANSPORTE, HORARIOS } from "../../agent/data/transporte.ts";
 import { darElAdelante, esperarLoDeDetras, llevar } from "../../agent/launcher/casa.ts";
-import { abrirViaje, leerVersion, leerViaje, nuevoRun, pasar, type ViajeEnLaMesa } from "../../agent/launcher/mesa.ts";
+import {
+  abrirViaje,
+  apuntar,
+  leerDiario,
+  leerVersion,
+  leerViaje,
+  nuevoRun,
+  pasar,
+  type ViajeEnLaMesa,
+} from "../../agent/launcher/mesa.ts";
 import {
   buscarElTransporte,
   FalloDelTransporte,
@@ -203,6 +212,7 @@ test("otro vuelo los mismos días, por otro país: la tabla, el que cruza y los 
     assert.equal(cara.flight.saved, true);
     assert.equal(cara.none, null);
     assert.equal(cara.search, null);
+    assert.deepEqual([cara.new_countries, cara.country_unknown], [[], false]);
     const b = await buscarElTransporte(v, transporteInventado(), { arrival: "XXX" }, ahora());
     assert.equal(b.version, 1);
     assert.deepEqual(readdirSync(join(v.carpeta, "transporte")), ["1.json"]);
@@ -231,6 +241,15 @@ test("otro vuelo los mismos días, por otro país: la tabla, el que cruza y los 
     assert.deepEqual(despues.before.ways, antesYAhora(antes, nueva));
     assert.equal(despues.before.version, 1);
     assert.throws(() => loQuePideLaOpcion(r.v, b.n, opcion.id), /old_search/);
+    // Con sus papeles mirados, el tuyo no avisa de nada.
+    assert.deepEqual(despues.new_countries, []);
+    // La trampa de la revisión: el que tienes llega por un país que la tabla de los papeles no tiene, y nadie lo
+    // decía. Ahora lo dice, sin cambiar nada.
+    const enDisco = join(r.v.carpeta, "versiones", "2", "viaje.json");
+    const sinWW = JSON.parse(readFileSync(enDisco, "utf8")) as Viaje;
+    sinWW.papeles!.casillas = sinWW.papeles!.casillas.filter((c) => c.pais !== "WW");
+    writeFileSync(enDisco, JSON.stringify(sinWW));
+    assert.deepEqual((transporteDeCara(r.v) as Record<string, any>).new_countries, ["WW"]);
   } finally {
     rmSync(mesa, { recursive: true, force: true });
   }
@@ -283,6 +302,16 @@ test("elegir pide una búsqueda de la versión que ves y una opción suya; sin f
       "bad_search",
     );
     await assert.rejects(buscarElTransporte(v, undefined, {}, ahora()), /no_source/);
+    // La trampa de la revisión: una búsqueda que falla después de preguntar a la fuente (aquí, un aeropuerto que la
+    // fuente no tiene) también cuenta para su freno. La que falla en la fuente se guarda sin opciones, y cuenta.
+    const intentos = (): number => leerDiario(v).filter((a) => a.que === "transport_search").length;
+    const antes = intentos();
+    const fuente = transporteInventado();
+    await assert.rejects(buscarElTransporte(v, fuente, { arrival: "QQQ" }, ahora()), PedidoQueNoVale);
+    assert.ok(fuente.pedidos.length > 0, "se le preguntó a la fuente");
+    assert.equal(intentos(), antes + 1);
+    assert.equal((await buscarElTransporte(v, transporteInventado({ falla: true }), {}, ahora())).opciones.length, 0);
+    assert.equal(intentos(), antes + 2);
     // Lo que se elige sale de lo guardado: el precio es el que dijo la fuente.
     assert.equal(loQuePideLaOpcion(v, b.n, b.opciones[0].id).pedido.flight.precio, b.opciones[0].vuelo.precio);
   } finally {
@@ -416,6 +445,13 @@ test("la puerta: abrir el transporte, buscarlo otra vez y elegir, solo su dueño
     for (let i = 0; i < 13; i++)
       ultimo = (await pide("POST", `/viajes/${otroViaje}/transporte`, ana, { move: {} })).estado;
     assert.equal(ultimo, 429);
+    // Y elegir otro transporte, el suyo: tantas veces por viaje en sus horas, contadas del diario.
+    for (let i = 0; i < ELECCIONES_DE_TRANSPORTE.deUnViaje; i++) apuntar(w, "transport_choice", {}, ahora());
+    const frenada = await pide("POST", `/viajes/${otroViaje}/transporte/elegir`, ana, { search: 1, option: "o1" });
+    assert.deepEqual([frenada.estado, frenada.cuerpo.error], [429, "too_many_choices"]);
+    assert.equal(leerViaje(otroViaje, dueno, mesa).ficha.runs.length, 1, "no rehace nada");
+    for (const idioma of ["en", "es"] as const)
+      assert.notEqual(TEXTOS[idioma].transporte.fallo("too_many_choices"), TEXTOS[idioma].transporte.fallo("otra"));
   } finally {
     await puerta.esperar();
     await puerta.cerrar();

@@ -26,6 +26,8 @@ import type { Textos } from "../lib/textos.ts";
 import { foto, type Reproductor } from "../lib/usar.ts";
 import { MeQuedo, Reservar } from "./Cerrar.tsx";
 import { masCercaDeCadaDia, noCabenTusDias } from "../../../agent/scripts/dia_a_dia.ts";
+import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
+import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
 
 type Comun = { t: Textos; idioma: string };
@@ -417,7 +419,36 @@ type DeViaje = Comun & {
   paraMensajes?: string | null;
   /** Abre el transporte de tu viaje (8.3). */
   alTransporte?: () => void;
+  /** Dónde duermes y cómo llegas, si elegiste otros que los de la manera (8.2, 8.3): la manera se pinta con ellos. */
+  alojamiento?: string | null;
+  transporte?: string | null;
 };
+
+/**
+ * El viaje con la manera elegida como se va a cerrar: con tu alojamiento, tu transporte y su total, sumados por el
+ * código de la casa (`conTuAlojamiento` y `conTuTransporte`). Lo que no se puede sumar (de otra moneda, o que ya no
+ * es del viaje) se queda como estaba. Un viaje cerrado se enseña como se cerró.
+ */
+function conLoTuyo(x: DeViaje): Viaje {
+  const { viaje } = x;
+  if (viaje.cierre || (x.alojamiento == null && x.transporte == null)) return viaje;
+  const intenta = (m: Manera, f: (m: Manera) => Manera): Manera => {
+    try {
+      return f(m);
+    } catch {
+      return m;
+    }
+  };
+  const maneras = viaje.maneras.map((m) =>
+    m.id !== x.manera
+      ? m
+      : intenta(
+          intenta(m, (n) => conTuAlojamiento(viaje, n, x.alojamiento ?? null)),
+          (n) => conTuTransporte(viaje, n, x.transporte ?? null),
+        ),
+  );
+  return { ...viaje, maneras };
+}
 
 function FotoDeParada({ p, n }: { p: Parada; n: number | null }) {
   return (
@@ -1039,7 +1070,10 @@ export function TuViaje(x: DeViaje) {
   // viaje cerrado, es el de la manera con que se cerró, con los precios de ese día; si ese día no hubo total, el que
   // se vio, y de qué día es.
   const cierre = viaje.cierre;
-  const arriba = (cierre && viaje.maneras.find((m) => m.id === cierre.manera)) || elegida;
+  const arriba =
+    (cierre && viaje.maneras.find((m) => m.id === cierre.manera)) ||
+    conLoTuyo(x).maneras.find((m) => m.id === elegida?.id) ||
+    elegida;
   const llega = comoSeLlega(viaje, arriba);
   const cifra = cierre ? (cierre.total.hoy ?? cierre.total.antes) : arriba?.total;
   const moneda = cierre ? cierre.moneda : arriba?.moneda;
@@ -1084,8 +1118,8 @@ export function TuViaje(x: DeViaje) {
       >
         {x.pestana === "book" && viaje.cierre && <Reservar t={t} idioma={idioma} viaje={viaje} cierre={viaje.cierre} />}
         {x.pestana === "days" && <Dias {...x} />}
-        {x.pestana === "stay" && <Dormir {...x} />}
-        {x.pestana === "money" && <Cuentas {...x} />}
+        {x.pestana === "stay" && <Dormir {...x} viaje={conLoTuyo(x)} />}
+        {x.pestana === "money" && <Cuentas {...x} viaje={conLoTuyo(x)} />}
         {x.pestana === "notes" && <Avisos {...x} />}
       </div>
     </>
