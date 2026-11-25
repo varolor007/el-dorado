@@ -625,3 +625,19 @@ test("lo que no es suyo no se cuela por el prototipo: elecciones, gustos y pedid
     rmSync(mesa, { recursive: true, force: true });
   }
 });
+
+test("lo que deja de valer sale también de la clase del cambio: otro vuelo no toca dónde duermes", () => {
+  // Otro vuelo en los mismos días: cómo llegas, y lo que sale de ello; no dónde duermes.
+  const vuelo = impactoDe(["flight"]);
+  assert.ok(vuelo.pieces.includes("transport"));
+  assert.ok(!vuelo.pieces.includes("lodging"));
+  assert.deepEqual(vuelo.pieces, ["transport", "ways", "guide"]);
+  // Otro alojamiento: dónde duermes, y lo que sale de ello; ni cómo llegas ni los demás precios.
+  const cama = impactoDe(["lodging"]);
+  assert.deepEqual(cama.pieces, ["lodging", "ways", "guide"]);
+  // Con otra clase a la vez, cada una dice lo suyo: unas fechas nuevas lo tiran todo igual.
+  for (const p of ["lodging", "transport", "prices"] as const)
+    assert.ok(impactoDe(["flight", "dates"]).pieces.includes(p));
+  assert.ok(impactoDe(["lodging", "budget"]).pieces.includes("lodging"));
+  assert.ok(!impactoDe(["lodging", "budget"]).pieces.includes("transport"));
+});
