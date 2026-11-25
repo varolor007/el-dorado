@@ -14,7 +14,7 @@ import type {
 } from "../../../agent/output/capas.ts";
 import type { Dia, Manera, Viaje } from "../../../agent/output/viaje.ts";
 import { COMIDAS_AL_DIA } from "../../../agent/data/presupuesto.ts";
-import { sueltoDelGrupo } from "../../../agent/scripts/capa_moverse.ts";
+import { conBillete, sueltoDelGrupo } from "../../../agent/scripts/capa_moverse.ts";
 import { abreElDia, diaDeLaSemana } from "../../../agent/scripts/capas.ts";
 import {
   cadaUnoDelGrupo,
@@ -95,6 +95,13 @@ export function abreTusDias(horarios: Horario[] | null, fechas: readonly string[
 export function billeteSuelto(m: DeMoverse | undefined, grupo: GrupoDelViaje): ReturnType<typeof sueltoDelGrupo> {
   return sueltoDelGrupo(m, grupo.adultos, grupo.ninos, grupo.moneda || null);
 }
+
+/**
+ * Si a un tramo que no se anda se le enseña su billete: solo si se puede hacer en transporte, la misma regla con que
+ * moverte allí lo cuenta (`conBillete`). Uno que solo se hace en coche no lleva billete.
+ */
+export const conTransporte = (ir: { cogiendo: readonly string[] }): boolean =>
+  conBillete({ aPie: ir.cogiendo.length === 0, maneras: ir.cogiendo });
 
 /**
  * Cómo se nombra la zona a la que llega cada manera de llegar: por su nombre, si el viaje trae las zonas de su ruta y

@@ -39,8 +39,11 @@ export type CapasParaLaCuenta = { moverse?: DeMoverse; saber?: DelDestino; entra
 /** Quiénes viajan, como los cuenta un precio: cuántos adultos (sin edad) y la edad de cada niño. */
 export type Grupo = { adultos: number; ninos: number[] };
 
-/** Los trayectos de un día que no se andan: los que pasan de lo que se anda de una parada a otra. */
-export type TrayectosDeUnDia = { fecha: string; trayectos: number };
+/**
+ * Los trayectos de un día que no se andan: los que se pueden hacer en transporte (`trayectos`, con su billete) y los
+ * que solo se hacen en coche (`soloEnCoche`), que no suman un billete: lo que cuesta el coche no se sabe.
+ */
+export type TrayectosDeUnDia = { fecha: string; trayectos: number; soloEnCoche?: number };
 
 /** Lo que da la cuenta de moverse allí: lo que cuesta para el grupo, en una moneda, y de qué páginas sale. */
 export type LoQueCuestaMoverse = { importe: number; moneda: string; fuentes: FuenteDeUnDato[] };
@@ -299,8 +302,12 @@ export function trayectosQueNoSeAndan(
   v: Pick<Viaje, "dias" | "paradas" | "caminos" | "alojamientos">,
   manera?: Viaje["maneras"][number],
 ): TrayectosDeUnDia[] {
-  const deCadaDia = new Map(viajesDeLosDias(v, dondeDuerme(v, manera)).map((d) => [d.fecha, d.viajes]));
-  return v.dias.map((d) => ({ fecha: d.fecha, trayectos: deCadaDia.get(d.fecha) ?? 0 }));
+  const deCadaDia = new Map(viajesDeLosDias(v, dondeDuerme(v, manera)).map((d) => [d.fecha, d]));
+  return v.dias.map((d) => ({
+    fecha: d.fecha,
+    trayectos: deCadaDia.get(d.fecha)?.viajes ?? 0,
+    soloEnCoche: deCadaDia.get(d.fecha)?.soloEnCoche ?? 0,
+  }));
 }
 
 /**
@@ -311,20 +318,27 @@ export function cuentaDeMoverseDelViaje(
   v: Viaje,
   manera: Viaje["maneras"][number] | undefined,
   moverse: DeMoverse | undefined = v.moverse,
-): { dias: TrayectosDeUnDia[]; viajes: number; grupo: ReturnType<typeof cuentaDelGrupo> } {
+): {
+  dias: TrayectosDeUnDia[];
+  viajes: number;
+  soloEnCoche: number;
+  grupo: ReturnType<typeof cuentaDelGrupo>;
+} {
   const dias = trayectosQueNoSeAndan(v, manera);
   const viajes = dias.map((d) => ({ fecha: d.fecha, viajes: d.trayectos }));
   const moneda = manera?.moneda ?? v.maneras[0]?.moneda ?? null;
   return {
     dias,
     viajes: dias.reduce((s, d) => s + d.trayectos, 0),
+    soloEnCoche: dias.reduce((s, d) => s + (d.soloEnCoche ?? 0), 0),
     grupo: cuentaDelGrupo(viajes, moverse, v.adultos, v.ninos, moneda),
   };
 }
 
 /**
- * Moverse allí: lo que da la cuenta de sueltos o abono (de 14.2) con los trayectos que no se andan. Sin ninguno, es
- * cero; sin la capa o sin cuenta, no se sabe, y faltan esos trayectos.
+ * Moverse allí: lo que da la cuenta de sueltos o abono (de 14.2) con los trayectos que no se andan y se pueden hacer
+ * en transporte. Sin ninguno, es cero; sin la capa o sin cuenta, no se sabe, y faltan esos trayectos. Los que solo se
+ * hacen en coche no suman un billete: faltan, que lo que cuesta el coche no se sabe.
  */
 export function moverseAlli(
   v: Viaje,
@@ -335,17 +349,21 @@ export function moverseAlli(
 ): ParteDelPresupuesto {
   const dias = trayectosQueNoSeAndan(v, manera);
   const n = dias.reduce((s, d) => s + d.trayectos, 0);
+  // Los que solo se hacen en coche no suman un billete: lo que cuesta el coche no se sabe, y falta.
+  const enCoche = dias.reduce((s, d) => s + (d.soloEnCoche ?? 0), 0);
   const c = new Cuenta("getting_around", moneda);
-  if (n === 0) return c.parteHecha();
-  const m = capas.moverse;
-  const r = m === undefined || m.falta !== null ? null : cuenta(m, dias, grupoDe(v), moneda);
-  const valida = r !== null && Number.isFinite(r.importe) && r.importe >= 0 && /^[A-Z]{3}$/.test(r.moneda);
-  c.suma(
-    valida ? { importes: r.importe > 0 ? [{ importe: r.importe, moneda: r.moneda }] : [], fuentes: r.fuentes } : null,
-    1,
-  );
-  // Lo que falta son los trayectos, no la cuenta.
-  if (!valida) c.faltan = n;
+  if (n > 0) {
+    const m = capas.moverse;
+    const r = m === undefined || m.falta !== null ? null : cuenta(m, dias, grupoDe(v), moneda);
+    const valida = r !== null && Number.isFinite(r.importe) && r.importe >= 0 && /^[A-Z]{3}$/.test(r.moneda);
+    c.suma(
+      valida ? { importes: r.importe > 0 ? [{ importe: r.importe, moneda: r.moneda }] : [], fuentes: r.fuentes } : null,
+      1,
+    );
+    // Lo que falta son los trayectos, no la cuenta.
+    if (!valida) c.faltan = n;
+  }
+  c.faltan += enCoche;
   return c.parteHecha();
 }
 

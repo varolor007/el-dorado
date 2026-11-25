@@ -4,7 +4,7 @@ Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de an
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), firmadas por el PM el 25-nov, construidas y juntas en la tanda
-6 bis (1.012 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
+6 bis (1.015 pruebas). Las revisan tres adversarios, y una sesión de obra hace que el lanzador diga lo gastado al
 cortarse, para el techo de gasto (rama `claude/eldorado-14-7-techo`). Después va la tanda 7, el ensayo, que gasta y
 no empieza sin el adelante del PM** (el estado, punto a punto, en [plan.md](plan.md)).
 
@@ -255,8 +255,10 @@ y «Allí» (`paraLlegar`): un taxi se dice por coche. Las comidas, por persona 
 (`comidasQueSeEnsenan`), y para el grupo dicho como tal. Al cerrar, los días no confirmados se dicen como fechas
 (`refDeUnaDuda`, en `web/src/lib/formato.ts`). Las pestañas del viaje caben a 390 de ancho, también las seis del
 viaje cerrado; en uno más estrecho la fila se desliza y su borde se desvanece mientras quede algo por ver. El caso
-inventado trae llegar a cada zona de la ruta. Sabido: un
-tramo que solo se hace en coche cuenta igual un billete de transporte en «moverte allí».
+inventado trae llegar a cada zona de la ruta. Un tramo
+que no se anda solo lleva billete si el transporte está entre sus maneras (`conBillete`, en `capa_moverse.ts`); uno
+que solo se hace en coche no suma un billete y falta en «moverte allí», sin inventar lo que cuesta el coche, y lo
+dicen igual el presupuesto, «Allí», cada tramo y la guía (`soloEnCoche`).
 
 **La casa y la guía, tras la revisión del bloque 14** (25-nov, una sesión de arreglos). La guía de un viaje con días
 libres sale: el material marca `free`, el contrato dice qué se escribe (GW10: un día libre se queda libre), la puerta

@@ -122,13 +122,23 @@ function monedasDe(billetes: Billete[]): string[] {
 
 // 3. Los trayectos que no se andan, día a día.
 
-/** Los trayectos de un día que no se andan: los que hay que hacer con un billete. */
-export type ViajesDeUnDia = { fecha: string; viajes: number };
+/**
+ * Los trayectos de un día que no se andan: los que se pueden hacer en transporte, que se pagan con un billete, y los
+ * que solo se hacen en coche, que no suman un billete: lo que cuesta el coche no se sabe.
+ */
+export type ViajesDeUnDia = { fecha: string; viajes: number; soloEnCoche?: number };
+
+/**
+ * Si un trayecto que no se anda se puede hacer en transporte: si el transporte está entre sus maneras, las que da
+ * `trayectoEntre` por su distancia. Solo entonces se cuenta su billete, y solo entonces se enseña en el tramo.
+ */
+export const conBillete = (t: { aPie: boolean; maneras: readonly string[] }): boolean =>
+  !t.aPie && t.maneras.includes("transit");
 
 /**
  * Los trayectos que no se andan de cada día del viaje, con la misma cuenta de caminos que la casa y la web: de una
- * parada a la siguiente y, si se dice dónde se duerme, de allí a la primera y de la última a allí. Un día sin ninguno
- * no sale. No dice con qué se hace cada uno: eso no se sabe.
+ * parada a la siguiente y, si se dice dónde se duerme, de allí a la primera y de la última a allí. Los que se pueden
+ * hacer en transporte (`viajes`) y los que solo en coche (`soloEnCoche`), aparte. Un día sin ninguno no sale.
  */
 export function viajesDeLosDias(
   v: { dias: Dia[]; paradas: Parada[]; caminos?: TablaDeCaminos },
@@ -142,8 +152,13 @@ export function viajesDeLosDias(
     if (puntos.length === 0) continue;
     const camino = dondeDuermes === null ? puntos : [dondeDuermes, ...puntos, dondeDuermes];
     let viajes = 0;
-    for (let i = 0; i + 1 < camino.length; i++) if (!trayectoEntre(camino[i], camino[i + 1], caminos).aPie) viajes++;
-    if (viajes > 0) salida.push({ fecha: d.fecha, viajes });
+    let soloEnCoche = 0;
+    for (let i = 0; i + 1 < camino.length; i++) {
+      const t = trayectoEntre(camino[i], camino[i + 1], caminos);
+      if (conBillete(t)) viajes++;
+      else if (!t.aPie) soloEnCoche++;
+    }
+    if (viajes + soloEnCoche > 0) salida.push({ fecha: d.fecha, viajes, soloEnCoche });
   }
   return salida;
 }

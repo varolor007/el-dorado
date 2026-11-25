@@ -31,7 +31,7 @@ import { conTuAlojamiento } from "../../../agent/scripts/alojamiento.ts";
 import { conTuTransporte } from "../../../agent/scripts/otro_transporte.ts";
 import { TuMensaje } from "./DiaADia.tsx";
 import { Alli, CosteDelTrayecto, diceSiReservar, ElPresupuesto, EntradaDeLaParada, FichaDeLaEntrada } from "./Alli.tsx";
-import { grupoDelViaje, presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
+import { conTransporte, grupoDelViaje, presupuestoQueSeEnsena, type TusCambios } from "../lib/alli.ts";
 import { MirarLasEntradas } from "./LasEntradas.tsx";
 
 type Comun = { t: Textos; idioma: string };
@@ -612,7 +612,7 @@ function Dias(x: DeViaje) {
                       {t.viaje.comoIr}
                     </a>
                   )}
-                  {desdeLaCama.cogiendo.length > 0 && (
+                  {conTransporte(desdeLaCama) && (
                     <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
                   )}
                 </span>
@@ -702,7 +702,7 @@ function Dias(x: DeViaje) {
                             {t.viaje.comoIr}
                           </a>
                         )}
-                        {irEntre(p.punto, todas[i + 1].punto, c, idioma).cogiendo.length > 0 && (
+                        {conTransporte(irEntre(p.punto, todas[i + 1].punto, c, idioma)) && (
                           <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
                         )}
                       </span>
@@ -724,7 +724,7 @@ function Dias(x: DeViaje) {
                       {t.viaje.comoIr}
                     </a>
                   )}
-                  {aLaCama.cogiendo.length > 0 && (
+                  {conTransporte(aLaCama) && (
                     <CosteDelTrayecto t={t} idioma={idioma} moverse={viaje.moverse} grupo={grupo} />
                   )}
                 </span>

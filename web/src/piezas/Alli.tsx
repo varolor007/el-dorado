@@ -531,8 +531,11 @@ export function CosteDelTrayecto({ t, idioma, moverse, grupo }: Comun & { movers
 function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Viaje; dias: Dia[]; manera?: Manera }) {
   const m = viaje.moverse;
   if (m === undefined || m.falta !== null) return null;
-  const { viajes, dias: conDias, grupo } = loQueTeConviene(viaje, manera, dias);
+  const { viajes, soloEnCoche, dias: conDias, grupo } = loQueTeConviene(viaje, manera, dias);
   const enDias = conDias.filter((d) => d.trayectos > 0).length;
+  // Los tramos que solo se hacen en coche no llevan billete: lo que cuesta el coche no se sabe, y se dice.
+  const enCoche = (ademas: boolean) =>
+    soloEnCoche > 0 && <p className="dato">{t.alli.soloEnCoche(soloEnCoche, ademas)}</p>;
   const dinero = (n: number, moneda: string | null): string =>
     moneda === null ? String(n) : importe({ importe: n, moneda }, idioma);
   const cabecera = <h3 className="fechas__sub">{t.alli.teConviene}</h3>;
@@ -540,7 +543,7 @@ function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Vi
     return (
       <div className="alli__conviene">
         {cabecera}
-        <p className="suave">{t.alli.convieneNada}</p>
+        {enCoche(false) || <p className="suave">{t.alli.convieneNada}</p>}
       </div>
     );
   // Cada uno con su cuenta; los adultos tienen la misma, y se dicen una vez.
@@ -568,6 +571,7 @@ function LoQueTeConviene({ t, idioma, viaje, dias, manera }: Comun & { viaje: Vi
     <div className="alli__conviene">
       {cabecera}
       <p className="dato">{t.alli.tusTrayectos(viajes, enDias)}</p>
+      {enCoche(true)}
       <ul className="fechas__lista">
         {personas.map((c, i) => (
           <li key={i} className="fecha alli__cosa">

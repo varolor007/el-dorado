@@ -183,6 +183,8 @@ type Rotulos = {
   paraElGrupo: (dinero: string, cuantos: number) => string;
   frenteASueltos: (sueltos: string, ahorra: string) => string;
   convieneNada: string;
+  /** Los trayectos que solo se hacen en coche: sin billete, y lo que cuesta el coche no se sabe. */
+  soloEnCoche: (n: number, ademas: boolean) => string;
   convieneNoSe: string;
 };
 
@@ -381,6 +383,9 @@ export const ROTULOS: Record<string, Rotulos> = {
     paraElGrupo: (dinero, cuantos) => (cuantos === 1 ? `In all: ${dinero}` : `For the ${cuantos} of you: ${dinero}`),
     frenteASueltos: (sueltos, ahorra) => `With single tickets only, ${sueltos}: you save ${ahorra}`,
     convieneNada: "Every leg of your days is walked: you need no tickets.",
+    soloEnCoche: (n, ademas) =>
+      `${ademas ? "Besides, " : ""}${cuenta(n, "leg is", "legs are")} only done by car: no ticket, ` +
+      "and what the car costs is not known, so it is not in getting around",
     convieneNoSe: "What suits you best is not known: a ticket price is missing.",
     deTantos: (dias, viajes) =>
       [dias === null ? "" : cuenta(dias, "day", "days"), viajes === null ? "" : cuenta(viajes, "ride", "rides")]
@@ -585,6 +590,9 @@ export const ROTULOS: Record<string, Rotulos> = {
     paraElGrupo: (dinero, cuantos) => (cuantos === 1 ? `En total: ${dinero}` : `Para los ${cuantos}: ${dinero}`),
     frenteASueltos: (sueltos, ahorra) => `Solo con billetes sueltos, ${sueltos}: ahorras ${ahorra}`,
     convieneNada: "En tus días todo se anda: no te hace falta ningún billete.",
+    soloEnCoche: (n, ademas) =>
+      `${ademas ? "Además, " : ""}${cuenta(n, "trayecto solo se hace", "trayectos solo se hacen")} en coche: ` +
+      "sin billete, y lo que cuesta el coche no se sabe, así que no va en moverte allí",
     convieneNoSe: "Lo que te conviene no se sabe: falta el precio de algún billete.",
     deTantos: (dias, viajes) =>
       [dias === null ? "" : cuenta(dias, "día", "días"), viajes === null ? "" : cuenta(viajes, "viaje", "viajes")]
