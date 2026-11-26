@@ -107,8 +107,8 @@ en su archivo. No se tocan los archivos comunes ni `investigar.ts`. El impacto d
 `agent/data/momentos.ts`: otras fechas rehacen las entradas; otra ruta, todo; un viajero más, solo el presupuesto;
 otro idioma o lo que buscas, al que conoce el destino; otro alojamiento u otro vuelo conservan las capas. En la web,
 `web/src/piezas/Alli.tsx` y la pestaña «Allí». Sus topes de partida, del PM, en `agent/data/internet.ts` y en los
-datos de cada capa. Sabido: una prueba de antes, «cada viaje, solo para su dueño», falla alguna vez si el
-identificador del viaje sale sin letras.
+datos de cada capa. La prueba «cada viaje, solo para su dueño», que fallaba alguna vez si el
+identificador del viaje salía sin letras, ya no lo hace (26-nov).
 
 **Las capas del destino, firmadas y en obra** (25-nov; bloque 14, tanda 6 bis). Al repasar lo que falta para que
 el agente sea funcional, el PM vio que faltan capas: el viaje no sabe lo que cuesta cada entrada ni cuándo abre,

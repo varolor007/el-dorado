@@ -187,7 +187,9 @@ test("cada viaje, solo para su dueño: otro no lo ve, ni llega a saber que exist
       noHay,
     );
     // Lo mismo que para un viaje que no existe, o un identificador que quiere salirse de la mesa.
-    for (const otro of ["ninguno", "..%2F..%2Fetc", "%2e%2e", id.toUpperCase()])
+    // En mayúsculas solo si tiene letras: un identificador sin letras es él mismo, y daba un rojo de casualidad.
+    const enMayusculas = id.toUpperCase() === id ? [] : [id.toUpperCase()];
+    for (const otro of ["ninguno", "..%2F..%2Fetc", "%2e%2e", ...enMayusculas])
       assert.deepEqual(await casa.pide("GET", `/viajes/${otro}`, { dueno: "ana" }), noHay, otro);
     assert.equal((await casa.pide("GET", `/viajes/${id}`, { dueno: "ana" })).estado, 200);
     assert.deepEqual(casa.claves, []);
