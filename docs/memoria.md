@@ -1,6 +1,6 @@
 # Memoria de El Dorado
 
-Al día el 25-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
+Al día el 26-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
 **Estamos aquí: las capas del destino (bloque 14), construidas, revisadas y arregladas el 25-nov, en la tanda 6
@@ -13,7 +13,9 @@ adversarios en su copia, y cuatro sesiones de arreglos. Tres bloqueantes, arregl
 otras edades, el taxi distinto en «Allí» y en las cuentas, y una dirección que pasaba las puertas sin haberse
 abierto. Lo que queda sabido y sin arreglar, y lo que es del PM, en ese informe y en «Pendientes». Para el ensayo
 hay tres cosas que mirar de verdad: que los tres asientos nuevos cumplan su contrato, que Overpass conteste desde
-donde corra la casa (`ELDORADO_OVERPASS`), y lo que dice el lanzador de lo gastado.
+donde corra la casa (`ELDORADO_OVERPASS`), y lo que dice el lanzador de lo gastado. El PM dejó a criterio de la sesión
+(26-nov) probar una vez, dentro del ensayo, a cortar a Claude con cuidado para que diga lo gastado. El adelante del
+ensayo sigue pendiente.
 
 **Cómo se mira la web de las capas sin gastar** (borrador de la sesión que orquesta, fuera del repositorio): una casa
 de mentira con la puerta de verdad (`puertaALaWeb`, `fuentesInventadas` y `lanzadorDeMentira`), y con una fuente de

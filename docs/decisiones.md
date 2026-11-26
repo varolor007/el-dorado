@@ -766,6 +766,17 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   no llegan a la pantalla, como se decidió para la guía; y la web que dicen los datos abiertos no se llama oficial ni
   vale para reservar, porque la edita cualquiera.
 
+## 26-nov-2026
+
+- **Cortar a Claude con cuidado, a criterio de la sesión** (el PM, al explicarle qué es: «lo que consideres»). Se
+  prueba una vez dentro del ensayo, cuando el PM dé su adelante al ensayo: en vez de apagar de golpe el programa de
+  un asiento, se le pide que pare, para ver si así dice lo que gastó. Si funciona, el techo de gasto valdrá también
+  con la cuenta de la casa; si no, se queda como está. **No es el sí al ensayo**: ese sigue pendiente.
+- **Las capturas con datos inventados salen sin mapa, y no es un fallo** (el PM lo preguntó). La ciudad inventada
+  está en un punto del mapa donde no hay nada, y sus sitios no tienen fotos. Con un viaje de verdad el mapa y las
+  fotos salen, como en el de Lisboa del ensayo, que es de antes de las capas. Las capas sobre un mapa de verdad no
+  se han visto todavía: es lo que enseñará el ensayo.
+
 ## Pendientes
 
 Lo que deja el 25-nov, a decisión del PM:
@@ -796,9 +807,8 @@ Lo que deja el 25-nov, a decisión del PM:
   «lo práctico» no se nombre ningún negocio, ni para bien: es una regla nueva, puesta con lo más prudente. Si una
   página que no es de quien lleva el transporte o el sitio (un blog, un agregador) vale como fuente de un precio:
   hoy vale cualquiera que el asiento abriera. Si «dónde reservar» puede ser de otro dominio que la web del sitio
-  (un revendedor): hoy, sí, si el asiento la abrió. Si en el ensayo se prueba a cortar a Claude con cuidado, por su
-  entrada, para que diga lo gastado: no está documentado y no se puede probar sin gastar. Y verlo con IA de verdad,
-  que es un gasto.
+  (un revendedor): hoy, sí, si el asiento la abrió. Y verlo con IA de verdad, que es un gasto: dentro de ese ensayo se
+  probará una vez a cortar a Claude con cuidado (el PM, 26-nov: a criterio de la sesión).
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.
