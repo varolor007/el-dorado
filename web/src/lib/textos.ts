@@ -780,7 +780,8 @@ const en = {
     reservado: "Already booked",
     choca: "What does not fit",
     nadaChoca: "Nothing clashes with what you told me.",
-    nadaQueSeparar: "I found nothing to keep from what you wrote.",
+    nadaQueSeparar:
+      "I found nothing more to keep from what you wrote. What you picked (where you leave from, who is going and what you are after) is already saved, and the research uses it.",
     preguntas: "A few questions",
     preguntasSub: "Answer the ones you want and I will read your words again. Or confirm without answering.",
     tuRespuesta: "Your answer",
@@ -2195,7 +2196,8 @@ const es: Textos = {
     reservado: "Ya reservado",
     choca: "Lo que no encaja",
     nadaChoca: "Nada choca con lo que me has dicho.",
-    nadaQueSeparar: "De lo que escribiste no he sacado nada que guardar.",
+    nadaQueSeparar:
+      "De lo que escribiste no he sacado nada más que guardar. Lo que marcaste (de dónde sales, quiénes vais y lo que buscas) ya está guardado, y la investigación lo usa.",
     preguntas: "Unas preguntas",
     preguntasSub: "Contesta las que quieras y vuelvo a leer tus palabras. O confirma sin contestar.",
     tuRespuesta: "Tu respuesta",

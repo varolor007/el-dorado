@@ -14,6 +14,7 @@ import { ofertasDeZona } from "../tools/fuentes/parallel.ts";
 import { SITIOS_DE_UNA_CLASE } from "../data/dia_a_dia.ts";
 import { raicesDeLasClases } from "../scripts/dia_a_dia.ts";
 import { conMargen, fotosDe, resumenesDe, sitiosConEscalera, sitiosDe } from "../tools/sitios.ts";
+import type { Entendido } from "../scripts/formas.ts";
 import type { Fuentes } from "./investigar.ts";
 import { carpetaDeLaMesa } from "./mesa.ts";
 
@@ -32,7 +33,7 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     sitios: (viaje) => {
       const c = viaje.destination.box;
       const caja = { oeste: c.west, sur: c.south, este: c.east, norte: c.north };
-      const pedido = { idioma: viaje.language, cuantos: SITIOS_QUE_SE_TRAEN };
+      const pedido = { idioma: viaje.language, cuantos: SITIOS_QUE_SE_TRAEN, ...soloDelPais(viaje) };
       return sitiosConEscalera(conMargen(caja, MARGEN), ESCALERA_DE_ENLACES, SITIOS_QUE_BASTAN, pedido);
     },
     // Lo que pidió el viajero en un mensaje y no estaba (8.6): solo esas clases, con menos fama, en la misma caja.
@@ -46,6 +47,7 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
         cuantos: SITIOS_DE_UNA_CLASE,
         raices,
         minimoDeEnlaces: 1,
+        ...soloDelPais(viaje),
       });
     },
     // Cuántos se resumen lo decide quien llama, según las noches del viaje.
@@ -68,6 +70,17 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
       matriz: (origenes, destinos, manera) => matrizDeCaminos(origenes, destinos, manera),
     };
   return fuentes;
+}
+
+/**
+ * Los sitios de un país o de una región, solo de su país, salvo que el viajero diga que le vale salir de él: la caja de
+ * un país coge también lo de sus vecinos. Los de una ciudad, de su caja, como siempre: lo de cerca de la frontera
+ * puede ser una excursión.
+ */
+export function soloDelPais(viaje: Entendido): { pais?: string } {
+  const pais = viaje.destination.country.toUpperCase();
+  if (viaje.moving === undefined || viaje.moving.leave_country === true || !/^[A-Z]{2}$/.test(pais)) return {};
+  return { pais };
 }
 
 function tieneClave(): boolean {

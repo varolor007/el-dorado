@@ -32,6 +32,7 @@ import {
   trabaja,
   type Objeto,
 } from "../cases/inventado/asientos.ts";
+import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
 import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
 
 const DICHO: Dicho = {
@@ -410,4 +411,11 @@ test("el contrato del que escucha está entero y pide su entrega por su nombre",
   assert.match(entrega, /\| `seat` \| Always `"listener"` \|/);
   for (const campo of ["limits", "tastes", "booked", "clashes", "questions", "assumed", "unknowns"])
     assert.match(entrega, new RegExp(`\\| \`${campo}\` \\|`), campo);
+});
+
+test("si el que escucha no saca nada, la pantalla dice que lo que marcaste sí está guardado", () => {
+  // En el ensayo del PM (26-nov), «no he sacado nada que guardar» se leía como que no se había guardado nada, cuando
+  // lo marcado con toques lo guarda el código y la investigación lo usa.
+  const guardado = { en: /already saved/, es: /ya está guardado/ };
+  for (const idioma of IDIOMAS) assert.match(TEXTOS[idioma].escucha.nadaQueSeparar, guardado[idioma], idioma);
 });

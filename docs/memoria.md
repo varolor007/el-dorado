@@ -34,7 +34,17 @@ guía de `agent/arranque/` y la puerta (la dirección gratuita de sslip.io); su 
 80; su puesta al día solo limpia imágenes sin nombre. Comparten la memoria (el ensamblador, hasta 8 GB de 12; la
 casa, 3) y la cuenta de Claude: el token de la casa es el mismo del ensamblador, copiado de su `.env`. LiteAPI, con
 la clave de pruebas. Lo que salió al instalar: la página de tu cuenta pedía una clave a quien piensa con la cuenta de
-la casa (arreglado, 11.2, con `tuIa` en `web/src/lib/tuIa.ts`). El PM enseñó sus claves en una captura: hay que
+la casa (arreglado, 11.2, con `tuIa` en `web/src/lib/tuIa.ts`). Y al confirmar lo entendido, «no he sacado nada que guardar»
+se leía como que no se había guardado nada: ahora dice que lo marcado con toques sí está guardado (5.2). Queda por
+hacer, del PM: que esa pantalla enseñe también lo que marcaste. **La primera investigación, Indonesia del 9 al 24 de enero, se
+paró en los sitios que ver** («algo ha fallado por mi parte»): la caja de un país entero no acababa a tiempo en
+Wikidata (502). Arreglado en el 3.10 (`agent/tools/sitios.ts`): una caja de más de cinco grados se pide por trozos
+(`trozosDe`, `consultaDeLoConocido` y `consultaDeLosElegidos`, tres trozos a la vez), lo más conocido primero; un país
+o una región, solo de su país salvo que al viajero le valga salir (`soloDelPais`, en `fuentes_de_verdad.ts`); un país
+nunca es un sitio (`NUNCA_UN_SITIO`); y con 502, 504 o sin respuesta se pide otra vez, una sola. Con Wikidata de
+verdad: 80 sitios de Indonesia en unos tres minutos (los trozos, unos cien segundos; de qué clase es cada uno, otros
+setenta). El PM pidió además que la pantalla en vivo no se quede vacía: fotos de los sitios, curiosidades y cosas que
+saber mientras investiga. Es un cambio de la hoja: propuesta por hacer. El PM enseñó sus claves en una captura: hay que
 cambiarlas al acabar el ensayo (el token, en los dos `.env`).
 
 **Lo que no hay que rehacer.** Todas las ramas `claude/eldorado-...` del remoto están juntas en la de todos

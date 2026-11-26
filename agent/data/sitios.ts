@@ -109,5 +109,11 @@ export const NO_SE_VA_A_VER: Omit<Raiz, "clase">[] = [
  */
 export const DIVISIONES: Omit<Raiz, "clase">[] = [{ raiz: "Q56061", es: "administrative territorial entity" }];
 
+/**
+ * Lo que nunca es un sitio que ver, aunque además sea de una clase concreta: un país (Indonesia es también un
+ * archipiélago, y salía la primera entre los sitios de su propio viaje, 26-nov).
+ */
+export const NUNCA_UN_SITIO: Omit<Raiz, "clase">[] = [{ raiz: "Q6256", es: "country" }];
+
 /** Las clases que no dicen de qué clase concreta es un sitio: ceden ante lo que no se va a ver y ante una división. */
 export const BLANDAS = [GENERICA, "neighbourhood"];

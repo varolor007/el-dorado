@@ -3,11 +3,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { LETRAS_DE_UN_NOMBRE } from "../../agent/data/ruta.ts";
-import { ATRACCION, BLANDAS, DIVISIONES, GENERICA, NO_SE_VA_A_VER, RAICES } from "../../agent/data/sitios.ts";
+import {
+  ATRACCION,
+  BLANDAS,
+  DIVISIONES,
+  GENERICA,
+  NO_SE_VA_A_VER,
+  NUNCA_UN_SITIO,
+  RAICES,
+} from "../../agent/data/sitios.ts";
+import { soloDelPais } from "../../agent/launcher/fuentes_de_verdad.ts";
+import type { Entendido } from "../../agent/scripts/formas.ts";
+import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
 import {
   claseDe,
   clasificar,
   conMargen,
+  consultaDeLoConocido,
+  consultaDeLosElegidos,
   consultaDeRaices,
   consultaDeSitios,
   fotosDe,
@@ -18,6 +31,7 @@ import {
   resumenesDe,
   sitiosConEscalera,
   sitiosDe,
+  trozosDe,
   type Respuesta,
 } from "../../agent/tools/sitios.ts";
 
@@ -477,4 +491,126 @@ test("trampa: una fila sin sus coordenadas, o sin lo que se habla de ella, no es
     leerCandidatos(json, VISTO).map((c) => c.id),
     ["Q33"],
   );
+});
+
+// Lo que salió en el ensayo del PM (26-nov): la caja de Indonesia entera, de una vez, no acababa a tiempo (502), cogía
+// lo de sus vecinos, y el propio país salía como un sitio, por ser también un archipiélago.
+
+const PAIS_GRANDE = { oeste: 95, sur: -11, este: 141, norte: 6 };
+
+test("una caja pequeña se pide de una vez, y lo más conocido se elige antes de pedir sus datos", () => {
+  assert.equal(trozosDe(CAJA).length, 1);
+  const q = consultaDeSitios(CAJA, { minimoDeEnlaces: 7, cuantos: 50 });
+  // La subconsulta ordena y corta; los nombres, las fotos y los artículos se piden después, solo de esos.
+  const sub = q.indexOf("{ SELECT ?item ?donde ?enlaces WHERE {");
+  const corte = q.indexOf("} ORDER BY DESC(?enlaces) LIMIT 300 }");
+  assert.ok(sub > 0 && corte > sub, "la subconsulta, con su orden y su corte");
+  assert.ok(q.indexOf("OPTIONAL { ?item wdt:P18 ?imagen . }") > corte, "la foto, después del corte");
+  assert.doesNotMatch(q, /wdt:P17/);
+});
+
+test("con país, se mira sobre lo más conocido, fuera de la subconsulta, que trae más; y el país son dos letras", () => {
+  const q = consultaDeSitios(CAJA, { cuantos: 50, pais: "ZZ" });
+  const corte = q.indexOf("} ORDER BY DESC(?enlaces) LIMIT 900 }");
+  assert.ok(corte > 0, "con país, la subconsulta trae el triple");
+  assert.ok(q.indexOf('?item wdt:P17/wdt:P297 "ZZ" .') > corte, "el país, fuera de la subconsulta");
+  assert.match(q, /LIMIT 300`?$/);
+  assert.throws(() => consultaDeSitios(CAJA, { pais: "zz" }), /dos letras/);
+  assert.throws(() => consultaDeSitios(CAJA, { pais: 'ZZ" . } #' }), /dos letras/);
+});
+
+test("una caja grande se parte en trozos de cinco grados que la cubren entera, sin salirse", () => {
+  const trozos = trozosDe(PAIS_GRANDE);
+  assert.equal(trozos.length, 10 * 4);
+  for (const t of trozos) {
+    assert.ok(t.este - t.oeste <= 5 && t.norte - t.sur <= 5);
+    assert.ok(t.oeste >= 95 && t.este <= 141 && t.sur >= -11 && t.norte <= 6);
+  }
+  const area = trozos.reduce((suma, t) => suma + (t.este - t.oeste) * (t.norte - t.sur), 0);
+  assert.equal(Math.round(area), 46 * 17);
+  const q = consultaDeLoConocido(trozos[0], { minimoDeEnlaces: 5, cuantos: 80, pais: "ZZ" });
+  assert.match(q, /^SELECT \?item \?enlaces WHERE/);
+  assert.doesNotMatch(q, /OPTIONAL|wdt:P17/);
+  const e = consultaDeLosElegidos(["Q1", "Q2", "no-es-Q"], { idioma: "es", pais: "ZZ" });
+  assert.match(e, /VALUES \?item \{ wd:Q1 wd:Q2 \}/);
+  assert.match(e, /wdt:P17\/wdt:P297 "ZZ"/);
+  assert.throws(() => consultaDeLosElegidos(["no-es-Q"]), /nada elegido/);
+});
+test("de una caja grande: lo más conocido de cada trozo, junto y ordenado, y los datos de lo elegido", async () => {
+  const pedidas: string[] = [];
+  const conocido = (q: string, enlaces: number) => ({
+    item: { value: `http://www.wikidata.org/entity/${q}` },
+    enlaces: { value: String(enlaces) },
+  });
+  const traer = async (url: string): Promise<Respuesta> => {
+    const q = decodeURIComponent(url);
+    pedidas.push(q);
+    if (q.includes("SELECT ?item ?enlaces WHERE")) {
+      // El primer trozo trae Q1 y Q3; el segundo, Q2 y Q1 otra vez (cae en el borde de los dos); los demás, nada.
+      const en = q.includes("Point(95 -11)") ? [conocido("Q1", 40), conocido("Q3", 60)] : [];
+      if (q.includes("Point(95 -6)")) en.push(conocido("Q2", 55), conocido("Q1", 40));
+      return bien({ results: { bindings: en } });
+    }
+    if (q.includes("VALUES ?item")) return bien(DE_WIKIDATA);
+    return bien(DE_LAS_RAICES);
+  };
+  const sitios = await sitiosDe(PAIS_GRANDE, { cuantos: 10, pais: "ZZ" }, { traer });
+  assert.equal(pedidas.filter((q) => q.includes("SELECT ?item ?enlaces WHERE")).length, 40);
+  const elegidos = pedidas.filter((q) => q.includes("VALUES ?item"));
+  assert.equal(elegidos.length, 1);
+  // Cada cosa una vez, de la más conocida abajo, y el país se mira con los datos.
+  assert.match(elegidos[0], /VALUES \?item \{ wd:Q3 wd:Q2 wd:Q1 \}/);
+  assert.match(elegidos[0], /wdt:P297 "ZZ"/);
+  assert.deepEqual(
+    sitios.map((x) => x.id),
+    ["Q1", "Q5", "Q7"],
+  );
+});
+
+test("si la fuente se satura (502, 504) o no contesta a tiempo, se vuelve a pedir una vez, no más", async () => {
+  const red = falsa([{ estado: 504, cuerpo: "", esperar: null }, bien(DE_WIKIDATA), bien(DE_LAS_RAICES)]);
+  assert.equal((await sitiosDe(CAJA, {}, { traer: red.traer, dormir: async () => {} })).length, 3);
+  const dos = falsa([
+    { estado: 502, cuerpo: "", esperar: null },
+    { estado: 502, cuerpo: "", esperar: null },
+  ]);
+  await assert.rejects(sitiosDe(CAJA, {}, { traer: dos.traer, dormir: async () => {} }), /contestan 502/);
+  let veces = 0;
+  const colgada = async (): Promise<Respuesta> => {
+    veces++;
+    if (veces === 1) throw new Error("The operation was aborted due to timeout");
+    return veces === 2 ? bien(DE_WIKIDATA) : bien(DE_LAS_RAICES);
+  };
+  assert.equal((await sitiosDe(CAJA, {}, { traer: colgada, dormir: async () => {} })).length, 3);
+  let siempre = 0;
+  const muerta = async (): Promise<Respuesta> => {
+    siempre++;
+    throw new Error("sin red");
+  };
+  await assert.rejects(sitiosDe(CAJA, {}, { traer: muerta, dormir: async () => {} }), /sin red/);
+  assert.equal(siempre, 2);
+});
+
+test("un país no es un sitio que ver, aunque sea también una isla", () => {
+  const isla = raiz("island");
+  const raices = new Map([
+    ["Q9101", [isla]],
+    ["Q9102", [isla, NUNCA_UN_SITIO[0].raiz]],
+  ]);
+  assert.notEqual(claseDe(["Q9101"], raices), null);
+  assert.equal(claseDe(["Q9102"], raices), null);
+  assert.match(consultaDeRaices(["Q9102"]), new RegExp(`wd:${NUNCA_UN_SITIO[0].raiz}\\b`));
+});
+
+test("los sitios de un país, solo de su país, salvo que te valga salir; los de una ciudad, de su caja", () => {
+  const ciudad = ENTENDIDO as Entendido;
+  assert.deepEqual(soloDelPais(ciudad), {});
+  const pais = (leave: boolean | null): Entendido => ({
+    ...ciudad,
+    destination: { ...ciudad.destination, kind: "country", country: "zz" },
+    moving: { several_places: true, leave_country: leave, how_much: null } as Entendido["moving"],
+  });
+  assert.deepEqual(soloDelPais(pais(false)), { pais: "ZZ" });
+  assert.deepEqual(soloDelPais(pais(null)), { pais: "ZZ" });
+  assert.deepEqual(soloDelPais(pais(true)), {});
 });

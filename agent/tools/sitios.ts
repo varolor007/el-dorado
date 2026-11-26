@@ -3,7 +3,7 @@
 // (Wikimedia Commons). No se guarda una base propia: se pide cada vez. Son datos libres y piden citar la fuente: cada
 // sitio la lleva. Aquí no se elige qué merece el tiempo del viajero: eso es de un asiento.
 
-import { ATRACCION, BLANDAS, DIVISIONES, GENERICA, NO_SE_VA_A_VER, RAICES } from "../data/sitios.ts";
+import { ATRACCION, BLANDAS, DIVISIONES, GENERICA, NO_SE_VA_A_VER, NUNCA_UN_SITIO, RAICES } from "../data/sitios.ts";
 import { nombreDeFuera } from "../gates/textos.ts";
 import type { Encuadre, Foto, Punto } from "../output/viaje.ts";
 
@@ -38,6 +38,8 @@ export type Sitio = {
  */
 export function claseDe(clases: string[], raicesDe: Map<string, string[]>): string | null {
   const raices = new Set(clases.flatMap((c) => raicesDe.get(c) ?? []));
+  // Un país no es un sitio que ver, aunque sea también una isla o un archipiélago.
+  if (NUNCA_UN_SITIO.some((n) => raices.has(n.raiz))) return null;
   const suyas = RAICES.filter((r) => raices.has(r.raiz)).map((r) => r.clase);
   // Gana la primera de la lista que sea concreta; una blanda (un barrio, un patrimonio a secas) solo si no hay otra.
   const clase = suyas.find((c) => !BLANDAS.includes(c)) ?? suyas[0] ?? null;
@@ -52,7 +54,14 @@ export function claseDe(clases: string[], raicesDe: Map<string, string[]>): stri
  * clases de la fuente (sus identificadores, `Q` y un número): así se vuelve a los datos abiertos por algo que pidió
  * el viajero y no estaba, como una playa o un mercado.
  */
-export type Pedido = { minimoDeEnlaces?: number; cuantos?: number; idioma?: string; raices?: string[] };
+export type Pedido = {
+  minimoDeEnlaces?: number;
+  cuantos?: number;
+  idioma?: string;
+  raices?: string[];
+  /** Solo lo de este país, por su código de dos letras: la caja de un país coge también lo de sus vecinos. */
+  pais?: string;
+};
 
 /**
  * Una caja, con un margen alrededor, en grados. La caja de una ciudad es la de su término, y lo que está en su
@@ -69,45 +78,110 @@ export function conMargen(caja: Encuadre, grados: number): Encuadre {
 
 const idiomaSeguro = (idioma: string): string => (/^[a-z]{2,3}$/.test(idioma) ? idioma : "en");
 
-/** La consulta a Wikidata: todo lo que tiene sitio en la caja y del que se habla lo bastante, lo más conocido antes. */
-export function consultaDeSitios(caja: Encuadre, p: Pedido = {}): string {
+/** Lo que se pide, ya mirado: solo números y letras que no pueden cambiar la consulta. */
+type Mirado = { idioma: string; minimo: number; filas: number; deClase: string; pais: string | null };
+
+function mirar(caja: Encuadre, p: Pedido): Mirado {
   const numeros = [caja.oeste, caja.sur, caja.este, caja.norte];
   if (!numeros.every(Number.isFinite) || !(caja.oeste < caja.este && caja.sur < caja.norte))
     throw new Error("la caja no encierra nada");
-  const idioma = idiomaSeguro(p.idioma ?? "en");
-  const minimo = Math.max(1, Math.floor(p.minimoDeEnlaces ?? 5));
-  // Se piden más filas de las que hacen falta: muchas son de cosas que no son un sitio que ver, y se caen después.
-  const filas = Math.min(500, Math.max(1, Math.floor(p.cuantos ?? 120)) * 6);
   // Solo identificadores de la fuente: nada de lo que se le pase entra en la consulta como texto.
   const raices = (p.raices ?? []).filter((r) => /^Q\d{1,12}$/.test(r));
   if (p.raices !== undefined && raices.length === 0) throw new Error("no hay ninguna clase que pedir");
-  const deClase =
-    raices.length === 0
-      ? ""
-      : `\n  ?item wdt:P31/wdt:P279* ?raiz . VALUES ?raiz { ${raices.map((r) => `wd:${r}`).join(" ")} }`;
-  return `SELECT ?item ?lat ?lon ?enlaces
+  if (p.pais !== undefined && !/^[A-Z]{2}$/.test(p.pais)) throw new Error("el país no son dos letras");
+  return {
+    idioma: idiomaSeguro(p.idioma ?? "en"),
+    minimo: Math.max(1, Math.floor(p.minimoDeEnlaces ?? 5)),
+    // Se piden más filas de las que hacen falta: muchas son de cosas que no son un sitio que ver, y se caen después.
+    filas: Math.min(500, Math.max(1, Math.floor(p.cuantos ?? 120)) * 6),
+    deClase:
+      raices.length === 0
+        ? ""
+        : `\n    ?item wdt:P31/wdt:P279* ?raiz . VALUES ?raiz { ${raices.map((r) => `wd:${r}`).join(" ")} }`,
+    pais: p.pais ?? null,
+  };
+}
+
+/**
+ * Con país, de lo más conocido de la caja se piden más, porque una parte es de los vecinos y se cae al mirar el país.
+ * El país se mira sobre esos, y no sobre todo lo que hay en la caja: eso no acaba a tiempo.
+ */
+const conocidosQueSePiden = (m: Mirado): number => (m.pais === null ? m.filas : Math.min(1500, m.filas * 3));
+
+const caja = (c: Encuadre, sangria: string): string => `${sangria}SERVICE wikibase:box {
+${sangria}  ?item wdt:P625 ?donde .
+${sangria}  bd:serviceParam wikibase:cornerSouthWest "Point(${c.oeste} ${c.sur})"^^geo:wktLiteral .
+${sangria}  bd:serviceParam wikibase:cornerNorthEast "Point(${c.este} ${c.norte})"^^geo:wktLiteral .
+${sangria}}`;
+
+const CABEZA = `SELECT ?item ?lat ?lon ?enlaces
   (SAMPLE(?nombreSuyo) AS ?nombre) (SAMPLE(?nombreIngles) AS ?nombreEn) (SAMPLE(?descripcion) AS ?about)
   (SAMPLE(?articuloSuyo) AS ?articulo) (SAMPLE(?articuloIngles) AS ?articuloEn) (SAMPLE(?imagen) AS ?foto)
   (GROUP_CONCAT(DISTINCT ?claseNombre; separator="|") AS ?clases)
-  (GROUP_CONCAT(DISTINCT STRAFTER(STR(?clase), "/entity/"); separator="|") AS ?clasesQ) WHERE {
-  SERVICE wikibase:box {
-    ?item wdt:P625 ?donde .
-    bd:serviceParam wikibase:cornerSouthWest "Point(${caja.oeste} ${caja.sur})"^^geo:wktLiteral .
-    bd:serviceParam wikibase:cornerNorthEast "Point(${caja.este} ${caja.norte})"^^geo:wktLiteral .
-  }
-  ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${minimo})${deClase}
-  BIND(geof:latitude(?donde) AS ?lat) BIND(geof:longitude(?donde) AS ?lon)
+  (GROUP_CONCAT(DISTINCT STRAFTER(STR(?clase), "/entity/"); separator="|") AS ?clasesQ) WHERE {`;
+
+/** Lo de cada cosa ya elegida: su país, si se pide, sus nombres, su foto, sus clases y sus artículos. */
+function detalles(m: Mirado, filas: number): string {
+  const delPais = m.pais === null ? "" : `  ?item wdt:P17/wdt:P297 "${m.pais}" .\n`;
+  return `${delPais}  BIND(geof:latitude(?donde) AS ?lat) BIND(geof:longitude(?donde) AS ?lon)
   OPTIONAL { ?item wdt:P18 ?imagen . }
   OPTIONAL { ?item wdt:P31 ?clase . }
   OPTIONAL {
     ?item wdt:P31 ?claseConNombre . ?claseConNombre rdfs:label ?claseNombre . FILTER(LANG(?claseNombre) = "en")
   }
-  OPTIONAL { ?item rdfs:label ?nombreSuyo . FILTER(LANG(?nombreSuyo) = "${idioma}") }
+  OPTIONAL { ?item rdfs:label ?nombreSuyo . FILTER(LANG(?nombreSuyo) = "${m.idioma}") }
   OPTIONAL { ?item rdfs:label ?nombreIngles . FILTER(LANG(?nombreIngles) = "en") }
   OPTIONAL { ?item schema:description ?descripcion . FILTER(LANG(?descripcion) = "en") }
-  OPTIONAL { ?articuloSuyo schema:about ?item ; schema:isPartOf <https://${idioma}.wikipedia.org/> . }
+  OPTIONAL { ?articuloSuyo schema:about ?item ; schema:isPartOf <https://${m.idioma}.wikipedia.org/> . }
   OPTIONAL { ?articuloIngles schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> . }
 } GROUP BY ?item ?lat ?lon ?enlaces ORDER BY DESC(?enlaces) LIMIT ${filas}`;
+}
+
+/**
+ * La consulta a Wikidata de una caja pequeña, de una vez: todo lo que tiene sitio en la caja y del que se habla lo
+ * bastante, lo más conocido antes. Lo más conocido se elige primero, en una subconsulta, y solo de eso se piden los
+ * nombres, las fotos y los artículos: pedirlo de todo lo que hay en la caja no acaba a tiempo.
+ */
+export function consultaDeSitios(c: Encuadre, p: Pedido = {}): string {
+  const m = mirar(c, p);
+  return `${CABEZA}
+  { SELECT ?item ?donde ?enlaces WHERE {
+${caja(c, "    ")}
+    ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${m.minimo})${m.deClase}
+  } ORDER BY DESC(?enlaces) LIMIT ${conocidosQueSePiden(m)} }
+${detalles(m, m.filas)}`;
+}
+
+/** Lo más conocido de un trozo de una caja grande: solo qué es y de cuánto se habla, sin nada más. */
+export function consultaDeLoConocido(c: Encuadre, p: Pedido = {}): string {
+  const m = mirar(c, p);
+  return `SELECT ?item ?enlaces WHERE {
+${caja(c, "  ")}
+  ?item wikibase:sitelinks ?enlaces . FILTER(?enlaces >= ${m.minimo})${m.deClase}
+} ORDER BY DESC(?enlaces) LIMIT ${conocidosQueSePiden(m)}`;
+}
+
+/** Lo de unas cosas ya elegidas por su número de la fuente, con su sitio en el mapa y lo demás. */
+export function consultaDeLosElegidos(items: string[], p: Pedido = {}): string {
+  const m = mirar({ oeste: 0, sur: 0, este: 1, norte: 1 }, p);
+  const qs = [...new Set(items)].filter(esQ);
+  if (qs.length === 0) throw new Error("no hay nada elegido que pedir");
+  return `${CABEZA}
+  VALUES ?item { ${qs.map((q) => `wd:${q}`).join(" ")} }
+  ?item wdt:P625 ?donde . ?item wikibase:sitelinks ?enlaces .
+${detalles(m, m.filas)}`;
+}
+
+/** El lado más grande, en grados, de lo que se pide de una vez: una caja mayor se parte en trozos de este lado. */
+export const LADO_DE_UN_TROZO = 5;
+
+/** Los trozos de una caja, de izquierda a derecha y de abajo arriba; una caja pequeña es un solo trozo. */
+export function trozosDe(c: Encuadre, lado = LADO_DE_UN_TROZO): Encuadre[] {
+  const trozos: Encuadre[] = [];
+  for (let oeste = c.oeste; oeste < c.este; oeste += lado)
+    for (let sur = c.sur; sur < c.norte; sur += lado)
+      trozos.push({ oeste, sur, este: Math.min(oeste + lado, c.este), norte: Math.min(sur + lado, c.norte) });
+  return trozos;
 }
 
 type Objeto = Record<string, unknown>;
@@ -191,7 +265,10 @@ export function leerCandidatos(json: unknown, visto: string): Candidato[] {
 
 /** La consulta que dice, de unas clases, de cuáles de las nuestras desciende cada una. */
 export function consultaDeRaices(clases: string[]): string {
-  const nuestras = [...new Set([...RAICES, ...NO_SE_VA_A_VER, ...DIVISIONES].map((r) => r.raiz)), ATRACCION];
+  const nuestras = [
+    ...new Set([...RAICES, ...NO_SE_VA_A_VER, ...DIVISIONES, ...NUNCA_UN_SITIO].map((r) => r.raiz)),
+    ATRACCION,
+  ];
   const valores = (qs: string[]): string =>
     [...new Set(qs)]
       .filter(esQ)
@@ -328,7 +405,15 @@ async function pedir(url: string, o: Salida): Promise<unknown> {
   const dormir = o.dormir ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const intentos = o.intentos ?? 5;
   for (let intento = 1; ; intento++) {
-    const r = await traer(url);
+    let r: Respuesta;
+    try {
+      r = await traer(url);
+    } catch (error) {
+      // Sin respuesta a tiempo: se vuelve a pedir una vez, como con 502 y 504.
+      if (intento >= 2) throw error;
+      await dormir(5000);
+      continue;
+    }
     if (r.estado === 200) {
       try {
         return JSON.parse(r.cuerpo);
@@ -336,7 +421,9 @@ async function pedir(url: string, o: Salida): Promise<unknown> {
         throw new Error("los datos abiertos no contestan con datos");
       }
     }
-    const reintentable = r.estado === 429 || r.estado === 503;
+    // Con 502 y 504 la fuente estaba saturada o no acabó a tiempo: se vuelve a pedir una vez, no más.
+    const reintentable =
+      r.estado === 429 || r.estado === 503 || ((r.estado === 502 || r.estado === 504) && intento < 2);
     if (!reintentable || intento >= intentos) throw new Error(`los datos abiertos contestan ${r.estado}`);
     await dormir(Math.min(60, r.esperar ?? 5 * intento) * 1000);
   }
@@ -345,10 +432,54 @@ async function pedir(url: string, o: Salida): Promise<unknown> {
 const WIKIDATA = "https://query.wikidata.org/sparql";
 const COMMONS = "https://commons.wikimedia.org/w/api.php";
 
-/** Los sitios de una caja del mapa, lo más conocido antes. */
+const aWikidata = (consulta: string): string => `${WIKIDATA}?format=json&query=${encodeURIComponent(consulta)}`;
+
+/** Cuántos trozos de una caja grande se piden a la vez: la fuente deja pocas consultas a la vez por cliente. */
+const TROZOS_A_LA_VEZ = 3;
+/** De cuántos en cuántos se piden los datos de lo elegido: la consulta va en la dirección, y tiene un largo. */
+const ELEGIDOS_DE_UNA_VEZ = 150;
+
+/**
+ * Lo más conocido de una caja grande, como candidatos: lo más conocido de cada trozo, juntos y ordenados, y los datos
+ * solo de lo elegido, de lo más conocido abajo, hasta tener bastantes. Con país, los de otro país se caen ahí.
+ */
+async function candidatosPorTrozos(c: Encuadre, p: Pedido, o: Salida): Promise<Candidato[]> {
+  const conocidos = new Map<string, number>();
+  const trozos = trozosDe(c);
+  for (let i = 0; i < trozos.length; i += TROZOS_A_LA_VEZ) {
+    const tanda = trozos.slice(i, i + TROZOS_A_LA_VEZ);
+    const respuestas = await Promise.all(tanda.map((t) => pedir(aWikidata(consultaDeLoConocido(t, p)), o)));
+    for (const json of respuestas)
+      for (const cruda of lista(objeto(objeto(json).results).bindings)) {
+        const fila = objeto(cruda);
+        const id = /\/(Q\d+)$/.exec(valor(fila, "item") ?? "")?.[1];
+        const enlaces = Number(valor(fila, "enlaces"));
+        if (id !== undefined && Number.isFinite(enlaces)) conocidos.set(id, Math.max(enlaces, conocidos.get(id) ?? 0));
+      }
+  }
+  const m = mirar(c, p);
+  const elegidos = [...conocidos.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, conocidosQueSePiden(m))
+    .map(([id]) => id);
+  const visto = new Date().toISOString();
+  const candidatos: Candidato[] = [];
+  for (let i = 0; i < elegidos.length && candidatos.length < m.filas; i += ELEGIDOS_DE_UNA_VEZ) {
+    const consulta = consultaDeLosElegidos(elegidos.slice(i, i + ELEGIDOS_DE_UNA_VEZ), p);
+    candidatos.push(...leerCandidatos(await pedir(aWikidata(consulta), o), visto));
+  }
+  return candidatos.slice(0, m.filas);
+}
+
+/**
+ * Los sitios de una caja del mapa, lo más conocido antes. Una caja pequeña (una ciudad, una región) se pide de una
+ * vez; una grande (un país), por trozos, porque de una vez no acaba a tiempo (Indonesia, 26-nov).
+ */
 export async function sitiosDe(caja: Encuadre, p: Pedido = {}, o: Salida = {}): Promise<Sitio[]> {
-  const url = `${WIKIDATA}?format=json&query=${encodeURIComponent(consultaDeSitios(caja, p))}`;
-  const candidatos = leerCandidatos(await pedir(url, o), new Date().toISOString());
+  const candidatos =
+    trozosDe(caja).length === 1
+      ? leerCandidatos(await pedir(aWikidata(consultaDeSitios(caja, p)), o), new Date().toISOString())
+      : await candidatosPorTrozos(caja, p, o);
   // De qué desciende cada clase se pregunta aparte, de cien en cien: así no depende de cómo se llame ni en qué idioma.
   const clases = [...new Set(candidatos.flatMap((c) => c.clasesQ))].sort();
   const raicesDe = new Map<string, string[]>();
