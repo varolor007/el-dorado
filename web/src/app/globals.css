@@ -3066,3 +3066,10 @@ select.toque {
   flex-direction: column;
   gap: 6px;
 }
+.cambios__marcado {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--oro-tinte);
+  color: var(--tinta);
+}

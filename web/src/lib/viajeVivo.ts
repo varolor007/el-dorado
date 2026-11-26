@@ -25,6 +25,8 @@ export type Investigacion = {
     looking?: boolean;
     /** Volver a intentarlo sigue desde aquí: solo se repite este paso. Si no, la investigación empieza otra vez. */
     resumes?: boolean;
+    /** Si se paró porque el viaje pide varias bases: dónde dormiría en cada una, en su orden. */
+    bases?: string[] | null;
   } | null;
   told: number;
   /** Si la investigación rehace una versión por un cambio: de cuál parte, su run y las clases del cambio. */

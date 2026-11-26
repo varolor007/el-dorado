@@ -763,8 +763,12 @@ const en = {
     } as Record<string, string>,
     queHacer: "What you can do",
     soloEstePaso: "Trying again repeats only this step. What is already done stays as it is, and is not paid again.",
+    variasBases: (n: number, sitios: string) =>
+      `To see what you asked for, your trip needs ${n} places to sleep: ${sitios}. For now I can only plan a trip that sleeps in one place, with day trips from it if needed.`,
+    unSitioTexto: "Choose to sleep in one place and I will plan the trip again from there, with day trips if needed.",
     salidas: {
       retry: "Try again",
+      one_place: "Sleep in one place",
       change_request: "Change what you asked",
       continue_without: "Go on without this part",
     } as Record<string, string>,
@@ -1166,6 +1170,7 @@ const en = {
       lodging_taste: "a taste about where you sleep",
       taste: "a taste",
       looking_for: "what you are looking for",
+      moving: "how much you move around",
       limits: "a limit",
       booked: "what you already booked",
       other: "something else",
@@ -1392,6 +1397,7 @@ const en = {
     abrir: "Change what you asked",
     abrirTexto: "Your dates, who is going, what you spend or what matters where you sleep",
     sub: "These are your answers from the start. Touch only what changes: the rest stays as it is, and is not asked or paid again.",
+    unSitio: "Marked: sleep in one place. Tap «See what changes» to see what is redone and what it costs.",
     fechas: "When",
     entrada: "Check-in",
     salida: "Check-out",
@@ -2188,8 +2194,13 @@ const es: Textos = {
     },
     queHacer: "Lo que puedes hacer",
     soloEstePaso: "Volver a intentarlo repite solo este paso. Lo ya hecho se queda como está, y no se paga otra vez.",
+    variasBases: (n, sitios) =>
+      `Para ver lo que pediste, tu viaje pide dormir en ${n} sitios: ${sitios}. De momento solo sé planear un viaje durmiendo en un mismo sitio, con excursiones de ida y vuelta si hacen falta.`,
+    unSitioTexto:
+      "Elige dormir en un solo sitio y vuelvo a planear el viaje desde ahí, con excursiones si hacen falta.",
     salidas: {
       retry: "Volver a intentarlo",
+      one_place: "Dormir en un solo sitio",
       change_request: "Cambiar lo que pediste",
       continue_without: "Seguir sin esta parte",
     },
@@ -2583,6 +2594,7 @@ const es: Textos = {
       lodging_taste: "un gusto de donde duermes",
       taste: "un gusto",
       looking_for: "lo que buscas",
+      moving: "cuánto te mueves",
       limits: "un límite",
       booked: "lo que ya tienes reservado",
       other: "otra cosa",
@@ -2804,6 +2816,7 @@ const es: Textos = {
     abrir: "Cambiar lo que pediste",
     abrirTexto: "Tus fechas, quién va, lo que gastas o lo que te importa donde duermes",
     sub: "Son tus respuestas del principio. Toca solo lo que cambia: lo demás se queda como está, sin volver a pedirlo ni a pagarlo.",
+    unSitio: "Marcado: dormir en un solo sitio. Pulsa «Ver lo que cambia» para ver lo que se rehace y lo que cuesta.",
     fechas: "Cuándo",
     entrada: "Entrada",
     salida: "Salida",

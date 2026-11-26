@@ -24,7 +24,8 @@ after you, and it searches where you say.
 ## A trip of several bases
 
 If the trip needs more than one base, deliver the route it needs. Do not squeeze it into one base to make it fit:
-that would be another trip. When `transfers.json` is empty you cannot know how long each transfer takes: put
+that would be another trip. Unless the traveller said they want one place (`several_places` is `false`): then it is
+one base, as the guide says. When `transfers.json` is empty you cannot know how long each transfer takes: put
 `unknown`, as RU3 says, and say so in `unknowns`. Today the house cannot yet measure transfers nor search lodging in
 more than one base: with a route of several bases it stops there and tells the traveller that it cannot plan that
 trip yet. That is the right outcome, and it is not a fault of yours.

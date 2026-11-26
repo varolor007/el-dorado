@@ -90,6 +90,7 @@ export const CLASES_DE_CAMBIO = [
   "lodging_taste",
   "taste",
   "looking_for",
+  "moving",
   "limits",
   "booked",
   "other",
@@ -161,6 +162,9 @@ export const CAMBIOS: Record<ClaseDeCambio, { pasos: IdDePaso[]; quizas: IdDePas
   // Lo que buscas lo leen la ruta y el del día a día, enteros; y el que conoce el destino y el del calendario, solo lo
   // de la lista fija (`loQueSeBusca`), que también puede cambiar.
   looking_for: { pasos: ["route", "pick", "calendar", "local_knowledge"], quizas: [] },
+  // Ver más de un sitio y cuánto moverse los lee la ruta; lo de después sale de ella. Los sitios y los papeles no
+  // cambian: es el mismo destino (salir o no del país va como destino, porque cambia los sitios).
+  moving: { pasos: ["route", "search", "pick", "getting_around", "local_knowledge", "tickets"], quizas: [] },
   limits: { pasos: ["route", "pick", "table"], quizas: [] },
   booked: { pasos: ["route", "pick", "search", "table"], quizas: [] },
   // Lo que no se sabe leer se rehace entero: es lo más prudente.

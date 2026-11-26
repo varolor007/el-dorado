@@ -45,7 +45,9 @@ export function clasesDelCambio(antes: Entendido, despues: Entendido): ClaseDeCa
     "said",
     "moving",
   ]);
-  if (!igual(antes.destination, despues.destination) || !igual(antes.moving, despues.moving)) hay.add("destination");
+  const salir = (e: Entendido): boolean | null => e.moving?.leave_country ?? null;
+  if (!igual(antes.destination, despues.destination) || salir(antes) !== salir(despues)) hay.add("destination");
+  else if (!igual(antes.moving, despues.moving)) hay.add("moving");
   if (!igual(antes.origin, despues.origin)) hay.add("origin");
   if (!igual(antes.dates, despues.dates)) hay.add("dates");
   const ta = antes.travellers;

@@ -60,7 +60,14 @@ que trabaja. Hecha la casa: tras los sitios, `prepararElCarrusel` (`agent/launch
 curiosidad del principio de su artículo en el idioma del viajero (`resumenesDe` con idioma; `curiosidad`, en
 `agent/scripts/carrusel.ts`, sin direcciones ni teléfonos); no frena el viaje (20 segundos como mucho) ni lo tumba;
 `GET /viajes/<id>/carrusel` da las cartas del último run que las tenga (`cartasDelViaje`, mirado con
-`cartasQueValen`). Hecha la web: `Carrusel` y `SenalDeTrabajo` (`web/src/piezas/Carrusel.tsx`), con `useCarrusel`
+`cartasQueValen`). **La salida de una parada por varias bases (4.5, 26-nov)**: el PM no encontraba cómo cambiar dónde
+dormir. `paradaDeCara` lleva `bases` (los nombres de la ruta, si se paró por eso; `agent/launcher/acta.ts`); la web
+(`EnCasa.tsx`) lo dice en claro y ofrece «Dormir en un solo sitio», que abre los cambios con `?one_place=1` y lo deja
+marcado (`Cambios.tsx`); la puerta 3 no deja pasar varias bases si `moving.several_places` es falso, y el contrato
+del de la ruta lo dice; la clase de cambio `moving` rehace la ruta y lo de después (no los sitios ni los papeles);
+`leave_country` sigue como destino. Pruebas en `tests/code/un_sitio.test.ts`. Sabido: en una primera investigación
+parada, un cambio empieza desde el principio (vuelve a lanzar papeles y calendario); retomar desde el run parado
+tocaría el cimiento (`rehacer.ts`), que es del PM hablarlo. Hecha la web: `Carrusel` y `SenalDeTrabajo` (`web/src/piezas/Carrusel.tsx`), con `useCarrusel`
 (`web/src/lib/carrusel.ts`), en cada espera: la investigación en vivo (`EnCasa`, cuando algún paso espera a su
 asiento), buscar otro alojamiento y preguntar por uno (`Alojamiento.tsx`), el mensaje para un día (`DiaADia.tsx`),
 tus entradas (`LasEntradas.tsx`), cerrar (`Cerrar.tsx`) y la guía. Un viaje de antes del carrusel da sus paradas con

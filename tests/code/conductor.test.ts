@@ -207,6 +207,7 @@ test("si la vuelta de más vuelve en rojo, el run se queda parado y ya no se lla
       said: null,
       looking: false,
       resumes: true,
+      bases: null,
     });
   });
 });
@@ -257,6 +258,7 @@ test("el conductor que cuenta la parada: la web la dice por claves, y su frase s
         said: enseña ? { text: message, lang: leerJson(join(run, "entendido.json")).language } : null,
         looking: false,
         resumes: false,
+        bases: null,
       });
       // Mientras no lo firme, no se enseña ninguna: la web lo dice por claves.
       assert.equal(paradaDeCara(run)?.said, null);

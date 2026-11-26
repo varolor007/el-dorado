@@ -800,6 +800,13 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   los diferentes pasos»). Regla nueva de la hoja y punto 10.11 del plan. Lo que enseña son sitios de verdad con su
   foto y su autor y una curiosidad de su artículo, sin IA y sin gastar; nada de progreso de mentira.
 
+- **Una salida clara de una parada por varias bases** (el PM, en su ensayo: «no me deja cambiar dónde dormir; piensa
+  que todo tiene que ser súper intuitivo siempre para el user»). La parada dice los sitios que pedía el viaje y ofrece
+  «Dormir en un solo sitio», que abre los cambios con eso marcado; el de la ruta lo respeta y la puerta 3 lo mira.
+  Cambiar cuánto te mueves es una clase de cambio propia (`moving`), que no rehace los sitios ni los papeles; salir o
+  no del país sigue siendo como otro destino. La regla para todo lo que se haga: cada parada, con una salida que se
+  entienda y funcione con un toque.
+
 ## Pendientes
 
 - **Los viajes de varias bases** (propuesta del 26-nov, a firma del PM; en la hoja, arriba, y en el bloque 15 del

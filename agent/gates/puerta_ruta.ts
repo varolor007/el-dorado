@@ -60,6 +60,9 @@ export function puertaRuta(entrega: unknown, m: MaterialDeRuta): Veredicto {
   if (forma === "route" && bases.length < 2) rojo("bases", "una ruta lleva dos bases o más");
   if ((forma === "single_base" || forma === "base_with_day_trips") && bases.length > 1)
     rojo("bases", "dice que hay una sola base y entrega más de una");
+  // Si el viajero dijo que no quiere ver más de un sitio, se duerme en uno: con excursiones, si hacen falta (26-nov).
+  if (m.viaje.moving?.several_places === false && (forma === "route" || bases.length > 1))
+    rojo("shape", "el viajero quiere dormir en un solo sitio: una base, con excursiones si hacen falta");
   bases.forEach((cruda, i) => {
     const donde = `bases[${i}]`;
     if (!esObjeto(cruda) || !esTexto(cruda.id)) return rojo(donde, "no dice qué base es");

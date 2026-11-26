@@ -392,7 +392,22 @@ export type ParadaDeCara = {
    * volver a intentarlo, la investigación empieza otra vez.
    */
   resumes: boolean;
+  /** Si se paró porque el viaje pide varias bases: dónde dormiría en cada una, en su orden. */
+  bases: string[] | null;
 };
+
+/** Los nombres de las bases de la ruta del run, si los hay. */
+function basesDeLaRuta(run: string): string[] | null {
+  const ruta = leer(join(run, "ruta.json")) as { entrega?: { bases?: unknown } } | null;
+  const bases = ruta?.entrega?.bases;
+  if (!Array.isArray(bases)) return null;
+  const nombres = bases.flatMap((b) =>
+    typeof b === "object" && b !== null && typeof (b as { name?: unknown }).name === "string"
+      ? [(b as { name: string }).name.slice(0, 80)]
+      : [],
+  );
+  return nombres.length > 1 ? nombres : null;
+}
 
 export function paradaDeCara(run: string, conSuFrase: boolean = SE_ENSENA_LA_FRASE_DEL_CONDUCTOR): ParadaDeCara | null {
   const causa = causaDe(run);
@@ -418,5 +433,6 @@ export function paradaDeCara(run: string, conSuFrase: boolean = SE_ENSENA_LA_FRA
     said: conSuFrase ? (suya?.message ?? null) : null,
     looking,
     resumes: como !== null && quedan && !looking && options.includes("retry"),
+    bases: causa.rojos.some((r) => r.donde === "bases") ? basesDeLaRuta(run) : null,
   };
 }

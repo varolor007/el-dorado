@@ -101,6 +101,7 @@ test("un asiento que no entrega: se repite solo ese, y el viaje sale sin volver 
       said: null,
       looking: false,
       resumes: true,
+      bases: null,
     });
     const antes = [...lanzador.lanzados];
     const gastado = gastoDe(run).usd;
@@ -167,6 +168,7 @@ test("en rojo tras sus vueltas y la del conductor: se pide otra, con lo devuelto
       said: null,
       looking: false,
       resumes: true,
+      bases: null,
     });
 
     reintentar(run);

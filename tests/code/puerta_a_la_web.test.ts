@@ -268,6 +268,7 @@ test("lo que sale por la puerta no lleva el porqué de un rojo, ni un asiento, n
         said: null,
         looking: false,
         resumes: true,
+        bases: null,
       });
       assert.deepEqual(
         cuerpo.research.jobs.filter((t: Objeto) => t.step !== "calendar" && t.step !== "papers"),
@@ -485,6 +486,7 @@ test("un run parado: el conductor lo cuenta por claves, y el acta del run la pid
         said: null,
         looking: false,
         resumes: true,
+        bases: null,
       });
       const acta = await casa.pide("GET", `/viajes/${id}/acta`);
       assert.equal(acta.estado, 200);

@@ -21,7 +21,9 @@ every distance afterwards.
 - `route`: several bases, slept in one after another.
 
 No shape is the usual one: it follows from where the places this traveller cares about sit and from the nights
-there are, whatever the kind of destination and however long the trip.
+there are, whatever the kind of destination and however long the trip. The one exception: when `moving.several_places`
+is `false`, the traveller wants to sleep in one place. Then the shape is `single_base` or `base_with_day_trips`, with
+what fits from that place; what does not fit goes to `left_out`, with why. The house checks it.
 
 Fewer bases is better: every change of base costs half a day. If what the traveller wants does not fit in the nights
 there are, leave places out and say which ones in `left_out`. Do not squeeze.

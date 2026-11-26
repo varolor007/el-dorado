@@ -12,6 +12,15 @@ import { Carrusel } from "./Carrusel.tsx";
 import { Confirmacion } from "./Confirmacion.tsx";
 import { fraseDeSuceso, TusPapeles } from "./Pantallas.tsx";
 
+/** Unos nombres en una lista, como se dice en cada idioma: «A, B y C». */
+function enLista(nombres: string[], idioma: string): string {
+  try {
+    return new Intl.ListFormat(idioma, { style: "long", type: "conjunction" }).format(nombres);
+  } catch {
+    return nombres.join(", ");
+  }
+}
+
 type Props = { t: Textos; idioma: string; estado: EnLaCasa; sucesos: Suceso[]; deNoches: number };
 
 export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
@@ -29,6 +38,8 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
   // una parte no se ofrece todavía: ningún paso se puede saltar.
   const salidas = parado?.options ?? ["retry"];
   const nombreDe = (paso: string | null): string => (paso === null ? "" : (t.casa.pasos[paso] ?? paso));
+  // Las bases que pedía el viaje, si se paró por eso: con ellas se ofrece dormir en un solo sitio.
+  const variasBases = parado?.bases != null && parado.bases.length > 1 ? parado.bases : null;
   // Los papeles, en cuanto están; si algo bloquea, o faltan, y no es lo que he entendido, es tu turno de decidir.
   const papeles = i?.papers ?? null;
   const turnoDePapeles =
@@ -110,8 +121,15 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
             <p className="suave">{t.casa.mirando}</p>
           ) : (
             <>
-              {parado.kind !== undefined && t.casa.queHaPasado[parado.kind] !== undefined && (
-                <p>{t.casa.queHaPasado[parado.kind]}</p>
+              {variasBases !== null ? (
+                // Un viaje que pide varias bases: se dice cuáles, en claro, y se ofrece dormir en un solo sitio.
+                <>
+                  <p>{t.casa.variasBases(variasBases.length, enLista(variasBases, idioma))}</p>
+                  <p className="suave">{t.casa.unSitioTexto}</p>
+                </>
+              ) : (
+                parado.kind !== undefined &&
+                t.casa.queHaPasado[parado.kind] !== undefined && <p>{t.casa.queHaPasado[parado.kind]}</p>
               )}
               {/* Su frase, solo si la casa la dejó pasar y está en el idioma de quien mira. */}
               {parado.said != null && parado.said.lang === idioma && <p className="suave">{parado.said.text}</p>}
@@ -120,6 +138,11 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
                   <p className="rotulo">{t.casa.queHacer}</p>
                   {desdeAqui && salidas.includes("retry") && <p className="suave">{t.casa.soloEstePaso}</p>}
                   <div className="parado__salidas">
+                    {variasBases !== null && (
+                      <a className="boton" href={`/plan?trip=${estado.trip.id}&at=change&one_place=1&lang=${idioma}`}>
+                        {t.casa.salidas.one_place}
+                      </a>
+                    )}
                     {salidas.includes("retry") && (
                       <button
                         type="button"
@@ -132,7 +155,7 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
                     )}
                     {/* Una página entera: la del mapa lee ?at=change al abrirse (8.5). */}
                     {salidas.includes("change_request") && (
-                      <a className="boton boton--hueco" href={`/plan?trip=${estado.trip.id}&at=change`}>
+                      <a className="boton boton--hueco" href={`/plan?trip=${estado.trip.id}&at=change&lang=${idioma}`}>
                         {t.casa.salidas.change_request}
                       </a>
                     )}

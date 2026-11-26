@@ -89,6 +89,13 @@ export function Cambios({
     setImpacto(null);
     setDeNuevo(false);
   };
+  // Desde una parada por varias bases (?one_place=1): dormir en un solo sitio llega ya marcado.
+  const [unSitio, setUnSitio] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("one_place") !== "1") return;
+    setR((ya) => ({ ...ya, moverse: { ...ya.moverse, variosSitios: false } }));
+    setUnSitio(true);
+  }, []);
 
   const tocados: GustoTocado[] = useMemo(
     () =>
@@ -161,6 +168,11 @@ export function Cambios({
         <span className="rotulo">{c.rotulo}</span>
         <h1 className="lugar">{antes.destination.name}</h1>
         <p className="suave">{c.sub}</p>
+        {unSitio && (
+          <p className="cambios__marcado" role="status">
+            {c.unSitio}
+          </p>
+        )}
       </div>
       <SeQuedaronAtras t={t} idioma={idioma} atras={para.behind} />
       {impacto !== null && (
