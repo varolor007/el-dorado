@@ -55,6 +55,11 @@ Rellena cada línea después del `=`, sin comillas y sin espacios:
 | `ELDORADO_DOMINIO` | con la puerta: en blanco para la dirección gratuita, o tu dominio (sin `https://`) |
 | `NGROK_AUTHTOKEN`, `NGROK_DOMAIN` | con el túnel: tu llave de ngrok y la dirección (sin `https://`) |
 
+`ELDORADO_OVERPASS` puede quedarse en blanco. Es de dónde lee la casa el horario de cada sitio en OpenStreetMap; en
+blanco usa su servicio principal. Si en el registro de una investigación ves el aviso «sin el horario ni si se paga
+de OpenStreetMap», es que ese servicio no contesta desde tu servidor: el viaje sale igual, y se puede poner ahí otra
+dirección, o varias separadas por comas (las que hay y lo que pide cada una, en `docs/condiciones.md`).
+
 Lo demás puede quedarse en blanco o como viene. El tope de la casa viene puesto en **3 GB de memoria y 2 núcleos**
 (`ELDORADO_MEMORIA` y `ELDORADO_NUCLEOS`): de los 12 GB y 6 núcleos del servidor, deja de sobra para el
 ensamblador. Si un día ves que la casa se queda corta, se sube ahí y se vuelve a correr el paso 3.

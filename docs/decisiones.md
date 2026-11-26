@@ -776,6 +776,15 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   está en un punto del mapa donde no hay nada, y sus sitios no tienen fotos. Con un viaje de verdad el mapa y las
   fotos salen, como en el de Lisboa del ensayo, que es de antes de las capas. Las capas sobre un mapa de verdad no
   se han visto todavía: es lo que enseñará el ensayo.
+- **El ensayo lo hace el PM** («creo que el ensayo es mejor que lo haga yo haciendo una prueba real»), y la sesión
+  se cierra para seguir en otra («¿por qué no creas memoria del proyecto y cerramos sesión para continuar en otra
+  sesión?»). Ninguna sesión lanza el ensayo por él. Para que pueda, la casa tiene que correr en su servidor, con
+  `agent/arranque/` y su guía, que no se ha probado nunca en un servidor: la sesión que siga le acompaña. La sesión
+  deja la memoria con lo siguiente, y `obra.md` con cómo se lleva la obra, porque lo que vivía solo en su borrador
+  se pierde al cerrarse. Y un ajuste para esa prueba: el `.env` del servidor puede decir de dónde se leen los
+  horarios de OpenStreetMap (`ELDORADO_OVERPASS`), que antes no le llegaba a la casa.
+- **El visto bueno a la tanda 6 bis sigue sin darse con esas palabras**: el PM preguntó por las capturas y decidió
+  hacer él el ensayo. La sesión no lo da por dado.
 
 ## Pendientes
 
@@ -807,8 +816,9 @@ Lo que deja el 25-nov, a decisión del PM:
   «lo práctico» no se nombre ningún negocio, ni para bien: es una regla nueva, puesta con lo más prudente. Si una
   página que no es de quien lleva el transporte o el sitio (un blog, un agregador) vale como fuente de un precio:
   hoy vale cualquiera que el asiento abriera. Si «dónde reservar» puede ser de otro dominio que la web del sitio
-  (un revendedor): hoy, sí, si el asiento la abrió. Y verlo con IA de verdad, que es un gasto: dentro de ese ensayo se
-  probará una vez a cortar a Claude con cuidado (el PM, 26-nov: a criterio de la sesión).
+  (un revendedor): hoy, sí, si el asiento la abrió. Y verlo con IA de verdad: el ensayo lo hace el PM con una prueba suya (26-nov), y
+  la prueba de cortar a Claude con cuidado, que dejó a criterio de la sesión, queda para cuando la casa corra en su
+  servidor.
 - **Otro ensayo entero con IA de verdad**, para ver lo construido después del primero («Volver a intentarlo»,
   las fechas contadas, los papeles mientras se busca y los frenos): unos 7 dólares de equivalente de su cuenta.
   O esperar al ensayo de la tanda 7.

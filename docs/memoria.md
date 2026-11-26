@@ -3,9 +3,39 @@
 Al día el 26-nov-2026. Lo que hace falta para seguir sin la conversación de antes. Cada decisión, con su fecha, en
 [decisiones.md](decisiones.md).
 
-**Estamos aquí: las capas del destino (bloque 14), construidas, revisadas y arregladas el 25-nov, en la tanda 6
-bis (1.035 pruebas, en verde aquí y en GitHub). Esperan el visto bueno del PM. Después va la tanda 7, el ensayo, que
-gasta y no empieza sin su adelante** (el estado, punto a punto, en [plan.md](plan.md)).
+**Estamos aquí (26-nov): las capas del destino (bloque 14) están construidas, revisadas y arregladas, en la tanda 6
+bis, con 1.035 pruebas en verde aquí y en GitHub. Lo siguiente es el ensayo (tanda 7), y el PM ha decidido hacerlo
+él, con una prueba de verdad. La sesión que orquestó las tandas 4 a 6 bis se cerró ese día: se sigue en otra, con
+esta memoria** (el estado, punto a punto, en [plan.md](plan.md)).
+
+**Lo siguiente, para la sesión que siga:**
+
+1. **Leer** el `CLAUDE.md`, este principio de la memoria hasta «Lo de las capas, punto a punto», y
+   [obra.md](obra.md), que dice cómo se lleva la obra: las sesiones de obra y su encargo, cómo se junta, los tres
+   adversarios y cómo se mira la web sin gastar. Después, la batería.
+2. **El ensayo es del PM** (26-nov: «el ensayo es mejor que lo haga yo haciendo una prueba real»). Ninguna sesión
+   lo lanza por él. Para que pueda, la casa tiene que correr donde su web la alcance: en su servidor, con
+   `agent/arranque/` y su guía (`agent/arranque/guia.md`), que no se ha probado nunca en un servidor. Lo natural es
+   acompañarle en esa instalación, paso a paso, y mirar con él lo que salga. Lo que se ve por primera vez en esa
+   prueba, en `obra.md`, punto 6. Le falta saber el modelo con el que se piensa, que no se escribe en el
+   repositorio: se le dice en la conversación.
+3. **Falta su visto bueno a la tanda 6 bis.** No lo ha dado con esas palabras: preguntó por las capturas y decidió
+   hacer él el ensayo. Su página, en https://claude.ai/artifact/JnxABFxPan41bg2yWJHGhY.
+4. **Lo suyo, sin contestar**, en [decisiones.md](decisiones.md), «Pendientes». Lo que más pesa: qué instancias de
+   Overpass se usan, qué precio se coge si valen varios, los números de partida de las capas, y lo que viene de
+   las tandas 4, 5 y 6.
+5. **Con lo que salga de su prueba**, la tanda 7 del plan: medir cada asiento, ajustar pesos y topes (7.3), y lo que
+   su prueba enseñe que hay que arreglar. Y del registro, lo que el PM vaya contestando.
+
+**Lo que no hay que rehacer.** Todas las ramas `claude/eldorado-...` del remoto están juntas en la de todos
+(`claude/intelligent-cerf-76wwli`, que es también la de partida: el repositorio no tiene `main`). Las páginas de la
+hoja, del plan y de cada revisión están publicadas, y sus direcciones, más abajo. Lo que vivía solo en el borrador
+de la sesión que se cerró se ha perdido con ella: sus guiones de capturas (lo que importa de ellos está en
+`obra.md`), los informes sueltos de los adversarios (lo que se hizo con cada hallazgo está en `revisiones/`) y la
+mesa del viaje de Lisboa del ensayo del 24-nov, que por la regla 8 no podía estar en el repositorio.
+
+**Lo de las capas, punto a punto**, sigue aquí debajo: cada punto del bloque 14 con sus archivos, y lo que se sabe
+que falta.
 
 **La revisión de la tanda 6 bis** (25-nov; entera en [revisiones/tanda-6-bis.md](revisiones/tanda-6-bis.md); sus
 pantallas, en https://claude.ai/artifact/JnxABFxPan41bg2yWJHGhY). Tres
@@ -14,10 +44,10 @@ otras edades, el taxi distinto en «Allí» y en las cuentas, y una dirección q
 abierto. Lo que queda sabido y sin arreglar, y lo que es del PM, en ese informe y en «Pendientes». Para el ensayo
 hay tres cosas que mirar de verdad: que los tres asientos nuevos cumplan su contrato, que Overpass conteste desde
 donde corra la casa (`ELDORADO_OVERPASS`), y lo que dice el lanzador de lo gastado. El PM dejó a criterio de la sesión
-(26-nov) probar una vez, dentro del ensayo, a cortar a Claude con cuidado para que diga lo gastado. El adelante del
-ensayo sigue pendiente.
+(26-nov) probar una vez a cortar a Claude con cuidado para que diga lo gastado: queda para cuando la casa corra en
+su servidor, porque el ensayo lo hace él.
 
-**Cómo se mira la web de las capas sin gastar** (borrador de la sesión que orquesta, fuera del repositorio): una casa
+**Cómo se mira la web de las capas sin gastar** (entero, con su guion, en [obra.md](obra.md), punto 5): una casa
 de mentira con la puerta de verdad (`puertaALaWeb`, `fuentesInventadas` y `lanzadorDeMentira`), y con una fuente de
 rutas inventada que alarga lo que se anda, para que haya tramos que no se andan y se vea su coste y lo que conviene
 para moverse. El viaje del ensayo, que es de antes de las capas, dice «Todavía no se sabe» en «Allí» y en el
@@ -1130,8 +1160,9 @@ se adelantaron las bases a la hoja, por decisión del PM del 23-nov.
 
 ## 4. Cómo se retoma
 
-1. Leer el `CLAUDE.md` y esta memoria, por su «Estamos aquí».
-2. Trabajar en la rama de la sesión; mirar antes si otra rama `claude/...` va por delante.
+1. Leer el `CLAUDE.md`, esta memoria por su «Estamos aquí» y su «Lo siguiente», y [obra.md](obra.md).
+2. Trabajar en la rama de la sesión; mirar antes si otra rama `claude/...` va por delante (el 26-nov, ninguna:
+   todas están juntas en la de todos).
 3. `npm install` y la batería (`node tests/bateria.mjs`): tiene que salir en verde antes de tocar nada.
 4. Para ver una búsqueda de verdad: la orden del `README.md`, con `NODE_USE_ENV_PROXY=1` delante en la nube. Para
    mirar sus finalistas: `mirar.ts preparar`, lanzar cada asiento con su orden (un asiento por puesto, que lea su

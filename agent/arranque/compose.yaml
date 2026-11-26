@@ -50,6 +50,7 @@ services:
       TRAVELPAYOUTS_TOKEN: ${TRAVELPAYOUTS_TOKEN:-}
       PARALLEL_API_KEY: ${PARALLEL_API_KEY:-}
       GEOAPIFY_KEY: ${GEOAPIFY_KEY:-}
+      ELDORADO_OVERPASS: ${ELDORADO_OVERPASS:-}
     volumes:
       - datos:/datos
     healthcheck:
