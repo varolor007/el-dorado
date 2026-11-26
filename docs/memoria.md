@@ -27,6 +27,16 @@ esta memoria** (el estado, punto a punto, en [plan.md](plan.md)).
 5. **Con lo que salga de su prueba**, la tanda 7 del plan: medir cada asiento, ajustar pesos y topes (7.3), y lo que
    su prueba enseñe que hay que arreglar. Y del registro, lo que el PM vaya contestando.
 
+**El ensayo del PM, en marcha (26-nov).** La casa está instalada en su servidor, el mismo del ensamblador, con la
+guía de `agent/arranque/` y la puerta (la dirección gratuita de sslip.io); su IP, fuera del repositorio, en la variable
+`ELDORADO_SERVIDOR` del entorno de las sesiones. No choca con el ensamblador: cada uno en su grupo de Docker
+(`eldorado` y `ensamblador`), con sus volúmenes y su red; el ensamblador no abre puertos y la casa abre el 443 y el
+80; su puesta al día solo limpia imágenes sin nombre. Comparten la memoria (el ensamblador, hasta 8 GB de 12; la
+casa, 3) y la cuenta de Claude: el token de la casa es el mismo del ensamblador, copiado de su `.env`. LiteAPI, con
+la clave de pruebas. Lo que salió al instalar: la página de tu cuenta pedía una clave a quien piensa con la cuenta de
+la casa (arreglado, 11.2, con `tuIa` en `web/src/lib/tuIa.ts`). El PM enseñó sus claves en una captura: hay que
+cambiarlas al acabar el ensayo (el token, en los dos `.env`).
+
 **Lo que no hay que rehacer.** Todas las ramas `claude/eldorado-...` del remoto están juntas en la de todos
 (`claude/intelligent-cerf-76wwli`, que es también la de partida: el repositorio no tiene `main`). Las páginas de la
 hoja, del plan y de cada revisión están publicadas, y sus direcciones, más abajo. Lo que vivía solo en el borrador

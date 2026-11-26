@@ -10,6 +10,8 @@ import { test } from "node:test";
 import { correosSinCuenta, iaDe } from "../../agent/launcher/arrancar.ts";
 import { correosDeLaCasa, registrar } from "../../agent/launcher/cuentas.ts";
 import { CABECERA_DE_LA_SESION, puertaALaWeb, type OpcionesDeLaPuerta } from "../../agent/launcher/puerta_a_la_web.ts";
+import { IDIOMAS, TEXTOS } from "../../web/src/lib/textos.ts";
+import { tuIa } from "../../web/src/lib/tuIa.ts";
 import { fuentesInventadas, lanzadorDeMentira, type Objeto } from "../cases/inventado/asientos.ts";
 import { ENTENDIDO } from "../cases/inventado/investigacion.ts";
 
@@ -244,4 +246,16 @@ test("al arrancar, la casa enchufa lo que diga su entorno: su cuenta, las claves
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_PRECIO_ENTRADA: "4" }), /falta el precio de la IA/);
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_CORREOS_DE_LA_CASA: "pm" }), /no tiene forma de correo/);
   assert.throws(() => iaDe({ ...modelo, ...casa, ELDORADO_ESFUERZO: "muchísimo" }), /esfuerzo/);
+});
+
+test("tu cuenta, en la web, dice que piensas con la cuenta de la casa y no te pide clave", () => {
+  // Lo que vio el PM al registrarse con su correo de la casa (26-nov): «Todavía sin clave de IA», porque la página
+  // solo miraba si había una clave guardada.
+  assert.equal(tuIa({ key: null, thinks_with: "house" }), "house");
+  assert.equal(tuIa({ key: { hint: "0001", since: "2027-01-01" }, thinks_with: "house" }), "house");
+  assert.equal(tuIa({ key: { hint: "0001", since: "2027-01-01" }, thinks_with: "key" }), "key");
+  assert.equal(tuIa({ key: null, thinks_with: null }), "none");
+  // Una casa de antes, que no dice con qué piensa: manda la clave, como antes.
+  assert.equal(tuIa({ key: null }), "none");
+  for (const idioma of IDIOMAS) assert.ok(TEXTOS[idioma].cuenta.deLaCasa.length > 0, idioma);
 });

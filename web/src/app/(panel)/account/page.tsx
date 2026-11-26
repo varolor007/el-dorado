@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { entrar, registrarse, salir, useCuenta, type Fallo } from "../../../lib/cuenta.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
+import { tuIa } from "../../../lib/tuIa.ts";
 import { useIdioma } from "../../../lib/usar.ts";
 
 export default function MiCuenta() {
@@ -96,9 +97,15 @@ export default function MiCuenta() {
         <section className="tarjeta">
           <span className="rotulo">{t.cuenta.dentro}</span>
           <b className="titulo">{cuenta.email}</b>
-          <p className="dato">{cuenta.key === null ? t.cuenta.sinClave : t.cuenta.conClave(cuenta.key.hint)}</p>
+          <p className="dato">
+            {tuIa(cuenta) === "house"
+              ? t.cuenta.deLaCasa
+              : cuenta.key === null
+                ? t.cuenta.sinClave
+                : t.cuenta.conClave(cuenta.key.hint)}
+          </p>
           <div className="cabecera__linea">
-            <Link className="boton boton--chico" href="/key">
+            <Link className={`boton boton--chico${tuIa(cuenta) === "house" ? " boton--hueco" : ""}`} href="/key">
               {cuenta.key === null ? t.cuenta.ponClave : t.cuenta.verClave}
             </Link>
             <button type="button" className="boton boton--chico boton--hueco" onClick={() => void salir()}>
