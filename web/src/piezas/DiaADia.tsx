@@ -12,6 +12,7 @@ import { pideALaCasa } from "../lib/cuenta.ts";
 import { loQueSeEnsena } from "../lib/diaADia.ts";
 import type { Textos } from "../lib/textos.ts";
 import { ElImpacto } from "./Momentos.tsx";
+import { Carrusel } from "./Carrusel.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -86,12 +87,9 @@ export function TuMensaje({
   return (
     <div className="grupo mensaje">
       {trabajando && enLaCasa !== null && (
-        <div className="mensaje__estado" role="status">
-          <span className="mensaje__pulso" aria-hidden="true" />
-          <span>
-            <b>{d.trabajando}</b>
-            <span className="dato">{d.dijiste(enLaCasa.said)}</span>
-          </span>
+        <div className="mensaje__trabaja">
+          <Carrusel t={t} viaje={id} que={d.trabajando} />
+          <span className="dato">{d.dijiste(enLaCasa.said)}</span>
         </div>
       )}
       {(acabado || nuevo) && enLaCasa !== null && (

@@ -2238,11 +2238,8 @@ select.toque {
   content: none;
 }
 .guia__escribe {
-  flex-direction: row;
-  align-items: center;
-}
-.guia__escribe > * {
-  width: auto;
+  flex-direction: column;
+  align-items: stretch;
 }
 .guia__pluma {
   flex: 0 0 auto;
@@ -2946,4 +2943,126 @@ select.toque {
   .entrada {
     margin-left: 0;
   }
+}
+
+/* Lo que se ve mientras trabaja la IA (10.11): la señal de que trabaja y el carrusel de sitios de verdad. */
+.carrusel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0 4px;
+}
+.trabaja {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: var(--tinta-suave);
+  line-height: 1.4;
+}
+.trabaja > span:not([class]) {
+  flex: 1 1 auto;
+}
+.trabaja__pulso {
+  flex: 0 0 10px;
+  height: 10px;
+  margin-top: 0.4em;
+  border-radius: 50%;
+  background: var(--oro);
+  animation: guia-pulso 1.6s var(--suave) infinite;
+}
+.trabaja__reloj {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.carrusel__carta {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: var(--velo);
+}
+.carrusel__foto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--raya);
+  animation: carta-entra 0.6s var(--suave);
+}
+.carrusel__pie {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 14px 4px;
+  animation: carta-entra 0.6s var(--suave);
+}
+.carrusel__nombre {
+  font-family: var(--titulos);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.carrusel__texto {
+  margin: 0;
+  color: var(--tinta-suave);
+  line-height: 1.45;
+}
+.carrusel__credito {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 0.72rem;
+  color: var(--tinta-tenue);
+}
+.carrusel__credito a {
+  color: inherit;
+}
+.carrusel__puntos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 4px 8px 8px;
+}
+.carrusel__punto {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.carrusel__punto::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--raya);
+}
+.carrusel__punto[aria-pressed="true"]::before {
+  background: var(--oro);
+}
+@keyframes carta-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trabaja__pulso,
+  .carrusel__foto,
+  .carrusel__pie {
+    animation: none;
+  }
+}
+.mensaje__trabaja {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }

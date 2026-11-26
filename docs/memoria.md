@@ -52,9 +52,12 @@ que trabaja. Hecha la casa: tras los sitios, `prepararElCarrusel` (`agent/launch
 curiosidad del principio de su artículo en el idioma del viajero (`resumenesDe` con idioma; `curiosidad`, en
 `agent/scripts/carrusel.ts`, sin direcciones ni teléfonos); no frena el viaje (20 segundos como mucho) ni lo tumba;
 `GET /viajes/<id>/carrusel` da las cartas del último run que las tenga (`cartasDelViaje`, mirado con
-`cartasQueValen`). Falta la web, en cada espera: el inventario está en la nota de la sesión (la investigación en
-vivo, buscar otro alojamiento, preguntar por uno, el mensaje para un día, tus entradas, cerrar y la guía; en las tres
-primeras de esas la web no sabe cuándo acaba). Sabido: mientras corre un run que rehace, al recargar, la versión de
+`cartasQueValen`). Hecha la web: `Carrusel` y `SenalDeTrabajo` (`web/src/piezas/Carrusel.tsx`), con `useCarrusel`
+(`web/src/lib/carrusel.ts`), en cada espera: la investigación en vivo (`EnCasa`, cuando algún paso espera a su
+asiento), buscar otro alojamiento y preguntar por uno (`Alojamiento.tsx`), el mensaje para un día (`DiaADia.tsx`),
+tus entradas (`LasEntradas.tsx`), cerrar (`Cerrar.tsx`) y la guía. Un viaje de antes del carrusel da sus paradas con
+foto. Mirado con una casa de mentira (con `EN_VIVO=1` se queda investigando) y fotos de verdad de Commons. Sabido:
+en buscar otro alojamiento, en tus entradas y en los cambios la web sigue sin saber cuándo acaba la IA. Sabido: mientras corre un run que rehace, al recargar, la versión de
 antes desaparece del mapa. El PM enseñó sus claves en una captura: hay que
 cambiarlas al acabar el ensayo (el token, en los dos `.env`).
 

@@ -1458,6 +1458,14 @@ const en = {
       })[clave] ?? "Something went wrong. Try again in a moment.",
   },
   // El día a día a ratos (8.6): tu mensaje para tus días, y lo que se ve de cada parada y de cada día.
+  carrusel: {
+    rotulo: "carousel",
+    mientras: "Meanwhile, from your destination",
+    trabaja: "The AI is working on it",
+    carta: (i: number, n: number, nombre: string) => `${i} of ${n}: ${nombre}`,
+    foto: (credito: string) => `Photo: ${credito}`,
+    wikipedia: "Text: Wikipedia",
+  },
   diaADia: {
     movida: "Moved by you",
     // Un día tuyo que no pasa las cuentas de la puerta 9: se dice, y no se impide.
@@ -2858,6 +2866,14 @@ const es: Textos = {
         no_key: "Pon antes tu clave de IA.",
         no_ai: "Ahora no hay IA que la escriba.",
       })[clave] ?? "Algo ha fallado. Prueba otra vez en un momento.",
+  },
+  carrusel: {
+    rotulo: "carrusel",
+    mientras: "Mientras tanto, de tu destino",
+    trabaja: "La IA está trabajando en ello",
+    carta: (i, n, nombre) => `${i} de ${n}: ${nombre}`,
+    foto: (credito) => `Foto: ${credito}`,
+    wikipedia: "Texto: Wikipedia",
   },
   diaADia: {
     movida: "La moviste tú",

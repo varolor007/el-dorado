@@ -9,7 +9,7 @@ import type { Foto } from "../output/viaje.ts";
 import { cartasDeLosSitios, cartasQueValen, sitiosDelCarrusel, type Carta } from "../scripts/carrusel.ts";
 import type { Entendido } from "../scripts/formas.ts";
 import type { Sitio } from "../tools/sitios.ts";
-import { guardarJson, type ViajeEnLaMesa } from "./mesa.ts";
+import { guardarJson, leerVersion, type ViajeEnLaMesa } from "./mesa.ts";
 
 export const CARRUSEL = "carrusel.json";
 
@@ -53,8 +53,27 @@ export async function prepararElCarrusel(
   }
 }
 
-/** Las cartas del carrusel de un viaje: las de su último run que las tenga, de lo más nuevo atrás. */
+/**
+ * Las cartas del carrusel de un viaje: las de su último run que las tenga, de lo más nuevo atrás; y si ninguno las
+ * tiene (un viaje de antes del carrusel), las paradas con foto de la versión que se enseña, con su porqué.
+ */
 export function cartasDelViaje(v: ViajeEnLaMesa): Carta[] {
+  const delRun = cartasDeLosRuns(v);
+  if (delRun.length > 0) return delRun;
+  try {
+    const paradas = (leerVersion(v)?.viaje as { paradas?: unknown } | undefined)?.paradas;
+    if (!Array.isArray(paradas)) return [];
+    const cartas = paradas.map((p) => {
+      const x = (typeof p === "object" && p !== null ? p : {}) as Record<string, unknown>;
+      return { id: x.id, nombre: x.nombre, foto: x.foto ?? null, texto: x.porQue ?? null, articulo: null };
+    });
+    return cartasQueValen({ cartas }).filter((c) => c.foto !== null);
+  } catch {
+    return [];
+  }
+}
+
+function cartasDeLosRuns(v: ViajeEnLaMesa): Carta[] {
   for (let n = v.ficha.runs.length; n >= 1; n--) {
     const archivo = join(v.carpeta, "runs", String(n), CARRUSEL);
     if (!existsSync(archivo)) continue;

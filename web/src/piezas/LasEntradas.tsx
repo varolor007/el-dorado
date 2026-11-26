@@ -10,6 +10,7 @@ import type { Impacto } from "../../../agent/scripts/impacto.ts";
 import { pideALaCasa } from "../lib/cuenta.ts";
 import type { Textos } from "../lib/textos.ts";
 import { ElImpacto } from "./Momentos.tsx";
+import { Carrusel } from "./Carrusel.tsx";
 
 /** Por qué solo se sabe lo que dicen los datos abiertos de una parada; sin porqué, lo de antes. */
 export function SinMirar({ t, porQue }: { t: Textos; porQue: PorQue | null }) {
@@ -49,8 +50,8 @@ export function MirarLasEntradas({
 
   if (enMarcha)
     return (
-      <div className="grupo" role="status">
-        <p className="dato">{d.mirandoEntradas}</p>
+      <div className="grupo">
+        <Carrusel t={t} viaje={id} que={d.mirandoEntradas} />
         <button type="button" className="enlace" onClick={() => window.location.reload()}>
           {d.verlasEntradas}
         </button>

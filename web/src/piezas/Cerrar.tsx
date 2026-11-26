@@ -10,6 +10,7 @@ import type { Cierre, Dia, Manera, Ritmo, Viaje } from "../../../agent/output/vi
 import { pideALaCasa } from "../lib/cuenta.ts";
 import { diaCorto, dinero, refDeUnaDuda } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
+import { Carrusel } from "./Carrusel.tsx";
 
 type Comun = { t: Textos; idioma: string };
 
@@ -132,12 +133,7 @@ export function MeQuedo({
           <p className="dato">{t.cerrar.antes}</p>
         </>
       )}
-      {trabajando && (
-        <p className="cerrar__etapa" role="status">
-          <span className="cerrar__pulso" aria-hidden="true" />
-          {t.cerrar.etapa[cierre.stage] ?? t.cerrar.etapa.prices}
-        </p>
-      )}
+      {trabajando && <Carrusel t={t} viaje={id} que={t.cerrar.etapa[cierre.stage] ?? t.cerrar.etapa.prices} />}
       {espera && (
         <div className="cerrar__pregunta" role="alert">
           <p>{t.cerrar.subio}</p>

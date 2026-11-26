@@ -3,11 +3,12 @@
 // La investigación de un viaje tuyo, contada por la casa mientras pasa: por qué paso va, lo que se ha ido
 // encontrando y lo que lleva gastado de tu clave. Si se para, lo dice, y no gasta más hasta que tú lo pidas.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Suceso } from "../../../agent/output/viaje.ts";
 import { gastoDeIA, reloj } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { confirmarLoEntendido, empezarLaInvestigacion, reintentarElPaso, type EnLaCasa } from "../lib/viajeVivo.ts";
+import { Carrusel } from "./Carrusel.tsx";
 import { Confirmacion } from "./Confirmacion.tsx";
 import { fraseDeSuceso, TusPapeles } from "./Pantallas.tsx";
 
@@ -39,6 +40,17 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
     setOcupado(false);
     if (mal !== null) setFallo(t.empezar.fallo(mal.clave, []));
   };
+
+  // Mientras trabaja, la señal y el carrusel (10.11): el reloj sale del último suceso, que dice cuánto lleva el run.
+  // Trabaja si la casa lo lleva o si algún paso espera a su asiento, que es trabajo de verdad.
+  const trabajando =
+    i !== null &&
+    parado === null &&
+    tuTurno === null &&
+    !turnoDePapeles &&
+    (i.running || pasos.some((p) => p.state === "waiting"));
+  const ultimoT = sucesos.at(-1)?.t ?? 0;
+  const desde = useMemo(() => Date.now() - ultimoT, [sucesos.length]);
 
   // Mientras se mira un alojamiento se dice que se está mirando; al acabar, esa línea pasa a ser la de lo mirado.
   const mirados = new Set(sucesos.filter((s) => s.clase === "looked").map((s) => s.ref));
@@ -136,6 +148,7 @@ export function EnCasa({ t, idioma, estado, sucesos, deNoches }: Props) {
           {fallo}
         </p>
       )}
+      {trabajando && <Carrusel t={t} viaje={estado.trip.id} que={t.carrusel.trabaja} desde={desde} />}
       {tuTurno !== null && <Confirmacion key={tuTurno.round} t={t} viaje={estado.trip.id} escuchado={tuTurno} />}
       {papeles !== null && (turnoDePapeles || papeles.bloquea || papeles.falta !== null) && (
         <TusPapeles

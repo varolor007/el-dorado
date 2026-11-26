@@ -205,3 +205,46 @@ test("las curiosidades se piden a la Wikipedia del idioma del viajero, con su ar
   await resumenesDe([sitio(1)], { traer }, "x/../evil");
   assert.ok(pedidas[1].startsWith("https://en.wikipedia.org/w/api.php?"));
 });
+
+test("la regla del PM: cada pantalla donde se espera a la IA lleva la señal de que trabaja y el carrusel", () => {
+  // Las esperas de hoy (26-nov). Una espera nueva entra aquí, con su carrusel.
+  const esperas = [
+    "web/src/piezas/EnCasa.tsx",
+    "web/src/piezas/Alojamiento.tsx",
+    "web/src/piezas/DiaADia.tsx",
+    "web/src/piezas/LasEntradas.tsx",
+    "web/src/piezas/Cerrar.tsx",
+    "web/src/app/(panel)/guide/page.tsx",
+  ];
+  for (const archivo of esperas) assert.match(readFileSync(archivo, "utf8"), /<Carrusel\b/, archivo);
+  // El de buscar otra vez y el de la pregunta, los dos en la ficha del alojamiento.
+  assert.equal(readFileSync("web/src/piezas/Alojamiento.tsx", "utf8").match(/<Carrusel\b/g)?.length, 2);
+});
+
+test("un viaje de antes del carrusel enseña sus paradas con foto, con su porqué", () => {
+  const carpeta = mkdtempSync(join(tmpdir(), "carrusel-version-"));
+  try {
+    mkdirSync(join(carpeta, "runs", "1"), { recursive: true });
+    mkdirSync(join(carpeta, "versiones", "1"), { recursive: true });
+    const parada = (id: string, foto: Foto | null) => ({
+      id,
+      nombre: `Parada ${id}`,
+      foto,
+      porQue: "Se ve el puerto entero desde arriba.",
+    });
+    const viaje = { paradas: [parada("Q1", FOTO), parada("Q2", null), { id: "Q3" }] };
+    for (const [nombre, dato] of [
+      ["viaje.json", viaje],
+      ["sucesos.json", []],
+      ["entendido.json", {}],
+    ] as const)
+      writeFileSync(join(carpeta, "versiones", "1", nombre), JSON.stringify(dato));
+    const v = { carpeta, ficha: { runs: [{}], version: 1, versiones: [{ n: 1 }] } } as unknown as ViajeEnLaMesa;
+    assert.deepEqual(
+      cartasDelViaje(v).map((c) => [c.id, c.texto]),
+      [["Q1", "Se ve el puerto entero desde arriba."]],
+    );
+  } finally {
+    rmSync(carpeta, { recursive: true, force: true });
+  }
+});

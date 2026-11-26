@@ -21,6 +21,7 @@ import { pideALaCasa } from "../lib/cuenta.ts";
 import { dinero } from "../lib/formato.ts";
 import type { Textos } from "../lib/textos.ts";
 import { foto } from "../lib/usar.ts";
+import { Carrusel } from "./Carrusel.tsx";
 import { ElImpacto } from "./Momentos.tsx";
 
 type Comun = { t: Textos; idioma: string };
@@ -201,12 +202,18 @@ function TusGustos({ t, idioma, id, a, gustos, alGustos }: Props) {
           {m.rehacerManeras}
         </button>
       )}
-      <ElCambio t={t} idioma={idioma} cambio={cambio} search={{ tastes: gustos }} />
+      <ElCambio t={t} idioma={idioma} id={id} cambio={cambio} search={{ tastes: gustos }} />
     </div>
   );
 }
 
-function ElCambio({ t, idioma, cambio, search }: Comun & { cambio: ReturnType<typeof useCambio>; search: unknown }) {
+function ElCambio({
+  t,
+  idioma,
+  id,
+  cambio,
+  search,
+}: Comun & { id: string; cambio: ReturnType<typeof useCambio>; search: unknown }) {
   const m = t.alojamiento;
   return (
     <>
@@ -230,7 +237,7 @@ function ElCambio({ t, idioma, cambio, search }: Comun & { cambio: ReturnType<ty
           />
         </>
       )}
-      {cambio.estado === "hecho" && <p className="aviso">{m.buscando}</p>}
+      {cambio.estado === "hecho" && <Carrusel t={t} viaje={id} que={m.buscando} />}
       {cambio.fallo !== null && <p className="aviso">{m.fallo(cambio.fallo)}</p>}
     </>
   );
@@ -330,7 +337,7 @@ function BuscarOtraVez({ t, idioma, id, viaje, a, gustos }: Props) {
           {m.verQueCambia}
         </button>
       )}
-      <ElCambio t={t} idioma={idioma} cambio={cambio} search={search} />
+      <ElCambio t={t} idioma={idioma} id={id} cambio={cambio} search={search} />
     </div>
   );
 }
@@ -380,7 +387,7 @@ function Preguntar({ t, idioma, id, a }: Props) {
         <div className="respuesta">
           <span className="rotulo">{m.tuPregunta}</span>
           <p className="respuesta__pregunta">{ultima.question}</p>
-          {ultima.state === "working" && <p className="dato">{m.contestando}</p>}
+          {ultima.state === "working" && <Carrusel t={t} viaje={id} que={m.contestando} />}
           {ultima.state === "stopped" && <p className="aviso">{m.noSalio}</p>}
           {ultima.state === "ready" && ultima.answer !== null && (
             <>

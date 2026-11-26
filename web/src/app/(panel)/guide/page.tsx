@@ -11,6 +11,7 @@ import { dinero } from "../../../lib/formato.ts";
 import { pedirGuia, useDocumento, useGuia } from "../../../lib/guia.ts";
 import { TEXTOS } from "../../../lib/textos.ts";
 import { useIdioma } from "../../../lib/usar.ts";
+import { Carrusel } from "../../../piezas/Carrusel.tsx";
 
 /** El documento, en un marco sin programas: se ve como se imprime, y su altura es la de lo que lleva. */
 function Documento({
@@ -177,9 +178,8 @@ export default function TuGuiaPagina() {
       )}
 
       {guia?.state === "working" && (
-        <section className="tarjeta guia__escribe" role="status">
-          <span className="guia__pluma" aria-hidden="true" />
-          <p>{t.guia.escribiendo}</p>
+        <section className="tarjeta guia__escribe">
+          {id != null ? <Carrusel t={t} viaje={id} que={t.guia.escribiendo} /> : <p>{t.guia.escribiendo}</p>}
         </section>
       )}
 
