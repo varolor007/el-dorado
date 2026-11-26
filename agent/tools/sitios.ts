@@ -534,10 +534,15 @@ export async function fotosDe(archivos: string[], o: Salida = {}, ancho = 640): 
   return fotos;
 }
 
-/** Las primeras frases del artículo en inglés de cada sitio que lo tenga, por su identificador. */
-export async function resumenesDe(sitios: Sitio[], o: Salida = {}): Promise<Map<string, string>> {
+/**
+ * Las primeras frases del artículo de cada sitio que lo tenga, por su identificador: en inglés, de partida, o en el
+ * idioma que se diga, de su artículo en ese idioma (el carrusel, 26-nov).
+ */
+export async function resumenesDe(sitios: Sitio[], o: Salida = {}, idioma = "en"): Promise<Map<string, string>> {
+  const lengua = idiomaSeguro(idioma);
+  const delArticulo = new RegExp(`^https://${lengua}\\.wikipedia\\.org/wiki/(.+)$`);
   const titulo = (s: Sitio): string | null => {
-    const m = /^https:\/\/en\.wikipedia\.org\/wiki\/(.+)$/.exec(s.articuloEnIngles ?? "");
+    const m = delArticulo.exec((lengua === "en" ? s.articuloEnIngles : s.articulo) ?? "");
     return m === null ? null : deDireccion(m[1]);
   };
   const conTitulo = sitios.flatMap((s) => {
@@ -557,7 +562,7 @@ export async function resumenesDe(sitios: Sitio[], o: Salida = {}): Promise<Map<
       redirects: "1",
       titles: tanda.map((x) => x.titulo).join("|"),
     });
-    const resumenes = leerResumenes(await pedir(`https://en.wikipedia.org/w/api.php?${q}`, o));
+    const resumenes = leerResumenes(await pedir(`https://${lengua}.wikipedia.org/w/api.php?${q}`, o));
     for (const x of tanda) {
       const texto = resumenes.get(x.titulo);
       if (texto !== undefined) porId.set(x.id, texto);

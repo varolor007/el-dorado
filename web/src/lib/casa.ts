@@ -66,6 +66,7 @@ const ADMITIDO: [RegExp, string[]][] = [
   [new RegExp(`^viajes/${ID}/cierre$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/elecciones$`), ["GET", "PUT"]],
   [new RegExp(`^viajes/${ID}/piezas$`), ["GET"]],
+  [new RegExp(`^viajes/${ID}/carrusel$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/impacto$`), ["POST"]],
   [new RegExp(`^viajes/${ID}/versiones$`), ["GET"]],
   [new RegExp(`^viajes/${ID}/volver$`), ["POST"]],

@@ -1187,6 +1187,7 @@ const secciones = [
           "Tres maneras de hacer el viaje, nunca diez.",
           "Lo que se mueve en el mapa es trabajo de verdad: ni una barra de mentira.",
           "Lo que se dice en vivo lo escribe el código con sus datos, no una IA.",
+          "Mientras trabaja la IA, siempre hay algo que mirar y una señal de que trabaja: sitios de verdad del destino, con su foto, su autor y una curiosidad de su artículo, y lo que está haciendo y desde cuándo. Nada de eso es progreso de mentira.",
           "Tu clave de IA se guarda cifrada, se usa solo para tus viajes y no la ve ningún asiento.",
           "Cada viaje es de su dueño.",
           "Cada foto que no es nuestra lleva su autor y su licencia.",

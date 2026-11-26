@@ -785,6 +785,20 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   horarios de OpenStreetMap (`ELDORADO_OVERPASS`), que antes no le llegaba a la casa.
 - **El visto bueno a la tanda 6 bis sigue sin darse con esas palabras**: el PM preguntó por las capturas y decidió
   hacer él el ensayo. La sesión no lo da por dado.
+- **El ensayo, en el servidor del ensamblador** (el PM, con la sesión nueva, por la tarde). La casa va en el mismo
+  servidor de Contabo que el ensamblador, con la puerta; su IP, fuera del repositorio (que es público), en la variable
+  `ELDORADO_SERVIDOR` del entorno de las sesiones. El token de la casa es el del ensamblador, copiado de su `.env`
+  (la misma cuenta de Claude). LiteAPI, con la clave de pruebas, la de siempre. El primer viaje, Indonesia del 9 al
+  24 de enero, por decisión suya: la sesión le recomendó una ciudad. Sus claves salieron en una captura: se cambian al
+  acabar el ensayo.
+- **Los arreglos del ensayo suben a la rama de todos** (el PM: «súbelo a main»). El repositorio no tiene `main`: la
+  rama de todos hace de main, y es la que baja su servidor y la que despliega Vercel.
+- **Mientras trabaja la IA, siempre algo que mirar y señales de que trabaja, en todos los pasos** (el PM, al ver la
+  pantalla en vivo vacía: «tienen que ir saliendo cosas para que sea más dinámico [...] fotos de lo que hay que ver,
+  [...] curiosidades o cosas que saber»; y a la propuesta del carrusel: «sí, y no solo con esto: siempre que esté
+  trabajando la IA tiene que haber algo que distraiga a la gente y además que dé señales de estar trabajando [...] en
+  los diferentes pasos»). Regla nueva de la hoja y punto 10.11 del plan. Lo que enseña son sitios de verdad con su
+  foto y su autor y una curiosidad de su artículo, sin IA y sin gastar; nada de progreso de mentira.
 
 ## Pendientes
 

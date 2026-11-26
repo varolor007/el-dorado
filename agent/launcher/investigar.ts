@@ -78,6 +78,7 @@ import {
   sinCalendario,
   type DelCalendarioGuardado,
 } from "./calendario.ts";
+import { prepararElCarrusel } from "./carrusel.ts";
 import { abrirViaje, dentroDelRepositorio, guardarJson, guardarVersion, nuevoRun, pasar, viajeDelRun } from "./mesa.ts";
 import { puertaEntendido } from "../gates/puerta_entendido.ts";
 import { puertaEscucha } from "../gates/puerta_escucha.ts";
@@ -159,6 +160,8 @@ export type Fuentes = {
   sitiosDeClases?: (viaje: Entendido, clases: string[]) => Promise<Sitio[]>;
   resumenes: (sitios: Sitio[]) => Promise<Map<string, string>>;
   fotos: (archivos: string[]) => Promise<Map<string, Foto>>;
+  /** Una curiosidad de los sitios más conocidos, en el idioma del viajero, para el carrusel. Sin ella, solo fotos. */
+  curiosidades?: (sitios: Sitio[], idioma: string) => Promise<Map<string, string>>;
   /** La fuente de transporte: sus aeropuertos y sus precios. Sin ella, el viaje va sin transporte, y se dice. */
   transporte?: FuenteTransporte;
   /** Lo que piden otros vendedores en una zona dicha con palabras. */
@@ -1115,6 +1118,8 @@ async function darLosPasos(run: string, f: Fuentes): Promise<Estado> {
 
   // 1. Los sitios, de datos abiertos. 2. La ruta y su puerta.
   if (!hay(run, "sitios.json")) await traerSitios(run, viaje, f);
+  // Lo que se enseña mientras trabaja la IA: no frena el viaje, y si no sale, se sigue sin ello.
+  await prepararElCarrusel(run, viaje, f);
   if (!hay(run, "ruta.json")) {
     const { sitios } = leer<DeLosSitios>(run, "sitios.json");
     const lugares = lugaresParaLaRuta(sitios);

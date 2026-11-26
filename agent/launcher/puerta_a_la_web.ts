@@ -158,6 +158,7 @@ import {
 import { impactoDeUnDia, MensajeQueNoVale } from "../scripts/dia_a_dia.ts";
 import { TOPE_DE_CAMBIOS, TOPES_DE_UN_VIAJE } from "../data/momentos.ts";
 import { cambioQueNoVale, queTrae } from "../scripts/cambios.ts";
+import { cartasDelViaje } from "./carrusel.ts";
 import { guardarJson } from "./mesa.ts";
 import { gastoDe, trabajosDe } from "./trabajos.ts";
 import { leerVivo } from "./vivo.ts";
@@ -1500,6 +1501,11 @@ export function puertaALaWeb(o: OpcionesDeLaPuerta): Puerta {
       return { estado: 200, cuerpo: { n, trip: version.viaje, events: version.sucesos } };
     }
     if (que === "elecciones" && cual === undefined) return tusElecciones(p);
+    if (que === "carrusel" && cual === undefined) {
+      // Lo que se enseña mientras trabaja la IA: fotos y curiosidades de los sitios, sin IA (el PM, 26-nov).
+      if (p.metodo !== "GET") throw new Fallo(405, "method");
+      return { estado: 200, cuerpo: { cards: cartasDelViaje(suViaje(p)) } };
+    }
     if (que === "piezas" && cual === undefined) {
       if (p.metodo !== "GET") throw new Fallo(405, "method");
       const v = suViaje(p);

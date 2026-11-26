@@ -240,7 +240,8 @@ export const MIRAN_TODAS_LAS_ENTRADAS: readonly ClaseDeCambio[] = ["destination"
  */
 export const LO_QUE_DEJA: Record<IdDePaso, string[]> = {
   understood: ["escuchado.json", "escucha-1.json", "escucha-2.json", "respuestas.json", "confirmado.json"],
-  sights: ["sitios.json"],
+  // El carrusel sale de los sitios (el PM, 26-nov): va con ellos.
+  sights: ["sitios.json", "carrusel.json"],
   route: ["ruta.json"],
   search: ["busqueda.json"],
   papers: ["papeles.json", "papeles-sigue.json"],

@@ -53,6 +53,11 @@ export function fuentesInventadas(): Fuentes {
     sitios: async () => SITIOS,
     resumenes: async () => new Map([["Q1", "It guides ships into the bay."]]),
     fotos: async (archivos) => new Map(archivos.map((a) => [a, FOTO])),
+    // El carrusel: una curiosidad inventada para los tres más conocidos, como la daría el principio de su artículo.
+    curiosidades: async (sitios) =>
+      new Map(
+        sitios.slice(0, 3).map((x) => [x.id, `${x.nombre} is an invented place. It only exists to try the screen.`]),
+      ),
     transporte: transporteInventado(),
     bajarFotos: { traer: async () => JPEG, segura: () => true, encoger: async (b) => b },
     // Las capas del destino (bloque 14): sus contratos de prueba, si aún no están los de verdad, y los datos abiertos.

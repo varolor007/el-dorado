@@ -52,6 +52,8 @@ export function fuentesDeVerdad(hoy: Date = new Date()): Fuentes {
     },
     // Cuántos se resumen lo decide quien llama, según las noches del viaje.
     resumenes: (sitios) => resumenesDe(sitios),
+    // Para el carrusel: el principio de su artículo, en el idioma del viajero.
+    curiosidades: (sitios, idioma) => resumenesDe(sitios, {}, idioma),
     fotos: (archivos) => fotosDe(archivos),
     // Lo que dicen los datos abiertos de los sitios elegidos, para el de las entradas (14.4).
     abiertos: (sitios, avisar) => abiertosDe(sitios, avisar === undefined ? {} : { avisar }),

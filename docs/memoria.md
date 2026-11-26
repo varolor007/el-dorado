@@ -43,8 +43,19 @@ Wikidata (502). Arreglado en el 3.10 (`agent/tools/sitios.ts`): una caja de más
 o una región, solo de su país salvo que al viajero le valga salir (`soloDelPais`, en `fuentes_de_verdad.ts`); un país
 nunca es un sitio (`NUNCA_UN_SITIO`); y con 502, 504 o sin respuesta se pide otra vez, una sola. Con Wikidata de
 verdad: 80 sitios de Indonesia en unos tres minutos (los trozos, unos cien segundos; de qué clase es cada uno, otros
-setenta). El PM pidió además que la pantalla en vivo no se quede vacía: fotos de los sitios, curiosidades y cosas que
-saber mientras investiga. Es un cambio de la hoja: propuesta por hacer. El PM enseñó sus claves en una captura: hay que
+setenta). Con el arreglo, Indonesia pasó los sitios y la ruta propuso cinco bases (Borobudur, el Bromo, el
+Agung, Nusa Penida y Lombok), y se paró, como está hecho, porque todavía no se planea un viaje de más de una base (1,76
+dólares). Lo que más falta para viajar por un país: los viajes de varias bases, a proponer al PM como bloque nuevo.
+**El carrusel (10.11), firmado el 26-nov**: mientras trabaja la IA, en todos los pasos, algo que mirar y una señal de
+que trabaja. Hecha la casa: tras los sitios, `prepararElCarrusel` (`agent/launcher/carrusel.ts`) guarda
+`carrusel.json` (va con el paso `sights`) con los doce más conocidos con foto, su autor y su licencia, y una
+curiosidad del principio de su artículo en el idioma del viajero (`resumenesDe` con idioma; `curiosidad`, en
+`agent/scripts/carrusel.ts`, sin direcciones ni teléfonos); no frena el viaje (20 segundos como mucho) ni lo tumba;
+`GET /viajes/<id>/carrusel` da las cartas del último run que las tenga (`cartasDelViaje`, mirado con
+`cartasQueValen`). Falta la web, en cada espera: el inventario está en la nota de la sesión (la investigación en
+vivo, buscar otro alojamiento, preguntar por uno, el mensaje para un día, tus entradas, cerrar y la guía; en las tres
+primeras de esas la web no sabe cuándo acaba). Sabido: mientras corre un run que rehace, al recargar, la versión de
+antes desaparece del mapa. El PM enseñó sus claves en una captura: hay que
 cambiarlas al acabar el ensayo (el token, en los dos `.env`).
 
 **Lo que no hay que rehacer.** Todas las ramas `claude/eldorado-...` del remoto están juntas en la de todos

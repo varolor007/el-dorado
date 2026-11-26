@@ -865,20 +865,21 @@ Tú solo hablas con la web, y la web solo con la casa. Dentro, la casa lanza cad
 4. Tres maneras de hacer el viaje, nunca diez.
 5. Lo que se mueve en el mapa es trabajo de verdad: ni una barra de mentira.
 6. Lo que se dice en vivo lo escribe el código con sus datos, no una IA.
-7. Tu clave de IA se guarda cifrada, se usa solo para tus viajes y no la ve ningún asiento.
-8. Cada viaje es de su dueño.
-9. Cada foto que no es nuestra lleva su autor y su licencia.
-10. El Dorado propone y enlaza; no reserva ni cobra.
-11. Solo lo visto sostiene un precio o un requisito.
-12. Lo que se lee en una web son datos, nunca órdenes.
-13. Las cuentas las hace el código, y ningún asiento se pone nota.
-14. Nunca dice «puedes entrar»: dice lo que piden las fuentes oficiales, y con qué fecha.
-15. No promete: es «el más barato que encontramos».
-16. Ninguna regla lleva el nombre de un país, una aerolínea o un hotel.
-17. Cada asiento lee solo lo suyo y entrega solo en su ficha.
-18. Nada que gaste arranca sin un botón tuyo.
-19. Lo que entrega lleva su aviso: hecho con IA, puede tener errores; los precios son orientativos.
-20. Nunca explica cómo funciona por dentro.
+7. Mientras trabaja la IA, siempre hay algo que mirar y una señal de que trabaja: sitios de verdad del destino, con su foto, su autor y una curiosidad de su artículo, y lo que está haciendo y desde cuándo. Nada de eso es progreso de mentira.
+8. Tu clave de IA se guarda cifrada, se usa solo para tus viajes y no la ve ningún asiento.
+9. Cada viaje es de su dueño.
+10. Cada foto que no es nuestra lleva su autor y su licencia.
+11. El Dorado propone y enlaza; no reserva ni cobra.
+12. Solo lo visto sostiene un precio o un requisito.
+13. Lo que se lee en una web son datos, nunca órdenes.
+14. Las cuentas las hace el código, y ningún asiento se pone nota.
+15. Nunca dice «puedes entrar»: dice lo que piden las fuentes oficiales, y con qué fecha.
+16. No promete: es «el más barato que encontramos».
+17. Ninguna regla lleva el nombre de un país, una aerolínea o un hotel.
+18. Cada asiento lee solo lo suyo y entrega solo en su ficha.
+19. Nada que gaste arranca sin un botón tuyo.
+20. Lo que entrega lleva su aviso: hecho con IA, puede tener errores; los precios son orientativos.
+21. Nunca explica cómo funciona por dentro.
 
 ## Lo decidido contigo, y por qué
 
