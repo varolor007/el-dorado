@@ -802,6 +802,10 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
 
 ## Pendientes
 
+- **Los viajes de varias bases** (propuesta del 26-nov, a firma del PM; en la hoja, arriba, y en el bloque 15 del
+  plan). Lo suyo: el tope de miradas (dos por base y diez en total, de partida), qué hacer con un ferri sin fuente,
+  cuántas horas de traslado caben en un día, y las búsquedas del de moverse con varias bases.
+
 Lo que deja el 25-nov, a decisión del PM:
 
 - **De las capas del destino** (firmadas el 25-nov): si se recomiendan sitios concretos donde comer, que pide una

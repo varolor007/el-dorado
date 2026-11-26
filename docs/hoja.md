@@ -6,6 +6,20 @@ Hoja de El Dorado, versión 2, firmada el 23 de noviembre de 2026.
 
 **Buscas a dónde quieres ir en un mapa del mundo, pulsas un botón y ves cómo se investiga tu viaje en vivo, hasta que queda dibujado en el mapa, día a día y al mejor precio.** La primera vez corre de una tirada. Después lo usas a ratos: vuelves al alojamiento, al transporte o a un día y lo cambias, lo cierras con sus enlaces de reserva y te llevas tu guía. Cada momento despierta solo a los asientos que necesita; la IA no recuerda nada de una vez a otra, y la casa le da cada vez lo suyo de lo guardado. **Para el viajero es uno solo: El Dorado.** Por dentro trabajan los asientos, y esta hoja, que es nuestra, los llama por su nombre. En violeta, lo que está por decidir o por diseñar. Lo marcado como hecho ya está construido; lo demás está diseñado y sale de lo que decidiste. Pulsa un paso para ver su detalle.
 
+## Los viajes de varias bases, propuesta del 26-nov, a tu firma
+
+- **Por qué.** En tu ensayo, Indonesia en tres semanas: el de la ruta lo planteó bien, con cinco bases (Borobudur, el Bromo, el Agung, Nusa Penida y Lombok), y la investigación se paró ahí, porque hoy solo sabe terminar un viaje de una sola base. Para recorrer un país hace falta dormir en varios sitios.
+- **Cómo queda tu viaje.** Varias bases, cada una con sus noches, sus zonas y su alojamiento. Tus días van por base, y el día del traslado se queda en la base a la que llegas, con medio día menos. En el mapa ves cada base, sus días y la línea de un traslado a otro.
+- **Los traslados, medidos por el código** (sin IA). Entre cada base y la siguiente: en coche y en transporte, con la fuente de rutas; en avión, con la de vuelos, de solo ida entre los aeropuertos de cerca y el día del cambio; y el ferri, de lo que diga el de moverse con su página. Cada uno con lo que tarda, lo que cuesta y su fuente; lo que no se sabe, «no se sabe». Si un traslado no cabe en medio día, el de la ruta lo rehace con los tiempos ya medidos (una vuelta más, unos 0,25 dólares).
+- **Llegar y volver.** Llegas a la primera base y vuelves desde la última, con dos vuelos de ida, y no una ida y vuelta al mismo sitio. Así entran las palancas de entrar por un sitio y salir por otro, y de cambiar el orden de la ruta.
+- **Dónde dormir.** Una búsqueda por base, con sus fechas y sus zonas, y su puerta 4. De cerca se miran dos por base (el más barato y el mejor por lo que cuesta) y diez como mucho en todo el viaje: mirar es lo que más gasta.
+- **Qué ver.** Los sitios se piden alrededor de cada base, y no solo en la caja del destino: así una base con excursiones trae lo que tiene cerca. El del día a día elige por base, y el código reparte los días de cada una.
+- **Las tres maneras.** El código arma cada manera con un alojamiento por base: la más barata, la mejor por lo que cuesta y otra con una base cambiada. Su total suma dormir en cada base, llegar, volver y los traslados. El que cruza sigue eligiendo entre lo que le da la tabla, con la puerta 6.
+- **Las capas, el presupuesto, cerrar y tu guía.** Moverte allí, con la cama de cada día; lo de una base a otra, que ya trae el de moverse y hoy no se enseña; el presupuesto, con una parte nueva, los traslados; cerrar, con el precio de hoy de cada alojamiento en sus fechas; y tu guía, por base. Cambiar el alojamiento de una base no rehace las demás.
+- **Lo que costaría.** Con el tope de diez miradas, un viaje de cinco bases rondaría los 11 dólares, frente a los 7 de Lisboa; sin tope, unos 22. Lo que cuestan las capas se mide en el ensayo.
+- **Lo que no hace.** No reserva ni un traslado: lo enseña con su enlace, como lo demás.
+- **Por decidir, tuyo:** el tope de miradas (dos por base y diez en total, de partida); qué se hace con un ferri sin fuente (decir «no se sabe», o buscar una fuente); cuántas horas de traslado caben en un día; y si el de moverse tiene más búsquedas cuantas más bases hay. *(por decidir)*
+
 ## Qué cambia en la versión 2
 
 - **Entra la web, entera**, como la contaste el 23-nov: el mapa del mundo con su buscador, la investigación en vivo, tu viaje en el mapa con una capa por día, los enlaces de reserva y tu guía.

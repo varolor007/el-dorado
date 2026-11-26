@@ -45,7 +45,15 @@ nunca es un sitio (`NUNCA_UN_SITIO`); y con 502, 504 o sin respuesta se pide otr
 verdad: 80 sitios de Indonesia en unos tres minutos (los trozos, unos cien segundos; de qué clase es cada uno, otros
 setenta). Con el arreglo, Indonesia pasó los sitios y la ruta propuso cinco bases (Borobudur, el Bromo, el
 Agung, Nusa Penida y Lombok), y se paró, como está hecho, porque todavía no se planea un viaje de más de una base (1,76
-dólares). Lo que más falta para viajar por un país: los viajes de varias bases, a proponer al PM como bloque nuevo.
+dólares). Lo que más falta para viajar por un país: los viajes de varias bases. **Su propuesta, a firma del PM
+(26-nov)**: en la hoja, la caja «Los viajes de varias bases», y en el plan, el bloque 15 (15.1 a 15.9) y la tanda 7
+bis. Sale de un inventario del código: la ruta ya trae bases, noches, zonas, entrada, salida y traslados sin medir
+(`agent/scripts/formas.ts`, puerta 3); los vuelos de solo ida entre dos aeropuertos ya se pueden pedir
+(`aviasales.ts`, `fechas` con `vuelta: null`); la fuente de rutas mide entre dos puntos cualesquiera; el de moverse ya
+entrega `between_bases`, que no llega al viaje; y `Estancia` ya es «para dormir en una base». Lo que da por hecho una
+sola cama: la búsqueda (una estancia con las fechas del viaje), el reparto de los días (un solo punto de partida), la
+tabla y las maneras (un alojamiento por fila), la forma del viaje y la web, el presupuesto, cerrar, la guía y las
+elecciones.
 **El carrusel (10.11), firmado el 26-nov**: mientras trabaja la IA, en todos los pasos, algo que mirar y una señal de
 que trabaja. Hecha la casa: tras los sitios, `prepararElCarrusel` (`agent/launcher/carrusel.ts`) guarda
 `carrusel.json` (va con el paso `sights`) con los doce más conocidos con foto, su autor y su licencia, y una
