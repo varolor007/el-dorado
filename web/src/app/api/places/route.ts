@@ -3,7 +3,7 @@
 // destino, y qué se comprueba de cada uno antes de darlo, está en `lib/lugares.ts`.
 
 import { frenoDeLugares, quienPide } from "../../../lib/freno.ts";
-import { lugarDe, origenDe, type Lugar } from "../../../lib/lugares.ts";
+import { lugarDe, nombreDelPais, origenDe, paisesQueEmpiezan, rangoDe, type Lugar } from "../../../lib/lugares.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,35 @@ async function cerca(lat: number, lon: number): Promise<Response> {
   }
 }
 
+/** Los países ya pedidos, por su código: no cambian, y así no se le pide lo mismo al buscador a cada letra. */
+const paisesVistos = new Map<string, Lugar | null>();
+
+/**
+ * Un país, pedido al buscador por su nombre en inglés, que entiende, y dado con su nombre en el idioma de quien busca.
+ * Solo vale el resultado que es ese país (su etiqueta y su código).
+ */
+async function pais(p: { codigo: string; nombre: string; ingles: string }): Promise<Lugar | null> {
+  if (paisesVistos.has(p.codigo)) {
+    const visto = paisesVistos.get(p.codigo) ?? null;
+    return visto === null ? null : { ...visto, nombre: p.nombre };
+  }
+  const direccion =
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(p.ingles)}&lang=en&limit=5` + "&osm_tag=place:country";
+  try {
+    const r = await alBuscador(direccion);
+    if (!r.ok) return null;
+    const datos = (await r.json()) as { features?: unknown } | null;
+    const suyo = (Array.isArray(datos?.features) ? datos.features : [])
+      .map((f) => lugarDe(f))
+      .find((l) => l !== null && l.clase === "country" && l.pais === p.codigo);
+    const lugar = suyo === undefined || suyo === null ? null : { ...suyo, nombre: p.nombre, donde: "" };
+    paisesVistos.set(p.codigo, lugar);
+    return lugar;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(pedido: Request): Promise<Response> {
   const url = new URL(pedido.url);
   const cliente = quienPide(pedido.headers.get("x-forwarded-for") ?? pedido.headers.get("x-real-ip"));
@@ -59,14 +88,28 @@ export async function GET(pedido: Request): Promise<Response> {
   const lang = idioma === "en" ? "&lang=en" : "";
   const direccion = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=12${lang}`;
   try {
-    const r = await alBuscador(direccion);
+    // Los países cuyo nombre en tu idioma empieza por lo escrito, a la vez que lo demás.
+    const [r, paises] = await Promise.all([
+      alBuscador(direccion),
+      Promise.all(paisesQueEmpiezan(q, idioma).map((p) => pais(p))),
+    ]);
     if (!r.ok) return Response.json({ lugares: [], error: `el buscador contesta ${r.status}` }, { status: 502 });
     const datos = (await r.json()) as { features?: unknown } | null;
-    const lugares: Lugar[] = [];
-    for (const resultado of Array.isArray(datos?.features) ? datos.features : []) {
-      const lugar = lugarDe(resultado);
-      if (lugar === null) continue;
+    const lugares: Lugar[] = paises.filter((l): l is Lugar => l !== null);
+    // Lo grande antes que lo pequeño, sin cambiar el orden del buscador entre los del mismo tamaño.
+    const resultados = (Array.isArray(datos?.features) ? [...datos.features] : [])
+      .map((f, i) => ({ f, i, rango: rangoDe(f) }))
+      .sort((a, b) => a.rango - b.rango || a.i - b.i)
+      .map((x) => x.f);
+    for (const resultado of resultados) {
+      const crudo = lugarDe(resultado);
+      if (crudo === null) continue;
+      // Un país, con su nombre en tu idioma.
+      const lugar =
+        crudo.clase === "country" ? { ...crudo, nombre: nombreDelPais(crudo.pais, idioma, crudo.nombre) } : crudo;
       if (lugares.some((l) => l.nombre === lugar.nombre && l.donde === lugar.donde)) continue;
+      // El país que ya salió por su nombre no sale otra vez con el suyo.
+      if (lugar.clase === "country" && lugares.some((l) => l.clase === "country" && l.pais === lugar.pais)) continue;
       lugares.push(lugar);
     }
     return Response.json({ lugares: lugares.slice(0, 6) });

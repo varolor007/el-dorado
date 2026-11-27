@@ -60,7 +60,13 @@ que trabaja. Hecha la casa: tras los sitios, `prepararElCarrusel` (`agent/launch
 curiosidad del principio de su artículo en el idioma del viajero (`resumenesDe` con idioma; `curiosidad`, en
 `agent/scripts/carrusel.ts`, sin direcciones ni teléfonos); no frena el viaje (20 segundos como mucho) ni lo tumba;
 `GET /viajes/<id>/carrusel` da las cartas del último run que las tenga (`cartasDelViaje`, mirado con
-`cartasQueValen`). **La salida de una parada por varias bases (4.5, 26-nov)**: el PM no encontraba cómo cambiar dónde
+`cartasQueValen`). **El buscador de lugares, en tu idioma (3.11, 27-nov)**: Photon no entiende el español; «Tailandia» daba un
+pueblo de Colombia. `paisesQueEmpiezan` (`web/src/lib/lugares.ts`, con `Intl.DisplayNames`, sin lista nuestra) busca el
+país por su nombre en el idioma de la web o en inglés y lo pide a Photon en inglés (`osm_tag=place:country`, con su
+código), guardado en memoria del servidor; `nombreDelPais` da a cualquier país su nombre en tu idioma; `rangoDe` pone
+lo grande antes. Pruebas en `tests/code/lugares_por_idioma.test.ts`. Sabido: el nombre de una ciudad en español que
+no es el suyo («Nueva York») sigue sin encontrarse; y en la web en español, de lo de Asia, «dónde» sale en su
+alfabeto. **La salida de una parada por varias bases (4.5, 26-nov)**: el PM no encontraba cómo cambiar dónde
 dormir. `paradaDeCara` lleva `bases` (los nombres de la ruta, si se paró por eso; `agent/launcher/acta.ts`); la web
 (`EnCasa.tsx`) lo dice en claro y ofrece «Dormir en un solo sitio», que abre los cambios con `?one_place=1` y lo deja
 marcado (`Cambios.tsx`); la puerta 3 no deja pasar varias bases si `moving.several_places` es falso, y el contrato

@@ -164,3 +164,82 @@ export function origenDe(resultado: unknown): Origen | null {
   const centro = enElMapa ? { lat: Math.round(lat * 10) / 10, lon: Math.round(lon * 10) / 10 } : null;
   return { nombre: nombre.trim().slice(0, 80), pais: pais?.toUpperCase() ?? null, centro };
 }
+
+// Los países, por su nombre en el idioma de quien busca. El buscador (Photon) solo entiende algunos idiomas, y en los
+// demás busca en los nombres de cada sitio: «Tailandia» daba un pueblo de Colombia, y no el país, que en sus datos se
+// llama en tailandés (el PM, 26-nov). Los nombres salen del navegador o del servidor (`Intl.DisplayNames`), para todos
+// los países a la vez, sin una lista nuestra.
+
+/** Una palabra sin mayúsculas ni tildes, para comparar lo que se escribe con un nombre. */
+export function sinTildes(texto: string): string {
+  return texto.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
+/** Los códigos de dos letras que pueden ser un país: los que el idioma sabe nombrar. */
+function codigosDePais(nombres: Intl.DisplayNames): string[] {
+  const codigos: string[] = [];
+  for (let a = 65; a <= 90; a++)
+    for (let b = 65; b <= 90; b++) {
+      const codigo = String.fromCharCode(a, b);
+      try {
+        const nombre = nombres.of(codigo);
+        if (nombre !== undefined && nombre !== codigo) codigos.push(codigo);
+      } catch {
+        // Un código que el idioma no conoce no es un país.
+      }
+    }
+  return codigos;
+}
+
+/**
+ * Los países cuyo nombre, en ese idioma, empieza por lo que se ha escrito (tres letras como poco), con su nombre ahí
+ * y en inglés, que es como se le pide al buscador. Como mucho, los dos primeros por orden alfabético.
+ */
+export function paisesQueEmpiezan(
+  escrito: string,
+  idioma: string,
+): { codigo: string; nombre: string; ingles: string }[] {
+  const q = sinTildes(escrito);
+  if (q.length < 3) return [];
+  let suyo: Intl.DisplayNames;
+  let ingles: Intl.DisplayNames;
+  try {
+    suyo = new Intl.DisplayNames([idioma], { type: "region" });
+    ingles = new Intl.DisplayNames(["en"], { type: "region" });
+  } catch {
+    return [];
+  }
+  return (
+    codigosDePais(suyo)
+      .map((codigo) => ({ codigo, nombre: suyo.of(codigo) as string, ingles: ingles.of(codigo) as string }))
+      // Por su nombre en tu idioma o en inglés: hay quien escribe «Thailand» en la web en español.
+      .filter((p) => sinTildes(p.nombre).startsWith(q) || sinTildes(p.ingles).startsWith(q))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, idioma))
+      .slice(0, 2)
+  );
+}
+
+/** Lo grande antes que lo pequeño: un país, una región, una ciudad, un pueblo, una aldea. Lo demás, detrás. */
+const RANGO = ["country", "state", "region", "island", "archipelago", "city", "town", "village", "hamlet"];
+
+/** El rango de un resultado del buscador, por su etiqueta: cuanto más bajo, antes sale. */
+export function rangoDe(resultado: unknown): number {
+  const p = ((resultado ?? {}) as { properties?: Record<string, unknown> }).properties ?? {};
+  const valor = typeof p.osm_value === "string" ? p.osm_value : "";
+  const i = RANGO.indexOf(valor);
+  return i === -1 ? RANGO.length : i;
+}
+
+/**
+ * El nombre de un país en el idioma de quien busca, por su código; si el idioma no lo sabe, el que dio el buscador. Así
+ * un país no sale escrito en su alfabeto («ประเทศไทย», «日本») en una web en español o en inglés.
+ */
+export function nombreDelPais(codigo: string | null, idioma: string, delBuscador: string): string {
+  if (codigo === null) return delBuscador;
+  try {
+    const nombre = new Intl.DisplayNames([idioma], { type: "region" }).of(codigo);
+    return nombre === undefined || nombre === codigo ? delBuscador : nombre;
+  } catch {
+    return delBuscador;
+  }
+}
