@@ -56,6 +56,9 @@ test("el vistazo inventado: lo que hay, lo que pasa y desde cuánto, por zonas, 
     // Con los aeropuertos dichos no se piden los lugares a la fuente: su nombre es su código.
     nombres: { origen: "OOO", destino: "VVV" },
     mes: "2027-03",
+    // Solo tres días antes y tres después de tu fecha (el PM, 27-nov).
+    desde: "2027-03-02",
+    hasta: "2027-03-08",
     noches: 3,
     moneda: "EUR",
     fuente: "inventada",
@@ -152,7 +155,7 @@ test("si la fuente no contesta, no hay vistazo; si contesta a medias, se dice", 
   assert.equal(p.devueltos, 0);
 });
 
-test("los días para volar: del mes del viaje, en su moneda y el más barato de cada día", async () => {
+test("los días para volar: de alrededor de tu fecha, en su moneda y el más barato de cada día", async () => {
   const transporte = transporteInventado();
   transporte.diasBaratos = async (t, mes) => {
     transporte.pedidos.push({ como: "dias", t });
@@ -160,12 +163,14 @@ test("los días para volar: del mes del viaje, en su moneda y el más barato de 
       { fuente: "inventada", visto: VISTO, dia: `${mes}-03`, precio: 80, moneda: "USD" },
       { fuente: "inventada", visto: VISTO, dia: "2027-04-01", precio: 70, moneda: "EUR" },
       { fuente: "inventada", visto: VISTO, dia: `${mes}-04`, precio: 0, moneda: "EUR" },
-      { fuente: "inventada", visto: VISTO, dia: `${mes}-09`, precio: 120, moneda: "EUR" },
-      { fuente: "inventada", visto: "2027-01-01T00:00:00Z", dia: `${mes}-09`, precio: 110, moneda: "EUR" },
+      { fuente: "inventada", visto: VISTO, dia: `${mes}-07`, precio: 120, moneda: "EUR" },
+      { fuente: "inventada", visto: "2027-01-01T00:00:00Z", dia: `${mes}-07`, precio: 110, moneda: "EUR" },
+      // A más de tres días de tu fecha (el 5): no sale, aunque sea más barato.
+      { fuente: "inventada", visto: VISTO, dia: `${mes}-20`, precio: 40, moneda: "EUR" },
     ];
   };
   const v = await primerVistazo(ENTENDIDO, { alojamiento: fuenteInventada(), transporte }, RAPIDO);
-  assert.deepEqual(v.vuelos?.dias, [{ dia: "2027-03-09", precio: 110 }]);
+  assert.deepEqual(v.vuelos?.dias, [{ dia: "2027-03-07", precio: 110 }]);
   // El día en que se vio es el más antiguo: el precio es de entonces.
   assert.equal(v.vuelos?.visto, "2027-01-01T00:00:00Z");
   // Una sola petición de precios, con los aeropuertos dichos, y sin pedir los lugares, que no hacen falta.
@@ -326,7 +331,15 @@ test("lo que comprueba el código de un vistazo antes de dárselo a la web", asy
   assert.ok(mal((v) => (v.desde = null)).includes("el «desde» no casa con los que tienen precio"));
   assert.ok(mal((v) => (v.puntos[0].punto.lat = 99)).includes("no está en el mapa"));
   assert.ok(mal((v) => (v.zonas![0].devueltos += 1)).includes("las zonas no suman lo que dice el vistazo"));
-  assert.ok(mal((v) => (v.vuelos!.dias[0].dia = "2027-04-01")).includes("el día no es de ese mes"));
+  assert.ok(mal((v) => (v.vuelos!.dias[0].dia = "2027-03-20")).includes("el día no es de los que se miran"));
+  // Un vistazo de antes, sin «desde» ni «hasta», mira el mes entero.
+  assert.ok(
+    mal((v) => {
+      delete v.vuelos!.desde;
+      delete v.vuelos!.hasta;
+      v.vuelos!.dias[0].dia = "2027-04-01";
+    }).includes("el día no es de los que se miran"),
+  );
   assert.ok(mal((v) => v.vuelos!.dias.reverse()).includes("los días no van en orden"));
   assert.ok(mal((v) => (v.mirados = 1)).length > 0);
 });
@@ -374,4 +387,25 @@ test("el freno: lo que ya se busca no se repite, lo que falla no se guarda, y ha
   assert.equal(buscadas, 1);
   await assert.rejects(freno.pedir("c", null, async () => Promise.reject(new Error("x"))));
   assert.deepEqual(await freno.pedir("c", null, async () => "bien"), { valor: "bien", deMemoria: false });
+});
+
+test("si los tres días de alrededor caen en otro mes, se pide también ese mes", async () => {
+  const transporte = transporteInventado();
+  const meses: string[] = [];
+  transporte.diasBaratos = async (_t, mes) => {
+    meses.push(mes);
+    const dia = (d: string, precio: number) => ({ fuente: "inventada", visto: VISTO, dia: d, precio, moneda: "EUR" });
+    return mes === "2027-02" ? [dia("2027-02-26", 70), dia("2027-02-20", 30)] : [dia("2027-03-02", 90)];
+  };
+  const alPrincipio: Entendido = {
+    ...(ENTENDIDO as Entendido),
+    dates: { ...(ENTENDIDO as Entendido).dates, check_in: "2027-03-01", check_out: "2027-03-04" },
+  };
+  const v = await primerVistazo(alPrincipio, { alojamiento: fuenteInventada(), transporte }, RAPIDO);
+  assert.deepEqual([...meses].sort(), ["2027-02", "2027-03"]);
+  assert.deepEqual(v.vuelos?.dias, [
+    { dia: "2027-02-26", precio: 70 },
+    { dia: "2027-03-02", precio: 90 },
+  ]);
+  assert.deepEqual([v.vuelos?.desde, v.vuelos?.hasta], ["2027-02-26", "2027-03-04"]);
 });

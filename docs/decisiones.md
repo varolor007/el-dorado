@@ -807,6 +807,14 @@ Las respuestas del PM a lo que dejó la revisión de la tanda 3 y, después, ese
   no del país sigue siendo como otro destino. La regla para todo lo que se haga: cada parada, con una salida que se
   entienda y funcione con un toque.
 
+## 27-nov-2026
+
+- **Mover las fechas es moverlas un poco: tres días antes o después** (el PM, al ver el primer vistazo: «cuando
+  hablamos de mover las fechas, lo que te tiene que salir es ±3 días, no 10 días de diferencia»). Los días baratos
+  para volar del primer vistazo son solo los de tres días alrededor de tu fecha, también si caen en otro mes.
+- **Un país se busca por su nombre en tu idioma** (el PM: «¿por qué no me sale el país?», al buscar «Tailandia»). El
+  buscador de lugares no entiende el español; el nombre de cada país sale del propio navegador o servidor.
+
 ## Pendientes
 
 - **Los viajes de varias bases** (propuesta del 26-nov, a firma del PM; en la hoja, arriba, y en el bloque 15 del

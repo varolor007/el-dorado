@@ -204,8 +204,11 @@ export type DiasParaVolar = {
   destino: string;
   /** Sus nombres, como los da la fuente. Un vistazo de antes no los trae. */
   nombres?: { origen: string; destino: string };
-  /** AAAA-MM. */
+  /** AAAA-MM: el mes de tu fecha. */
   mes: string;
+  /** Los días que se miran, alrededor de tu fecha (AAAA-MM-DD). Un vistazo de antes no los trae: era el mes entero. */
+  desde?: string;
+  hasta?: string;
   noches: number;
   moneda: string;
   fuente: string;
@@ -987,7 +990,9 @@ export function comprobarVistazo(v: Vistazo): Pega[] {
     if (!(Number.isInteger(d.noches) && d.noches > 0)) pega("vuelos", "no dice de cuántas noches es el viaje");
     if (d.fuente.trim() === "" || Number.isNaN(Date.parse(d.visto))) pega("vuelos", "no dice de dónde sale");
     d.dias.forEach((x, i) => {
-      if (!fecha(x.dia) || !x.dia.startsWith(d.mes)) pega(`vuelos.dias[${i}]`, "el día no es de ese mes");
+      const dentro =
+        d.desde !== undefined && d.hasta !== undefined ? x.dia >= d.desde && x.dia <= d.hasta : x.dia.startsWith(d.mes);
+      if (!fecha(x.dia) || !dentro) pega(`vuelos.dias[${i}]`, "el día no es de los que se miran");
       if (!importe(x.precio)) pega(`vuelos.dias[${i}]`, "el precio no es un importe");
       if (i > 0 && x.dia <= d.dias[i - 1].dia) pega(`vuelos.dias[${i}]`, "los días no van en orden");
     });

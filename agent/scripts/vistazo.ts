@@ -10,6 +10,7 @@
 import { CANDIDATOS_QUE_BASTAN, ESCALERA_DE_MINIMOS, RADIO_MAXIMO } from "../data/cribas.ts";
 import { monedaDe } from "../data/monedas.ts";
 import {
+  DIAS_ALREDEDOR,
   ESPERA_DEL_VISTAZO,
   LISTAS_A_LA_VEZ,
   POR_TANDA,
@@ -273,11 +274,20 @@ function aQuienPreguntar(dentro: Alojamiento[], zonaDe: Map<string, string>, cua
  * vuelos de salida con el primero de llegada), con una sola petición de precios. Sin saber de dónde se sale no se
  * pide nada. Todo, aeropuertos incluidos, dentro de su espera: lo que no llega no se espera.
  */
+/** Un día AAAA-MM-DD movido unos días, con su calendario. */
+function otroDia(dia: string, dias: number): string {
+  return new Date(Date.parse(`${dia}T00:00:00Z`) + dias * 86_400_000).toISOString().slice(0, 10);
+}
+
 async function diasParaVolar(e: Entendido, f: FuentesDelVistazo, ms: number): Promise<DiasParaVolar | null> {
   const fuente = f.transporte;
   const origen = e.origin;
   if (fuente?.diasBaratos === undefined || origen === null) return null;
   const mes = e.dates.check_in.slice(0, 7);
+  // Solo los días de alrededor de tu fecha; si caen en otro mes, se pide también ese.
+  const desde = otroDia(e.dates.check_in, -DIAS_ALREDEDOR);
+  const hasta = otroDia(e.dates.check_in, DIAS_ALREDEDOR);
+  const meses = [...new Set([desde.slice(0, 7), hasta.slice(0, 7)])];
   const noches = nochesDe(e);
   const moneda = e.currency.toUpperCase();
   const pedido = (async () => {
@@ -285,14 +295,22 @@ async function diasParaVolar(e: Entendido, f: FuentesDelVistazo, ms: number): Pr
     const par = parPrincipal(salida, llegada);
     if (par === null) return null;
     const mercado = origen.country.toLowerCase();
-    const t: Trayecto = { origen: par.de.codigo, destino: par.a.codigo, ida: mes, vuelta: null, moneda, mercado };
-    return { par, dias: await fuente.diasBaratos!(t, mes, noches) };
+    const t = (m: string): Trayecto => ({
+      origen: par.de.codigo,
+      destino: par.a.codigo,
+      ida: m,
+      vuelta: null,
+      moneda,
+      mercado,
+    });
+    const porMes = await Promise.all(meses.map((m) => fuente.diasBaratos!(t(m), m, noches)));
+    return { par, dias: porMes.flat() };
   })();
   const llegado = await aTiempo(pedido, ms);
   if (!llegado.ok || llegado.v === null) return null;
   const { par, dias: dados } = llegado.v;
   const dias = dados
-    .filter((d) => d.dia.startsWith(mes) && d.moneda.toUpperCase() === moneda && d.precio > 0)
+    .filter((d) => d.dia >= desde && d.dia <= hasta && d.moneda.toUpperCase() === moneda && d.precio > 0)
     .sort((a, b) => a.dia.localeCompare(b.dia) || a.precio - b.precio)
     .filter((d, i, todos) => i === 0 || d.dia !== todos[i - 1].dia);
   if (dias.length === 0) return null;
@@ -301,6 +319,8 @@ async function diasParaVolar(e: Entendido, f: FuentesDelVistazo, ms: number): Pr
     destino: par.a.codigo,
     nombres: { origen: par.de.nombre, destino: par.a.nombre },
     mes,
+    desde,
+    hasta,
     noches,
     moneda,
     fuente: dias[0].fuente,

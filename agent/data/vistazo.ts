@@ -21,6 +21,12 @@ export const PUNTOS_DEL_VISTAZO = 400;
 export const ESPERA_DEL_VISTAZO = { lista: 12, precios: 8, vuelos: 8 };
 
 /**
+ * Cuántos días antes y después de tu fecha se miran los días baratos para volar: mover las fechas es moverlas un poco,
+ * no irse a otra semana (el PM, 27-nov: «±3 días, no 10 días de diferencia»).
+ */
+export const DIAS_ALREDEDOR = 3;
+
+/**
  * El freno de la puerta. Un vistazo nuevo cuenta para el tope; uno que ya estaba en la memoria, no. La memoria
  * guarda la misma respuesta para el mismo destino, las mismas fechas y el mismo grupo durante unos minutos.
  */
